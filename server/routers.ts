@@ -33,10 +33,19 @@ const signupRequestInput = z.object({
   source: z.string().max(120).optional().default("landing"),
 });
 
+const personalizationInput = z.object({
+  primaryGoal: z.string().trim().min(3).max(220),
+  biggestObstacle: z.string().trim().min(3).max(2000),
+  trainingLevel: z.enum(["starting", "building", "consistent", "advanced"]),
+  motivationStyle: z.enum(["direct", "supportive", "competitive", "quiet"]),
+  supportNeeded: z.string().trim().min(3).max(2000),
+});
+
 const siteLoginInput = z.object({
   email: z.string().trim().email().max(320),
   displayName: z.string().trim().min(2).max(140).optional(),
   mode: z.enum(["register", "login"]).default("register"),
+  personalization: personalizationInput.optional(),
 });
 
 const dayLogInput = z.object({
@@ -59,10 +68,14 @@ export const appRouter = router({
     me: publicProcedure.query(opts => opts.ctx.user),
     siteLogin: publicProcedure.input(siteLoginInput).mutation(async ({ ctx, input }) => {
       const email = normalizeSignupEmail(input.email);
+      if (input.mode === "register" && !input.personalization) {
+        throw new TRPCError({ code: "BAD_REQUEST", message: "Answer the five registration questions before joining the challenge." });
+      }
       const user = await createSiteNativeUser({
         email,
         displayName: input.displayName || email,
         mode: input.mode,
+        personalization: input.mode === "register" ? input.personalization : undefined,
       });
       const token = await sdk.createSessionToken(user.openId, { name: user.name || user.email || "6+1 participant" });
       const cookieOptions = getSessionCookieOptions(ctx.req);
@@ -97,6 +110,7 @@ export const appRouter = router({
         biggestObstacle: z.string().max(2000).optional().default(""),
         trainingLevel: z.string().max(80).optional().default(""),
         motivationStyle: z.string().max(80).optional().default(""),
+        supportNeeded: z.string().max(2000).optional().default(""),
       }))
       .mutation(async ({ ctx, input }) => {
         return updateParticipantProfile(ctx.user.id, input);
@@ -109,6 +123,7 @@ export const appRouter = router({
         biggestObstacle: z.string().trim().min(3).max(2000),
         trainingLevel: z.enum(["starting", "building", "consistent", "advanced"]),
         motivationStyle: z.enum(["direct", "supportive", "competitive", "quiet"]),
+        supportNeeded: z.string().trim().min(3).max(2000).optional(),
         profilePhotoDataUrl: z.string().max(3_000_000).regex(/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/, "Profile photo must be a PNG, JPG, or WEBP data URL.").optional(),
       }))
       .mutation(async ({ ctx, input }) => {

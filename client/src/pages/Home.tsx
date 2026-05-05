@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import React from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
 import { clampLives, getDailyLogProgress } from "@/lib/challengeUi";
 import { haptics } from "@/lib/haptics";
@@ -225,15 +225,44 @@ function scrollToEntryPanel() {
   document.getElementById("site-entry-panel")?.scrollIntoView({ behavior: "smooth", block: "center" });
 }
 
+type PersonalizationForm = {
+  primaryGoal: string;
+  biggestObstacle: string;
+  trainingLevel: "starting" | "building" | "consistent" | "advanced";
+  motivationStyle: "direct" | "supportive" | "competitive" | "quiet";
+  supportNeeded: string;
+};
+
+const trainingLevels = [
+  ["starting", "Starting again"],
+  ["building", "Building consistency"],
+  ["consistent", "Already consistent"],
+  ["advanced", "Advanced / pushing hard"],
+] as const;
+
+const motivationStyles = [
+  ["direct", "Direct Warden"],
+  ["supportive", "Supportive Warden"],
+  ["competitive", "Competitive Warden"],
+  ["quiet", "Quiet accountability"],
+] as const;
+
 function SiteEntryPanel() {
   const [email, setEmail] = useState("");
   const [displayName, setDisplayName] = useState("");
-  const [entryMode, setEntryMode] = useState<"register" | "login">("register");
+  const [entryMode, setEntryMode] = useState<"choice" | "register" | "login">("choice");
+  const [personalization, setPersonalization] = useState<PersonalizationForm>({
+    primaryGoal: "",
+    biggestObstacle: "",
+    trainingLevel: "building",
+    motivationStyle: "direct",
+    supportNeeded: "",
+  });
   const utils = trpc.useUtils();
   const siteLogin = trpc.auth.siteLogin.useMutation({
     onSuccess: async () => {
       haptics.success();
-      toast(entryMode === "register" ? "Registration started. Finish the setup and start logging inside the site." : "Welcome back. You are in.");
+      toast(entryMode === "register" ? "Registered. The Warden has your context." : "Welcome back. You are in.");
       await utils.auth.me.invalidate();
       await utils.challenge.snapshot.invalidate();
     },
@@ -243,14 +272,34 @@ function SiteEntryPanel() {
     },
   });
 
+  const updatePersonalization = <Key extends keyof PersonalizationForm>(key: Key, value: PersonalizationForm[Key]) => {
+    setPersonalization(current => ({ ...current, [key]: value }));
+  };
+
+  const chooseMode = (mode: "register" | "login") => {
+    haptics.tap();
+    setEntryMode(mode);
+  };
+
+  const resetEntry = () => {
+    haptics.tap();
+    setEntryMode("choice");
+  };
+
   return (
     <form
       id="site-entry-panel"
-      className="mt-8 scroll-mt-10 border border-[#2A2A2A] bg-[#090909]/92 p-4 shadow-[0_18px_70px_rgba(0,0,0,0.42)] transition duration-500 hover:border-[#C8A96E]/70 sm:p-5"
+      className="mt-8 scroll-mt-10 border border-[#2A2A2A] bg-[#090909]/94 p-4 shadow-[0_18px_70px_rgba(0,0,0,0.42)] transition duration-500 hover:border-[#C8A96E]/70 sm:p-5"
       onSubmit={event => {
         event.preventDefault();
+        if (entryMode === "choice") return;
         haptics.submit();
-        siteLogin.mutate({ email, displayName: displayName || undefined, mode: entryMode });
+        siteLogin.mutate({
+          email,
+          displayName: entryMode === "register" ? displayName : undefined,
+          mode: entryMode,
+          personalization: entryMode === "register" ? personalization : undefined,
+        });
       }}
     >
       <div className="flex items-start gap-3">
@@ -258,110 +307,314 @@ function SiteEntryPanel() {
           <Mail className="h-4 w-4" />
         </div>
         <div>
-          <MicroLabel tone="gold">Register inside the site</MicroLabel>
+          <MicroLabel tone="gold">Register or log in</MicroLabel>
           <p className="mt-2 text-sm font-bold leading-6 text-[#AFAFAF]">
-            New challengers can register here with an email. Returning challengers can log back in from the same panel. No Manus account is needed.
+            New challenger? Register first. Already made your profile? Log in with your email.
           </p>
         </div>
       </div>
-      <div className="mt-4 grid grid-cols-2 border border-[#2A2A2A] bg-black p-1">
-        <button
-          type="button"
-          onClick={() => { haptics.tap(); setEntryMode("register"); }}
-          className={`min-h-10 text-[10px] font-black uppercase tracking-[0.18em] transition ${entryMode === "register" ? "bg-[#C8A96E] text-black" : "text-[#777] hover:text-white"}`}
-        >
-          Register
-        </button>
-        <button
-          type="button"
-          onClick={() => { haptics.tap(); setEntryMode("login"); }}
-          className={`min-h-10 text-[10px] font-black uppercase tracking-[0.18em] transition ${entryMode === "login" ? "bg-white text-black" : "text-[#777] hover:text-white"}`}
-        >
-          Returning login
-        </button>
-      </div>
-      <div className="mt-3 grid gap-2 sm:grid-cols-2">
-        <input
-          required
-          type="email"
-          value={email}
-          onChange={event => setEmail(event.target.value)}
-          placeholder="you@email.com"
-          className="min-h-12 border border-[#2A2A2A] bg-black px-4 text-sm font-bold text-white outline-none transition placeholder:text-[#555] focus:border-[#C8A96E]"
-        />
-        <input
-          type="text"
-          value={displayName}
-          onChange={event => setDisplayName(event.target.value)}
-          placeholder={entryMode === "register" ? "Display name" : "Display name optional"}
-          className="min-h-12 border border-[#2A2A2A] bg-black px-4 text-sm font-bold text-white outline-none transition placeholder:text-[#555] focus:border-[#C8A96E]"
-        />
-      </div>
-      <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto] sm:items-center">
-        <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#777]">
-          Register creates your challenger profile. Returning login reopens it by email. Founder/admin access stays separate for approvals, payments, and fulfilment.
-        </p>
-        <SharpButton type="submit" disabled={siteLogin.isPending} className="min-w-40">
-          {siteLogin.isPending ? "Opening" : entryMode === "register" ? "Register" : "Log in"}
-        </SharpButton>
-      </div>
-      <button
-        type="button"
-        onClick={() => { haptics.tap(); window.location.href = getLoginUrl(); }}
-        className="mt-3 text-[10px] font-black uppercase tracking-[0.2em] text-[#777] transition hover:text-[#C8A96E]"
-      >
-        Founder login only.
-      </button>
+
+      {entryMode === "choice" ? (
+        <div className="mt-5 grid gap-3 sm:grid-cols-2" data-testid="entry-choice-panel">
+          <button
+            type="button"
+            onClick={() => chooseMode("register")}
+            className="group min-h-28 border border-[#C8A96E]/70 bg-[#C8A96E] p-4 text-left text-black transition hover:-translate-y-0.5 hover:shadow-[0_14px_40px_rgba(200,169,110,0.20)] focus:outline-none focus:ring-2 focus:ring-[#C8A96E] focus:ring-offset-2 focus:ring-offset-black"
+          >
+            <span className="block text-[10px] font-black uppercase tracking-[0.18em] text-black/60">New challenger</span>
+            <span className="mt-2 block text-2xl font-black uppercase tracking-[-0.05em]">Register</span>
+            <span className="mt-2 block text-xs font-black uppercase tracking-[0.12em] text-black/70">Answer five quick questions after this click.</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => chooseMode("login")}
+            className="group min-h-28 border border-[#2A2A2A] bg-black p-4 text-left text-white transition hover:-translate-y-0.5 hover:border-white/60 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black"
+          >
+            <span className="block text-[10px] font-black uppercase tracking-[0.18em] text-[#777]">Returning member</span>
+            <span className="mt-2 block text-2xl font-black uppercase tracking-[-0.05em]">Log in</span>
+            <span className="mt-2 block text-xs font-black uppercase tracking-[0.12em] text-[#888]">Email only. No questionnaire.</span>
+          </button>
+        </div>
+      ) : (
+        <div className="mt-5" data-testid={entryMode === "register" ? "registration-flow-panel" : "login-flow-panel"}>
+          <div className="mb-4 flex items-center justify-between gap-3 border-b border-[#2A2A2A] pb-3">
+            <div>
+              <MicroLabel tone={entryMode === "register" ? "gold" : "muted"}>{entryMode === "register" ? "New registration" : "Returning login"}</MicroLabel>
+              <p className="mt-1 text-xs font-bold uppercase tracking-[0.12em] text-[#777]">
+                {entryMode === "register" ? "Five answers help personalise the journey." : "Use the email already attached to your challenger profile."}
+              </p>
+            </div>
+            <button type="button" onClick={resetEntry} className="text-[10px] font-black uppercase tracking-[0.18em] text-[#C8A96E] underline-offset-4 hover:underline">
+              Back
+            </button>
+          </div>
+
+          <div className={entryMode === "register" ? "grid gap-2 sm:grid-cols-2" : "grid gap-2"}>
+            <input
+              required
+              type="email"
+              value={email}
+              onChange={event => setEmail(event.target.value)}
+              placeholder="you@email.com"
+              className="min-h-12 border border-[#2A2A2A] bg-black px-4 text-sm font-bold text-white outline-none transition placeholder:text-[#555] focus:border-[#C8A96E]"
+            />
+            {entryMode === "register" && (
+              <input
+                required
+                type="text"
+                value={displayName}
+                onChange={event => setDisplayName(event.target.value)}
+                placeholder="Display name"
+                className="min-h-12 border border-[#2A2A2A] bg-black px-4 text-sm font-bold text-white outline-none transition placeholder:text-[#555] focus:border-[#C8A96E]"
+              />
+            )}
+          </div>
+
+          {entryMode === "register" && (
+            <div className="mt-4 grid gap-3" data-testid="registration-personalization">
+              <div className="grid gap-3 lg:grid-cols-2">
+                <label>
+                  <MicroLabel tone="gold">1. Main goal</MicroLabel>
+                  <input required value={personalization.primaryGoal} onChange={event => updatePersonalization("primaryGoal", event.target.value)} placeholder="What are you here to change?" className="mt-2 min-h-12 w-full border border-[#2A2A2A] bg-black px-4 text-sm font-bold text-white outline-none transition placeholder:text-[#555] focus:border-[#C8A96E]" />
+                </label>
+                <label>
+                  <MicroLabel tone="gold">2. Training level</MicroLabel>
+                  <select required value={personalization.trainingLevel} onChange={event => updatePersonalization("trainingLevel", event.target.value as PersonalizationForm["trainingLevel"])} className="mt-2 min-h-12 w-full border border-[#2A2A2A] bg-black px-4 text-sm font-bold text-white outline-none transition focus:border-[#C8A96E]">
+                    {trainingLevels.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                  </select>
+                </label>
+              </div>
+              <label>
+                <MicroLabel tone="gold">3. Biggest obstacle</MicroLabel>
+                <textarea required value={personalization.biggestObstacle} onChange={event => updatePersonalization("biggestObstacle", event.target.value)} placeholder="What usually knocks you off track?" className="mt-2 min-h-20 w-full border border-[#2A2A2A] bg-black px-4 py-3 text-sm font-bold leading-6 text-white outline-none transition placeholder:text-[#555] focus:border-[#C8A96E]" />
+              </label>
+              <div className="grid gap-3 lg:grid-cols-2">
+                <label>
+                  <MicroLabel tone="gold">4. Warden style</MicroLabel>
+                  <select required value={personalization.motivationStyle} onChange={event => updatePersonalization("motivationStyle", event.target.value as PersonalizationForm["motivationStyle"])} className="mt-2 min-h-12 w-full border border-[#2A2A2A] bg-black px-4 text-sm font-bold text-white outline-none transition focus:border-[#C8A96E]">
+                    {motivationStyles.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                  </select>
+                </label>
+                <label>
+                  <MicroLabel tone="gold">5. Support needed</MicroLabel>
+                  <input required value={personalization.supportNeeded} onChange={event => updatePersonalization("supportNeeded", event.target.value)} placeholder="What should the group/Warden know?" className="mt-2 min-h-12 w-full border border-[#2A2A2A] bg-black px-4 text-sm font-bold text-white outline-none transition placeholder:text-[#555] focus:border-[#C8A96E]" />
+                </label>
+              </div>
+            </div>
+          )}
+
+          <div className="mt-4 grid gap-2 sm:grid-cols-[1fr_auto] sm:items-center">
+            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#777]">
+              {entryMode === "register" ? "Register creates your challenger profile and saves your five answers." : "Log in reopens an existing challenger profile by email."}
+            </p>
+            <SharpButton type="submit" disabled={siteLogin.isPending} className="min-w-40">
+              {siteLogin.isPending ? "Opening" : entryMode === "register" ? "Complete registration" : "Log in"}
+            </SharpButton>
+          </div>
+        </div>
+      )}
     </form>
+  );
+}
+
+const challengeStats = [
+  ["DURATION", "50 Days"],
+  ["LIVES", "4"],
+  ["ENTRY", "£100"],
+  ["FAIL COST", "£25"],
+] as const;
+
+const landingRules = [
+  ["1", "🚫", "Forget the Alcohol", "Zero alcohol for the full 50 days. No exceptions for weekends, events, or celebrations. You don't need it.", "Full abstinence. 50 days."],
+  ["2", "🥗", "We Don't Eat Junk", "Clean eating every day. No fast food, no processed snacks, no shortcuts. Eat like you mean it.", "Eat with intention. Every meal."],
+  ["3", "🏃", "Exercise is a Privilege", "Minimum 30 minutes of intentional movement every single day. Not everyone can. You can. Act like it. Missing this loses a life.", "30 mins minimum. Any movement."],
+  ["4", "📓", "Daily Reflection", "Write something every day. A thought, a lesson, a feeling. No minimum length. Just honesty on the page. Use your 6+1 journal.", "Journal daily. No length requirement."],
+  ["5", "📖", "Read and Teach", "Read something every day and share one insight with the group. Book, article, podcast, conversation. The teaching part is what makes it stick. Bring it to the Sunday morning check in at 10:00am.", "1 insight shared daily to the group."],
+  ["6", "📊", "Track Everything", "Log your activity on the tracker every day. If it isn't recorded, it didn't happen. The tracker is the source of truth.", "Daily log. No exceptions."],
+] as const;
+
+const dailyChecklist = [
+  ["Forgot the alcohol today", "Zero. All day."],
+  ["Didn't eat junk", "Clean eating all day"],
+  ["Used the privilege", "Minimum 30 minutes any movement"],
+  ["Reflected", "At least one honest thought written down"],
+  ["Read and taught something", "One insight shared with the group"],
+  ["Logged on tracker", "Activity recorded and up to date"],
+] as const;
+
+const journeySteps = [
+  ["Day 1", "Everyone deposits £100. Challenge begins.", "Group chat active. Tracker live. No excuses from here."],
+  ["Day 1–10", "Building the habit", "The hardest stretch. Routines are forming, resistance is highest. Lean on the group."],
+  ["Weekly", "Sunday morning check in at 10:00am", "Every week without fail. Reflect on the week. Hold each other accountable. Recharge for what's ahead."],
+  ["Day 25", "Halfway check-in", "Group check-in. Lives tallied. Momentum assessed. The second half starts here."],
+  ["Day 40–50", "The final push", "You can see the finish line. This is where it separates the ones who said they would from the ones who did."],
+  ["Day 50", "Challenge complete. Deposits returned.", "Everyone who finished gets their £100 back. The group celebrates together. You earned it."],
+] as const;
+
+const moverPrinciples = [
+  "Respect yourself. Mind and body. Both.",
+  "Exercise is a privilege. Make sure you get it in.",
+  "Give gratitude. Every day you wake up is a reason.",
+  "The giver is the receiver. The more you give, the more you get.",
+  "Don't be scared to fail. Failure is just the beginning of figuring it out.",
+  "Build. Share. Reflect. Then do it again.",
+  "Look good. Feel good. The two are connected.",
+  "Remember where you came from. Stay humble.",
+  "Stay sharp. Be a student of life. Never stop learning.",
+  "Winners always find a way. Always.",
+  "I hear but I don't hear. Trust your instincts.",
+  "If you're not premium, why are you getting premium me.",
+] as const;
+
+function LandingSection({ marker, title, children }: { marker: string; title: string; children: React.ReactNode }) {
+  return (
+    <section className="border border-[#2A2A2A] bg-[#101010]/88 p-4 sm:p-5">
+      <div className="mb-4 flex items-end justify-between gap-4 border-b border-[#2A2A2A] pb-3">
+        <h2 className="text-2xl font-black uppercase tracking-[-0.05em] text-white sm:text-3xl">{title}</h2>
+        <span className="text-3xl font-black text-[#C8A96E]/40">{marker}</span>
+      </div>
+      {children}
+    </section>
   );
 }
 
 function Landing() {
   return (
     <main className="poster-grid min-h-screen overflow-hidden bg-[#0D0D0D] text-white">
-      <section className="container flex min-h-screen flex-col justify-between py-8">
+      <section className="container py-7 sm:py-8">
         <nav className="flex flex-col items-start gap-5 border-b border-[#2A2A2A] pb-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex min-w-0 items-center gap-3 sm:gap-4">
             <LogoMark />
             <div className="min-w-0">
-              <MicroLabel tone="gold">6+1 Four Lives</MicroLabel>
-              <p className="mt-2 max-w-[15rem] text-xs font-black uppercase tracking-[0.18em] text-white sm:max-w-none sm:text-sm sm:tracking-[0.22em]">50 days. 4 lives. No hiding.</p>
+              <MicroLabel tone="gold">6+1 4 Lives Challenge</MicroLabel>
+              <p className="mt-2 max-w-[18rem] text-xs font-black uppercase tracking-[0.18em] text-white sm:max-w-none sm:text-sm sm:tracking-[0.22em]">4 Lives. 50 days. Make it count.</p>
             </div>
           </div>
           <SharpButton className="w-full sm:w-auto" onClick={scrollToEntryPanel}>
-            <UserRound className="h-4 w-4" /> Enter
+            <UserRound className="h-4 w-4" /> Register / Log in
           </SharpButton>
         </nav>
-        <div className="grid items-end gap-10 py-14 lg:grid-cols-[1.12fr_0.88fr]">
+
+        <div className="grid gap-8 py-10 lg:grid-cols-[1.08fr_0.92fr] lg:items-start">
           <div>
-            <MicroLabel tone="red">Accountability with teeth</MicroLabel>
-            <h1 className="mt-5 max-w-5xl text-6xl font-black uppercase leading-[0.82] tracking-[-0.08em] md:text-8xl lg:text-9xl">
-              You are in. Now prove it.
+            <MicroLabel tone="red">6+1 4 LIVES CHALLENGE</MicroLabel>
+            <h1 className="mt-5 max-w-5xl text-5xl font-black uppercase leading-[0.84] tracking-[-0.08em] sm:text-7xl lg:text-8xl">
+              4 Lives.
             </h1>
-            <p className="mt-7 max-w-2xl text-lg font-bold leading-8 text-[#BDBDBD]">
-              Daily rules. Public pressure. Four lives. Offline Monzo penalties. Warden commentary. This is not a dashboard — it is the scoreboard for whether the group keeps its word.
-            </p>
-            <div className="mt-8 grid gap-3 sm:grid-cols-2">
-              <SharpButton onClick={scrollToEntryPanel}>Start today’s log</SharpButton>
-              <button onClick={() => haptics.tap()} className="min-h-12 border border-[#2A2A2A] bg-[#111] px-5 py-3 text-xs font-black uppercase tracking-[0.18em] text-white transition hover:border-[#C8A96E] hover:text-[#C8A96E]">
-                See the rules
-              </button>
+            <p className="mt-5 max-w-2xl text-xl font-black leading-8 text-white sm:text-2xl">50 days. Make it count. Remember you're not a civilian.</p>
+            <div className="mt-7 grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {challengeStats.map(([label, value]) => (
+                <div key={label} className="border border-[#2A2A2A] bg-[#111] p-3">
+                  <MicroLabel tone="gold">{label}</MicroLabel>
+                  <p className="mt-2 text-2xl font-black uppercase text-white">{value}</p>
+                </div>
+              ))}
             </div>
+            <div className="mt-5 border-l-4 border-[#C0392B] bg-[#130F0F] p-4">
+              <MicroLabel tone="red">Your Lives</MicroLabel>
+              <p className="mt-2 text-base font-black leading-7 text-white">Miss a workout. Lose a life. Lose 4 lives and you're done.</p>
+            </div>
+            <p className="mt-6 max-w-3xl text-base font-bold leading-7 text-[#BDBDBD]">6+1. There are 7 days in a week and every single one is an opportunity to be better. Not just for you. For the people next to you. Better everyday. Better together. You have 50 days. Make it count.</p>
             <SiteEntryPanel />
           </div>
-          <div className="bg-[#2A2A2A] p-[2px]">
-            {[
-              ["01", "Six rules decide the day", GOLD],
-              ["02", "Miss one and a life can go", RED],
-              ["03", "The group sees the scoreboard", GREEN],
-              ["04", "Ghost Life is one shot only", PURPLE],
-            ].map(([number, copy, color]) => (
-              <div key={number} className="mb-[2px] grid grid-cols-[76px_1fr] bg-[#101010] last:mb-0">
-                <div className="grid place-items-center border-r border-[#2A2A2A] p-5 text-3xl font-black" style={{ color }}>{number}</div>
-                <div className="p-5 text-lg font-black uppercase tracking-[-0.03em] text-white">{copy}</div>
+
+          <div className="grid gap-4">
+            <LandingSection marker="00" title="What This Is">
+              <div className="space-y-4 text-sm font-bold leading-7 text-[#CFCFCF]">
+                <p>The team only functions like a dream team when we are tested. We need to suffer together. That's what this challenge is about.</p>
+                <p>50 days of mashing work. Side by side. The Movers holding each other to the standard we talk about. Not just on runs. Not just at events. Every. Single. Day.</p>
+                <p>This challenge isn't for everyone. It's for the ones ready to mash work. The ones who understand that doing hard things is the price you pay to be the best version of yourself. Are you on it?</p>
               </div>
-            ))}
+              <div className="mt-4 border border-[#C8A96E]/50 bg-black p-4">
+                <MicroLabel tone="gold">Weekly Check In</MicroLabel>
+                <p className="mt-2 text-sm font-black leading-6 text-white">Every Sunday morning at 10:00am. Show up. Be honest. Move forward.</p>
+                <p className="mt-2 text-sm font-bold leading-6 text-[#BDBDBD]">Challenge each other to continue getting better.</p>
+              </div>
+            </LandingSection>
           </div>
+        </div>
+
+        <div className="grid gap-5 pb-10">
+          <LandingSection marker="01" title="The Rules">
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {landingRules.map(([number, icon, title, body, footer]) => (
+                <article key={number} className="border border-[#2A2A2A] bg-black p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-3xl font-black text-[#C8A96E]">{number}</span>
+                    <span className="text-2xl" aria-hidden="true">{icon}</span>
+                  </div>
+                  <h3 className="mt-4 text-lg font-black uppercase tracking-[-0.04em] text-white">{title}</h3>
+                  <p className="mt-3 text-sm font-bold leading-6 text-[#BDBDBD]">{body}</p>
+                  <p className="mt-3 text-[10px] font-black uppercase tracking-[0.18em] text-[#C8A96E]">{footer}</p>
+                </article>
+              ))}
+            </div>
+          </LandingSection>
+
+          <LandingSection marker="02" title="Daily Checklist">
+            <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
+              {dailyChecklist.map(([title, detail]) => (
+                <div key={title} className="border border-[#2A2A2A] bg-black p-4">
+                  <p className="text-sm font-black uppercase tracking-[-0.03em] text-white">{title}</p>
+                  <p className="mt-2 text-xs font-bold text-[#BDBDBD]">{detail}</p>
+                </div>
+              ))}
+            </div>
+          </LandingSection>
+
+          <div className="grid gap-5 lg:grid-cols-2">
+            <LandingSection marker="03" title="The Lives System">
+              <p className="text-sm font-bold leading-7 text-[#CFCFCF]">You start with 4 lives. The only way to lose a life is to miss your daily workout. Every life lost costs you £25. Lose all 4 and you're out.</p>
+              <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                {[ ["1", "STILL IN IT"], ["2", "STILL IN IT"], ["3", "LAST WARNING"], ["4", "GONE. DONE."] ].map(([number, label]) => (
+                  <div key={number} className="border border-[#2A2A2A] bg-black p-3">
+                    <p className="text-2xl font-black text-[#C0392B]">{number}</p>
+                    <p className="mt-2 text-[10px] font-black uppercase tracking-[0.16em] text-white">{label}</p>
+                  </div>
+                ))}
+              </div>
+            </LandingSection>
+
+            <LandingSection marker="04" title="The Money">
+              <div className="grid gap-3 sm:grid-cols-3">
+                {[ ["ENTRY DEPOSIT", "£100", "Everyone puts in £100 before the challenge starts. This is held for the full 50 days."], ["COST PER FAIL", "£25", "Every missed workout costs £25 from your deposit. Miss 4 workouts and your £100 is gone."], ["IF YOU COMPLETE", "£100", "Finish all 50 days with at least one life remaining and your full £100 comes straight back."] ].map(([label, amount, body]) => (
+                  <div key={label} className="border border-[#2A2A2A] bg-black p-4">
+                    <MicroLabel tone="gold">{label}</MicroLabel>
+                    <p className="mt-3 text-3xl font-black text-white">{amount}</p>
+                    <p className="mt-3 text-xs font-bold leading-5 text-[#BDBDBD]">{body}</p>
+                  </div>
+                ))}
+              </div>
+            </LandingSection>
+          </div>
+
+          <LandingSection marker="05" title="The Journey">
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {journeySteps.map(([day, title, detail]) => (
+                <article key={day} className="border border-[#2A2A2A] bg-black p-4">
+                  <MicroLabel tone="gold">{day}</MicroLabel>
+                  <h3 className="mt-3 text-base font-black uppercase tracking-[-0.03em] text-white">{title}</h3>
+                  <p className="mt-2 text-sm font-bold leading-6 text-[#BDBDBD]">{detail}</p>
+                </article>
+              ))}
+            </div>
+          </LandingSection>
+
+          <LandingSection marker="6+1" title="The Movers">
+            <MicroLabel tone="gold">Rules for the Movers</MicroLabel>
+            <p className="mt-3 text-sm font-bold leading-7 text-[#CFCFCF]">These aren't challenge rules. These are the principles and standards we should live by. You're not a civilian.</p>
+            <div className="mt-4 grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+              {moverPrinciples.map((principle, index) => (
+                <div key={principle} className="grid grid-cols-[3rem_1fr] border border-[#2A2A2A] bg-black">
+                  <div className="grid place-items-center border-r border-[#2A2A2A] text-sm font-black text-[#C8A96E]">{String(index + 1).padStart(2, "0")}</div>
+                  <p className="p-3 text-sm font-bold leading-6 text-white">{principle}</p>
+                </div>
+              ))}
+            </div>
+            <p className="mt-5 text-base font-black uppercase tracking-[-0.03em] text-white">Better everyday. Better together. This is what that looks like in practice.</p>
+            <p className="mt-2 text-2xl font-black uppercase text-[#C8A96E]">6+1</p>
+            <p className="text-sm font-black uppercase tracking-[0.2em] text-white">4 LIVES CHALLENGE</p>
+          </LandingSection>
         </div>
       </section>
     </main>

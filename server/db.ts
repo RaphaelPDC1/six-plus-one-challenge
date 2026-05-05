@@ -75,7 +75,15 @@ export async function getUserByEmail(email: string) {
   return result[0];
 }
 
-export async function createSiteNativeUser(input: { email: string; displayName: string; mode?: "register" | "login" }) {
+export type RegistrationPersonalizationInput = {
+  primaryGoal: string;
+  biggestObstacle: string;
+  trainingLevel: string;
+  motivationStyle: string;
+  supportNeeded: string;
+};
+
+export async function createSiteNativeUser(input: { email: string; displayName: string; mode?: "register" | "login"; personalization?: RegistrationPersonalizationInput }) {
   const db = await getDb();
   if (!db) throw new Error("Database unavailable");
   const email = normalizeSignupEmail(input.email);
@@ -116,6 +124,35 @@ export async function createSiteNativeUser(input: { email: string; displayName: 
   });
   const user = await getUserByOpenId(openId);
   if (!user) throw new Error("Could not create participant session");
+  if (input.personalization) {
+    const personalization = {
+      primaryGoal: input.personalization.primaryGoal.trim(),
+      biggestObstacle: input.personalization.biggestObstacle.trim(),
+      trainingLevel: input.personalization.trainingLevel,
+      motivationStyle: input.personalization.motivationStyle,
+      supportNeeded: input.personalization.supportNeeded.trim(),
+    };
+    await db.insert(participants).values({
+      userId: user.id,
+      displayName,
+      avatarInitials: initials(displayName),
+      monzoPaymentLink: DEFAULT_MONZO_PAYMENT_LINK,
+      onboardingCompleted: true,
+      ...personalization,
+    });
+    const existingRequest = await db.select().from(signupRequests).where(eq(signupRequests.email, email)).limit(1);
+    const requestValues = {
+      status: "approved" as const,
+      source: "site-registration",
+      displayName,
+      ...personalization,
+    };
+    if (existingRequest[0]) {
+      await db.update(signupRequests).set(requestValues).where(eq(signupRequests.email, email));
+    } else {
+      await db.insert(signupRequests).values({ email, ...requestValues });
+    }
+  }
   return { ...user, loginMethod: "site-native" };
 }
 
@@ -140,6 +177,7 @@ export type OnboardingInput = {
   biggestObstacle: string;
   trainingLevel: string;
   motivationStyle: string;
+  supportNeeded?: string;
   profilePhotoDataUrl?: string;
 };
 
@@ -186,6 +224,7 @@ export async function completeOnboarding(user: { id: number; name: string | null
     biggestObstacle: input.biggestObstacle.trim(),
     trainingLevel: input.trainingLevel,
     motivationStyle: input.motivationStyle,
+    supportNeeded: input.supportNeeded?.trim() || null,
     profilePhotoUrl: uploaded?.url ?? null,
     profilePhotoKey: uploaded?.key ?? null,
     onboardingCompleted: true,
@@ -206,6 +245,7 @@ export async function completeOnboarding(user: { id: number; name: string | null
       biggestObstacle: input.biggestObstacle.trim(),
       trainingLevel: input.trainingLevel,
       motivationStyle: input.motivationStyle,
+      supportNeeded: input.supportNeeded?.trim() || null,
       profilePhotoUrl: uploaded?.url ?? null,
       profilePhotoKey: uploaded?.key ?? null,
     };
@@ -279,7 +319,7 @@ export async function getParticipantByUserId(userId: number) {
   return participant[0];
 }
 
-export async function updateParticipantProfile(userId: number, input: { displayName: string; whatsappName?: string; monzoPaymentLink?: string; primaryGoal?: string; biggestObstacle?: string; trainingLevel?: string; motivationStyle?: string }) {
+export async function updateParticipantProfile(userId: number, input: { displayName: string; whatsappName?: string; monzoPaymentLink?: string; primaryGoal?: string; biggestObstacle?: string; trainingLevel?: string; motivationStyle?: string; supportNeeded?: string }) {
   const db = await getDb();
   if (!db) throw new Error("Database unavailable");
   const participant = await getOrCreateParticipant({ id: userId, name: input.displayName, email: null });
@@ -292,6 +332,7 @@ export async function updateParticipantProfile(userId: number, input: { displayN
     biggestObstacle: input.biggestObstacle || participant.biggestObstacle || null,
     trainingLevel: input.trainingLevel || participant.trainingLevel || null,
     motivationStyle: input.motivationStyle || participant.motivationStyle || null,
+    supportNeeded: input.supportNeeded || participant.supportNeeded || null,
     onboardingCompleted: true,
   }).where(eq(participants.id, participant.id));
   return getParticipantByUserId(userId);

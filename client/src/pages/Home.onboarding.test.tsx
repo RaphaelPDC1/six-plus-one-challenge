@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import Home, { LogoMark } from "./Home";
@@ -31,6 +33,15 @@ vi.mock("@/const", () => ({
 
 vi.mock("@/lib/trpc", () => ({
   trpc: {
+    useUtils: () => ({
+      auth: { me: { invalidate: vi.fn() } },
+      challenge: { snapshot: { invalidate: vi.fn() } },
+    }),
+    auth: {
+      siteLogin: {
+        useMutation: () => mockState.mutation,
+      },
+    },
     signup: {
       requestAccess: {
         useMutation: () => mockState.mutation,
@@ -111,9 +122,39 @@ describe("Home onboarding shell", () => {
 
     const markup = renderToStaticMarkup(<Home />);
 
-    expect(markup).toContain("50 days. 4 lives. No hiding.");
+    expect(markup).toContain("6+1 4 Lives Challenge");
+    expect(markup).toContain("50 days. Make it count. Remember you&#x27;re not a civilian.");
     expect(markup).toContain("/manus-storage/six-plus-one-brand-logo-white-strong_2949fb51.webp");
     expect(markup).toContain("data-testid=\"brand-logo\"");
+  });
+
+  it("keeps the public entry panel streamlined until Register is selected", () => {
+    mockState.auth.isAuthenticated = false;
+    mockState.snapshotQuery.isLoading = false;
+
+    const markup = renderToStaticMarkup(<Home />);
+
+    expect(markup).toContain("data-testid=\"entry-choice-panel\"");
+    expect(markup).toContain("New challenger");
+    expect(markup).toContain("Returning member");
+    expect(markup).toContain("Email only. No questionnaire.");
+    expect(markup).not.toContain("data-testid=\"registration-personalization\"");
+    expect(markup).not.toContain("What are you here to change?");
+    expect(markup).not.toContain("Display name");
+  });
+
+  it("defines the click-driven register questionnaire, email-only login branch, and back-to-choice path", () => {
+    const source = readFileSync(new URL("./Home.tsx", import.meta.url), "utf8");
+
+    expect(source).toContain('onClick={() => chooseMode("register")}');
+    expect(source).toContain('data-testid={entryMode === "register" ? "registration-flow-panel" : "login-flow-panel"}');
+    expect(source).toContain('data-testid="registration-personalization"');
+    expect(source).toContain('personalization: entryMode === "register" ? personalization : undefined');
+    expect(source).toContain('displayName: entryMode === "register" ? displayName : undefined');
+    expect(source).toContain('onClick={() => chooseMode("login")}');
+    expect(source).toContain('Email only. No questionnaire.');
+    expect(source).toContain('onClick={resetEntry}');
+    expect(source).toContain('setEntryMode("choice")');
   });
 
   it("renders the animated landing/loading page with the white uploaded logo image instead of blue text", () => {

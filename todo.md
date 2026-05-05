@@ -155,3 +155,24 @@
 - [x] Add focused Vitest coverage for the real site-native helper proving register creates a new challenger and returning login rejects unknown emails
 - [x] Re-run full TypeScript, test, build, restart, and preview validation after helper-level coverage
 - [x] Save the final v4.5 checkpoint after helper-level validation is complete
+
+## Refinement Pass (v4.6) — Public Entry, Personalization, and Exact Landing Copy
+- [x] Remove founder/admin Manus login from the public-facing logged-out UI entirely
+- [x] Simplify logged-out entry to only Register for new challengers and Log in for returning members
+- [x] Add five registration personalization questions for goals, motivation, obstacles, support needs, and Warden journey context
+- [x] Replace the logged-out landing page copy with the exact text from /home/ubuntu/upload/pasted_content.txt while keeping the page visually structured and not text-heavy
+- [x] Preserve responsive behavior across mobile, tablet, and desktop after the public-entry redesign
+- [x] Update automated tests for the personalized registration payload and public UI changes
+- [x] Run full validation and save a new checkpoint
+
+## Blocking Bug — Database Migration Mismatch
+- [x] Fix runtime query failure where the application selects participants.supportNeeded before the database has the supportNeeded column
+- [x] Apply the generated v4.6 supportNeeded migration to the live development database
+- [x] Validate that authenticated admin and participant snapshot queries load after the migration
+
+## Refinement Pass (v4.7) — Streamlined Register Click Flow
+- [x] Keep the logged-out home page entry panel simple, with no five-question form visible by default
+- [x] Show the five personalization questions only after a visitor clicks Register
+- [x] Keep returning-member login as email-only with no display-name or questionnaire fields
+- [x] Add a clear back/cancel path from the registration questionnaire to the simple entry panel
+- [x] Update validation/tests for the streamlined public entry and register-questionnaire flow

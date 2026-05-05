@@ -14,6 +14,14 @@ const siteUser = {
   lastSignedIn: new Date("2026-05-05T00:00:00Z"),
 };
 
+const registrationPersonalization = {
+  primaryGoal: "Build discipline",
+  biggestObstacle: "Late-night snacking and inconsistent training",
+  trainingLevel: "building" as const,
+  motivationStyle: "direct" as const,
+  supportNeeded: "Keep me accountable when I go quiet",
+};
+
 const { createSiteNativeUserMock } = vi.hoisted(() => ({
   createSiteNativeUserMock: vi.fn(),
 }));
@@ -63,12 +71,13 @@ describe("auth.siteLogin", () => {
     const { ctx, cookies } = createPublicContext();
     const caller = appRouter.createCaller(ctx);
 
-    const result = await caller.auth.siteLogin({ email: " Challenger@Example.com ", displayName: "Challenger One", mode: "register" });
+    const result = await caller.auth.siteLogin({ email: " Challenger@Example.com ", displayName: "Challenger One", mode: "register", personalization: registrationPersonalization });
 
     expect(createSiteNativeUserMock).toHaveBeenCalledWith({
       email: "challenger@example.com",
       displayName: "Challenger One",
       mode: "register",
+      personalization: registrationPersonalization,
     });
     expect(result).toEqual({ success: true, mode: "register", user: siteUser });
     expect(cookies).toHaveLength(1);
@@ -121,7 +130,7 @@ describe("auth.siteLogin", () => {
     const { ctx, cookies } = createPublicContext();
     const caller = appRouter.createCaller(ctx);
 
-    await expect(caller.auth.siteLogin({ email: "founder@example.com", displayName: "Imposter", mode: "register" })).rejects.toThrow("protected founder/admin account");
+    await expect(caller.auth.siteLogin({ email: "founder@example.com", displayName: "Imposter", mode: "register", personalization: registrationPersonalization })).rejects.toThrow("protected founder/admin account");
     expect(cookies).toHaveLength(0);
   });
 
