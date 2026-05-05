@@ -107,7 +107,7 @@ describe("Home onboarding shell", () => {
   it("renders the uploaded brand image in the reusable logo mark instead of text-only 6+1 lettering", () => {
     const markup = renderToStaticMarkup(<LogoMark compact />);
 
-    expect(markup).toContain("/manus-storage/six-plus-one-brand-logo-white-strong_2949fb51.webp");
+    expect(markup).toContain("/manus-storage/six-plus-one-brand-logo-white-strong_2665284a.png");
     expect(markup).toContain("alt=\"6+1 Four Lives Challenge logo\"");
     expect(markup).toContain("data-testid=\"brand-logo\"");
     expect(markup).toContain("brand-logo-shell");
@@ -119,7 +119,7 @@ describe("Home onboarding shell", () => {
     const markup = renderToStaticMarkup(<Home />);
 
     expect(markup).toContain("sticky top-0");
-    expect(markup).toContain("/manus-storage/six-plus-one-brand-logo-white-strong_2949fb51.webp");
+    expect(markup).toContain("/manus-storage/six-plus-one-brand-logo-white-strong_2665284a.png");
     expect(markup).toContain("data-testid=\"brand-logo\"");
     expect(markup).toContain("Four Lives Challenge");
   });
@@ -132,7 +132,7 @@ describe("Home onboarding shell", () => {
 
     expect(markup).toContain("6+1 4 Lives Challenge");
     expect(markup).toContain("50 days. Make it count. Remember you&#x27;re not a civilian.");
-    expect(markup).toContain("/manus-storage/six-plus-one-brand-logo-white-strong_2949fb51.webp");
+    expect(markup).toContain("/manus-storage/six-plus-one-brand-logo-white-strong_2665284a.png");
     expect(markup).toContain("data-testid=\"brand-logo\"");
   });
 
@@ -226,7 +226,7 @@ describe("Home onboarding shell", () => {
     expect(markup).toContain("load-crosshair");
     expect(markup).toContain("load-status-panel");
     expect(markup).toContain("load-progress");
-    expect(markup).toContain("/manus-storage/six-plus-one-brand-logo-white-strong_2949fb51.webp");
+    expect(markup).toContain("/manus-storage/six-plus-one-brand-logo-white-strong_2665284a.png");
     expect(markup).not.toContain("bg-black/62");
     expect(markup).not.toContain(">6+1</");
   });
@@ -241,6 +241,6 @@ describe("Home onboarding shell", () => {
     expect(markup).toContain("New email found. Set your profile first.");
     expect(markup).toContain("Make it yours.");
     expect(markup).toContain("new@example.com");
-    expect(markup).toContain("/manus-storage/six-plus-one-brand-logo-white-strong_2949fb51.webp");
+    expect(markup).toContain("/manus-storage/six-plus-one-brand-logo-white-strong_2665284a.png");
   });
 });

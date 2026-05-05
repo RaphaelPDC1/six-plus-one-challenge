@@ -209,3 +209,9 @@
 - [x] Update the installable web-app icon/favicon/manifest to use the 6+1 logo
 - [x] Add or update tests for the v5 bug fixes, run full validation, and save a checkpoint
 - [x] Remove any £100 upfront deposit wording, UI assumptions, tests, or data labels; the challenge must state there is no upfront deposit
+
+## Logo Loading Fix Pass
+- [x] Diagnose why 6+1 logos are not loading across the site after deployment
+- [x] Replace fragile logo/icon references with reliable web-app-safe asset URLs or generated public assets
+- [x] Ensure header, landing, loading, favicon, Apple touch icon, and manifest icons all load the correct 6+1 logo
+- [x] Add or update tests for logo references and run validation before checkpointing

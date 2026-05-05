@@ -61,7 +61,7 @@ const RED = "#C0392B";
 const GREEN = "#2ECC71";
 const PURPLE = "#9B59B6";
 const chartColors = [GOLD, RED, GREEN, PURPLE, "#4CA3C9", "#E67E22", "#F1C40F", "#ECF0F1"];
-const BRAND_LOGO_URL = "/manus-storage/six-plus-one-brand-logo-white-strong_2949fb51.webp";
+const BRAND_LOGO_URL = "/manus-storage/six-plus-one-brand-logo-white-strong_2665284a.png";
 
 const emptyDay: MyDayForm = {
   noAlcohol: false,
@@ -89,11 +89,27 @@ function hapticFallback(pattern: number | number[] = 18) {
   }
 }
 
+function BrandLogoImage({ alt, className = "h-full w-full object-contain", decorative = false }: { alt: string; className?: string; decorative?: boolean }) {
+  const [failed, setFailed] = useState(false);
+  if (failed) {
+    return (
+      <span
+        aria-hidden={decorative ? "true" : undefined}
+        aria-label={decorative ? undefined : alt}
+        className="grid h-full w-full place-items-center text-center text-[clamp(1.65rem,7vw,4rem)] font-black leading-none tracking-[-0.14em] text-white"
+      >
+        6<span className="text-[#C8A96E]">+</span>1
+      </span>
+    );
+  }
+  return <img src={BRAND_LOGO_URL} alt={decorative ? "" : alt} data-testid="brand-logo" className={className} decoding="async" loading="eager" onError={() => setFailed(true)} />;
+}
+
 function AnimatedLoadPage({ label = "Loading the challenge" }: { label?: string }) {
   return (
     <div className="poster-grid animated-load-page grid min-h-screen place-items-center overflow-hidden bg-black text-white">
       <div className="load-mark load-mark-image" aria-hidden="true">
-        <img src={BRAND_LOGO_URL} alt="" />
+        <BrandLogoImage alt="6+1 Four Lives Challenge logo" decorative />
       </div>
       <div className="load-lines" aria-hidden="true" />
       <div className="load-crosshair" aria-hidden="true" />
@@ -207,7 +223,7 @@ export function LogoMark({ compact = false }: { compact?: boolean }) {
         compact ? "h-9 w-24 sm:h-10 sm:w-28 md:w-32" : "h-11 w-28 sm:h-12 sm:w-36 md:h-14 md:w-40",
       )}
     >
-      <img src={BRAND_LOGO_URL} alt="6+1 Four Lives Challenge logo" data-testid="brand-logo" className="brand-logo-image h-full w-full object-contain" />
+      <BrandLogoImage alt="6+1 Four Lives Challenge logo" className="brand-logo-image h-full w-full object-contain" />
     </span>
   );
 }
