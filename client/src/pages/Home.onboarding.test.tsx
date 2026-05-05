@@ -59,6 +59,9 @@ vi.mock("@/lib/trpc", () => ({
       submitMyDay: {
         useMutation: () => mockState.mutation,
       },
+      uploadProof: {
+        useMutation: () => mockState.mutation,
+      },
       applyGhostLife: {
         useMutation: () => mockState.mutation,
       },
@@ -164,7 +167,7 @@ describe("Home onboarding shell", () => {
     expect(registerSource).not.toContain('motivationStyle');
   });
 
-  it("renders a compact public home that preserves the supplied challenge copy in smart sections", () => {
+  it("renders a compact public home that preserves the supplied challenge copy and no-deposit correction", () => {
     mockState.auth.isAuthenticated = false;
     mockState.snapshotQuery.isLoading = false;
 
@@ -175,7 +178,39 @@ describe("Home onboarding shell", () => {
     expect(markup).toContain("You start with 4 lives. The only way to lose a life is to miss your daily workout.");
     expect(markup).toContain("From day one to the finish line.");
     expect(markup).toContain("These aren&#x27;t challenge rules. These are the principles and standards we should live by.");
+    expect(markup).toContain("UPFRONT DEPOSIT");
+    expect(markup).toContain("£0");
+    expect(markup).toContain("There is no £100 upfront deposit before the challenge starts.");
     expect(markup).toContain("href=\"/register\"");
+  });
+
+  it("keeps reflections private, supports proof image upload, and constrains overview/name surfaces", () => {
+    const homeSource = readFileSync(new URL("./Home.tsx", import.meta.url), "utf8");
+
+    expect(homeSource).toContain("No public reflection option. Saved privately to your challenge log.");
+    expect(homeSource).toContain("onChange={reflectionText => setForm({ ...form, reflectionText, reflectionShared: false })}");
+    expect(homeSource).toContain("submit.mutate({ ...form, reflectionShared: false");
+    expect(homeSource).not.toContain("Make public");
+    expect(homeSource).toContain("trpc.challenge.uploadProof.useMutation");
+    expect(homeSource).toContain("accept=\"image/png,image/jpeg,image/webp\"");
+    expect(homeSource).toContain("Image attached");
+    expect(homeSource).toContain("sticky top-[58px]");
+    expect(homeSource).toContain("min-w-0 overflow-hidden");
+    expect(homeSource).toContain("break-words");
+    expect(homeSource).toContain("owner?.displayName ?? \"Participant\"");
+    expect(homeSource).not.toContain("No public proof yet");
+  });
+
+  it("wires installable web-app metadata to generated 6+1 PNG app icons", () => {
+    const htmlSource = readFileSync(new URL("../../index.html", import.meta.url), "utf8");
+    const manifestSource = readFileSync(new URL("../../public/site.webmanifest", import.meta.url), "utf8");
+
+    expect(htmlSource).toContain('rel="icon" type="image/png" sizes="192x192"');
+    expect(htmlSource).toContain('rel="apple-touch-icon" sizes="180x180"');
+    expect(htmlSource).toContain("/manus-storage/six-plus-one-app-icon-180_");
+    expect(manifestSource).toContain('"name": "6+1 Four Lives Challenge"');
+    expect(manifestSource).toContain('"purpose": "any maskable"');
+    expect(manifestSource).toContain("/manus-storage/six-plus-one-app-icon-512_");
   });
 
   it("renders the animated landing/loading page with the white uploaded logo image instead of blue text", () => {

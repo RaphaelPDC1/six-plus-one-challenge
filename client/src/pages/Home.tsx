@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
-import React from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
@@ -65,16 +64,16 @@ const chartColors = [GOLD, RED, GREEN, PURPLE, "#4CA3C9", "#E67E22", "#F1C40F", 
 const BRAND_LOGO_URL = "/manus-storage/six-plus-one-brand-logo-white-strong_2949fb51.webp";
 
 const emptyDay: MyDayForm = {
-  noAlcohol: true,
-  cleanEating: true,
+  noAlcohol: false,
+  cleanEating: false,
   cleanEatingNote: "",
-  exerciseDuration: 30,
+  exerciseDuration: 0,
   exerciseType: "",
   exerciseProofUrl: "",
   reflectionText: "",
-  reflectionShared: true,
+  reflectionShared: false,
   readTeachText: "",
-  trackedEverything: true,
+  trackedEverything: false,
 };
 
 function pulse(pattern: number | number[] = 18) {
@@ -300,7 +299,7 @@ function SiteEntryPanel() {
 const challengeStats = [
   ["DURATION", "50 Days"],
   ["LIVES", "4"],
-  ["ENTRY", "£100"],
+  ["ENTRY", "No deposit"],
   ["FAIL COST", "£25"],
 ] as const;
 
@@ -323,12 +322,12 @@ const dailyChecklist = [
 ] as const;
 
 const journeySteps = [
-  ["Day 1", "Everyone deposits £100. Challenge begins.", "Group chat active. Tracker live. No excuses from here."],
+  ["Day 1", "No upfront deposit. Challenge begins.", "Group chat active. Tracker live. No excuses from here."],
   ["Day 1–10", "Building the habit", "The hardest stretch. Routines are forming, resistance is highest. Lean on the group."],
   ["Weekly", "Sunday morning check in at 10:00am", "Every week without fail. Reflect on the week. Hold each other accountable. Recharge for what's ahead."],
   ["Day 25", "Halfway check-in", "Group check-in. Lives tallied. Momentum assessed. The second half starts here."],
   ["Day 40–50", "The final push", "You can see the finish line. This is where it separates the ones who said they would from the ones who did."],
-  ["Day 50", "Challenge complete. Deposits returned.", "Everyone who finished gets their £100 back. The group celebrates together. You earned it."],
+  ["Day 50", "Challenge complete.", "Everyone who finished protects their lives and finishes with the group. The group celebrates together. You earned it."],
 ] as const;
 
 const moverPrinciples = [
@@ -360,9 +359,9 @@ function LandingSection({ marker, title, children }: { marker: string; title: st
 
 function Landing() {
   const moneyCards = [
-    ["ENTRY DEPOSIT", "£100", "Everyone puts in £100 before the challenge starts. This is held for the full 50 days."],
-    ["COST PER FAIL", "£25", "Every missed workout costs £25 from your deposit. Miss 4 workouts and your £100 is gone."],
-    ["IF YOU COMPLETE", "£100", "Finish all 50 days with at least one life remaining and your full £100 comes straight back."],
+    ["UPFRONT DEPOSIT", "£0", "There is no £100 upfront deposit before the challenge starts. You enter without paying a deposit."],
+    ["COST PER FAIL", "£25", "Every missed workout creates a £25 Monzo obligation. Miss 4 workouts and all 4 lives are gone."],
+    ["IF YOU COMPLETE", "Lives kept", "Finish all 50 days with at least one life remaining and you complete the challenge with the group."],
   ] as const;
 
   return (
@@ -605,40 +604,33 @@ function TextArea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
 
 function JournalReflectionCard({
   value,
-  shared,
   onChange,
-  onShareChange,
 }: {
   value: string;
-  shared: boolean;
   onChange: (value: string) => void;
-  onShareChange: (shared: boolean) => void;
 }) {
   const characterCount = value.trim().length;
   return (
     <div className="journal-letter-card group relative overflow-hidden border border-[#2A2A2A] bg-[#080808] p-4 transition duration-500 hover:border-[#C8A96E]/70">
       <div className="journal-letter-mark" aria-hidden="true">“</div>
       <div className="relative z-10 grid gap-4 md:grid-cols-[1fr_170px]">
-        <label className="block">
+        <label className="block min-w-0">
           <MicroLabel tone="gold">Reflection</MicroLabel>
           <textarea
             value={value}
             onFocus={() => haptics.tap()}
             onChange={event => onChange(event.target.value)}
-            placeholder="One honest line for the group."
+            placeholder="One honest private line for the log."
             className="journal-letter-input mt-3 min-h-44 w-full resize-none border border-[#1F1F1F] bg-black/50 px-5 py-5 text-base font-extrabold leading-8 text-white outline-none transition duration-300 placeholder:text-[#4E4E4E] focus:border-[#C8A96E] focus:bg-black/80"
           />
         </label>
         <aside className="flex flex-col justify-between border border-[#1F1F1F] bg-[#0D0D0D]/90 p-4">
           <div>
-            <MicroLabel tone={characterCount > 0 ? "green" : "muted"}>Signal</MicroLabel>
+            <MicroLabel tone={characterCount > 0 ? "green" : "muted"}>Private log</MicroLabel>
             <p className="mt-3 text-3xl font-black uppercase leading-none tracking-[-0.07em] text-white">{characterCount || "—"}</p>
             <p className="mt-2 text-[10px] font-black uppercase tracking-[0.2em] text-[#777]">chars</p>
           </div>
-          <label className="mt-6 flex items-center justify-between gap-3 border-t border-[#242424] pt-4">
-            <span className="text-[10px] font-black uppercase tracking-[0.18em] text-[#BDBDBD]">Public</span>
-            <input type="checkbox" checked={shared} onChange={event => { haptics.tap(); onShareChange(event.target.checked); }} className="h-5 w-5 accent-[#C8A96E]" />
-          </label>
+          <p className="mt-6 border-t border-[#242424] pt-4 text-[10px] font-black uppercase leading-5 tracking-[0.18em] text-[#BDBDBD]">No public reflection option. Saved privately to your challenge log.</p>
         </aside>
       </div>
     </div>
@@ -649,6 +641,8 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
   const [form, setForm] = useState<MyDayForm>(emptyDay);
   const [openRule, setOpenRule] = useState<RuleKey>("exercise");
   const [lastMissed, setLastMissed] = useState<string[]>([]);
+  const cameraProofInputRef = useRef<HTMLInputElement | null>(null);
+  const libraryProofInputRef = useRef<HTMLInputElement | null>(null);
   const participant = snapshot?.participant;
   const latestWarden = [...(snapshot?.wardenMessages ?? [])].reverse()[0];
   const { rules, completedRules, allAddressed } = getDailyLogProgress(form);
@@ -675,6 +669,25 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
     },
     onError: error => toast.error(error.message),
   });
+  const uploadProof = trpc.challenge.uploadProof.useMutation({
+    onSuccess: data => {
+      setForm(current => ({ ...current, exerciseProofUrl: data.url }));
+      pulse([12, 28, 12]);
+      toast("Proof image uploaded and attached to today’s exercise log.");
+    },
+    onError: error => toast.error(error.message || "Could not upload proof image."),
+  });
+
+  function handleProofFile(file?: File) {
+    if (!file) return;
+    if (!file.type.match(/^image\/(png|jpeg|webp)$/)) { toast.error("Use a PNG, JPG, or WEBP proof image."); return; }
+    if (file.size > 4_000_000) { toast.error("Proof image must be under 4MB."); return; }
+    const reader = new FileReader();
+    const mimeType = file.type as "image/png" | "image/jpeg" | "image/webp";
+    reader.onload = () => uploadProof.mutate({ fileName: file.name || "exercise-proof", mimeType, dataUrl: String(reader.result) });
+    reader.onerror = () => toast.error("Could not read that proof image.");
+    reader.readAsDataURL(file);
+  }
 
   return (
     <div className="grid gap-5 xl:grid-cols-[1fr_360px]">
@@ -718,11 +731,14 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
               <Field label="Minutes"><TextInput type="number" value={form.exerciseDuration} onChange={event => setForm({ ...form, exerciseDuration: Number(event.target.value) })} /></Field>
               <Field label="Workout type"><TextInput value={form.exerciseType} onChange={event => setForm({ ...form, exerciseType: event.target.value })} placeholder="Run, gym, mobility..." /></Field>
               <div className="sm:col-span-2">
-                <Field label="Proof upload / link"><TextInput value={form.exerciseProofUrl} onChange={event => setForm({ ...form, exerciseProofUrl: event.target.value })} placeholder="Camera, library, Strava or proof note" /></Field>
+                <Field label="Proof image / link"><TextInput value={form.exerciseProofUrl} onChange={event => setForm({ ...form, exerciseProofUrl: event.target.value })} placeholder="Upload a gym proof image, paste Strava, or add a proof note" /></Field>
+                <input ref={cameraProofInputRef} type="file" accept="image/png,image/jpeg,image/webp" capture="environment" className="sr-only" onChange={event => { handleProofFile(event.target.files?.[0]); event.currentTarget.value = ""; }} />
+                <input ref={libraryProofInputRef} type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={event => { handleProofFile(event.target.files?.[0]); event.currentTarget.value = ""; }} />
                 <div className="mt-2 grid grid-cols-2 gap-2">
-                  <button type="button" className="border border-[#C8A96E]/50 bg-[#16130B] px-4 py-3 text-[10px] font-black uppercase tracking-[0.22em] text-[#C8A96E]" onClick={() => pulse(12)}>Camera</button>
-                  <button type="button" className="border border-[#2A2A2A] bg-[#111] px-4 py-3 text-[10px] font-black uppercase tracking-[0.22em] text-white" onClick={() => pulse(12)}>Library</button>
+                  <button type="button" disabled={uploadProof.isPending} className="border border-[#C8A96E]/50 bg-[#16130B] px-4 py-3 text-[10px] font-black uppercase tracking-[0.22em] text-[#C8A96E] disabled:opacity-50" onClick={() => { pulse(12); cameraProofInputRef.current?.click(); }}>{uploadProof.isPending ? "Uploading" : "Camera"}</button>
+                  <button type="button" disabled={uploadProof.isPending} className="border border-[#2A2A2A] bg-[#111] px-4 py-3 text-[10px] font-black uppercase tracking-[0.22em] text-white disabled:opacity-50" onClick={() => { pulse(12); libraryProofInputRef.current?.click(); }}>{uploadProof.isPending ? "Uploading" : "Library"}</button>
                 </div>
+                {form.exerciseProofUrl.startsWith("/manus-storage/") && <p className="mt-2 text-[10px] font-black uppercase tracking-[0.16em] text-[#2ECC71]">Image attached</p>}
               </div>
             </div>
           </RuleCard>
@@ -730,9 +746,7 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
           <RuleCard title="Reflect" label="Rule 04" icon={MessageSquare} complete={rules[3].done} active={openRule === "reflection"} onToggle={() => setOpenRule(openRule === "reflection" ? "readTeach" : "reflection")}>
             <JournalReflectionCard
               value={form.reflectionText}
-              shared={form.reflectionShared}
-              onChange={reflectionText => setForm({ ...form, reflectionText })}
-              onShareChange={reflectionShared => setForm({ ...form, reflectionShared })}
+              onChange={reflectionText => setForm({ ...form, reflectionText, reflectionShared: false })}
             />
           </RuleCard>
 
@@ -749,7 +763,7 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
         </div>
 
         <div className={classNames("submit-dock sticky bottom-[74px] z-20 border border-[#2A2A2A] bg-[#0D0D0D]/95 p-3 backdrop-blur transition-all duration-300 md:static md:bg-transparent md:p-0", submit.isPending && "submit-dock-pending", allAddressed && !submit.isPending && "submit-dock-ready")}>
-          <SharpButton className={classNames("w-full py-5 text-sm transition-all duration-300", submit.isPending && "submit-button-pending")} disabled={!allAddressed || submit.isPending} onClick={() => submit.mutate({ ...form, dayNumber: snapshot?.challenge.currentDay ?? 1 })}>
+          <SharpButton className={classNames("w-full py-5 text-sm transition-all duration-300", submit.isPending && "submit-button-pending")} disabled={!allAddressed || submit.isPending} onClick={() => submit.mutate({ ...form, reflectionShared: false, dayNumber: snapshot?.challenge.currentDay ?? 1 })}>
             {submit.isPending ? "Submitting the log" : allAddressed ? `Submit day ${snapshot?.challenge.currentDay ?? 1}` : `Address ${6 - completedRules} more`}
           </SharpButton>
           {lastMissed.length > 0 && <div className="mt-3 border-l-4 border-[#C0392B] bg-[#180F0F] p-4 text-sm font-bold text-[#F0B7AE]">Missed: {lastMissed.join(", ")}. Penalty logged.</div>}
@@ -779,6 +793,7 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
 function Overview({ snapshot }: { snapshot: Snapshot }) {
   const participants = snapshot?.participants ?? [];
   const logs = snapshot?.logs ?? [];
+  const chartKeys = participants.map((participant: any, index: number) => ({ ...participant, chartKey: `participant_${participant.id ?? index}` }));
   const calendar = snapshot?.challenge?.calendar ?? [];
   const trackedDays = calendar.map((day: any) => {
     const dayLogs = logs.filter((log: any) => log.dayNumber === day.dayNumber);
@@ -790,38 +805,38 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
     return Array.from({ length: dayCount }, (_, index) => {
       const day = index + 1;
       const row: Record<string, number> = { day };
-      participants.forEach((participant: any) => {
-        row[participant.displayName] = logs.filter((log: any) => log.participantId === participant.id && log.dayNumber <= day && log.dayComplete).length;
+      chartKeys.forEach((participant: any) => {
+        row[participant.chartKey] = logs.filter((log: any) => log.participantId === participant.id && log.dayNumber <= day && log.dayComplete).length;
       });
       return row;
     });
-  }, [participants, logs, snapshot?.challenge?.currentDay]);
+  }, [chartKeys, logs, snapshot?.challenge?.currentDay]);
 
   return (
     <div className="space-y-5">
-      <div className="grid gap-2 bg-[#2A2A2A] p-[2px] md:grid-cols-4">
+      <div className="grid min-w-0 gap-2 bg-[#2A2A2A] p-[2px] sm:grid-cols-2 md:grid-cols-4">
         <PosterStat label="Challenge day" value={snapshot?.challenge?.currentDay ?? 1} tone="gold" />
         <PosterStat label="Participants" value={participants.length} tone="white" />
         <PosterStat label="Pending payments" value={(snapshot?.payments ?? []).filter((p: any) => p.status === "pending").length} tone="red" />
         <PosterStat label="Reward requests" value={(snapshot?.redemptions ?? []).filter((r: any) => r.status === "pending").length} tone="purple" />
       </div>
-      <section className="border border-[#2A2A2A] bg-[#101010] p-5">
-        <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
-          <div>
+      <section className="sticky top-[58px] z-30 min-w-0 overflow-hidden border border-[#2A2A2A] bg-[#101010]/98 p-3 shadow-[0_18px_55px_rgba(0,0,0,0.35)] backdrop-blur sm:top-[68px] sm:p-5 md:top-[78px]">
+        <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+          <div className="min-w-0">
             <MicroLabel tone="gold">Live tracker</MicroLabel>
-            <h2 className="mt-2 text-3xl font-black uppercase tracking-[-0.06em] text-white">People plotted, not listed.</h2>
+            <h2 className="mt-2 break-words text-xl font-black uppercase tracking-[-0.06em] text-white sm:text-3xl">People plotted, not listed.</h2>
           </div>
-          <p className="max-w-sm text-xs font-bold uppercase tracking-[0.14em] text-[#777]">Each line shows completed days by participant.</p>
+          <p className="max-w-sm text-[10px] font-bold uppercase tracking-[0.12em] text-[#777] sm:text-xs">Each line shows completed days by participant.</p>
         </div>
-        <div className="h-80">
+        <div className="h-56 min-w-0 overflow-hidden sm:h-80">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData} margin={{ left: -20, right: 16, top: 10, bottom: 0 }}>
+              <LineChart data={chartData} margin={{ left: -18, right: 4, top: 10, bottom: 0 }}>
               <CartesianGrid stroke="#242424" strokeDasharray="3 3" />
               <XAxis dataKey="day" stroke="#777" tick={{ fill: "#777", fontSize: 11, fontWeight: 900 }} />
               <YAxis allowDecimals={false} stroke="#777" tick={{ fill: "#777", fontSize: 11, fontWeight: 900 }} />
               <Tooltip contentStyle={{ background: "#0D0D0D", border: "1px solid #C8A96E", borderRadius: 0, color: "#fff" }} />
-              {participants.map((participant: any, index: number) => (
-                <Line key={participant.id} type="monotone" dataKey={participant.displayName} stroke={chartColors[index % chartColors.length]} strokeWidth={3} dot={false} activeDot={{ r: 6 }} />
+              {chartKeys.map((participant: any, index: number) => (
+                <Line key={participant.id} type="monotone" dataKey={participant.chartKey} name={participant.displayName} stroke={chartColors[index % chartColors.length]} strokeWidth={3} dot={false} activeDot={{ r: 6 }} />
               ))}
             </LineChart>
           </ResponsiveContainer>
@@ -836,7 +851,7 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
                 <ProfilePhoto participant={p} className="h-12 w-12" />
                 <span className="poster-label text-[#C0392B]">{p.livesRemaining}/4</span>
               </div>
-              <p className="mt-4 text-lg font-black uppercase text-white">{p.displayName}</p>
+              <p className="mt-4 min-w-0 overflow-hidden text-ellipsis break-words text-base font-black uppercase text-white sm:text-lg">{p.displayName}</p>
               <div className="mt-3"><HealthBar lives={p.livesRemaining} label="" compact /></div>
             </div>
           ))}
@@ -880,7 +895,7 @@ function ParticipantSheet({ participant, onClose }: { participant: any; onClose:
         <div className="flex items-start justify-between gap-4">
           <div>
             <MicroLabel tone="gold">Participant stats</MicroLabel>
-            <h3 className="mt-2 text-4xl font-black uppercase tracking-[-0.07em] text-white">{visibleParticipant.displayName}</h3>
+            <h3 className="mt-2 break-words text-3xl font-black uppercase tracking-[-0.07em] text-white sm:text-4xl">{visibleParticipant.displayName}</h3>
           </div>
           <button onClick={onClose} className="border border-[#2A2A2A] p-3 text-[#777] hover:border-[#C8A96E] hover:text-[#C8A96E]"><X className="h-5 w-5" /></button>
         </div>
@@ -903,21 +918,21 @@ function Leaderboard({ snapshot }: { snapshot: Snapshot }) {
       <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
         <div>
           <MicroLabel tone="gold">Leaderboard</MicroLabel>
-          <h2 className="mt-2 text-4xl font-black uppercase leading-none tracking-[-0.07em] text-white">Tap a line. Feel the chase.</h2>
+          <h2 className="mt-2 break-words text-3xl font-black uppercase leading-none tracking-[-0.07em] text-white sm:text-4xl">Tap a line. Feel the chase.</h2>
         </div>
         <p className="max-w-sm text-xs font-bold uppercase tracking-[0.14em] text-[#777]">Ranked by points first, then streak. Tap any row for the stat sheet.</p>
       </div>
       <div className="space-y-2">
         {ranked.map((p: any, index) => (
-          <button key={p.id} onClick={() => { pulse(14); setSelected(p); }} className={classNames("grid w-full grid-cols-[56px_1fr_auto] items-center gap-4 border bg-[#0D0D0D] p-4 text-left transition hover:border-[#C8A96E]", index === 0 ? "border-l-4 border-l-[#C8A96E] border-[#3C3423]" : "border-[#2A2A2A]")}> 
-            <span className={classNames("text-3xl font-black", index === 0 ? "text-[#C8A96E]" : "text-[#777]")}>#{index + 1}</span>
-            <span>
-              <span className="block text-xl font-black uppercase tracking-[-0.04em] text-white">{p.displayName}</span>
-              <span className="mt-1 block text-xs font-bold uppercase tracking-[0.14em] text-[#777]">{p.currentStreak} day streak · {p.daysComplete} days complete</span>
+          <button key={p.id} onClick={() => { pulse(14); setSelected(p); }} className={classNames("grid w-full grid-cols-[40px_minmax(0,1fr)] items-center gap-3 border bg-[#0D0D0D] p-3 text-left transition hover:border-[#C8A96E] sm:grid-cols-[56px_minmax(0,1fr)_auto] sm:gap-4 sm:p-4", index === 0 ? "border-l-4 border-l-[#C8A96E] border-[#3C3423]" : "border-[#2A2A2A]")}> 
+            <span className={classNames("text-2xl font-black sm:text-3xl", index === 0 ? "text-[#C8A96E]" : "text-[#777]")}>#{index + 1}</span>
+            <span className="min-w-0">
+              <span className="block break-words text-lg font-black uppercase tracking-[-0.04em] text-white sm:text-xl">{p.displayName}</span>
+              <span className="mt-1 block break-words text-[11px] font-bold uppercase tracking-[0.1em] text-[#777] sm:text-xs sm:tracking-[0.14em]">{p.currentStreak} day streak · {p.daysComplete} days complete</span>
               <span className="mt-3 block max-w-[260px]"><HealthBar lives={p.livesRemaining} label="" compact /></span>
             </span>
-            <span className="text-right">
-              <span className="block text-3xl font-black text-[#C8A96E]">{p.totalPoints}</span>
+              <span className="col-span-2 mt-2 min-w-0 text-left sm:col-span-1 sm:mt-0 sm:text-right">
+              <span className="block text-2xl font-black text-[#C8A96E] sm:text-3xl">{p.totalPoints}</span>
               <span className="poster-label text-[#777]">points</span>
             </span>
           </button>
@@ -929,11 +944,11 @@ function Leaderboard({ snapshot }: { snapshot: Snapshot }) {
 }
 
 function ProofFeed({ snapshot }: { snapshot: Snapshot }) {
-  const publicLogs = (snapshot?.logs ?? []).filter((log: any) => log.reflectionShared || log.exerciseProofUrl || log.readTeachText);
+  const publicLogs = (snapshot?.logs ?? []).filter((log: any) => log.exerciseProofUrl || log.readTeachText);
   return (
     <section className="border border-[#2A2A2A] bg-[#101010] p-5">
       <MicroLabel tone="green">Proof feed</MicroLabel>
-      <h2 className="mt-2 text-4xl font-black uppercase tracking-[-0.07em] text-white">Receipts. Insights. Momentum.</h2>
+      <h2 className="mt-2 break-words text-3xl font-black uppercase tracking-[-0.07em] text-white sm:text-4xl">Receipts. Insights. Momentum.</h2>
       <div className="mt-5 grid gap-3 lg:grid-cols-2">
         {publicLogs.map((log: any) => {
           const owner = snapshot?.participants.find((p: any) => p.id === log.participantId);
@@ -947,15 +962,14 @@ function ProofFeed({ snapshot }: { snapshot: Snapshot }) {
                     <MicroLabel>Day {log.dayNumber}</MicroLabel>
                   </div>
                 </div>
-                <span className="border border-[#2ECC71]/50 bg-[#102018] px-3 py-1 text-[9px] font-black uppercase tracking-[0.2em] text-[#2ECC71]">Public</span>
+                <span className="border border-[#2ECC71]/50 bg-[#102018] px-3 py-1 text-[9px] font-black uppercase tracking-[0.2em] text-[#2ECC71]">Proof</span>
               </div>
               {log.readTeachText && <p className="mt-4 border-l-2 border-[#C8A96E] pl-4 text-sm font-bold leading-6 text-[#D8D8D8]">{log.readTeachText}</p>}
-              {log.reflectionShared && log.reflectionText && <p className="mt-3 text-sm font-bold leading-6 text-[#999]">{log.reflectionText}</p>}
-              {log.exerciseProofUrl && <p className="mt-3 border border-[#2A2A2A] bg-[#111] p-3 text-xs font-bold text-[#C8A96E] break-all">Proof: {log.exerciseProofUrl}</p>}
+              {log.exerciseProofUrl && (log.exerciseProofUrl.startsWith("/manus-storage/") ? <img src={log.exerciseProofUrl} alt={`Exercise proof for day ${log.dayNumber}`} className="mt-3 max-h-72 w-full border border-[#2A2A2A] object-cover" /> : <p className="mt-3 break-all border border-[#2A2A2A] bg-[#111] p-3 text-xs font-bold text-[#C8A96E]">Proof: {log.exerciseProofUrl}</p>)}
             </article>
           );
         })}
-        {publicLogs.length === 0 && <p className="border border-[#2A2A2A] bg-[#0D0D0D] p-6 text-sm font-bold uppercase tracking-[0.12em] text-[#777]">No public proof yet. The feed wakes up when people submit.</p>}
+        {publicLogs.length === 0 && <p className="border border-[#2A2A2A] bg-[#0D0D0D] p-6 text-sm font-bold uppercase tracking-[0.12em] text-[#777]">No proof yet. The feed wakes up when people submit exercise receipts or teachings.</p>}
       </div>
     </section>
   );
@@ -1121,9 +1135,9 @@ function AdminPanel({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => 
             <div key={request.id} className="border border-[#2A2A2A] bg-[#0D0D0D] p-4 transition duration-300 hover:border-[#C8A96E]/60">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="break-all font-black uppercase text-white">{request.email}</p>
-                  <p className="mt-2 text-[10px] font-black uppercase tracking-[0.18em] text-[#777]">{request.source} · {new Date(request.createdAt).toLocaleString()}</p>
-                  {request.displayName && <p className="mt-3 text-sm font-black uppercase text-[#C8A96E]">{request.displayName}</p>}
+                  <p className="min-w-0 break-words font-black uppercase text-white">{request.displayName || "Pending participant"}</p>
+                  <p className="mt-2 break-all text-xs font-bold text-[#777]">{request.email}</p>
+                  <p className="mt-2 text-[10px] font-black uppercase tracking-[0.14em] text-[#777]">{request.source} · {new Date(request.createdAt).toLocaleString()}</p>
                   {request.primaryGoal && <p className="mt-2 text-sm font-bold text-[#D8D8D8]">Goal: {request.primaryGoal}</p>}
                   {request.biggestObstacle && <p className="mt-2 text-xs font-bold leading-5 text-[#999]">Obstacle: {request.biggestObstacle}</p>}
                   {request.trainingLevel && <p className="mt-2 text-[10px] font-black uppercase tracking-[0.16em] text-[#777]">{request.trainingLevel} · universal adaptive Warden</p>}
@@ -1164,6 +1178,8 @@ export default function Home() {
   const { user, loading, isAuthenticated, logout } = useAuth();
   const [activeTab, setActiveTab] = useState<TabKey>("myday");
   const [entryVisible, setEntryVisible] = useState(() => typeof window !== "undefined" && window.sessionStorage.getItem("sixone-entry-seen") !== "true");
+  const [loginEntryVisible, setLoginEntryVisible] = useState(false);
+  const previousAuthRef = useRef(isAuthenticated);
   const snapshotQuery = trpc.challenge.snapshot.useQuery(undefined, { enabled: isAuthenticated });
   const snapshot = snapshotQuery.data;
 
@@ -1177,7 +1193,18 @@ export default function Home() {
     return () => window.clearTimeout(timer);
   }, [entryVisible, loading]);
 
-  if (loading || entryVisible) return <AnimatedLoadPage label={loading ? "Authenticating" : "Entering the log"} />;
+  useEffect(() => {
+    if (loading) return;
+    const justAuthenticated = isAuthenticated && !previousAuthRef.current;
+    previousAuthRef.current = isAuthenticated;
+    if (!justAuthenticated || typeof window === "undefined") return;
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    setLoginEntryVisible(true);
+    const timer = window.setTimeout(() => setLoginEntryVisible(false), prefersReducedMotion ? 120 : 950);
+    return () => window.clearTimeout(timer);
+  }, [isAuthenticated, loading]);
+
+  if (loading || entryVisible || loginEntryVisible) return <AnimatedLoadPage label={loading ? "Authenticating" : loginEntryVisible ? "Opening your challenge" : "Entering the log"} />;
   if (!isAuthenticated) return <Landing />;
   if (snapshot?.accessState?.status === "questionnaire_required") return <OnboardingGate user={user} refetch={snapshotQuery.refetch} />;
 

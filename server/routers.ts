@@ -27,6 +27,7 @@ import {
   updateParticipantProfile,
 } from "./db";
 import { generateWardenCommentary } from "./warden";
+import { storagePut } from "./storage";
 
 const signupRequestInput = z.object({
   email: z.string().trim().email().max(320),
@@ -140,6 +141,25 @@ export const appRouter = router({
       }
       return result;
     }),
+
+    uploadProof: protectedProcedure
+      .input(z.object({
+        fileName: z.string().trim().min(1).max(180),
+        mimeType: z.enum(["image/png", "image/jpeg", "image/webp"]),
+        dataUrl: z.string().max(6_000_000).regex(/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/, "Proof image must be a PNG, JPG, or WEBP data URL."),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const participant = await getOrCreateParticipant(ctx.user);
+        const extension = input.mimeType === "image/png" ? "png" : input.mimeType === "image/webp" ? "webp" : "jpg";
+        const base64 = input.dataUrl.split(",")[1] ?? "";
+        const bytes = Buffer.from(base64, "base64");
+        if (bytes.length === 0 || bytes.length > 4_000_000) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Proof image must be under 4MB." });
+        }
+        const safeName = input.fileName.replace(/[^a-z0-9._-]/gi, "-").slice(0, 80) || "exercise-proof";
+        const stored = await storagePut(`exercise-proof/participant-${participant.id}/${Date.now()}-${safeName}.${extension}`, bytes, input.mimeType);
+        return { success: true, url: stored.url, key: stored.key } as const;
+      }),
 
     loseLife: protectedProcedure
       .input(z.object({ reason: z.string().min(2).max(500), dailyLogId: z.number().int().optional() }))

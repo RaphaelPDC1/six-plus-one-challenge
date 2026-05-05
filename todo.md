@@ -196,3 +196,16 @@
 - [x] Update dashboard/home copy where needed to communicate that the challenge has already started from 6 May
 - [x] Add or update automated tests for fixed-date challenge-day calculation and per-day log tracking
 - [x] Validate the fixed calendar behavior, save a checkpoint, and deliver the updated version
+
+## Bug-Fix Pass (v5) — Login Animation, Logging, Mobile Bounds, Names, and App Icon
+- [x] Restore or add the login/entry animation so signing in does not feel abrupt
+- [x] Fix daily task state styling so tasks only show green when genuinely completed and remain visually clear otherwise
+- [x] Investigate and fix gym/session proof image upload for exercise logging
+- [x] Remove the reflection public/private option so reflections are not presented with a public toggle
+- [x] Fix mobile Overview layout so people names, stats, graph, and leaderboard content stay within screen bounds
+- [x] Keep the Overview graph persistently visible at the top on mobile where practical
+- [x] Use participant display names instead of email addresses throughout app UI surfaces, including board/leaderboard/proof/admin-facing summaries where appropriate
+- [x] Ensure long names and text are bounded, wrapped, or truncated so nothing hangs off-screen
+- [x] Update the installable web-app icon/favicon/manifest to use the 6+1 logo
+- [x] Add or update tests for the v5 bug fixes, run full validation, and save a checkpoint
+- [x] Remove any £100 upfront deposit wording, UI assumptions, tests, or data labels; the challenge must state there is no upfront deposit
