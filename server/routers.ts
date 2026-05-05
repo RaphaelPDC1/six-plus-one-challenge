@@ -37,7 +37,7 @@ const personalizationInput = z.object({
   primaryGoal: z.string().trim().min(3).max(220),
   biggestObstacle: z.string().trim().min(3).max(2000),
   trainingLevel: z.enum(["starting", "building", "consistent", "advanced"]),
-  motivationStyle: z.enum(["direct", "supportive", "competitive", "quiet"]),
+  motivationStyle: z.string().max(80).optional().default("adaptive"),
   supportNeeded: z.string().trim().min(3).max(2000),
 });
 
@@ -122,7 +122,7 @@ export const appRouter = router({
         primaryGoal: z.string().trim().min(3).max(220),
         biggestObstacle: z.string().trim().min(3).max(2000),
         trainingLevel: z.enum(["starting", "building", "consistent", "advanced"]),
-        motivationStyle: z.enum(["direct", "supportive", "competitive", "quiet"]),
+        motivationStyle: z.string().max(80).optional().default("adaptive"),
         supportNeeded: z.string().trim().min(3).max(2000).optional(),
         profilePhotoDataUrl: z.string().max(3_000_000).regex(/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/, "Profile photo must be a PNG, JPG, or WEBP data URL.").optional(),
       }))

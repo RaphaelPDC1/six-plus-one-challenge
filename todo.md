@@ -176,3 +176,23 @@
 - [x] Keep returning-member login as email-only with no display-name or questionnaire fields
 - [x] Add a clear back/cancel path from the registration questionnaire to the simple entry panel
 - [x] Update validation/tests for the streamlined public entry and register-questionnaire flow
+
+## Refinement Pass (v4.8) — Dedicated Registration Page, Universal Warden, Compact Home
+- [x] Move registration and the five onboarding questions out of the home page into a dedicated registration page
+- [x] Keep the public home page entry simple with clear navigation to Register and returning-member email login
+- [x] Remove any user-facing Warden type/personality selection from registration or onboarding
+- [x] Make the Warden framing universal and data-driven, using app activity and group-chat signals rather than a selected type
+- [x] Redesign the public home page to display the provided challenge information in compact, smart sections instead of an endless scroll
+- [x] Preserve the exact supplied landing copy while improving layout density, scanability, and responsive behavior
+- [x] Add back/cancel navigation from the dedicated registration page to the public home page
+- [x] Update frontend and server tests for the dedicated registration route, email-only login, universal Warden copy, and compact public home layout
+- [x] Run full TypeScript, automated tests, production build, preview health check, and save a checkpoint
+
+## Refinement Pass (v4.9) — Fixed 6 May Challenge Calendar
+- [x] Set the challenge start date to 6 May for challenge-day calculations
+- [x] Ensure every calendar day from 6 May is represented and trackable as a challenge day
+- [x] Update daily log logic so workout, food, water, sleep, reflection, and proof states are tied to the correct challenge date
+- [x] Show missed or unlogged days clearly so participants and admin can trace the challenge from day one
+- [x] Update dashboard/home copy where needed to communicate that the challenge has already started from 6 May
+- [x] Add or update automated tests for fixed-date challenge-day calculation and per-day log tracking
+- [x] Validate the fixed calendar behavior, save a checkpoint, and deliver the updated version

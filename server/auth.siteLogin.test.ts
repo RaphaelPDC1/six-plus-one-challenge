@@ -18,7 +18,6 @@ const registrationPersonalization = {
   primaryGoal: "Build discipline",
   biggestObstacle: "Late-night snacking and inconsistent training",
   trainingLevel: "building" as const,
-  motivationStyle: "direct" as const,
   supportNeeded: "Keep me accountable when I go quiet",
 };
 
@@ -66,7 +65,7 @@ describe("auth.siteLogin", () => {
     createSiteNativeUserMock.mockImplementation(async () => siteUser);
   });
 
-  it("registers a site-native participant without requiring Manus OAuth or an access code", async () => {
+  it("registers a site-native participant without requiring Manus OAuth, an access code, or a Warden style picker", async () => {
     const { appRouter } = await import("./routers");
     const { ctx, cookies } = createPublicContext();
     const caller = appRouter.createCaller(ctx);
@@ -77,8 +76,9 @@ describe("auth.siteLogin", () => {
       email: "challenger@example.com",
       displayName: "Challenger One",
       mode: "register",
-      personalization: registrationPersonalization,
+      personalization: { ...registrationPersonalization, motivationStyle: "adaptive" },
     });
+    expect(registrationPersonalization).not.toHaveProperty("motivationStyle");
     expect(result).toEqual({ success: true, mode: "register", user: siteUser });
     expect(cookies).toHaveLength(1);
     expect(cookies[0]).toMatchObject({

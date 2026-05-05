@@ -23,6 +23,11 @@ const mockState = vi.hoisted(() => ({
   },
 }));
 
+vi.mock("wouter", () => ({
+  Link: ({ href, className, children }: { href: string; className?: string; children: React.ReactNode }) => React.createElement("a", { href, className }, children),
+  useLocation: () => ["/", vi.fn()],
+}));
+
 vi.mock("@/_core/hooks/useAuth", () => ({
   useAuth: () => mockState.auth,
 }));
@@ -137,24 +142,40 @@ describe("Home onboarding shell", () => {
     expect(markup).toContain("data-testid=\"entry-choice-panel\"");
     expect(markup).toContain("New challenger");
     expect(markup).toContain("Returning member");
-    expect(markup).toContain("Email only. No questionnaire.");
+    expect(markup).toContain("Email only. No questionnaire for existing members.");
     expect(markup).not.toContain("data-testid=\"registration-personalization\"");
     expect(markup).not.toContain("What are you here to change?");
     expect(markup).not.toContain("Display name");
   });
 
-  it("defines the click-driven register questionnaire, email-only login branch, and back-to-choice path", () => {
-    const source = readFileSync(new URL("./Home.tsx", import.meta.url), "utf8");
+  it("keeps registration on a dedicated route with back-home navigation and universal Warden copy", () => {
+    const appSource = readFileSync(new URL("../App.tsx", import.meta.url), "utf8");
+    const homeSource = readFileSync(new URL("./Home.tsx", import.meta.url), "utf8");
+    const registerSource = readFileSync(new URL("./Register.tsx", import.meta.url), "utf8");
 
-    expect(source).toContain('onClick={() => chooseMode("register")}');
-    expect(source).toContain('data-testid={entryMode === "register" ? "registration-flow-panel" : "login-flow-panel"}');
-    expect(source).toContain('data-testid="registration-personalization"');
-    expect(source).toContain('personalization: entryMode === "register" ? personalization : undefined');
-    expect(source).toContain('displayName: entryMode === "register" ? displayName : undefined');
-    expect(source).toContain('onClick={() => chooseMode("login")}');
-    expect(source).toContain('Email only. No questionnaire.');
-    expect(source).toContain('onClick={resetEntry}');
-    expect(source).toContain('setEntryMode("choice")');
+    expect(appSource).toContain('<Route path={"/register"} component={Register} />');
+    expect(homeSource).toContain('href="/register"');
+    expect(homeSource).toContain('data-testid="entry-choice-panel"');
+    expect(homeSource).not.toContain('data-testid="registration-personalization"');
+    expect(registerSource).toContain('data-testid="dedicated-registration-form"');
+    expect(registerSource).toContain('Back home');
+    expect(registerSource).toContain('No Warden type selection. The Warden learns from app data and group-chat signals.');
+    expect(registerSource).toContain('supportNeeded: combinedSupport');
+    expect(registerSource).not.toContain('motivationStyle');
+  });
+
+  it("renders a compact public home that preserves the supplied challenge copy in smart sections", () => {
+    mockState.auth.isAuthenticated = false;
+    mockState.snapshotQuery.isLoading = false;
+
+    const markup = renderToStaticMarkup(<Home />);
+
+    expect(markup).toContain("Six rules. One source of truth.");
+    expect(markup).toContain("Compact by default. Tap open for the exact brief.");
+    expect(markup).toContain("You start with 4 lives. The only way to lose a life is to miss your daily workout.");
+    expect(markup).toContain("From day one to the finish line.");
+    expect(markup).toContain("These aren&#x27;t challenge rules. These are the principles and standards we should live by.");
+    expect(markup).toContain("href=\"/register\"");
   });
 
   it("renders the animated landing/loading page with the white uploaded logo image instead of blue text", () => {
@@ -182,7 +203,8 @@ describe("Home onboarding shell", () => {
     const markup = renderToStaticMarkup(<Home />);
 
     expect(markup).toContain("Unknown email");
-    expect(markup).toContain("Personalise the challenge first");
+    expect(markup).toContain("New email found. Set your profile first.");
+    expect(markup).toContain("Make it yours.");
     expect(markup).toContain("new@example.com");
     expect(markup).toContain("/manus-storage/six-plus-one-brand-logo-white-strong_2949fb51.webp");
   });

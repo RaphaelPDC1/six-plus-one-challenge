@@ -7,6 +7,13 @@ import {
   getGhostLifeEligibility,
   nextLivesAfterLoss,
 } from "./challengeLogic";
+import {
+  CHALLENGE_START_DATE,
+  getChallengeCalendar,
+  getChallengeDateIsoForDay,
+  getChallengeDeadlineForDay,
+  getCurrentChallengeDay,
+} from "./db";
 
 describe("challengeLogic", () => {
   it("marks a day complete only when all six rules are satisfied", () => {
@@ -78,5 +85,27 @@ describe("challengeLogic", () => {
     expect(canPostWardenMessage(2)).toBe(true);
     expect(canPostWardenMessage(3)).toBe(false);
     expect(canPostWardenMessage(9)).toBe(false);
+  });
+
+  it("anchors challenge day calculations to 6 May and clamps before/after the 50-day window", () => {
+    expect(CHALLENGE_START_DATE).toBe("2026-05-06");
+    expect(getChallengeDateIsoForDay(1)).toBe("2026-05-06");
+    expect(getChallengeDateIsoForDay(2)).toBe("2026-05-07");
+    expect(getChallengeDateIsoForDay(50)).toBe("2026-06-24");
+    expect(getCurrentChallengeDay(new Date("2026-05-05T23:59:59Z"))).toBe(1);
+    expect(getCurrentChallengeDay(new Date("2026-05-06T00:00:00Z"))).toBe(1);
+    expect(getCurrentChallengeDay(new Date("2026-05-20T12:00:00Z"))).toBe(15);
+    expect(getCurrentChallengeDay(new Date("2026-07-20T12:00:00Z"))).toBe(50);
+  });
+
+  it("builds a traceable calendar from day one through the current challenge day", () => {
+    const calendar = getChallengeCalendar(new Date("2026-05-10T09:00:00Z"));
+
+    expect(calendar).toHaveLength(5);
+    expect(calendar.map(day => day.dayNumber)).toEqual([1, 2, 3, 4, 5]);
+    expect(calendar.map(day => day.dateIso)).toEqual(["2026-05-06", "2026-05-07", "2026-05-08", "2026-05-09", "2026-05-10"]);
+    expect(calendar[0]).toMatchObject({ dayNumber: 1, dateIso: "2026-05-06", isToday: false });
+    expect(calendar[4]).toMatchObject({ dayNumber: 5, dateIso: "2026-05-10", isToday: true });
+    expect(getChallengeDeadlineForDay(1).toISOString()).toBe("2026-05-06T23:59:59.999Z");
   });
 });

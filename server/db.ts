@@ -79,7 +79,7 @@ export type RegistrationPersonalizationInput = {
   primaryGoal: string;
   biggestObstacle: string;
   trainingLevel: string;
-  motivationStyle: string;
+  motivationStyle?: string;
   supportNeeded: string;
 };
 
@@ -129,7 +129,7 @@ export async function createSiteNativeUser(input: { email: string; displayName: 
       primaryGoal: input.personalization.primaryGoal.trim(),
       biggestObstacle: input.personalization.biggestObstacle.trim(),
       trainingLevel: input.personalization.trainingLevel,
-      motivationStyle: input.personalization.motivationStyle,
+      motivationStyle: input.personalization.motivationStyle || "adaptive",
       supportNeeded: input.personalization.supportNeeded.trim(),
     };
     await db.insert(participants).values({
@@ -176,7 +176,7 @@ export type OnboardingInput = {
   primaryGoal: string;
   biggestObstacle: string;
   trainingLevel: string;
-  motivationStyle: string;
+  motivationStyle?: string;
   supportNeeded?: string;
   profilePhotoDataUrl?: string;
 };
@@ -223,7 +223,7 @@ export async function completeOnboarding(user: { id: number; name: string | null
     primaryGoal: input.primaryGoal.trim(),
     biggestObstacle: input.biggestObstacle.trim(),
     trainingLevel: input.trainingLevel,
-    motivationStyle: input.motivationStyle,
+    motivationStyle: input.motivationStyle || "adaptive",
     supportNeeded: input.supportNeeded?.trim() || null,
     profilePhotoUrl: uploaded?.url ?? null,
     profilePhotoKey: uploaded?.key ?? null,
@@ -244,7 +244,7 @@ export async function completeOnboarding(user: { id: number; name: string | null
       primaryGoal: input.primaryGoal.trim(),
       biggestObstacle: input.biggestObstacle.trim(),
       trainingLevel: input.trainingLevel,
-      motivationStyle: input.motivationStyle,
+      motivationStyle: input.motivationStyle || "adaptive",
       supportNeeded: input.supportNeeded?.trim() || null,
       profilePhotoUrl: uploaded?.url ?? null,
       profilePhotoKey: uploaded?.key ?? null,
@@ -288,10 +288,41 @@ function initials(name?: string | null) {
     .join("") || "M";
 }
 
+const DAY_MS = 86_400_000;
+
+export function getChallengeDateForDay(dayNumber: number) {
+  const safeDay = Math.min(50, Math.max(1, Math.trunc(dayNumber)));
+  const start = new Date(`${CHALLENGE_START_DATE}T00:00:00Z`);
+  return new Date(start.getTime() + (safeDay - 1) * DAY_MS);
+}
+
+export function getChallengeDateIsoForDay(dayNumber: number) {
+  return getChallengeDateForDay(dayNumber).toISOString().slice(0, 10);
+}
+
+export function getChallengeDeadlineForDay(dayNumber: number) {
+  const date = getChallengeDateForDay(dayNumber);
+  return new Date(date.getTime() + DAY_MS - 1);
+}
+
 export function getCurrentChallengeDay(now = new Date()) {
   const start = new Date(`${CHALLENGE_START_DATE}T00:00:00Z`);
-  const diff = Math.floor((now.getTime() - start.getTime()) / 86_400_000) + 1;
+  const diff = Math.floor((now.getTime() - start.getTime()) / DAY_MS) + 1;
   return Math.min(50, Math.max(1, diff));
+}
+
+export function getChallengeCalendar(now = new Date()) {
+  const currentDay = getCurrentChallengeDay(now);
+  return Array.from({ length: currentDay }, (_, index) => {
+    const dayNumber = index + 1;
+    const date = getChallengeDateForDay(dayNumber);
+    return {
+      dayNumber,
+      dateIso: date.toISOString().slice(0, 10),
+      label: date.toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" }),
+      isToday: dayNumber === currentDay,
+    };
+  });
 }
 
 export async function getOrCreateParticipant(user: { id: number; name: string | null; email: string | null }) {
@@ -331,7 +362,7 @@ export async function updateParticipantProfile(userId: number, input: { displayN
     primaryGoal: input.primaryGoal || participant.primaryGoal || null,
     biggestObstacle: input.biggestObstacle || participant.biggestObstacle || null,
     trainingLevel: input.trainingLevel || participant.trainingLevel || null,
-    motivationStyle: input.motivationStyle || participant.motivationStyle || null,
+    motivationStyle: input.motivationStyle || participant.motivationStyle || "adaptive",
     supportNeeded: input.supportNeeded || participant.supportNeeded || null,
     onboardingCompleted: true,
   }).where(eq(participants.id, participant.id));
@@ -361,7 +392,12 @@ export async function submitDailyLog(participantId: number, input: {
   const db = await getDb();
   if (!db) throw new Error("Database unavailable");
   const submittedAt = new Date();
-  const logDate = new Date(`${submittedAt.toISOString().slice(0, 10)}T00:00:00Z`);
+  const currentChallengeDay = getCurrentChallengeDay(submittedAt);
+  if (input.dayNumber > currentChallengeDay) {
+    throw new Error(`Day ${input.dayNumber} is not open yet. The challenge is currently on day ${currentChallengeDay}.`);
+  }
+  const logDate = getChallengeDateForDay(input.dayNumber);
+  const deadline = getChallengeDeadlineForDay(input.dayNumber);
   const exerciseDone = input.exerciseDuration >= 30 && input.exerciseProofUrl.trim().length > 0;
   const reflectionDone = input.reflectionText.trim().length > 0;
   const readTeachDone = input.readTeachText.trim().length >= 30;
@@ -373,6 +409,7 @@ export async function submitDailyLog(participantId: number, input: {
     readTeachDone,
     trackedEverything: input.trackedEverything,
     submittedAt,
+    deadline,
   });
   const pointsAwarded = calculateDailyPoints(input.dayNumber, complete);
 
@@ -473,7 +510,7 @@ export async function getAppSnapshot(userId: number, role: "admin" | "user" = "u
   if (onboarding.status !== "ready") {
     return {
       accessState: onboarding,
-      challenge: { currentDay: getCurrentChallengeDay(), totalDays: 50, monzoPaymentLink: DEFAULT_MONZO_PAYMENT_LINK },
+      challenge: { currentDay: getCurrentChallengeDay(), totalDays: 50, startDate: CHALLENGE_START_DATE, calendar: getChallengeCalendar(), monzoPaymentLink: DEFAULT_MONZO_PAYMENT_LINK },
       participant: null,
       myLog: null,
       participants: [],
@@ -501,7 +538,7 @@ export async function getAppSnapshot(userId: number, role: "admin" | "user" = "u
   const myLog = await getTodayLog(participant.id);
   return {
     accessState: { status: "ready" as const, reason: onboarding.reason },
-    challenge: { currentDay: getCurrentChallengeDay(), totalDays: 50, monzoPaymentLink: DEFAULT_MONZO_PAYMENT_LINK },
+    challenge: { currentDay: getCurrentChallengeDay(), totalDays: 50, startDate: CHALLENGE_START_DATE, calendar: getChallengeCalendar(), monzoPaymentLink: DEFAULT_MONZO_PAYMENT_LINK },
     participant,
     myLog,
     participants: allParticipants,

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import React from "react";
+import { Link } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { clampLives, getDailyLogProgress } from "@/lib/challengeUi";
@@ -225,44 +226,13 @@ function scrollToEntryPanel() {
   document.getElementById("site-entry-panel")?.scrollIntoView({ behavior: "smooth", block: "center" });
 }
 
-type PersonalizationForm = {
-  primaryGoal: string;
-  biggestObstacle: string;
-  trainingLevel: "starting" | "building" | "consistent" | "advanced";
-  motivationStyle: "direct" | "supportive" | "competitive" | "quiet";
-  supportNeeded: string;
-};
-
-const trainingLevels = [
-  ["starting", "Starting again"],
-  ["building", "Building consistency"],
-  ["consistent", "Already consistent"],
-  ["advanced", "Advanced / pushing hard"],
-] as const;
-
-const motivationStyles = [
-  ["direct", "Direct Warden"],
-  ["supportive", "Supportive Warden"],
-  ["competitive", "Competitive Warden"],
-  ["quiet", "Quiet accountability"],
-] as const;
-
 function SiteEntryPanel() {
   const [email, setEmail] = useState("");
-  const [displayName, setDisplayName] = useState("");
-  const [entryMode, setEntryMode] = useState<"choice" | "register" | "login">("choice");
-  const [personalization, setPersonalization] = useState<PersonalizationForm>({
-    primaryGoal: "",
-    biggestObstacle: "",
-    trainingLevel: "building",
-    motivationStyle: "direct",
-    supportNeeded: "",
-  });
   const utils = trpc.useUtils();
   const siteLogin = trpc.auth.siteLogin.useMutation({
     onSuccess: async () => {
       haptics.success();
-      toast(entryMode === "register" ? "Registered. The Warden has your context." : "Welcome back. You are in.");
+      toast("Welcome back. You are in.");
       await utils.auth.me.invalidate();
       await utils.challenge.snapshot.invalidate();
     },
@@ -272,151 +242,61 @@ function SiteEntryPanel() {
     },
   });
 
-  const updatePersonalization = <Key extends keyof PersonalizationForm>(key: Key, value: PersonalizationForm[Key]) => {
-    setPersonalization(current => ({ ...current, [key]: value }));
-  };
-
-  const chooseMode = (mode: "register" | "login") => {
-    haptics.tap();
-    setEntryMode(mode);
-  };
-
-  const resetEntry = () => {
-    haptics.tap();
-    setEntryMode("choice");
-  };
-
   return (
-    <form
+    <section
       id="site-entry-panel"
       className="mt-8 scroll-mt-10 border border-[#2A2A2A] bg-[#090909]/94 p-4 shadow-[0_18px_70px_rgba(0,0,0,0.42)] transition duration-500 hover:border-[#C8A96E]/70 sm:p-5"
-      onSubmit={event => {
-        event.preventDefault();
-        if (entryMode === "choice") return;
-        haptics.submit();
-        siteLogin.mutate({
-          email,
-          displayName: entryMode === "register" ? displayName : undefined,
-          mode: entryMode,
-          personalization: entryMode === "register" ? personalization : undefined,
-        });
-      }}
     >
       <div className="flex items-start gap-3">
         <div className="grid h-10 w-10 shrink-0 place-items-center border border-[#C8A96E]/70 text-[#C8A96E]">
           <Mail className="h-4 w-4" />
         </div>
         <div>
-          <MicroLabel tone="gold">Register or log in</MicroLabel>
+          <MicroLabel tone="gold">Start here</MicroLabel>
           <p className="mt-2 text-sm font-bold leading-6 text-[#AFAFAF]">
-            New challenger? Register first. Already made your profile? Log in with your email.
+            New challenger? Register on the dedicated page. Already made your profile? Log in with email only.
           </p>
         </div>
       </div>
 
-      {entryMode === "choice" ? (
-        <div className="mt-5 grid gap-3 sm:grid-cols-2" data-testid="entry-choice-panel">
-          <button
-            type="button"
-            onClick={() => chooseMode("register")}
-            className="group min-h-28 border border-[#C8A96E]/70 bg-[#C8A96E] p-4 text-left text-black transition hover:-translate-y-0.5 hover:shadow-[0_14px_40px_rgba(200,169,110,0.20)] focus:outline-none focus:ring-2 focus:ring-[#C8A96E] focus:ring-offset-2 focus:ring-offset-black"
-          >
-            <span className="block text-[10px] font-black uppercase tracking-[0.18em] text-black/60">New challenger</span>
-            <span className="mt-2 block text-2xl font-black uppercase tracking-[-0.05em]">Register</span>
-            <span className="mt-2 block text-xs font-black uppercase tracking-[0.12em] text-black/70">Answer five quick questions after this click.</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => chooseMode("login")}
-            className="group min-h-28 border border-[#2A2A2A] bg-black p-4 text-left text-white transition hover:-translate-y-0.5 hover:border-white/60 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-black"
-          >
-            <span className="block text-[10px] font-black uppercase tracking-[0.18em] text-[#777]">Returning member</span>
-            <span className="mt-2 block text-2xl font-black uppercase tracking-[-0.05em]">Log in</span>
-            <span className="mt-2 block text-xs font-black uppercase tracking-[0.12em] text-[#888]">Email only. No questionnaire.</span>
-          </button>
-        </div>
-      ) : (
-        <div className="mt-5" data-testid={entryMode === "register" ? "registration-flow-panel" : "login-flow-panel"}>
-          <div className="mb-4 flex items-center justify-between gap-3 border-b border-[#2A2A2A] pb-3">
-            <div>
-              <MicroLabel tone={entryMode === "register" ? "gold" : "muted"}>{entryMode === "register" ? "New registration" : "Returning login"}</MicroLabel>
-              <p className="mt-1 text-xs font-bold uppercase tracking-[0.12em] text-[#777]">
-                {entryMode === "register" ? "Five answers help personalise the journey." : "Use the email already attached to your challenger profile."}
-              </p>
-            </div>
-            <button type="button" onClick={resetEntry} className="text-[10px] font-black uppercase tracking-[0.18em] text-[#C8A96E] underline-offset-4 hover:underline">
-              Back
-            </button>
-          </div>
+      <div className="mt-5 grid gap-3 lg:grid-cols-[1fr_1fr]" data-testid="entry-choice-panel">
+        <Link href="/register" className="group min-h-32 border border-[#C8A96E]/70 bg-[#C8A96E] p-4 text-left text-black transition hover:-translate-y-0.5 hover:shadow-[0_14px_40px_rgba(200,169,110,0.20)] focus:outline-none focus:ring-2 focus:ring-[#C8A96E] focus:ring-offset-2 focus:ring-offset-black">
+          <span className="block text-[10px] font-black uppercase tracking-[0.18em] text-black/60">New challenger</span>
+          <span className="mt-2 block text-3xl font-black uppercase tracking-[-0.06em]">Register</span>
+          <span className="mt-2 block text-xs font-black uppercase tracking-[0.12em] text-black/70">A focused page for the five setup questions.</span>
+        </Link>
 
-          <div className={entryMode === "register" ? "grid gap-2 sm:grid-cols-2" : "grid gap-2"}>
+        <form
+          className="border border-[#2A2A2A] bg-black p-4"
+          data-testid="login-flow-panel"
+          onSubmit={event => {
+            event.preventDefault();
+            haptics.submit();
+            siteLogin.mutate({ email, mode: "login" });
+          }}
+        >
+          <span className="block text-[10px] font-black uppercase tracking-[0.18em] text-[#777]">Returning member</span>
+          <span className="mt-2 block text-3xl font-black uppercase tracking-[-0.06em] text-white">Log in</span>
+          <div className="mt-4 grid gap-2 sm:grid-cols-[1fr_auto]">
             <input
               required
               type="email"
               value={email}
               onChange={event => setEmail(event.target.value)}
               placeholder="you@email.com"
-              className="min-h-12 border border-[#2A2A2A] bg-black px-4 text-sm font-bold text-white outline-none transition placeholder:text-[#555] focus:border-[#C8A96E]"
+              aria-label="Returning member email"
+              className="min-h-12 border border-[#2A2A2A] bg-[#0D0D0D] px-4 text-sm font-bold text-white outline-none transition placeholder:text-[#555] focus:border-[#C8A96E]"
             />
-            {entryMode === "register" && (
-              <input
-                required
-                type="text"
-                value={displayName}
-                onChange={event => setDisplayName(event.target.value)}
-                placeholder="Display name"
-                className="min-h-12 border border-[#2A2A2A] bg-black px-4 text-sm font-bold text-white outline-none transition placeholder:text-[#555] focus:border-[#C8A96E]"
-              />
-            )}
-          </div>
-
-          {entryMode === "register" && (
-            <div className="mt-4 grid gap-3" data-testid="registration-personalization">
-              <div className="grid gap-3 lg:grid-cols-2">
-                <label>
-                  <MicroLabel tone="gold">1. Main goal</MicroLabel>
-                  <input required value={personalization.primaryGoal} onChange={event => updatePersonalization("primaryGoal", event.target.value)} placeholder="What are you here to change?" className="mt-2 min-h-12 w-full border border-[#2A2A2A] bg-black px-4 text-sm font-bold text-white outline-none transition placeholder:text-[#555] focus:border-[#C8A96E]" />
-                </label>
-                <label>
-                  <MicroLabel tone="gold">2. Training level</MicroLabel>
-                  <select required value={personalization.trainingLevel} onChange={event => updatePersonalization("trainingLevel", event.target.value as PersonalizationForm["trainingLevel"])} className="mt-2 min-h-12 w-full border border-[#2A2A2A] bg-black px-4 text-sm font-bold text-white outline-none transition focus:border-[#C8A96E]">
-                    {trainingLevels.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-                  </select>
-                </label>
-              </div>
-              <label>
-                <MicroLabel tone="gold">3. Biggest obstacle</MicroLabel>
-                <textarea required value={personalization.biggestObstacle} onChange={event => updatePersonalization("biggestObstacle", event.target.value)} placeholder="What usually knocks you off track?" className="mt-2 min-h-20 w-full border border-[#2A2A2A] bg-black px-4 py-3 text-sm font-bold leading-6 text-white outline-none transition placeholder:text-[#555] focus:border-[#C8A96E]" />
-              </label>
-              <div className="grid gap-3 lg:grid-cols-2">
-                <label>
-                  <MicroLabel tone="gold">4. Warden style</MicroLabel>
-                  <select required value={personalization.motivationStyle} onChange={event => updatePersonalization("motivationStyle", event.target.value as PersonalizationForm["motivationStyle"])} className="mt-2 min-h-12 w-full border border-[#2A2A2A] bg-black px-4 text-sm font-bold text-white outline-none transition focus:border-[#C8A96E]">
-                    {motivationStyles.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-                  </select>
-                </label>
-                <label>
-                  <MicroLabel tone="gold">5. Support needed</MicroLabel>
-                  <input required value={personalization.supportNeeded} onChange={event => updatePersonalization("supportNeeded", event.target.value)} placeholder="What should the group/Warden know?" className="mt-2 min-h-12 w-full border border-[#2A2A2A] bg-black px-4 text-sm font-bold text-white outline-none transition placeholder:text-[#555] focus:border-[#C8A96E]" />
-                </label>
-              </div>
-            </div>
-          )}
-
-          <div className="mt-4 grid gap-2 sm:grid-cols-[1fr_auto] sm:items-center">
-            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#777]">
-              {entryMode === "register" ? "Register creates your challenger profile and saves your five answers." : "Log in reopens an existing challenger profile by email."}
-            </p>
-            <SharpButton type="submit" disabled={siteLogin.isPending} className="min-w-40">
-              {siteLogin.isPending ? "Opening" : entryMode === "register" ? "Complete registration" : "Log in"}
+            <SharpButton type="submit" disabled={siteLogin.isPending} className="min-w-28">
+              {siteLogin.isPending ? "Opening" : "Log in"}
             </SharpButton>
           </div>
-        </div>
-      )}
-    </form>
+          <p className="mt-3 text-[10px] font-black uppercase tracking-[0.16em] text-[#777]">Email only. No questionnaire for existing members.</p>
+        </form>
+      </div>
+    </section>
   );
 }
-
 const challengeStats = [
   ["DURATION", "50 Days"],
   ["LIVES", "4"],
@@ -479,10 +359,16 @@ function LandingSection({ marker, title, children }: { marker: string; title: st
 }
 
 function Landing() {
+  const moneyCards = [
+    ["ENTRY DEPOSIT", "£100", "Everyone puts in £100 before the challenge starts. This is held for the full 50 days."],
+    ["COST PER FAIL", "£25", "Every missed workout costs £25 from your deposit. Miss 4 workouts and your £100 is gone."],
+    ["IF YOU COMPLETE", "£100", "Finish all 50 days with at least one life remaining and your full £100 comes straight back."],
+  ] as const;
+
   return (
-    <main className="poster-grid min-h-screen overflow-hidden bg-[#0D0D0D] text-white">
-      <section className="container py-7 sm:py-8">
-        <nav className="flex flex-col items-start gap-5 border-b border-[#2A2A2A] pb-5 sm:flex-row sm:items-center sm:justify-between">
+    <main className="poster-grid min-h-screen bg-[#0D0D0D] text-white">
+      <section className="container py-5 sm:py-6">
+        <nav className="flex flex-col items-start gap-4 border-b border-[#2A2A2A] pb-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex min-w-0 items-center gap-3 sm:gap-4">
             <LogoMark />
             <div className="min-w-0">
@@ -495,126 +381,171 @@ function Landing() {
           </SharpButton>
         </nav>
 
-        <div className="grid gap-8 py-10 lg:grid-cols-[1.08fr_0.92fr] lg:items-start">
-          <div>
-            <MicroLabel tone="red">6+1 4 LIVES CHALLENGE</MicroLabel>
-            <h1 className="mt-5 max-w-5xl text-5xl font-black uppercase leading-[0.84] tracking-[-0.08em] sm:text-7xl lg:text-8xl">
-              4 Lives.
-            </h1>
-            <p className="mt-5 max-w-2xl text-xl font-black leading-8 text-white sm:text-2xl">50 days. Make it count. Remember you're not a civilian.</p>
-            <div className="mt-7 grid grid-cols-2 gap-2 sm:grid-cols-4">
-              {challengeStats.map(([label, value]) => (
-                <div key={label} className="border border-[#2A2A2A] bg-[#111] p-3">
-                  <MicroLabel tone="gold">{label}</MicroLabel>
-                  <p className="mt-2 text-2xl font-black uppercase text-white">{value}</p>
-                </div>
-              ))}
+        <div className="grid gap-4 py-6 xl:grid-cols-[minmax(0,1.05fr)_minmax(340px,0.95fr)] xl:items-stretch">
+          <section className="relative overflow-hidden border border-[#2A2A2A] bg-[#080808]/92 p-5 sm:p-6 lg:p-7">
+            <div className="absolute -right-8 -top-10 text-[11rem] font-black leading-none tracking-[-0.14em] text-white/[0.025] sm:text-[14rem]" aria-hidden="true">4</div>
+            <div className="relative z-10 flex h-full flex-col justify-between gap-6">
+              <div>
+                <MicroLabel tone="red">6+1 4 LIVES CHALLENGE</MicroLabel>
+                <h1 className="mt-4 max-w-3xl text-6xl font-black uppercase leading-[0.78] tracking-[-0.1em] sm:text-8xl lg:text-9xl">
+                  4<br />Lives.
+                </h1>
+                <p className="mt-5 max-w-2xl text-xl font-black leading-8 text-white sm:text-2xl">50 days. Make it count. Remember you're not a civilian.</p>
+                <p className="mt-5 max-w-3xl text-sm font-bold leading-6 text-[#BDBDBD] sm:text-base sm:leading-7">6+1. There are 7 days in a week and every single one is an opportunity to be better. Not just for you. For the people next to you. Better everyday. Better together. You have 50 days. Make it count.</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                {challengeStats.map(([label, value]) => (
+                  <div key={label} className="border border-[#2A2A2A] bg-[#111] p-3">
+                    <MicroLabel tone="gold">{label}</MicroLabel>
+                    <p className="mt-2 text-2xl font-black uppercase text-white">{value}</p>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="mt-5 border-l-4 border-[#C0392B] bg-[#130F0F] p-4">
+          </section>
+
+          <aside className="grid gap-4">
+            <SiteEntryPanel />
+            <section className="border-l-4 border-[#C0392B] bg-[#130F0F] p-4">
               <MicroLabel tone="red">Your Lives</MicroLabel>
               <p className="mt-2 text-base font-black leading-7 text-white">Miss a workout. Lose a life. Lose 4 lives and you're done.</p>
-            </div>
-            <p className="mt-6 max-w-3xl text-base font-bold leading-7 text-[#BDBDBD]">6+1. There are 7 days in a week and every single one is an opportunity to be better. Not just for you. For the people next to you. Better everyday. Better together. You have 50 days. Make it count.</p>
-            <SiteEntryPanel />
-          </div>
-
-          <div className="grid gap-4">
-            <LandingSection marker="00" title="What This Is">
-              <div className="space-y-4 text-sm font-bold leading-7 text-[#CFCFCF]">
+              <div className="mt-4 grid grid-cols-4 gap-1 bg-[#2A2A2A] p-[2px]" aria-hidden="true">
+                {Array.from({ length: 4 }).map((_, index) => <span key={index} className="h-7 bg-[#C0392B]" />)}
+              </div>
+            </section>
+            <section className="border border-[#2A2A2A] bg-[#101010]/88 p-4">
+              <div className="flex items-end justify-between gap-4 border-b border-[#2A2A2A] pb-3">
+                <div>
+                  <MicroLabel tone="gold">00 · What This Is</MicroLabel>
+                  <h2 className="mt-2 text-2xl font-black uppercase tracking-[-0.05em] text-white">Tested together.</h2>
+                </div>
+                <span className="text-4xl font-black text-[#C8A96E]/35">00</span>
+              </div>
+              <div className="mt-4 space-y-3 text-sm font-bold leading-6 text-[#CFCFCF]">
                 <p>The team only functions like a dream team when we are tested. We need to suffer together. That's what this challenge is about.</p>
                 <p>50 days of mashing work. Side by side. The Movers holding each other to the standard we talk about. Not just on runs. Not just at events. Every. Single. Day.</p>
                 <p>This challenge isn't for everyone. It's for the ones ready to mash work. The ones who understand that doing hard things is the price you pay to be the best version of yourself. Are you on it?</p>
               </div>
-              <div className="mt-4 border border-[#C8A96E]/50 bg-black p-4">
+              <div className="mt-4 border border-[#C8A96E]/50 bg-black p-3">
                 <MicroLabel tone="gold">Weekly Check In</MicroLabel>
                 <p className="mt-2 text-sm font-black leading-6 text-white">Every Sunday morning at 10:00am. Show up. Be honest. Move forward.</p>
-                <p className="mt-2 text-sm font-bold leading-6 text-[#BDBDBD]">Challenge each other to continue getting better.</p>
+                <p className="mt-1 text-xs font-bold leading-5 text-[#BDBDBD]">Challenge each other to continue getting better.</p>
               </div>
-            </LandingSection>
-          </div>
+            </section>
+          </aside>
         </div>
 
-        <div className="grid gap-5 pb-10">
-          <LandingSection marker="01" title="The Rules">
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-4 pb-8">
+          <section className="border border-[#2A2A2A] bg-[#101010]/88 p-4 sm:p-5">
+            <div className="flex flex-wrap items-end justify-between gap-4 border-b border-[#2A2A2A] pb-3">
+              <div>
+                <MicroLabel tone="gold">01 · The Rules</MicroLabel>
+                <h2 className="mt-2 text-3xl font-black uppercase tracking-[-0.06em] text-white">Six rules. One source of truth.</h2>
+              </div>
+              <p className="max-w-xs text-[10px] font-black uppercase tracking-[0.18em] text-[#777]">Compact by default. Tap open for the exact brief.</p>
+            </div>
+            <div className="mt-4 grid gap-2 md:grid-cols-2 xl:grid-cols-3">
               {landingRules.map(([number, icon, title, body, footer]) => (
-                <article key={number} className="border border-[#2A2A2A] bg-black p-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="text-3xl font-black text-[#C8A96E]">{number}</span>
-                    <span className="text-2xl" aria-hidden="true">{icon}</span>
-                  </div>
-                  <h3 className="mt-4 text-lg font-black uppercase tracking-[-0.04em] text-white">{title}</h3>
-                  <p className="mt-3 text-sm font-bold leading-6 text-[#BDBDBD]">{body}</p>
-                  <p className="mt-3 text-[10px] font-black uppercase tracking-[0.18em] text-[#C8A96E]">{footer}</p>
-                </article>
+                <details key={number} className="group border border-[#2A2A2A] bg-black p-4 open:border-[#C8A96E]/70">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-3">
+                    <span>
+                      <span className="poster-label text-[#C8A96E]">{number} · {footer}</span>
+                      <span className="mt-2 block text-lg font-black uppercase tracking-[-0.04em] text-white">{title}</span>
+                    </span>
+                    <span className="grid h-10 w-10 shrink-0 place-items-center border border-[#2A2A2A] text-xl" aria-hidden="true">{icon}</span>
+                  </summary>
+                  <p className="mt-3 border-t border-[#2A2A2A] pt-3 text-sm font-bold leading-6 text-[#BDBDBD]">{body}</p>
+                </details>
               ))}
             </div>
-          </LandingSection>
+          </section>
 
-          <LandingSection marker="02" title="Daily Checklist">
-            <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
-              {dailyChecklist.map(([title, detail]) => (
-                <div key={title} className="border border-[#2A2A2A] bg-black p-4">
-                  <p className="text-sm font-black uppercase tracking-[-0.03em] text-white">{title}</p>
-                  <p className="mt-2 text-xs font-bold text-[#BDBDBD]">{detail}</p>
+          <div className="grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
+            <section className="border border-[#2A2A2A] bg-[#101010]/88 p-4 sm:p-5">
+              <div className="flex items-end justify-between gap-4 border-b border-[#2A2A2A] pb-3">
+                <div>
+                  <MicroLabel tone="gold">02 · Daily Checklist</MicroLabel>
+                  <h2 className="mt-2 text-2xl font-black uppercase tracking-[-0.05em] text-white">What must be true today.</h2>
                 </div>
-              ))}
-            </div>
-          </LandingSection>
+                <span className="text-4xl font-black text-[#C8A96E]/35">02</span>
+              </div>
+              <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                {dailyChecklist.map(([title, detail]) => (
+                  <div key={title} className="border border-[#2A2A2A] bg-black p-3">
+                    <p className="text-sm font-black uppercase tracking-[-0.03em] text-white">{title}</p>
+                    <p className="mt-1 text-xs font-bold text-[#BDBDBD]">{detail}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
 
-          <div className="grid gap-5 lg:grid-cols-2">
-            <LandingSection marker="03" title="The Lives System">
-              <p className="text-sm font-bold leading-7 text-[#CFCFCF]">You start with 4 lives. The only way to lose a life is to miss your daily workout. Every life lost costs you £25. Lose all 4 and you're out.</p>
-              <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
-                {[ ["1", "STILL IN IT"], ["2", "STILL IN IT"], ["3", "LAST WARNING"], ["4", "GONE. DONE."] ].map(([number, label]) => (
+            <section className="border border-[#2A2A2A] bg-[#101010]/88 p-4 sm:p-5">
+              <div className="flex items-end justify-between gap-4 border-b border-[#2A2A2A] pb-3">
+                <div>
+                  <MicroLabel tone="red">03 · The Lives System / 04 · The Money</MicroLabel>
+                  <h2 className="mt-2 text-2xl font-black uppercase tracking-[-0.05em] text-white">The cost is visible.</h2>
+                </div>
+                <span className="text-4xl font-black text-[#C0392B]/35">03</span>
+              </div>
+              <p className="mt-4 text-sm font-bold leading-6 text-[#CFCFCF]">You start with 4 lives. The only way to lose a life is to miss your daily workout. Every life lost costs you £25. Lose all 4 and you're out.</p>
+              <div className="mt-4 grid grid-cols-4 gap-2">
+                {[["1", "STILL IN IT"], ["2", "STILL IN IT"], ["3", "LAST WARNING"], ["4", "GONE. DONE."]].map(([number, label]) => (
                   <div key={number} className="border border-[#2A2A2A] bg-black p-3">
                     <p className="text-2xl font-black text-[#C0392B]">{number}</p>
                     <p className="mt-2 text-[10px] font-black uppercase tracking-[0.16em] text-white">{label}</p>
                   </div>
                 ))}
               </div>
-            </LandingSection>
-
-            <LandingSection marker="04" title="The Money">
-              <div className="grid gap-3 sm:grid-cols-3">
-                {[ ["ENTRY DEPOSIT", "£100", "Everyone puts in £100 before the challenge starts. This is held for the full 50 days."], ["COST PER FAIL", "£25", "Every missed workout costs £25 from your deposit. Miss 4 workouts and your £100 is gone."], ["IF YOU COMPLETE", "£100", "Finish all 50 days with at least one life remaining and your full £100 comes straight back."] ].map(([label, amount, body]) => (
-                  <div key={label} className="border border-[#2A2A2A] bg-black p-4">
+              <div className="mt-4 grid gap-2 sm:grid-cols-3">
+                {moneyCards.map(([label, amount, body]) => (
+                  <div key={label} className="border border-[#2A2A2A] bg-black p-3">
                     <MicroLabel tone="gold">{label}</MicroLabel>
-                    <p className="mt-3 text-3xl font-black text-white">{amount}</p>
-                    <p className="mt-3 text-xs font-bold leading-5 text-[#BDBDBD]">{body}</p>
+                    <p className="mt-2 text-2xl font-black text-white">{amount}</p>
+                    <p className="mt-2 text-xs font-bold leading-5 text-[#BDBDBD]">{body}</p>
                   </div>
                 ))}
               </div>
-            </LandingSection>
+            </section>
           </div>
 
-          <LandingSection marker="05" title="The Journey">
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-              {journeySteps.map(([day, title, detail]) => (
-                <article key={day} className="border border-[#2A2A2A] bg-black p-4">
-                  <MicroLabel tone="gold">{day}</MicroLabel>
-                  <h3 className="mt-3 text-base font-black uppercase tracking-[-0.03em] text-white">{title}</h3>
-                  <p className="mt-2 text-sm font-bold leading-6 text-[#BDBDBD]">{detail}</p>
-                </article>
-              ))}
+          <section className="border border-[#2A2A2A] bg-[#101010]/88 p-4 sm:p-5">
+            <div className="flex flex-wrap items-end justify-between gap-4 border-b border-[#2A2A2A] pb-3">
+              <div>
+                <MicroLabel tone="gold">05 · The Journey / The Movers</MicroLabel>
+                <h2 className="mt-2 text-3xl font-black uppercase tracking-[-0.06em] text-white">From day one to the finish line.</h2>
+              </div>
+              <p className="max-w-sm text-[10px] font-black uppercase tracking-[0.18em] text-[#777]">Timeline and standards stay on one compact board.</p>
             </div>
-          </LandingSection>
-
-          <LandingSection marker="6+1" title="The Movers">
-            <MicroLabel tone="gold">Rules for the Movers</MicroLabel>
-            <p className="mt-3 text-sm font-bold leading-7 text-[#CFCFCF]">These aren't challenge rules. These are the principles and standards we should live by. You're not a civilian.</p>
-            <div className="mt-4 grid gap-2 md:grid-cols-2 xl:grid-cols-3">
-              {moverPrinciples.map((principle, index) => (
-                <div key={principle} className="grid grid-cols-[3rem_1fr] border border-[#2A2A2A] bg-black">
-                  <div className="grid place-items-center border-r border-[#2A2A2A] text-sm font-black text-[#C8A96E]">{String(index + 1).padStart(2, "0")}</div>
-                  <p className="p-3 text-sm font-bold leading-6 text-white">{principle}</p>
+            <div className="mt-4 grid gap-3 xl:grid-cols-[1.05fr_0.95fr]">
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-2">
+                {journeySteps.map(([day, title, detail]) => (
+                  <article key={day} className="border border-[#2A2A2A] bg-black p-3">
+                    <MicroLabel tone="gold">{day}</MicroLabel>
+                    <h3 className="mt-2 text-sm font-black uppercase tracking-[-0.03em] text-white">{title}</h3>
+                    <p className="mt-2 text-xs font-bold leading-5 text-[#BDBDBD]">{detail}</p>
+                  </article>
+                ))}
+              </div>
+              <details className="border border-[#2A2A2A] bg-black p-4 open:border-[#C8A96E]/70" open>
+                <summary className="cursor-pointer list-none">
+                  <MicroLabel tone="gold">The Movers · Rules for the Movers</MicroLabel>
+                  <p className="mt-2 text-sm font-bold leading-6 text-[#CFCFCF]">These aren't challenge rules. These are the principles and standards we should live by. You're not a civilian.</p>
+                </summary>
+                <div className="mt-3 grid max-h-80 gap-2 overflow-auto pr-1 sm:grid-cols-2">
+                  {moverPrinciples.map((principle, index) => (
+                    <div key={principle} className="grid grid-cols-[2.5rem_1fr] border border-[#2A2A2A] bg-[#080808]">
+                      <div className="grid place-items-center border-r border-[#2A2A2A] text-xs font-black text-[#C8A96E]">{String(index + 1).padStart(2, "0")}</div>
+                      <p className="p-2 text-xs font-bold leading-5 text-white">{principle}</p>
+                    </div>
+                  ))}
                 </div>
-              ))}
+                <p className="mt-4 text-sm font-black uppercase tracking-[-0.03em] text-white">Better everyday. Better together. This is what that looks like in practice.</p>
+                <p className="mt-1 text-2xl font-black uppercase text-[#C8A96E]">6+1</p>
+                <p className="text-xs font-black uppercase tracking-[0.2em] text-white">4 LIVES CHALLENGE</p>
+              </details>
             </div>
-            <p className="mt-5 text-base font-black uppercase tracking-[-0.03em] text-white">Better everyday. Better together. This is what that looks like in practice.</p>
-            <p className="mt-2 text-2xl font-black uppercase text-[#C8A96E]">6+1</p>
-            <p className="text-sm font-black uppercase tracking-[0.2em] text-white">4 LIVES CHALLENGE</p>
-          </LandingSection>
+          </section>
         </div>
       </section>
     </main>
@@ -819,7 +750,7 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
 
         <div className={classNames("submit-dock sticky bottom-[74px] z-20 border border-[#2A2A2A] bg-[#0D0D0D]/95 p-3 backdrop-blur transition-all duration-300 md:static md:bg-transparent md:p-0", submit.isPending && "submit-dock-pending", allAddressed && !submit.isPending && "submit-dock-ready")}>
           <SharpButton className={classNames("w-full py-5 text-sm transition-all duration-300", submit.isPending && "submit-button-pending")} disabled={!allAddressed || submit.isPending} onClick={() => submit.mutate({ ...form, dayNumber: snapshot?.challenge.currentDay ?? 1 })}>
-            {submit.isPending ? "Submitting the log" : allAddressed ? "Submit today" : `Address ${6 - completedRules} more`}
+            {submit.isPending ? "Submitting the log" : allAddressed ? `Submit day ${snapshot?.challenge.currentDay ?? 1}` : `Address ${6 - completedRules} more`}
           </SharpButton>
           {lastMissed.length > 0 && <div className="mt-3 border-l-4 border-[#C0392B] bg-[#180F0F] p-4 text-sm font-bold text-[#F0B7AE]">Missed: {lastMissed.join(", ")}. Penalty logged.</div>}
         </div>
@@ -848,6 +779,12 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
 function Overview({ snapshot }: { snapshot: Snapshot }) {
   const participants = snapshot?.participants ?? [];
   const logs = snapshot?.logs ?? [];
+  const calendar = snapshot?.challenge?.calendar ?? [];
+  const trackedDays = calendar.map((day: any) => {
+    const dayLogs = logs.filter((log: any) => log.dayNumber === day.dayNumber);
+    const completed = dayLogs.filter((log: any) => log.dayComplete).length;
+    return { ...day, logged: dayLogs.length, completed, missing: Math.max(participants.length - dayLogs.length, 0) };
+  });
   const chartData = useMemo(() => {
     const dayCount = Math.max(snapshot?.challenge?.currentDay ?? 1, 10);
     return Array.from({ length: dayCount }, (_, index) => {
@@ -1069,10 +1006,9 @@ function OnboardingGate({ user, refetch }: { user: any; refetch: () => void }) {
   const [primaryGoal, setPrimaryGoal] = useState("");
   const [biggestObstacle, setBiggestObstacle] = useState("");
   const [trainingLevel, setTrainingLevel] = useState("building");
-  const [motivationStyle, setMotivationStyle] = useState("direct");
   const [profilePhotoDataUrl, setProfilePhotoDataUrl] = useState<string | undefined>();
   const complete = trpc.challenge.completeOnboarding.useMutation({
-    onSuccess: () => { haptics.success(); toast("Profile personalised. Welcome into the challenge."); refetch(); },
+    onSuccess: () => { haptics.success(); toast("Profile saved. Welcome into the challenge."); refetch(); },
     onError: error => { haptics.warning(); toast(error.message || "Could not complete onboarding."); },
   });
 
@@ -1092,13 +1028,13 @@ function OnboardingGate({ user, refetch }: { user: any; refetch: () => void }) {
           <LogoMark />
           <div>
             <MicroLabel tone="gold">6+1 entry gate</MicroLabel>
-            <p className="mt-1 text-xs font-black uppercase tracking-[0.18em] text-white">New email found. Personalise the challenge first.</p>
+            <p className="mt-1 text-xs font-black uppercase tracking-[0.18em] text-white">New email found. Set your profile first.</p>
           </div>
         </div>
-        <form className="mx-auto max-w-3xl border border-[#2A2A2A] bg-[#101010] p-5 shadow-[0_22px_90px_rgba(0,0,0,0.38)]" onSubmit={event => { event.preventDefault(); haptics.submit(); complete.mutate({ displayName, primaryGoal, biggestObstacle, trainingLevel: trainingLevel as any, motivationStyle: motivationStyle as any, profilePhotoDataUrl }); }}>
+        <form className="mx-auto max-w-3xl border border-[#2A2A2A] bg-[#101010] p-5 shadow-[0_22px_90px_rgba(0,0,0,0.38)]" onSubmit={event => { event.preventDefault(); haptics.submit(); complete.mutate({ displayName, primaryGoal, biggestObstacle, trainingLevel: trainingLevel as any, motivationStyle: "adaptive", profilePhotoDataUrl }); }}>
           <MicroLabel tone="red">Unknown email</MicroLabel>
           <h1 className="mt-3 text-5xl font-black uppercase leading-none tracking-[-0.08em] text-white">Make it yours.</h1>
-          <p className="mt-4 text-sm font-bold leading-6 text-[#999]">{user?.email ?? "This account"} is signed in, but it is not yet recognised in the 6+1 platform. Answer the quick setup and the app will open with your profile, goal, and photo.</p>
+          <p className="mt-4 text-sm font-bold leading-6 text-[#999]">{user?.email ?? "This account"} is signed in, but it is not yet recognised in the 6+1 platform. Answer the quick setup and the app will open with your profile, goal, and photo. The Warden adapts from your app activity and group-chat signals rather than a selected style.</p>
           <div className="mt-6 grid gap-4 md:grid-cols-[160px_1fr]">
             <label className="grid min-h-40 cursor-pointer place-items-center border border-dashed border-[#C8A96E]/70 bg-black/40 p-4 text-center text-[#C8A96E] transition hover:bg-[#17120A]">
               {profilePhotoDataUrl ? <img src={profilePhotoDataUrl} alt="Profile preview" className="h-28 w-28 object-cover" /> : <span className="flex flex-col items-center gap-2 text-[10px] font-black uppercase tracking-[0.16em]"><Camera className="h-6 w-6" />Upload photo</span>}
@@ -1109,12 +1045,15 @@ function OnboardingGate({ user, refetch }: { user: any; refetch: () => void }) {
               <Field label="Main goal"><TextInput value={primaryGoal} onChange={event => setPrimaryGoal(event.target.value)} placeholder="Lose weight, rebuild discipline, build fitness..." /></Field>
             </div>
           </div>
-          <div className="mt-4 grid gap-3 md:grid-cols-2">
+          <div className="mt-4 grid gap-3">
             <Field label="Training level"><select value={trainingLevel} onChange={event => setTrainingLevel(event.target.value)} className="min-h-12 w-full border border-[#2A2A2A] bg-black px-4 text-sm font-bold text-white outline-none focus:border-[#C8A96E]"><option value="starting">Starting again</option><option value="building">Building consistency</option><option value="consistent">Already consistent</option><option value="advanced">Advanced</option></select></Field>
-            <Field label="Motivation style"><select value={motivationStyle} onChange={event => setMotivationStyle(event.target.value)} className="min-h-12 w-full border border-[#2A2A2A] bg-black px-4 text-sm font-bold text-white outline-none focus:border-[#C8A96E]"><option value="direct">Direct pressure</option><option value="supportive">Supportive nudge</option><option value="competitive">Leaderboard chase</option><option value="quiet">Quiet accountability</option></select></Field>
+            <div className="border border-[#2A2A2A] bg-black p-4">
+              <MicroLabel tone="gold">Universal Warden</MicroLabel>
+              <p className="mt-2 text-sm font-bold leading-6 text-[#AFAFAF]">There is no Warden type to pick. The Warden reads your logs, consistency, misses, wins, and group-chat signals, then adapts its feedback from the data.</p>
+            </div>
           </div>
           <Field label="What usually gets in the way?"><TextArea value={biggestObstacle} onChange={event => setBiggestObstacle(event.target.value)} placeholder="Time, weekends, travel, stress, motivation dips..." /></Field>
-          <SharpButton type="submit" disabled={complete.isPending} className="mt-5 w-full">{complete.isPending ? "Personalising" : "Enter personalised challenge"}</SharpButton>
+          <SharpButton type="submit" disabled={complete.isPending} className="mt-5 w-full">{complete.isPending ? "Personalising" : "Enter challenge"}</SharpButton>
         </form>
       </section>
     </main>
@@ -1187,7 +1126,7 @@ function AdminPanel({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => 
                   {request.displayName && <p className="mt-3 text-sm font-black uppercase text-[#C8A96E]">{request.displayName}</p>}
                   {request.primaryGoal && <p className="mt-2 text-sm font-bold text-[#D8D8D8]">Goal: {request.primaryGoal}</p>}
                   {request.biggestObstacle && <p className="mt-2 text-xs font-bold leading-5 text-[#999]">Obstacle: {request.biggestObstacle}</p>}
-                  {(request.trainingLevel || request.motivationStyle) && <p className="mt-2 text-[10px] font-black uppercase tracking-[0.16em] text-[#777]">{request.trainingLevel} · {request.motivationStyle}</p>}
+                  {request.trainingLevel && <p className="mt-2 text-[10px] font-black uppercase tracking-[0.16em] text-[#777]">{request.trainingLevel} · universal adaptive Warden</p>}
                 </div>
                 <span className={classNames("border px-3 py-1 text-[9px] font-black uppercase tracking-[0.18em]", request.status === "approved" ? "border-[#2ECC71] text-[#2ECC71]" : request.status === "rejected" ? "border-[#C0392B] text-[#C0392B]" : "border-[#C8A96E] text-[#C8A96E]")}>{request.status}</span>
               </div>
