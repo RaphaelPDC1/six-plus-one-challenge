@@ -61,7 +61,7 @@ const RED = "#C0392B";
 const GREEN = "#2ECC71";
 const PURPLE = "#9B59B6";
 const chartColors = [GOLD, RED, GREEN, PURPLE, "#4CA3C9", "#E67E22", "#F1C40F", "#ECF0F1"];
-const BRAND_LOGO_URL = "/manus-storage/six-plus-one-brand-logo-visible_52856d30.webp";
+const BRAND_LOGO_URL = "/manus-storage/six-plus-one-brand-logo-white-strong_2949fb51.webp";
 
 const emptyDay: MyDayForm = {
   noAlcohol: true,
@@ -92,7 +92,9 @@ function hapticFallback(pattern: number | number[] = 18) {
 function AnimatedLoadPage({ label = "Loading the challenge" }: { label?: string }) {
   return (
     <div className="poster-grid animated-load-page grid min-h-screen place-items-center overflow-hidden bg-black text-white">
-      <div className="load-mark" aria-hidden="true">6+1</div>
+      <div className="load-mark load-mark-image" aria-hidden="true">
+        <img src={BRAND_LOGO_URL} alt="" />
+      </div>
       <div className="load-lines" aria-hidden="true" />
       <div className="relative z-10 border border-[#191919] bg-black/62 px-6 py-5 text-center backdrop-blur-sm">
         <p className="poster-label text-[#211832]">Four Lives Challenge</p>
@@ -196,7 +198,7 @@ function WardenPresence({ snapshot }: { snapshot: Snapshot }) {
 export function LogoMark({ compact = false }: { compact?: boolean }) {
   return (
     <span className={classNames("flex shrink-0 items-center justify-center overflow-hidden bg-black", compact ? "h-12 w-36 sm:w-44" : "h-16 w-48 sm:w-56")}>
-      <img src={BRAND_LOGO_URL} alt="6+1 Four Lives Challenge logo" data-testid="brand-logo" className="h-full w-full object-contain drop-shadow-[0_0_18px_rgba(155,89,182,0.45)]" />
+      <img src={BRAND_LOGO_URL} alt="6+1 Four Lives Challenge logo" data-testid="brand-logo" className="h-full w-full object-contain drop-shadow-[0_0_18px_rgba(255,255,255,0.22)]" />
     </span>
   );
 }

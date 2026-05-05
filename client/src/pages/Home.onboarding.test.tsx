@@ -88,7 +88,7 @@ describe("Home onboarding shell", () => {
   it("renders the uploaded brand image in the reusable logo mark instead of text-only 6+1 lettering", () => {
     const markup = renderToStaticMarkup(<LogoMark compact />);
 
-    expect(markup).toContain("/manus-storage/six-plus-one-brand-logo-visible_52856d30.webp");
+    expect(markup).toContain("/manus-storage/six-plus-one-brand-logo-white-strong_2949fb51.webp");
     expect(markup).toContain("alt=\"6+1 Four Lives Challenge logo\"");
     expect(markup).toContain("data-testid=\"brand-logo\"");
     expect(markup).not.toContain(">6+1</");
@@ -98,9 +98,34 @@ describe("Home onboarding shell", () => {
     const markup = renderToStaticMarkup(<Home />);
 
     expect(markup).toContain("sticky top-0");
-    expect(markup).toContain("/manus-storage/six-plus-one-brand-logo-visible_52856d30.webp");
+    expect(markup).toContain("/manus-storage/six-plus-one-brand-logo-white-strong_2949fb51.webp");
     expect(markup).toContain("data-testid=\"brand-logo\"");
     expect(markup).toContain("Four Lives Challenge");
+  });
+
+  it("renders the public landing page with the white uploaded logo", () => {
+    mockState.auth.isAuthenticated = false;
+    mockState.snapshotQuery.isLoading = false;
+
+    const markup = renderToStaticMarkup(<Home />);
+
+    expect(markup).toContain("50 days. 4 lives. No hiding.");
+    expect(markup).toContain("/manus-storage/six-plus-one-brand-logo-white-strong_2949fb51.webp");
+    expect(markup).toContain("data-testid=\"brand-logo\"");
+  });
+
+  it("renders the animated landing/loading page with the white uploaded logo image instead of blue text", () => {
+    if (typeof window !== "undefined") {
+      window.sessionStorage.removeItem("sixone-entry-seen");
+    }
+    mockState.auth.loading = true;
+
+    const markup = renderToStaticMarkup(<Home />);
+
+    expect(markup).toContain("animated-load-page");
+    expect(markup).toContain("load-mark-image");
+    expect(markup).toContain("/manus-storage/six-plus-one-brand-logo-white-strong_2949fb51.webp");
+    expect(markup).not.toContain(">6+1</");
   });
 
   it("renders the real unknown-email questionnaire gate from mocked app state", () => {
@@ -112,6 +137,6 @@ describe("Home onboarding shell", () => {
     expect(markup).toContain("Unknown email");
     expect(markup).toContain("Personalise the challenge first");
     expect(markup).toContain("new@example.com");
-    expect(markup).toContain("/manus-storage/six-plus-one-brand-logo-visible_52856d30.webp");
+    expect(markup).toContain("/manus-storage/six-plus-one-brand-logo-white-strong_2949fb51.webp");
   });
 });

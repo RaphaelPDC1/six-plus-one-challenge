@@ -252,6 +252,25 @@
   z-index: -1;
 }
 
+.load-mark-image {
+  width: clamp(20rem, 52vw, 58rem);
+  max-width: min(82vw, 58rem);
+  aspect-ratio: 1 / 1;
+  color: transparent;
+  letter-spacing: normal;
+}
+
+.load-mark-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  opacity: 0.9;
+  filter:
+    drop-shadow(0 0 24px rgba(255, 255, 255, 0.14))
+    drop-shadow(0 0 92px rgba(200, 169, 110, 0.12))
+    drop-shadow(0 0 180px rgba(0, 0, 0, 0.82));
+}
+
 .load-mark::after {
   content: "";
   position: absolute;

@@ -106,3 +106,11 @@
 - [x] Save a named checkpoint after the real-logo and runtime-test refinement is complete
 - [x] Improve the real uploaded header logo visibility against the dark app chrome without replacing the brand artwork
 
+
+## Refinement Pass (v4.2) — White Brand Logo Correction
+- [x] Convert the real uploaded top-corner brand logo treatment from blue/purple to white while preserving the original 6+1 artwork shape
+- [x] Upload/store the white logo through the approved web project static-asset workflow and reference the returned URL in code
+- [x] Update header and onboarding logo runtime tests to verify the white-logo storage asset
+- [x] Run full TypeScript, test, build, and preview validation after the white-logo update
+- [x] Save a named checkpoint after the v4.2 white-logo correction
+- [x] Apply the white logo treatment to the landing/loading page as well as the in-app top-corner header logo
