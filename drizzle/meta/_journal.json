@@ -1,5 +1,27 @@
 {
   "version": "7",
   "dialect": "mysql",
-  "entries": []
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1778002387202,
+      "tag": "0000_nervous_captain_britain",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1778002917692,
+      "tag": "0001_same_roughhouse",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1778003650733,
+      "tag": "0002_hot_zodiak",
+      "breakpoints": true
+    }
+  ]
 }

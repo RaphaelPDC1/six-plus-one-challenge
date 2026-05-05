@@ -1,11 +1,24 @@
-import { eq } from "drizzle-orm";
+import { and, desc, eq, gte } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
-import { ENV } from './_core/env';
+import {
+  dailyLogs,
+  InsertUser,
+  participants,
+  paymentEvents,
+  redemptionRequests,
+  rewardCatalogue,
+  users,
+  wardenMessages,
+  whatsappChatHistory,
+} from "../drizzle/schema";
+import { applyLifeLoss, calculateDailyPoints, canEarnGhostLife, canSendWardenMessage, getMissedRules, isDayComplete } from "./challengeLogic";
+import { ENV } from "./_core/env";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
-// Lazily create the drizzle instance so local tooling can run without a DB.
+export const CHALLENGE_START_DATE = "2026-05-06";
+export const DEFAULT_MONZO_PAYMENT_LINK = "https://monzo.me/6plus1challenge/25";
+
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
@@ -19,74 +32,305 @@ export async function getDb() {
 }
 
 export async function upsertUser(user: InsertUser): Promise<void> {
-  if (!user.openId) {
-    throw new Error("User openId is required for upsert");
-  }
-
+  if (!user.openId) throw new Error("User openId is required for upsert");
   const db = await getDb();
-  if (!db) {
-    console.warn("[Database] Cannot upsert user: database not available");
-    return;
-  }
+  if (!db) return;
 
-  try {
-    const values: InsertUser = {
-      openId: user.openId,
-    };
-    const updateSet: Record<string, unknown> = {};
-
-    const textFields = ["name", "email", "loginMethod"] as const;
-    type TextField = (typeof textFields)[number];
-
-    const assignNullable = (field: TextField) => {
-      const value = user[field];
-      if (value === undefined) return;
-      const normalized = value ?? null;
+  const values: InsertUser = { openId: user.openId };
+  const updateSet: Record<string, unknown> = {};
+  (["name", "email", "loginMethod"] as const).forEach(field => {
+    if (user[field] !== undefined) {
+      const normalized = user[field] ?? null;
       values[field] = normalized;
       updateSet[field] = normalized;
-    };
-
-    textFields.forEach(assignNullable);
-
-    if (user.lastSignedIn !== undefined) {
-      values.lastSignedIn = user.lastSignedIn;
-      updateSet.lastSignedIn = user.lastSignedIn;
     }
-    if (user.role !== undefined) {
-      values.role = user.role;
-      updateSet.role = user.role;
-    } else if (user.openId === ENV.ownerOpenId) {
-      values.role = 'admin';
-      updateSet.role = 'admin';
-    }
+  });
 
-    if (!values.lastSignedIn) {
-      values.lastSignedIn = new Date();
-    }
-
-    if (Object.keys(updateSet).length === 0) {
-      updateSet.lastSignedIn = new Date();
-    }
-
-    await db.insert(users).values(values).onDuplicateKeyUpdate({
-      set: updateSet,
-    });
-  } catch (error) {
-    console.error("[Database] Failed to upsert user:", error);
-    throw error;
+  values.lastSignedIn = user.lastSignedIn ?? new Date();
+  updateSet.lastSignedIn = values.lastSignedIn;
+  if (user.role !== undefined) {
+    values.role = user.role;
+    updateSet.role = user.role;
+  } else if (user.openId === ENV.ownerOpenId) {
+    values.role = "admin";
+    updateSet.role = "admin";
   }
+
+  await db.insert(users).values(values).onDuplicateKeyUpdate({ set: updateSet });
 }
 
 export async function getUserByOpenId(openId: string) {
   const db = await getDb();
-  if (!db) {
-    console.warn("[Database] Cannot get user: database not available");
-    return undefined;
-  }
-
+  if (!db) return undefined;
   const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
-
-  return result.length > 0 ? result[0] : undefined;
+  return result[0];
 }
 
-// TODO: add feature queries here as your schema grows.
+function initials(name?: string | null) {
+  const safe = name?.trim() || "Mover";
+  return safe
+    .split(/\s+/)
+    .slice(0, 2)
+    .map(part => part[0]?.toUpperCase() ?? "")
+    .join("") || "M";
+}
+
+export function getCurrentChallengeDay(now = new Date()) {
+  const start = new Date(`${CHALLENGE_START_DATE}T00:00:00Z`);
+  const diff = Math.floor((now.getTime() - start.getTime()) / 86_400_000) + 1;
+  return Math.min(50, Math.max(1, diff));
+}
+
+export async function getOrCreateParticipant(user: { id: number; name: string | null; email: string | null }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  const existing = await db.select().from(participants).where(eq(participants.userId, user.id)).limit(1);
+  if (existing[0]) return existing[0];
+
+  await db.insert(participants).values({
+    userId: user.id,
+    displayName: user.name || user.email || `Participant ${user.id}`,
+    avatarInitials: initials(user.name || user.email),
+    monzoPaymentLink: DEFAULT_MONZO_PAYMENT_LINK,
+  });
+
+  const created = await db.select().from(participants).where(eq(participants.userId, user.id)).limit(1);
+  return created[0];
+}
+
+export async function getParticipantByUserId(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  const participant = await db.select().from(participants).where(eq(participants.userId, userId)).limit(1);
+  return participant[0];
+}
+
+export async function updateParticipantProfile(userId: number, input: { displayName: string; whatsappName?: string; monzoPaymentLink?: string }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  const participant = await getOrCreateParticipant({ id: userId, name: input.displayName, email: null });
+  await db.update(participants).set({
+    displayName: input.displayName,
+    avatarInitials: initials(input.displayName),
+    whatsappName: input.whatsappName || null,
+    monzoPaymentLink: input.monzoPaymentLink || DEFAULT_MONZO_PAYMENT_LINK,
+  }).where(eq(participants.id, participant.id));
+  return getParticipantByUserId(userId);
+}
+
+export async function getTodayLog(participantId: number, dayNumber = getCurrentChallengeDay()) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  const rows = await db.select().from(dailyLogs).where(and(eq(dailyLogs.participantId, participantId), eq(dailyLogs.dayNumber, dayNumber))).limit(1);
+  return rows[0];
+}
+
+export async function submitDailyLog(participantId: number, input: {
+  dayNumber: number;
+  noAlcohol: boolean;
+  cleanEating: boolean;
+  cleanEatingNote?: string;
+  exerciseDuration: number;
+  exerciseType: string;
+  exerciseProofUrl: string;
+  reflectionText: string;
+  reflectionShared: boolean;
+  readTeachText: string;
+  trackedEverything: boolean;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  const submittedAt = new Date();
+  const logDate = new Date(`${submittedAt.toISOString().slice(0, 10)}T00:00:00Z`);
+  const exerciseDone = input.exerciseDuration >= 30 && input.exerciseProofUrl.trim().length > 0;
+  const reflectionDone = input.reflectionText.trim().length > 0;
+  const readTeachDone = input.readTeachText.trim().length >= 30;
+  const complete = isDayComplete({
+    noAlcohol: input.noAlcohol,
+    cleanEating: input.cleanEating,
+    exerciseDone,
+    reflectionDone,
+    readTeachDone,
+    trackedEverything: input.trackedEverything,
+    submittedAt,
+  });
+  const pointsAwarded = calculateDailyPoints(input.dayNumber, complete);
+
+  const existing = await getTodayLog(participantId, input.dayNumber);
+  const values = {
+    participantId,
+    dayNumber: input.dayNumber,
+    logDate,
+    noAlcohol: input.noAlcohol,
+    cleanEating: input.cleanEating,
+    cleanEatingNote: input.cleanEatingNote || null,
+    exerciseDone,
+    exerciseDuration: input.exerciseDuration,
+    exerciseType: input.exerciseType,
+    exerciseProofUrl: input.exerciseProofUrl,
+    reflectionDone,
+    reflectionText: input.reflectionText,
+    reflectionShared: input.reflectionShared,
+    readTeachDone,
+    readTeachText: input.readTeachText,
+    trackedEverything: input.trackedEverything,
+    dayComplete: complete,
+    pointsAwarded,
+    submittedAt,
+  };
+
+  if (existing) {
+    await db.update(dailyLogs).set(values).where(eq(dailyLogs.id, existing.id));
+  } else {
+    await db.insert(dailyLogs).values(values);
+  }
+
+  if (complete) {
+    const participant = await db.select().from(participants).where(eq(participants.id, participantId)).limit(1);
+    const current = participant[0];
+    const newStreak = (current?.currentStreak ?? 0) + 1;
+    await db.update(participants).set({
+      currentStreak: newStreak,
+      longestStreak: Math.max(current?.longestStreak ?? 0, newStreak),
+      totalPoints: (current?.totalPoints ?? 0) + pointsAwarded,
+      daysComplete: (current?.daysComplete ?? 0) + 1,
+    }).where(eq(participants.id, participantId));
+  }
+
+  const missedRules = getMissedRules({
+    noAlcohol: input.noAlcohol,
+    cleanEating: input.cleanEating,
+    exerciseDone,
+    reflectionDone,
+    readTeachDone,
+    trackedEverything: input.trackedEverything,
+  });
+
+  return { complete, pointsAwarded, missedRules, log: await getTodayLog(participantId, input.dayNumber) };
+}
+
+export async function triggerLifeLoss(participantId: number, reason: string, dailyLogId?: number | null) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  const row = (await db.select().from(participants).where(eq(participants.id, participantId)).limit(1))[0];
+  if (!row) throw new Error("Participant not found");
+  const newLives = applyLifeLoss(row.livesRemaining);
+  await db.update(participants).set({ livesRemaining: newLives, currentStreak: 0 }).where(eq(participants.id, participantId));
+  await db.insert(paymentEvents).values({
+    participantId,
+    dailyLogId: dailyLogId ?? null,
+    amountPence: 2500,
+    paymentLink: row.monzoPaymentLink || DEFAULT_MONZO_PAYMENT_LINK,
+    reason,
+    status: "pending",
+  });
+  await db.insert(wardenMessages).values({
+    mode: "surveillance",
+    sourceEvent: "life_lost",
+    postedToWhatsapp: false,
+    content: `${row.displayName} has lost a life. £25 Monzo payment request: ${row.monzoPaymentLink || DEFAULT_MONZO_PAYMENT_LINK}`,
+  });
+  return { livesRemaining: newLives };
+}
+
+export async function tryApplyGhostLife(participantId: number, exerciseDuration: number, insightCount: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  const participant = (await db.select().from(participants).where(eq(participants.id, participantId)).limit(1))[0];
+  if (!participant) throw new Error("Participant not found");
+  if (!canEarnGhostLife({ ghostLifeUsed: participant.ghostLifeUsed, livesRemaining: participant.livesRemaining, exerciseDuration, insightCount })) {
+    return { applied: false, livesRemaining: participant.livesRemaining };
+  }
+  const livesRemaining = Math.min(4, participant.livesRemaining + 1);
+  await db.update(participants).set({ ghostLifeUsed: true, livesRemaining }).where(eq(participants.id, participantId));
+  return { applied: true, livesRemaining };
+}
+
+export async function getAppSnapshot(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  const participant = await getOrCreateParticipant({ id: userId, name: null, email: null });
+  await seedRewardsIfEmpty();
+  const [allParticipants, allLogs, rewards, payments, redemptions, warden, chat] = await Promise.all([
+    db.select().from(participants),
+    db.select().from(dailyLogs).orderBy(desc(dailyLogs.createdAt)).limit(250),
+    db.select().from(rewardCatalogue).where(eq(rewardCatalogue.active, true)),
+    db.select().from(paymentEvents).orderBy(desc(paymentEvents.createdAt)).limit(100),
+    db.select().from(redemptionRequests).orderBy(desc(redemptionRequests.createdAt)).limit(100),
+    db.select().from(wardenMessages).orderBy(desc(wardenMessages.createdAt)).limit(50),
+    db.select().from(whatsappChatHistory).orderBy(desc(whatsappChatHistory.createdAt)).limit(50),
+  ]);
+  const myLog = await getTodayLog(participant.id);
+  return {
+    challenge: { currentDay: getCurrentChallengeDay(), totalDays: 50, monzoPaymentLink: DEFAULT_MONZO_PAYMENT_LINK },
+    participant,
+    myLog,
+    participants: allParticipants,
+    logs: allLogs,
+    rewards,
+    payments,
+    redemptions,
+    wardenMessages: warden,
+    chatHistory: chat,
+  };
+}
+
+export async function seedRewardsIfEmpty() {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  const existing = await db.select().from(rewardCatalogue).limit(1);
+  if (existing.length) return;
+  await db.insert(rewardCatalogue).values([
+    { name: "Pure Sport Bottle", description: "A practical reward for consistency at the early checkpoint.", pointsCost: 60 },
+    { name: "Pure Sport Tee", description: "Visible social proof for participants building a streak.", pointsCost: 140 },
+    { name: "Pure Sport Supplement Pack", description: "Recovery-focused reward for sustained challenge execution.", pointsCost: 260 },
+    { name: "Founder Choice Bundle", description: "Manual founder-approved bundle for the strongest finishers.", pointsCost: 520 },
+  ]);
+}
+
+export async function createRedemption(participantId: number, input: { rewardId: number; deliveryName: string; deliveryAddress: string; checkpointEarned: string }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  await db.insert(redemptionRequests).values({ participantId, ...input, status: "pending" });
+  return true;
+}
+
+export async function markPaymentReceived(paymentId: number, founderUserId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  await db.update(paymentEvents).set({ status: "received", confirmedByUserId: founderUserId, confirmedAt: new Date() }).where(eq(paymentEvents.id, paymentId));
+  return true;
+}
+
+export async function markRedemptionFulfilled(redemptionId: number, founderUserId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  await db.update(redemptionRequests).set({ status: "fulfilled", fulfilledByUserId: founderUserId, fulfilledAt: new Date() }).where(eq(redemptionRequests.id, redemptionId));
+  return true;
+}
+
+export async function captureWhatsAppMessage(input: { senderId: string; senderName?: string; groupId: string; messageText: string; messageTimestamp?: Date }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  await db.insert(whatsappChatHistory).values({
+    senderId: input.senderId,
+    senderName: input.senderName || null,
+    groupId: input.groupId,
+    messageText: input.messageText,
+    messageTimestamp: input.messageTimestamp || new Date(),
+  });
+  return true;
+}
+
+export async function logWardenMessage(input: { mode: "surveillance" | "commentary" | "on_ramp" | "system"; content: string; sourceEvent?: string; postedToWhatsapp?: boolean }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const sentToday = await db.select().from(wardenMessages).where(gte(wardenMessages.createdAt, today));
+  if (!canSendWardenMessage(sentToday.length)) {
+    return { created: false, reason: "warden_daily_cap_reached" as const };
+  }
+  await db.insert(wardenMessages).values({ ...input, sourceEvent: input.sourceEvent || null, postedToWhatsapp: input.postedToWhatsapp ?? false });
+  return { created: true as const };
+}

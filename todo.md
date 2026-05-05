@@ -1,0 +1,31 @@
+# Project TODO
+
+- [x] Implement participant and founder/admin role-based access using the existing authenticated user model
+- [x] Add challenge database tables for participant profiles, daily logs, payment events, reward catalogue items, redemption requests, WhatsApp chat history, and Warden message logs
+- [x] Build the private My Day daily logging flow scoped only to the logged-in participant
+- [x] Implement all six daily rules with required inputs and midnight completion logic
+- [x] Implement the 4 Lives system where any missed rule can trigger a life loss
+- [x] Add in-app £25 Monzo payment-link prompt scaffolding when a life is lost
+- [x] Implement the non-repeatable Ghost Life mechanic with Double-Down day eligibility
+- [x] Implement points, streaks, days-complete, and checkpoint awards for Day 10, Day 25, Day 40, and Day 50
+- [x] Build the four-tab gamified tracker: Overview, Leaderboard, Proof Feed, and My Day
+- [x] Ensure Overview shows group progress graph, all participant lives grid, and activity feed
+- [x] Ensure Leaderboard ranks participants by points and streaks
+- [x] Ensure Proof Feed shows public insights and submissions while respecting private reflections
+- [x] Ensure My Day incomplete state and personal stats are visible only to the logged-in participant
+- [x] Build the Pure Sport rewards catalogue and redemption request flow
+- [x] Build founder/admin dashboard for participant visibility, lives, payment statuses, pending redemptions, fulfillment controls, and Warden logs
+- [x] Add WhatsApp webhook receiver endpoint scaffolding that persists incoming group messages to the database
+- [x] Add Warden AI commentator scaffolding with Surveillance, Commentary, and On-ramp modes
+- [x] Enforce hard cap of 3 unprompted Warden messages per day
+- [x] Add server-side tests for core challenge logic and access controls
+- [x] Validate the app build, type checks, tests, and running preview before delivery
+- [x] Save a final checkpoint after the completed first build
+- [ ] Deliver summary, limitations, and next steps to the user
+- [x] Remove Stripe from v1 scope and use a fixed Monzo payment request link for life-loss penalties
+- [x] Log every life-loss payment obligation in the database regardless of whether payment has been manually confirmed
+- [x] Add founder/admin controls to manually mark Monzo penalty payments as received
+- [x] Ensure Warden life-loss messaging references the Monzo payment request link rather than Stripe
+- [x] Wire Track Everything through the daily log form, schema, persistence, completion evaluation, and life-loss/payment tests
+- [x] Implement Ghost Life end-to-end with participant mutation, one-time persistence, life restoration, and UI controls
+- [x] Add Vitest coverage for founder/admin-only procedures and protected access controls
