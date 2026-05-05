@@ -5,8 +5,10 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { adminProcedure, protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import {
+  approveSignupRequest,
   captureWhatsAppMessage,
   createRedemption,
+  createSignupRequest,
   getAppSnapshot,
   getCurrentChallengeDay,
   getOrCreateParticipant,
@@ -14,12 +16,18 @@ import {
   logWardenMessage,
   markPaymentReceived,
   markRedemptionFulfilled,
+  rejectSignupRequest,
   submitDailyLog,
   triggerLifeLoss,
   tryApplyGhostLife,
   updateParticipantProfile,
 } from "./db";
 import { generateWardenCommentary } from "./warden";
+
+const signupRequestInput = z.object({
+  email: z.string().trim().email().max(320),
+  source: z.string().max(120).optional().default("landing"),
+});
 
 const dayLogInput = z.object({
   dayNumber: z.number().int().min(1).max(50).default(getCurrentChallengeDay()),
@@ -46,9 +54,16 @@ export const appRouter = router({
     }),
   }),
 
+  signup: router({
+    requestAccess: publicProcedure.input(signupRequestInput).mutation(async ({ input }) => {
+      const request = await createSignupRequest(input.email, input.source);
+      return { success: true, request } as const;
+    }),
+  }),
+
   challenge: router({
     snapshot: protectedProcedure.query(async ({ ctx }) => {
-      return getAppSnapshot(ctx.user.id);
+      return getAppSnapshot(ctx.user.id, ctx.user.role);
     }),
 
     updateProfile: protectedProcedure
@@ -110,6 +125,16 @@ export const appRouter = router({
 
     fulfillRedemption: adminProcedure.input(z.object({ redemptionId: z.number().int() })).mutation(async ({ ctx, input }) => {
       await markRedemptionFulfilled(input.redemptionId, ctx.user.id);
+      return { success: true } as const;
+    }),
+
+    approveSignup: adminProcedure.input(z.object({ requestId: z.number().int() })).mutation(async ({ ctx, input }) => {
+      await approveSignupRequest(input.requestId, ctx.user.id);
+      return { success: true } as const;
+    }),
+
+    rejectSignup: adminProcedure.input(z.object({ requestId: z.number().int() })).mutation(async ({ ctx, input }) => {
+      await rejectSignupRequest(input.requestId, ctx.user.id);
       return { success: true } as const;
     }),
 

@@ -21,6 +21,17 @@ export const users = mysqlTable("users", {
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
 });
 
+export const signupRequests = mysqlTable("signup_requests", {
+  id: int("id").autoincrement().primaryKey(),
+  email: varchar("email", { length: 320 }).notNull().unique(),
+  status: mysqlEnum("status", ["pending", "approved", "rejected"]).default("pending").notNull(),
+  source: varchar("source", { length: 120 }).default("landing").notNull(),
+  approvedByUserId: int("approvedByUserId"),
+  approvedAt: timestamp("approvedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
 export const participants = mysqlTable("participants", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
@@ -120,6 +131,7 @@ export const wardenMessages = mysqlTable("warden_messages", {
 
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
+export type SignupRequest = typeof signupRequests.$inferSelect;
 export type Participant = typeof participants.$inferSelect;
 export type DailyLog = typeof dailyLogs.$inferSelect;
 export type PaymentEvent = typeof paymentEvents.$inferSelect;

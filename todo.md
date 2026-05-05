@@ -52,14 +52,21 @@
 - [x] Implement the redesign from REDESIGN_BRIEF.md and FRONTEND_REDESIGN_EDIT_LIST.md, prioritizing Today’s Log as the participant default landing experience
 
 ## Refinement Pass (v3) — Transitions, Haptics, Signup Approval, Journal Component
-- [ ] Save a safety checkpoint for the completed v2 redesign before making v3 changes
-- [ ] Inspect the provided Framer journal/testimonial reference and translate its interaction style into native React/Tailwind without importing marketplace components
-- [ ] Add fine-grained transitions for tab changes, rule expansion, sheet open/close, CTA hover/tap states, and submit feedback while keeping sharp poster styling
-- [ ] Strengthen haptic feedback behavior with a shared helper for tap, success, warning/life-loss, drawer, and submit patterns with safe browser fallback
-- [ ] Add an email-only signup request section on the unauthenticated landing page
-- [ ] Add database-backed signup request persistence so submitted emails can be reviewed and approved from the Database section/admin data workflow
-- [ ] Add founder/admin visibility for signup requests without disrupting existing participant, Monzo, WhatsApp, Warden, or life-loss mechanics
-- [ ] Restyle the journal/reflection entry area using the provided Framer reference as inspiration, with a more premium card/input interaction while preserving existing daily-log fields
-- [ ] Add focused Vitest coverage for signup request validation/persistence and haptic/progress utilities where practical
-- [ ] Run full tests, production build, and preview health check after v3 refinements
+- [x] Save a safety checkpoint for the completed v2 redesign before making v3 changes
+- [x] Inspect the provided Framer journal/testimonial reference and translate its interaction style into native React/Tailwind without importing marketplace components
+- [x] Add fine-grained transitions for tab changes, rule expansion, sheet open/close, CTA hover/tap states, and submit feedback while keeping sharp poster styling
+- [x] Strengthen haptic feedback behavior with a shared helper for tap, success, warning/life-loss, drawer, and submit patterns with safe browser fallback
+- [x] Add an email-only signup request section on the unauthenticated landing page
+- [x] Add database-backed signup request persistence so submitted emails can be reviewed and approved from the Database section/admin data workflow
+- [x] Add founder/admin visibility for signup requests without disrupting existing participant, Monzo, WhatsApp, Warden, or life-loss mechanics
+- [x] Restyle the journal/reflection entry area using the provided Framer reference as inspiration, with a more premium card/input interaction while preserving existing daily-log fields
+- [x] Add focused Vitest coverage for signup request validation/persistence and haptic/progress utilities where practical
+- [x] Run full tests, production build, and preview health check after v3 refinements
 - [ ] Save a named checkpoint after the v3 refinement pass is complete
+- [x] Add an animated loading/entry page inspired by the attached dark 6+1 log visual, with oversized ghosted mark, scan-line motion, and smooth transition into the app
+- [x] Ensure the animated loading page respects reduced-motion settings and does not slow authenticated users unnecessarily
+- [x] Fix API query failure caused by missing `signup_requests` table in the database
+- [x] Add/verify explicit animated open-close transitions for detail panels/drawers such as leaderboard and rewards selections
+- [x] Add/verify visible submit-feedback transition states for the daily log submit interaction beyond haptics/toast
+- [x] Reduce and streamline wording in the My Day section while preserving all daily-log fields and validation logic
+- [x] Make the animated loading page 6+1 logo/mark heavier, clearer, and more visually dominant against the dark background

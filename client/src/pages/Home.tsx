@@ -1,8 +1,9 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
 import { clampLives, getDailyLogProgress } from "@/lib/challengeUi";
+import { haptics } from "@/lib/haptics";
 import { toast } from "sonner";
 import {
   Activity,
@@ -16,6 +17,7 @@ import {
   Gift,
   HeartPulse,
   Lock,
+  Mail,
   MessageSquare,
   Shield,
   Swords,
@@ -73,9 +75,29 @@ const emptyDay: MyDayForm = {
 };
 
 function pulse(pattern: number | number[] = 18) {
+  haptics.tap();
+  if (Array.isArray(pattern) || pattern !== 18) {
+    hapticFallback(pattern);
+  }
+}
+
+function hapticFallback(pattern: number | number[] = 18) {
   if (typeof navigator !== "undefined" && "vibrate" in navigator) {
     navigator.vibrate(pattern);
   }
+}
+
+function AnimatedLoadPage({ label = "Loading the challenge" }: { label?: string }) {
+  return (
+    <div className="poster-grid animated-load-page grid min-h-screen place-items-center overflow-hidden bg-black text-white">
+      <div className="load-mark" aria-hidden="true">6+1</div>
+      <div className="load-lines" aria-hidden="true" />
+      <div className="relative z-10 border border-[#191919] bg-black/62 px-6 py-5 text-center backdrop-blur-sm">
+        <p className="poster-label text-[#211832]">Four Lives Challenge</p>
+        <p className="mt-3 text-xs font-black uppercase tracking-[0.28em] text-[#C8A96E]">{label}</p>
+      </div>
+    </div>
+  );
 }
 
 function classNames(...items: Array<string | false | null | undefined>) {
@@ -168,6 +190,65 @@ function WardenPresence({ snapshot }: { snapshot: Snapshot }) {
   );
 }
 
+
+function SignupAccessForm() {
+  const [email, setEmail] = useState("");
+  const requestAccess = trpc.signup.requestAccess.useMutation({
+    onSuccess: () => {
+      haptics.success();
+      toast("Request received. Founder approval happens in the database/admin queue.");
+      setEmail("");
+    },
+    onError: error => {
+      haptics.warning();
+      toast(error.message || "Could not submit access request.");
+    },
+  });
+
+  return (
+    <form
+      className="mt-8 border border-[#2A2A2A] bg-[#090909]/92 p-4 shadow-[0_18px_70px_rgba(0,0,0,0.42)] transition duration-500 hover:border-[#C8A96E]/70"
+      onSubmit={event => {
+        event.preventDefault();
+        haptics.submit();
+        requestAccess.mutate({ email, source: "landing-load-gate" });
+      }}
+    >
+      <div className="flex items-start gap-3">
+        <div className="grid h-10 w-10 shrink-0 place-items-center border border-[#C8A96E]/70 text-[#C8A96E]">
+          <Mail className="h-4 w-4" />
+        </div>
+        <div>
+          <MicroLabel tone="gold">Need access?</MicroLabel>
+          <p className="mt-2 text-sm font-bold leading-6 text-[#AFAFAF]">
+            Drop your email. The founder approves it from the database/admin section before you join the challenge.
+          </p>
+        </div>
+      </div>
+      <div className="mt-4 grid gap-2 sm:grid-cols-[1fr_auto]">
+        <input
+          required
+          type="email"
+          value={email}
+          onChange={event => setEmail(event.target.value)}
+          placeholder="you@email.com"
+          className="min-h-12 border border-[#2A2A2A] bg-black px-4 text-sm font-bold text-white outline-none transition placeholder:text-[#555] focus:border-[#C8A96E]"
+        />
+        <SharpButton type="submit" disabled={requestAccess.isPending} className="min-w-40">
+          {requestAccess.isPending ? "Sending" : "Request access"}
+        </SharpButton>
+      </div>
+      <button
+        type="button"
+        onClick={() => { haptics.tap(); window.location.href = getLoginUrl(); }}
+        className="mt-3 text-[10px] font-black uppercase tracking-[0.2em] text-[#777] transition hover:text-[#C8A96E]"
+      >
+        Already approved? Log in.
+      </button>
+    </form>
+  );
+}
+
 function Landing() {
   return (
     <main className="poster-grid min-h-screen overflow-hidden bg-[#0D0D0D] text-white">
@@ -191,11 +272,12 @@ function Landing() {
               Daily rules. Public pressure. Four lives. Offline Monzo penalties. Warden commentary. This is not a dashboard — it is the scoreboard for whether the group keeps its word.
             </p>
             <div className="mt-8 grid gap-3 sm:grid-cols-2">
-              <SharpButton onClick={() => (window.location.href = getLoginUrl())}>Start today’s log</SharpButton>
-              <button className="min-h-12 border border-[#2A2A2A] bg-[#111] px-5 py-3 text-xs font-black uppercase tracking-[0.18em] text-white transition hover:border-[#C8A96E] hover:text-[#C8A96E]">
+              <SharpButton onClick={() => { haptics.tap(); window.location.href = getLoginUrl(); }}>Start today’s log</SharpButton>
+              <button onClick={() => haptics.tap()} className="min-h-12 border border-[#2A2A2A] bg-[#111] px-5 py-3 text-xs font-black uppercase tracking-[0.18em] text-white transition hover:border-[#C8A96E] hover:text-[#C8A96E]">
                 See the rules
               </button>
             </div>
+            <SignupAccessForm />
           </div>
           <div className="bg-[#2A2A2A] p-[2px]">
             {[
@@ -234,7 +316,7 @@ function RuleCard({
   children: React.ReactNode;
 }) {
   return (
-    <article className={classNames("border transition", complete ? "border-[#174D2B] bg-[#0F1E15]" : active ? "border-[#C8A96E] bg-[#14120B]" : "border-[#2A2A2A] bg-[#101010]")}> 
+    <article className={classNames("border transition-all duration-300 hover:-translate-y-0.5", complete ? "border-[#174D2B] bg-[#0F1E15]" : active ? "border-[#C8A96E] bg-[#14120B] shadow-[0_18px_55px_rgba(200,169,110,0.08)]" : "border-[#2A2A2A] bg-[#101010]")}> 
       <button className="flex w-full items-center justify-between gap-4 p-4 text-left" onClick={() => { pulse(12); onToggle(); }}>
         <div className="flex min-w-0 items-center gap-4">
           <div className={classNames("grid h-11 w-11 place-items-center border", complete ? "border-[#2ECC71] text-[#2ECC71]" : "border-[#343434] text-[#C8A96E]")}>{complete ? <Check className="h-5 w-5 animate-gold-pop" /> : <Icon className="h-5 w-5" />}</div>
@@ -245,7 +327,7 @@ function RuleCard({
         </div>
         {active ? <ChevronUp className="h-5 w-5 text-[#C8A96E]" /> : <ChevronDown className="h-5 w-5 text-[#777]" />}
       </button>
-      {active && <div className="border-t border-[#2A2A2A] p-4">{children}</div>}
+      {active && <div className="rule-open border-t border-[#2A2A2A] p-4">{children}</div>}
     </article>
   );
 }
@@ -265,6 +347,48 @@ function TextInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
 
 function TextArea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
   return <textarea {...props} className={classNames("min-h-28 w-full border border-[#2A2A2A] bg-[#0D0D0D] px-4 py-3 text-sm font-bold leading-6 text-white outline-none transition placeholder:text-[#555] focus:border-[#C8A96E]", props.className)} />;
+}
+
+function JournalReflectionCard({
+  value,
+  shared,
+  onChange,
+  onShareChange,
+}: {
+  value: string;
+  shared: boolean;
+  onChange: (value: string) => void;
+  onShareChange: (shared: boolean) => void;
+}) {
+  const characterCount = value.trim().length;
+  return (
+    <div className="journal-letter-card group relative overflow-hidden border border-[#2A2A2A] bg-[#080808] p-4 transition duration-500 hover:border-[#C8A96E]/70">
+      <div className="journal-letter-mark" aria-hidden="true">“</div>
+      <div className="relative z-10 grid gap-4 md:grid-cols-[1fr_170px]">
+        <label className="block">
+          <MicroLabel tone="gold">Reflection</MicroLabel>
+          <textarea
+            value={value}
+            onFocus={() => haptics.tap()}
+            onChange={event => onChange(event.target.value)}
+            placeholder="One honest line for the group."
+            className="journal-letter-input mt-3 min-h-44 w-full resize-none border border-[#1F1F1F] bg-black/50 px-5 py-5 text-base font-extrabold leading-8 text-white outline-none transition duration-300 placeholder:text-[#4E4E4E] focus:border-[#C8A96E] focus:bg-black/80"
+          />
+        </label>
+        <aside className="flex flex-col justify-between border border-[#1F1F1F] bg-[#0D0D0D]/90 p-4">
+          <div>
+            <MicroLabel tone={characterCount > 0 ? "green" : "muted"}>Signal</MicroLabel>
+            <p className="mt-3 text-3xl font-black uppercase leading-none tracking-[-0.07em] text-white">{characterCount || "—"}</p>
+            <p className="mt-2 text-[10px] font-black uppercase tracking-[0.2em] text-[#777]">chars</p>
+          </div>
+          <label className="mt-6 flex items-center justify-between gap-3 border-t border-[#242424] pt-4">
+            <span className="text-[10px] font-black uppercase tracking-[0.18em] text-[#BDBDBD]">Public</span>
+            <input type="checkbox" checked={shared} onChange={event => { haptics.tap(); onShareChange(event.target.checked); }} className="h-5 w-5 accent-[#C8A96E]" />
+          </label>
+        </aside>
+      </div>
+    </div>
+  );
 }
 
 function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void }) {
@@ -304,9 +428,9 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
         <div className="border border-[#2A2A2A] bg-[#101010] p-5">
           <div className="grid gap-5 md:grid-cols-[1fr_320px]">
             <div>
-              <MicroLabel tone="gold">Day {snapshot?.challenge.currentDay ?? "—"} / 50 · Today’s Log</MicroLabel>
-              <h1 className="mt-3 text-5xl font-black uppercase leading-[0.86] tracking-[-0.08em] text-white md:text-7xl">Do the work. Log the proof.</h1>
-              <p className="mt-4 max-w-2xl text-sm font-bold leading-6 text-[#A7A7A7]">This is the first screen because this is the only action that matters today. Address all six rules, submit once, then earn the right to check the leaderboard.</p>
+              <MicroLabel tone="gold">Day {snapshot?.challenge.currentDay ?? "—"} / 50</MicroLabel>
+              <h1 className="mt-3 text-5xl font-black uppercase leading-[0.86] tracking-[-0.08em] text-white md:text-7xl">Log today.</h1>
+              <p className="mt-4 max-w-xl text-sm font-bold leading-6 text-[#A7A7A7]">Six checks. One submission. No hiding.</p>
             </div>
             <HealthBar lives={participant?.livesRemaining ?? 4} label="Your lives" />
           </div>
@@ -335,7 +459,7 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
             </div>
           </RuleCard>
 
-          <RuleCard title="Exercise done" label="Rule 03" icon={Dumbbell} complete={rules[2].done} active={openRule === "exercise"} onToggle={() => setOpenRule(openRule === "exercise" ? "reflection" : "exercise")}>
+          <RuleCard title="Exercise" label="Rule 03" icon={Dumbbell} complete={rules[2].done} active={openRule === "exercise"} onToggle={() => setOpenRule(openRule === "exercise" ? "reflection" : "exercise")}>
             <div className="grid gap-3 sm:grid-cols-2">
               <Field label="Minutes"><TextInput type="number" value={form.exerciseDuration} onChange={event => setForm({ ...form, exerciseDuration: Number(event.target.value) })} /></Field>
               <Field label="Workout type"><TextInput value={form.exerciseType} onChange={event => setForm({ ...form, exerciseType: event.target.value })} placeholder="Run, gym, mobility..." /></Field>
@@ -349,33 +473,32 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
             </div>
           </RuleCard>
 
-          <RuleCard title="Reflection shared" label="Rule 04" icon={MessageSquare} complete={rules[3].done} active={openRule === "reflection"} onToggle={() => setOpenRule(openRule === "reflection" ? "readTeach" : "reflection")}>
-            <div className="space-y-3">
-              <Field label="Daily reflection"><TextArea value={form.reflectionText} onChange={event => setForm({ ...form, reflectionText: event.target.value })} placeholder="What did today reveal?" /></Field>
-              <label className="flex items-center justify-between gap-4 border border-[#2A2A2A] bg-[#0D0D0D] p-4">
-                <span className="text-xs font-black uppercase tracking-[0.16em] text-[#BDBDBD]">Share insight to Proof Feed</span>
-                <input type="checkbox" checked={form.reflectionShared} onChange={event => { pulse(18); setForm({ ...form, reflectionShared: event.target.checked }); }} className="h-5 w-5 accent-[#C8A96E]" />
-              </label>
-            </div>
+          <RuleCard title="Reflect" label="Rule 04" icon={MessageSquare} complete={rules[3].done} active={openRule === "reflection"} onToggle={() => setOpenRule(openRule === "reflection" ? "readTeach" : "reflection")}>
+            <JournalReflectionCard
+              value={form.reflectionText}
+              shared={form.reflectionShared}
+              onChange={reflectionText => setForm({ ...form, reflectionText })}
+              onShareChange={reflectionShared => setForm({ ...form, reflectionShared })}
+            />
           </RuleCard>
 
           <RuleCard title="Read & Teach" label="Rule 05" icon={BookOpen} complete={rules[4].done} active={openRule === "readTeach"} onToggle={() => setOpenRule(openRule === "readTeach" ? "trackedEverything" : "readTeach")}>
-            <Field label="Teach one useful idea"><TextArea value={form.readTeachText} onChange={event => setForm({ ...form, readTeachText: event.target.value })} placeholder="One useful idea for the group..." /></Field>
+            <Field label="One useful idea"><TextArea value={form.readTeachText} onChange={event => setForm({ ...form, readTeachText: event.target.value })} placeholder="Teach the group one thing." /></Field>
           </RuleCard>
 
           <RuleCard title="Track everything" label="Rule 06" icon={Activity} complete={form.trackedEverything} active={openRule === "trackedEverything"} onToggle={() => setOpenRule(openRule === "trackedEverything" ? "exercise" : "trackedEverything")}>
             <label className="flex items-center justify-between gap-4 border border-[#2A2A2A] bg-[#0D0D0D] p-4">
-              <span className="text-sm font-black uppercase tracking-[0.12em] text-white">The day has been logged honestly</span>
+              <span className="text-sm font-black uppercase tracking-[0.12em] text-white">Logged honestly</span>
               <input type="checkbox" checked={form.trackedEverything} onChange={event => { pulse(18); setForm({ ...form, trackedEverything: event.target.checked }); }} className="h-5 w-5 accent-[#C8A96E]" />
             </label>
           </RuleCard>
         </div>
 
-        <div className="sticky bottom-[74px] z-20 border border-[#2A2A2A] bg-[#0D0D0D]/95 p-3 backdrop-blur md:static md:bg-transparent md:p-0">
-          <SharpButton className="w-full py-5 text-sm" disabled={!allAddressed || submit.isPending} onClick={() => submit.mutate({ ...form, dayNumber: snapshot?.challenge.currentDay ?? 1 })}>
-            {submit.isPending ? "Submitting" : allAddressed ? "Submit today" : `Address ${6 - completedRules} more`}
+        <div className={classNames("submit-dock sticky bottom-[74px] z-20 border border-[#2A2A2A] bg-[#0D0D0D]/95 p-3 backdrop-blur transition-all duration-300 md:static md:bg-transparent md:p-0", submit.isPending && "submit-dock-pending", allAddressed && !submit.isPending && "submit-dock-ready")}>
+          <SharpButton className={classNames("w-full py-5 text-sm transition-all duration-300", submit.isPending && "submit-button-pending")} disabled={!allAddressed || submit.isPending} onClick={() => submit.mutate({ ...form, dayNumber: snapshot?.challenge.currentDay ?? 1 })}>
+            {submit.isPending ? "Submitting the log" : allAddressed ? "Submit today" : `Address ${6 - completedRules} more`}
           </SharpButton>
-          {lastMissed.length > 0 && <div className="mt-3 border-l-4 border-[#C0392B] bg-[#180F0F] p-4 text-sm font-bold text-[#F0B7AE]">Missed rules: {lastMissed.join(", ")}. A Monzo penalty obligation has been logged for founder confirmation.</div>}
+          {lastMissed.length > 0 && <div className="mt-3 border-l-4 border-[#C0392B] bg-[#180F0F] p-4 text-sm font-bold text-[#F0B7AE]">Missed: {lastMissed.join(", ")}. Penalty logged.</div>}
         </div>
       </section>
 
@@ -464,23 +587,49 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
 }
 
 function ParticipantSheet({ participant, onClose }: { participant: any; onClose: () => void }) {
-  if (!participant) return null;
+  const [visibleParticipant, setVisibleParticipant] = useState<any>(participant);
+  const [closing, setClosing] = useState(false);
+
+  useEffect(() => {
+    if (participant) {
+      setVisibleParticipant(participant);
+      setClosing(false);
+      return;
+    }
+
+    if (!visibleParticipant) return;
+    const reducedMotion = typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reducedMotion) {
+      setVisibleParticipant(null);
+      setClosing(false);
+      return;
+    }
+
+    setClosing(true);
+    const timer = window.setTimeout(() => {
+      setVisibleParticipant(null);
+      setClosing(false);
+    }, 240);
+    return () => window.clearTimeout(timer);
+  }, [participant, visibleParticipant]);
+
+  if (!visibleParticipant) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-end bg-black/70" onClick={onClose}>
-      <div className="w-full border-t-2 border-[#C8A96E] bg-[#0D0D0D] p-5 shadow-2xl md:mx-auto md:mb-8 md:max-w-xl md:border" onClick={event => event.stopPropagation()}>
+    <div className={classNames("sheet-backdrop fixed inset-0 z-50 flex items-end bg-black/70", closing && "sheet-backdrop-out")} onClick={onClose}>
+      <div className={classNames("sheet-panel w-full border-t-2 border-[#C8A96E] bg-[#0D0D0D] p-5 shadow-2xl md:mx-auto md:mb-8 md:max-w-xl md:border", closing && "sheet-panel-out")} onClick={event => event.stopPropagation()}>
         <div className="flex items-start justify-between gap-4">
           <div>
             <MicroLabel tone="gold">Participant stats</MicroLabel>
-            <h3 className="mt-2 text-4xl font-black uppercase tracking-[-0.07em] text-white">{participant.displayName}</h3>
+            <h3 className="mt-2 text-4xl font-black uppercase tracking-[-0.07em] text-white">{visibleParticipant.displayName}</h3>
           </div>
           <button onClick={onClose} className="border border-[#2A2A2A] p-3 text-[#777] hover:border-[#C8A96E] hover:text-[#C8A96E]"><X className="h-5 w-5" /></button>
         </div>
         <div className="mt-5 grid grid-cols-3 gap-2 bg-[#2A2A2A] p-[2px]">
-          <PosterStat label="Points" value={participant.totalPoints} tone="gold" />
-          <PosterStat label="Streak" value={participant.currentStreak} tone="green" />
-          <PosterStat label="Days" value={participant.daysComplete} tone="white" />
+          <PosterStat label="Points" value={visibleParticipant.totalPoints} tone="gold" />
+          <PosterStat label="Streak" value={visibleParticipant.currentStreak} tone="green" />
+          <PosterStat label="Days" value={visibleParticipant.daysComplete} tone="white" />
         </div>
-        <div className="mt-5"><HealthBar lives={participant.livesRemaining} label="Lives status" /></div>
+        <div className="mt-5"><HealthBar lives={visibleParticipant.livesRemaining} label="Lives status" /></div>
       </div>
     </div>
   );
@@ -570,22 +719,33 @@ function Rewards({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => voi
           </button>
         ))}
       </div>
-      <section className="border border-[#2A2A2A] bg-[#101010] p-5">
-        <MicroLabel tone="purple">Request reward</MicroLabel>
-        <h3 className="mt-2 text-3xl font-black uppercase tracking-[-0.06em] text-white">Earned, then fulfilled manually.</h3>
-        <div className="mt-5 space-y-3">
-          <Field label="Delivery name"><TextInput value={deliveryName} onChange={event => setDeliveryName(event.target.value)} /></Field>
-          <Field label="Delivery address"><TextArea value={deliveryAddress} onChange={event => setDeliveryAddress(event.target.value)} /></Field>
-          <SharpButton className="w-full" disabled={!selected || redeem.isPending} onClick={() => selected && redeem.mutate({ rewardId: selected, deliveryName, deliveryAddress, checkpointEarned: `Day ${snapshot?.challenge.currentDay ?? 1}` })}>Submit redemption</SharpButton>
-        </div>
+      <section className={classNames("reward-detail-panel border border-[#2A2A2A] bg-[#101010] p-5 transition-all duration-300", selected ? "reward-detail-panel-open" : "reward-detail-panel-closed")}>
+        <MicroLabel tone="gold">Redemption desk</MicroLabel>
+        {selected ? (
+          <div className="reward-detail-content">
+            <h3 className="mt-2 text-3xl font-black uppercase tracking-[-0.06em] text-white">Earned, then fulfilled manually.</h3>
+            <div className="mt-5 space-y-3">
+              <Field label="Delivery name"><TextInput value={deliveryName} onChange={event => setDeliveryName(event.target.value)} /></Field>
+              <Field label="Delivery address"><TextArea value={deliveryAddress} onChange={event => setDeliveryAddress(event.target.value)} /></Field>
+              <SharpButton className="w-full" disabled={redeem.isPending} onClick={() => redeem.mutate({ rewardId: selected, deliveryName, deliveryAddress, checkpointEarned: `Day ${snapshot?.challenge.currentDay ?? 1}` })}>{redeem.isPending ? "Submitting redemption" : "Submit redemption"}</SharpButton>
+            </div>
+          </div>
+        ) : (
+          <div className="reward-detail-empty">
+            <h3 className="mt-2 text-3xl font-black uppercase tracking-[-0.06em] text-white">Choose a reward to open the desk.</h3>
+            <p className="mt-4 text-sm font-bold leading-6 text-[#777]">The delivery form stays closed until a Pure Sport reward is selected, keeping the redemption step intentional.</p>
+          </div>
+        )}
       </section>
     </div>
   );
 }
 
 function AdminPanel({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void }) {
-  const confirmPayment = trpc.admin.confirmPayment.useMutation({ onSuccess: () => { toast("Payment marked received."); refetch(); } });
-  const fulfill = trpc.admin.fulfillRedemption.useMutation({ onSuccess: () => { toast("Redemption marked fulfilled."); refetch(); } });
+  const confirmPayment = trpc.admin.confirmPayment.useMutation({ onSuccess: () => { haptics.success(); toast("Payment marked received."); refetch(); } });
+  const fulfill = trpc.admin.fulfillRedemption.useMutation({ onSuccess: () => { haptics.success(); toast("Redemption marked fulfilled."); refetch(); } });
+  const approveSignup = trpc.admin.approveSignup.useMutation({ onSuccess: () => { haptics.success(); toast("Access request approved."); refetch(); } });
+  const rejectSignup = trpc.admin.rejectSignup.useMutation({ onSuccess: () => { haptics.warning(); toast("Access request rejected."); refetch(); } });
   return (
     <div className="grid gap-5 xl:grid-cols-2">
       <section className="border border-[#2A2A2A] bg-[#101010] p-5">
@@ -629,6 +789,35 @@ function AdminPanel({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => 
         </div>
       </section>
       <section className="border border-[#2A2A2A] bg-[#101010] p-5 xl:col-span-2">
+        <MicroLabel tone="gold">Access requests</MicroLabel>
+        <h2 className="mt-2 text-3xl font-black uppercase tracking-[-0.06em] text-white">Approve the gate.</h2>
+        <p className="mt-3 max-w-2xl text-sm font-bold leading-6 text-[#999]">
+          Email-only requests land here and in the database. Approving marks the request as founder-cleared before the participant logs in.
+        </p>
+        <div className="mt-5 grid gap-3 md:grid-cols-2">
+          {(snapshot?.signupRequests ?? []).length === 0 && (
+            <div className="border border-[#2A2A2A] bg-[#0D0D0D] p-4 text-sm font-bold text-[#777]">No access requests yet.</div>
+          )}
+          {(snapshot?.signupRequests ?? []).map((request: any) => (
+            <div key={request.id} className="border border-[#2A2A2A] bg-[#0D0D0D] p-4 transition duration-300 hover:border-[#C8A96E]/60">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="break-all font-black uppercase text-white">{request.email}</p>
+                  <p className="mt-2 text-[10px] font-black uppercase tracking-[0.18em] text-[#777]">{request.source} · {new Date(request.createdAt).toLocaleString()}</p>
+                </div>
+                <span className={classNames("border px-3 py-1 text-[9px] font-black uppercase tracking-[0.18em]", request.status === "approved" ? "border-[#2ECC71] text-[#2ECC71]" : request.status === "rejected" ? "border-[#C0392B] text-[#C0392B]" : "border-[#C8A96E] text-[#C8A96E]")}>{request.status}</span>
+              </div>
+              {request.status === "pending" && (
+                <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                  <SharpButton className="min-h-10 px-4 py-2" disabled={approveSignup.isPending} onClick={() => approveSignup.mutate({ requestId: request.id })}>Approve</SharpButton>
+                  <button disabled={rejectSignup.isPending} className="min-h-10 border border-[#2A2A2A] px-4 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-[#C0392B] transition hover:border-[#C0392B] disabled:opacity-50" onClick={() => rejectSignup.mutate({ requestId: request.id })}>Reject</button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </section>
+      <section className="border border-[#2A2A2A] bg-[#101010] p-5 xl:col-span-2">
         <MicroLabel tone="red">Warden and WhatsApp context</MicroLabel>
         <div className="mt-5 grid gap-3 lg:grid-cols-2">
           <div className="space-y-3">{snapshot?.wardenMessages.map((m: any) => <div key={m.id} className="border-l-4 border-[#C0392B] bg-[#130F0F] p-4"><MicroLabel tone="red">{m.mode}</MicroLabel><p className="mt-2 text-sm font-bold leading-6 text-[#D8D8D8]">{m.content}</p></div>)}</div>
@@ -651,10 +840,21 @@ const tabs: Array<{ key: TabKey; label: string; icon: any }> = [
 export default function Home() {
   const { user, loading, isAuthenticated, logout } = useAuth();
   const [activeTab, setActiveTab] = useState<TabKey>("myday");
+  const [entryVisible, setEntryVisible] = useState(() => typeof window !== "undefined" && window.sessionStorage.getItem("sixone-entry-seen") !== "true");
   const snapshotQuery = trpc.challenge.snapshot.useQuery(undefined, { enabled: isAuthenticated });
   const snapshot = snapshotQuery.data;
 
-  if (loading) return <div className="poster-grid grid min-h-screen place-items-center bg-[#0D0D0D] text-sm font-black uppercase tracking-[0.24em] text-[#C8A96E]">Loading the challenge...</div>;
+  useEffect(() => {
+    if (loading || !entryVisible || typeof window === "undefined") return;
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const timer = window.setTimeout(() => {
+      window.sessionStorage.setItem("sixone-entry-seen", "true");
+      setEntryVisible(false);
+    }, prefersReducedMotion ? 120 : 950);
+    return () => window.clearTimeout(timer);
+  }, [entryVisible, loading]);
+
+  if (loading || entryVisible) return <AnimatedLoadPage label={loading ? "Authenticating" : "Entering the log"} />;
   if (!isAuthenticated) return <Landing />;
 
   const visibleTabs = tabs.filter(tab => tab.key !== "admin" || user?.role === "admin");
@@ -694,12 +894,14 @@ export default function Home() {
               })}
             </div>
 
-            {activeTab === "myday" && <MyDay snapshot={snapshot} refetch={snapshotQuery.refetch} />}
-            {activeTab === "overview" && <Overview snapshot={snapshot} />}
-            {activeTab === "leaderboard" && <Leaderboard snapshot={snapshot} />}
-            {activeTab === "proof" && <ProofFeed snapshot={snapshot} />}
-            {activeTab === "rewards" && <Rewards snapshot={snapshot} refetch={snapshotQuery.refetch} />}
-            {activeTab === "admin" && (user?.role === "admin" ? <AdminPanel snapshot={snapshot} refetch={snapshotQuery.refetch} /> : <div className="border border-[#2A2A2A] bg-[#101010] p-8"><MicroLabel tone="red">Restricted</MicroLabel><p className="mt-3 text-xl font-black uppercase text-white">Founder dashboard is restricted to admin users.</p></div>)}
+            <div key={activeTab} className="tab-stage">
+              {activeTab === "myday" && <MyDay snapshot={snapshot} refetch={snapshotQuery.refetch} />}
+              {activeTab === "overview" && <Overview snapshot={snapshot} />}
+              {activeTab === "leaderboard" && <Leaderboard snapshot={snapshot} />}
+              {activeTab === "proof" && <ProofFeed snapshot={snapshot} />}
+              {activeTab === "rewards" && <Rewards snapshot={snapshot} refetch={snapshotQuery.refetch} />}
+              {activeTab === "admin" && (user?.role === "admin" ? <AdminPanel snapshot={snapshot} refetch={snapshotQuery.refetch} /> : <div className="border border-[#2A2A2A] bg-[#101010] p-8"><MicroLabel tone="red">Restricted</MicroLabel><p className="mt-3 text-xl font-black uppercase text-white">Founder dashboard is restricted to admin users.</p></div>)}
+            </div>
           </>
         )}
       </section>

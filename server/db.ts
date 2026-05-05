@@ -7,6 +7,7 @@ import {
   paymentEvents,
   redemptionRequests,
   rewardCatalogue,
+  signupRequests,
   users,
   wardenMessages,
   whatsappChatHistory,
@@ -65,6 +66,42 @@ export async function getUserByOpenId(openId: string) {
   const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
   return result[0];
 }
+
+export function normalizeSignupEmail(email: string) {
+  return email.trim().toLowerCase();
+}
+
+export async function createSignupRequest(email: string, source = "landing") {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  const normalizedEmail = normalizeSignupEmail(email);
+  const existing = await db.select().from(signupRequests).where(eq(signupRequests.email, normalizedEmail)).limit(1);
+  if (existing[0]) return existing[0];
+  await db.insert(signupRequests).values({ email: normalizedEmail, source, status: "pending" });
+  const created = await db.select().from(signupRequests).where(eq(signupRequests.email, normalizedEmail)).limit(1);
+  return created[0];
+}
+
+export async function listSignupRequests() {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  return db.select().from(signupRequests).orderBy(desc(signupRequests.createdAt)).limit(200);
+}
+
+export async function approveSignupRequest(requestId: number, founderUserId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  await db.update(signupRequests).set({ status: "approved", approvedByUserId: founderUserId, approvedAt: new Date() }).where(eq(signupRequests.id, requestId));
+  return true;
+}
+
+export async function rejectSignupRequest(requestId: number, founderUserId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  await db.update(signupRequests).set({ status: "rejected", approvedByUserId: founderUserId, approvedAt: new Date() }).where(eq(signupRequests.id, requestId));
+  return true;
+}
+
 
 function initials(name?: string | null) {
   const safe = name?.trim() || "Mover";
@@ -246,12 +283,12 @@ export async function tryApplyGhostLife(participantId: number, exerciseDuration:
   return { applied: true, livesRemaining };
 }
 
-export async function getAppSnapshot(userId: number) {
+export async function getAppSnapshot(userId: number, role: "admin" | "user" = "user") {
   const db = await getDb();
   if (!db) throw new Error("Database unavailable");
   const participant = await getOrCreateParticipant({ id: userId, name: null, email: null });
   await seedRewardsIfEmpty();
-  const [allParticipants, allLogs, rewards, payments, redemptions, warden, chat] = await Promise.all([
+  const [allParticipants, allLogs, rewards, payments, redemptions, warden, chat, accessRequests] = await Promise.all([
     db.select().from(participants),
     db.select().from(dailyLogs).orderBy(desc(dailyLogs.createdAt)).limit(250),
     db.select().from(rewardCatalogue).where(eq(rewardCatalogue.active, true)),
@@ -259,6 +296,7 @@ export async function getAppSnapshot(userId: number) {
     db.select().from(redemptionRequests).orderBy(desc(redemptionRequests.createdAt)).limit(100),
     db.select().from(wardenMessages).orderBy(desc(wardenMessages.createdAt)).limit(50),
     db.select().from(whatsappChatHistory).orderBy(desc(whatsappChatHistory.createdAt)).limit(50),
+    role === "admin" ? listSignupRequests() : Promise.resolve([]),
   ]);
   const myLog = await getTodayLog(participant.id);
   return {
@@ -272,6 +310,7 @@ export async function getAppSnapshot(userId: number) {
     redemptions,
     wardenMessages: warden,
     chatHistory: chat,
+    signupRequests: accessRequests,
   };
 }
 

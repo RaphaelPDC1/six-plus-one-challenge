@@ -2,8 +2,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { TrpcContext } from "./_core/context";
 
 const dbMocks = vi.hoisted(() => ({
+  approveSignupRequest: vi.fn(),
   captureWhatsAppMessage: vi.fn(),
   createRedemption: vi.fn(),
+  createSignupRequest: vi.fn(),
   getAppSnapshot: vi.fn(),
   getCurrentChallengeDay: vi.fn(() => 1),
   getOrCreateParticipant: vi.fn(),
@@ -11,6 +13,7 @@ const dbMocks = vi.hoisted(() => ({
   logWardenMessage: vi.fn(),
   markPaymentReceived: vi.fn(),
   markRedemptionFulfilled: vi.fn(),
+  rejectSignupRequest: vi.fn(),
   submitDailyLog: vi.fn(),
   triggerLifeLoss: vi.fn(),
   tryApplyGhostLife: vi.fn(),
@@ -26,14 +29,14 @@ import { appRouter } from "./routers";
 
 type AuthenticatedUser = NonNullable<TrpcContext["user"]>;
 
-function createParticipantContext(): TrpcContext {
+function createUserContext(role: "admin" | "user" = "user"): TrpcContext {
   const user: AuthenticatedUser = {
     id: 42,
     openId: "participant-open-id",
     email: "participant@example.com",
     name: "Marcus",
     loginMethod: "manus",
-    role: "user",
+    role,
     createdAt: new Date(),
     updatedAt: new Date(),
     lastSignedIn: new Date(),
@@ -44,6 +47,14 @@ function createParticipantContext(): TrpcContext {
     req: { protocol: "https", headers: {} } as TrpcContext["req"],
     res: { clearCookie: () => undefined } as unknown as TrpcContext["res"],
   };
+}
+
+function createParticipantContext(): TrpcContext {
+  return createUserContext("user");
+}
+
+function createAdminContext(): TrpcContext {
+  return createUserContext("admin");
 }
 
 describe("challenge router flow", () => {
@@ -96,5 +107,39 @@ describe("challenge router flow", () => {
 
     expect(result).toEqual({ applied: true, livesRemaining: 3 });
     expect(dbMocks.tryApplyGhostLife).toHaveBeenCalledWith(7, 60, 2);
+  });
+
+  it("accepts email-only signup requests from the landing page", async () => {
+    dbMocks.createSignupRequest.mockResolvedValue({
+      id: 12,
+      email: "newmember@example.com",
+      status: "pending",
+      source: "landing",
+    });
+
+    const caller = appRouter.createCaller(createParticipantContext());
+    const result = await caller.signup.requestAccess({ email: " newmember@example.com ", source: "landing" });
+
+    expect(result.success).toBe(true);
+    expect(dbMocks.createSignupRequest).toHaveBeenCalledWith("newmember@example.com", "landing");
+  });
+
+  it("rejects invalid email-only signup requests before persistence", async () => {
+    const caller = appRouter.createCaller(createParticipantContext());
+
+    await expect(caller.signup.requestAccess({ email: "not-an-email", source: "landing" })).rejects.toThrow();
+    expect(dbMocks.createSignupRequest).not.toHaveBeenCalled();
+  });
+
+  it("routes founder signup approval and rejection through admin helpers", async () => {
+    dbMocks.approveSignupRequest.mockResolvedValue(undefined);
+    dbMocks.rejectSignupRequest.mockResolvedValue(undefined);
+
+    const caller = appRouter.createCaller(createAdminContext());
+
+    await expect(caller.admin.approveSignup({ requestId: 44 })).resolves.toEqual({ success: true });
+    await expect(caller.admin.rejectSignup({ requestId: 45 })).resolves.toEqual({ success: true });
+    expect(dbMocks.approveSignupRequest).toHaveBeenCalledWith(44, 42);
+    expect(dbMocks.rejectSignupRequest).toHaveBeenCalledWith(45, 42);
   });
 });
