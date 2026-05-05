@@ -1,4 +1,3 @@
-import { createHash } from "crypto";
 import { and, desc, eq, gte, inArray, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
@@ -69,10 +68,6 @@ export async function getUserByOpenId(openId: string) {
   return result[0];
 }
 
-function hashSiteAccessCode(email: string, accessCode: string) {
-  return createHash("sha256").update(`${normalizeSignupEmail(email)}:${accessCode}`).digest("hex");
-}
-
 export async function getUserByEmail(email: string) {
   const db = await getDb();
   if (!db) return undefined;
@@ -80,40 +75,42 @@ export async function getUserByEmail(email: string) {
   return result[0];
 }
 
-export async function createSiteNativeUser(input: { email: string; displayName: string; accessCode: string }) {
+export async function createSiteNativeUser(input: { email: string; displayName: string; mode?: "register" | "login" }) {
   const db = await getDb();
   if (!db) throw new Error("Database unavailable");
   const email = normalizeSignupEmail(input.email);
   const displayName = input.displayName.trim() || email;
+  const mode = input.mode ?? "register";
   const openId = `site-native:${email}`;
-  const accessCodeHash = hashSiteAccessCode(email, input.accessCode);
   const existingSiteUser = await getUserByOpenId(openId);
 
   if (existingSiteUser) {
-    if (existingSiteUser.loginMethod !== accessCodeHash) {
-      throw new Error("That email already has a 6+1 access code. Use the same code or ask the founder to reset it.");
-    }
     await upsertUser({
       openId,
       name: existingSiteUser.name || displayName,
       email,
-      loginMethod: accessCodeHash,
+      loginMethod: "site-native",
       role: "user",
       lastSignedIn: new Date(),
     });
-    return { ...existingSiteUser, loginMethod: "site-native" };
+    const refreshed = await getUserByOpenId(openId);
+    return { ...(refreshed ?? existingSiteUser), loginMethod: "site-native" };
   }
 
   const existingEmailUser = await getUserByEmail(email);
   if (existingEmailUser) {
-    throw new Error("That email is already attached to a protected account. Ask the founder to enable site access for it.");
+    throw new Error("That email is already attached to a protected founder/admin account. Use Founder Login or register with a different email.");
+  }
+
+  if (mode === "login") {
+    throw new Error("No challenger account exists for that email yet. Choose Register first to create one.");
   }
 
   await upsertUser({
     openId,
     name: displayName,
     email,
-    loginMethod: accessCodeHash,
+    loginMethod: "site-native",
     role: "user",
     lastSignedIn: new Date(),
   });

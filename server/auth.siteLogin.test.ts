@@ -58,19 +58,19 @@ describe("auth.siteLogin", () => {
     createSiteNativeUserMock.mockImplementation(async () => siteUser);
   });
 
-  it("creates a site-native participant session without requiring Manus OAuth", async () => {
+  it("registers a site-native participant without requiring Manus OAuth or an access code", async () => {
     const { appRouter } = await import("./routers");
     const { ctx, cookies } = createPublicContext();
     const caller = appRouter.createCaller(ctx);
 
-    const result = await caller.auth.siteLogin({ email: " Challenger@Example.com ", displayName: "Challenger One", accessCode: "neverquit" });
+    const result = await caller.auth.siteLogin({ email: " Challenger@Example.com ", displayName: "Challenger One", mode: "register" });
 
     expect(createSiteNativeUserMock).toHaveBeenCalledWith({
       email: "challenger@example.com",
       displayName: "Challenger One",
-      accessCode: "neverquit",
+      mode: "register",
     });
-    expect(result).toEqual({ success: true, user: siteUser });
+    expect(result).toEqual({ success: true, mode: "register", user: siteUser });
     expect(cookies).toHaveLength(1);
     expect(cookies[0]).toMatchObject({
       name: COOKIE_NAME,
@@ -84,23 +84,44 @@ describe("auth.siteLogin", () => {
     });
   });
 
-  it("rejects weak or missing private access codes before issuing a session", async () => {
+  it("lets returning challengers log in through the site without a private access code", async () => {
     const { appRouter } = await import("./routers");
     const { ctx, cookies } = createPublicContext();
     const caller = appRouter.createCaller(ctx);
 
-    await expect(caller.auth.siteLogin({ email: "challenger@example.com", displayName: "Challenger One", accessCode: "123" })).rejects.toMatchObject({ code: "BAD_REQUEST" });
-    expect(cookies).toHaveLength(0);
-    expect(createSiteNativeUserMock).not.toHaveBeenCalled();
+    const result = await caller.auth.siteLogin({ email: "challenger@example.com", mode: "login" });
+
+    expect(createSiteNativeUserMock).toHaveBeenCalledWith({
+      email: "challenger@example.com",
+      displayName: "challenger@example.com",
+      mode: "login",
+    });
+    expect(result.mode).toBe("login");
+    expect(cookies).toHaveLength(1);
   });
 
-  it("does not mint a cookie when the backend rejects an impersonation attempt", async () => {
-    createSiteNativeUserMock.mockRejectedValueOnce(new Error("That email is already attached to a protected account."));
+  it("does not mint a cookie when returning login rejects an unknown challenger email", async () => {
+    createSiteNativeUserMock.mockRejectedValueOnce(new Error("No challenger account exists for that email yet. Choose Register first to create one."));
     const { appRouter } = await import("./routers");
     const { ctx, cookies } = createPublicContext();
     const caller = appRouter.createCaller(ctx);
 
-    await expect(caller.auth.siteLogin({ email: "founder@example.com", displayName: "Imposter", accessCode: "neverquit" })).rejects.toThrow("protected account");
+    await expect(caller.auth.siteLogin({ email: "new@example.com", mode: "login" })).rejects.toThrow("Choose Register first");
+    expect(createSiteNativeUserMock).toHaveBeenCalledWith({
+      email: "new@example.com",
+      displayName: "new@example.com",
+      mode: "login",
+    });
+    expect(cookies).toHaveLength(0);
+  });
+
+  it("does not mint a cookie when the backend rejects a protected-account impersonation attempt", async () => {
+    createSiteNativeUserMock.mockRejectedValueOnce(new Error("That email is already attached to a protected founder/admin account."));
+    const { appRouter } = await import("./routers");
+    const { ctx, cookies } = createPublicContext();
+    const caller = appRouter.createCaller(ctx);
+
+    await expect(caller.auth.siteLogin({ email: "founder@example.com", displayName: "Imposter", mode: "register" })).rejects.toThrow("protected founder/admin account");
     expect(cookies).toHaveLength(0);
   });
 

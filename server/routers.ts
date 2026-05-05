@@ -36,7 +36,7 @@ const signupRequestInput = z.object({
 const siteLoginInput = z.object({
   email: z.string().trim().email().max(320),
   displayName: z.string().trim().min(2).max(140).optional(),
-  accessCode: z.string().trim().min(6).max(80),
+  mode: z.enum(["register", "login"]).default("register"),
 });
 
 const dayLogInput = z.object({
@@ -62,12 +62,12 @@ export const appRouter = router({
       const user = await createSiteNativeUser({
         email,
         displayName: input.displayName || email,
-        accessCode: input.accessCode,
+        mode: input.mode,
       });
       const token = await sdk.createSessionToken(user.openId, { name: user.name || user.email || "6+1 participant" });
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.cookie(COOKIE_NAME, token, cookieOptions);
-      return { success: true, user } as const;
+      return { success: true, mode: input.mode, user } as const;
     }),
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);

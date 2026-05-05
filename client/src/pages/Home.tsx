@@ -228,12 +228,12 @@ function scrollToEntryPanel() {
 function SiteEntryPanel() {
   const [email, setEmail] = useState("");
   const [displayName, setDisplayName] = useState("");
-  const [accessCode, setAccessCode] = useState("");
+  const [entryMode, setEntryMode] = useState<"register" | "login">("register");
   const utils = trpc.useUtils();
   const siteLogin = trpc.auth.siteLogin.useMutation({
     onSuccess: async () => {
       haptics.success();
-      toast("You are in. Finish the setup and start logging inside the site.");
+      toast(entryMode === "register" ? "Registration started. Finish the setup and start logging inside the site." : "Welcome back. You are in.");
       await utils.auth.me.invalidate();
       await utils.challenge.snapshot.invalidate();
     },
@@ -250,7 +250,7 @@ function SiteEntryPanel() {
       onSubmit={event => {
         event.preventDefault();
         haptics.submit();
-        siteLogin.mutate({ email, displayName: displayName || undefined, accessCode });
+        siteLogin.mutate({ email, displayName: displayName || undefined, mode: entryMode });
       }}
     >
       <div className="flex items-start gap-3">
@@ -258,13 +258,29 @@ function SiteEntryPanel() {
           <Mail className="h-4 w-4" />
         </div>
         <div>
-          <MicroLabel tone="gold">Enter inside the site</MicroLabel>
+          <MicroLabel tone="gold">Register inside the site</MicroLabel>
           <p className="mt-2 text-sm font-bold leading-6 text-[#AFAFAF]">
-            Use your email and private access code to create or reopen your 6+1 participant session. No Manus account is needed for challengers.
+            New challengers can register here with an email. Returning challengers can log back in from the same panel. No Manus account is needed.
           </p>
         </div>
       </div>
-      <div className="mt-4 grid gap-2 sm:grid-cols-3">
+      <div className="mt-4 grid grid-cols-2 border border-[#2A2A2A] bg-black p-1">
+        <button
+          type="button"
+          onClick={() => { haptics.tap(); setEntryMode("register"); }}
+          className={`min-h-10 text-[10px] font-black uppercase tracking-[0.18em] transition ${entryMode === "register" ? "bg-[#C8A96E] text-black" : "text-[#777] hover:text-white"}`}
+        >
+          Register
+        </button>
+        <button
+          type="button"
+          onClick={() => { haptics.tap(); setEntryMode("login"); }}
+          className={`min-h-10 text-[10px] font-black uppercase tracking-[0.18em] transition ${entryMode === "login" ? "bg-white text-black" : "text-[#777] hover:text-white"}`}
+        >
+          Returning login
+        </button>
+      </div>
+      <div className="mt-3 grid gap-2 sm:grid-cols-2">
         <input
           required
           type="email"
@@ -277,25 +293,16 @@ function SiteEntryPanel() {
           type="text"
           value={displayName}
           onChange={event => setDisplayName(event.target.value)}
-          placeholder="Display name optional"
-          className="min-h-12 border border-[#2A2A2A] bg-black px-4 text-sm font-bold text-white outline-none transition placeholder:text-[#555] focus:border-[#C8A96E]"
-        />
-        <input
-          required
-          type="password"
-          minLength={6}
-          value={accessCode}
-          onChange={event => setAccessCode(event.target.value)}
-          placeholder="Private access code"
+          placeholder={entryMode === "register" ? "Display name" : "Display name optional"}
           className="min-h-12 border border-[#2A2A2A] bg-black px-4 text-sm font-bold text-white outline-none transition placeholder:text-[#555] focus:border-[#C8A96E]"
         />
       </div>
       <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto] sm:items-center">
         <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#777]">
-          Returning challengers must use the same code. Founder/admin access stays separate for approvals, payments, and fulfilment.
+          Register creates your challenger profile. Returning login reopens it by email. Founder/admin access stays separate for approvals, payments, and fulfilment.
         </p>
         <SharpButton type="submit" disabled={siteLogin.isPending} className="min-w-40">
-          {siteLogin.isPending ? "Opening" : "Enter challenge"}
+          {siteLogin.isPending ? "Opening" : entryMode === "register" ? "Register" : "Log in"}
         </SharpButton>
       </div>
       <button

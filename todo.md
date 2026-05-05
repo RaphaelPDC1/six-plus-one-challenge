@@ -134,3 +134,24 @@
 - [x] Add Vitest coverage for public challenger login/signup and founder/admin access separation
 - [x] Run full TypeScript, test, build, and preview validation after replacing the public login flow
 - [x] Save a named checkpoint after the v4.4 site-native challenger login refinement
+
+## Refinement Pass (v4.5) — No-Code Challenger Registration
+- [x] Replace the public access-code entry requirement with a clearer Register flow for new challengers
+- [x] Add a returning-user login path that does not require Manus accounts and does not ask new users for an access code
+- [x] Preserve founder/admin Manus access separately from public challenger registration and login
+- [x] Prevent protected Manus/founder account impersonation while allowing ordinary public challenger registration
+- [x] Update frontend copy so the entry panel explains Register versus Returning Login simply
+- [x] Update Vitest coverage for no-code registration, returning login, and founder/admin separation
+- [x] Run full TypeScript, test, build, and preview validation after the v4.5 registration refinement
+- [x] Save a named checkpoint after the v4.5 no-code challenger registration refinement
+
+## Refinement Pass (v4.5 Follow-up) — Returning Login Semantics
+- [x] Implement true returning-user login semantics so login rejects unknown emails instead of auto-registering them
+- [x] Add Vitest coverage proving returning login rejects unknown emails while register creates new challenger accounts
+- [x] Re-run full TypeScript, test, build, restart, and preview validation after correcting returning-login behavior
+- [x] Save a named checkpoint after the corrected v4.5 registration/login refinement
+
+## Refinement Pass (v4.5 Final Validation) — Helper-Level Auth Coverage
+- [x] Add focused Vitest coverage for the real site-native helper proving register creates a new challenger and returning login rejects unknown emails
+- [x] Re-run full TypeScript, test, build, restart, and preview validation after helper-level coverage
+- [x] Save the final v4.5 checkpoint after helper-level validation is complete
