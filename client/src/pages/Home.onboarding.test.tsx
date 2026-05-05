@@ -131,9 +131,17 @@ describe("Home onboarding shell", () => {
     const markup = renderToStaticMarkup(<Home />);
 
     expect(markup).toContain("6+1 4 Lives Challenge");
-    expect(markup).toContain("50 days. Make it count. Remember you&#x27;re not a civilian.");
+    expect(markup).toContain("50 days. Make it count.");
+    expect(markup).toContain("Remember you&#x27;re");
+    expect(markup).toContain("not a civilian.");
+    expect(markup).toContain("block sm:inline");
     expect(markup).toContain("/manus-storage/six-plus-one-brand-logo-white-strong_2665284a.png");
     expect(markup).toContain("data-testid=\"brand-logo\"");
+    expect(markup).toContain("overflow-hidden border-b");
+    expect(markup).toContain("whitespace-normal break-words");
+    expect(markup).toContain("max-w-[12.5rem]");
+    expect(markup).toContain("max-w-full whitespace-normal break-words text-lg");
+    expect(markup).toContain("sm:max-w-3xl sm:text-base");
   });
 
   it("keeps the public entry panel streamlined until Register is selected", () => {
@@ -227,8 +235,20 @@ describe("Home onboarding shell", () => {
     expect(markup).toContain("load-status-panel");
     expect(markup).toContain("load-progress");
     expect(markup).toContain("/manus-storage/six-plus-one-brand-logo-white-strong_2665284a.png");
+    expect(markup).not.toContain("sticky top-0");
     expect(markup).not.toContain("bg-black/62");
     expect(markup).not.toContain(">6+1</");
+  });
+
+  it("keeps the animated loading logo on a fixed overlay above the sticky app header on mobile", () => {
+    const cssSource = readFileSync(new URL("../index.css", import.meta.url), "utf8");
+
+    expect(cssSource).toContain(".animated-load-page {\n  position: fixed;");
+    expect(cssSource).toContain("z-index: 100;");
+    expect(cssSource).toContain("min-height: 100dvh;");
+    expect(cssSource).toContain("contain: layout paint style;");
+    expect(cssSource).toContain(".load-mark {\n  position: absolute;");
+    expect(cssSource).toContain("z-index: 0;");
   });
 
   it("renders the real unknown-email questionnaire gate from mocked app state", () => {

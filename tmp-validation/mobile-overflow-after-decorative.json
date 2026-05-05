@@ -1,0 +1,34 @@
+{
+  "viewport": 390,
+  "documentClientWidth": 390,
+  "documentScrollWidth": 390,
+  "bodyClientWidth": 390,
+  "bodyScrollWidth": 390,
+  "hero": {
+    "text": "50 days. Make it count. Remember you're not a civilian.",
+    "className": "mt-5 max-w-full whitespace-normal break-words text-lg font-black leading-7 text-white min-[380px]:text-xl sm:max-w-2xl sm:text-2xl sm:leading-8",
+    "left": 37,
+    "right": 353,
+    "width": 316,
+    "clientWidth": 316,
+    "scrollWidth": 316,
+    "whiteSpace": "normal",
+    "overflowWrap": "break-word",
+    "wordBreak": "normal",
+    "fontSize": "20px"
+  },
+  "navText": {
+    "text": "4 Lives. 50 days. Make it count.",
+    "className": "mt-2 max-w-[12.5rem] whitespace-normal break-words text-[0.68rem] font-black uppercase leading-4 tracking-[0.12em] text-white min-[380px]:max-w-[14.5rem] sm:max-w-none sm:text-sm sm:leading-5 sm:tracking-[0.22em]",
+    "left": 124,
+    "right": 356,
+    "width": 232,
+    "clientWidth": 232,
+    "scrollWidth": 232,
+    "whiteSpace": "normal",
+    "overflowWrap": "break-word",
+    "wordBreak": "normal",
+    "fontSize": "10.88px"
+  },
+  "overflow": []
+}

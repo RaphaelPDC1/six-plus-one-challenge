@@ -215,3 +215,11 @@
 - [x] Replace fragile logo/icon references with reliable web-app-safe asset URLs or generated public assets
 - [x] Ensure header, landing, loading, favicon, Apple touch icon, and manifest icons all load the correct 6+1 logo
 - [x] Add or update tests for logo references and run validation before checkpointing
+
+## Mobile Logo Stacking Fix Pass
+- [x] Diagnose why the mobile loading logo and top-left app logo appear stacked or duplicated
+- [x] Adjust mobile loading/header logo layout so only the intended logo is visible and no marks overlap
+- [x] Validate the mobile logo transition and header rendering with tests, build, and preview health before checkpointing
+
+- [x] Fix mobile public landing header text clipping next to the 6+1 logo so the tagline wraps within the viewport
+- [x] Fix mobile public landing hero/body text clipping so all challenge copy wraps within the viewport

@@ -383,12 +383,12 @@ function Landing() {
   return (
     <main className="poster-grid min-h-screen bg-[#0D0D0D] text-white">
       <section className="container py-5 sm:py-6">
-        <nav className="flex flex-col items-start gap-4 border-b border-[#2A2A2A] pb-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex min-w-0 items-center gap-3 sm:gap-4">
-            <LogoMark />
-            <div className="min-w-0">
+        <nav className="flex flex-col items-start gap-4 overflow-hidden border-b border-[#2A2A2A] pb-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex w-full min-w-0 items-center gap-3 sm:w-auto sm:gap-4">
+            <LogoMark compact />
+            <div className="min-w-0 flex-1">
               <MicroLabel tone="gold">6+1 4 Lives Challenge</MicroLabel>
-              <p className="mt-2 max-w-[18rem] text-xs font-black uppercase tracking-[0.18em] text-white sm:max-w-none sm:text-sm sm:tracking-[0.22em]">4 Lives. 50 days. Make it count.</p>
+              <p className="mt-2 max-w-[12.5rem] whitespace-normal break-words text-[0.68rem] font-black uppercase leading-4 tracking-[0.12em] text-white min-[380px]:max-w-[14.5rem] sm:max-w-none sm:text-sm sm:leading-5 sm:tracking-[0.22em]">4 Lives. 50 days. Make it count.</p>
             </div>
           </div>
           <SharpButton className="w-full sm:w-auto" onClick={scrollToEntryPanel}>
@@ -398,15 +398,15 @@ function Landing() {
 
         <div className="grid gap-4 py-6 xl:grid-cols-[minmax(0,1.05fr)_minmax(340px,0.95fr)] xl:items-stretch">
           <section className="relative overflow-hidden border border-[#2A2A2A] bg-[#080808]/92 p-5 sm:p-6 lg:p-7">
-            <div className="absolute -right-8 -top-10 text-[11rem] font-black leading-none tracking-[-0.14em] text-white/[0.025] sm:text-[14rem]" aria-hidden="true">4</div>
+                <div className="absolute -right-2 -top-10 text-[11rem] font-black leading-none tracking-[-0.14em] text-white/[0.025] sm:-right-8 sm:text-[14rem]" aria-hidden="true">4</div>
             <div className="relative z-10 flex h-full flex-col justify-between gap-6">
               <div>
                 <MicroLabel tone="red">6+1 4 LIVES CHALLENGE</MicroLabel>
                 <h1 className="mt-4 max-w-3xl text-6xl font-black uppercase leading-[0.78] tracking-[-0.1em] sm:text-8xl lg:text-9xl">
                   4<br />Lives.
                 </h1>
-                <p className="mt-5 max-w-2xl text-xl font-black leading-8 text-white sm:text-2xl">50 days. Make it count. Remember you're not a civilian.</p>
-                <p className="mt-5 max-w-3xl text-sm font-bold leading-6 text-[#BDBDBD] sm:text-base sm:leading-7">6+1. There are 7 days in a week and every single one is an opportunity to be better. Not just for you. For the people next to you. Better everyday. Better together. You have 50 days. Make it count.</p>
+                <p className="mt-5 max-w-full whitespace-normal break-words text-lg font-black leading-7 text-white sm:max-w-2xl sm:text-2xl sm:leading-8"><span className="block sm:inline">50 days. Make it count.</span><span className="block sm:inline sm:before:content-['\00a0']">Remember you're</span><span className="block sm:inline sm:before:content-['\00a0']">not a civilian.</span></p>
+                <p className="mt-5 max-w-full whitespace-normal break-words text-sm font-bold leading-6 text-[#BDBDBD] sm:max-w-3xl sm:text-base sm:leading-7">6+1. There are 7 days in a week and every single one is an opportunity to be better. Not just for you. For the people next to you. Better everyday. Better together. You have 50 days. Make it count.</p>
               </div>
 
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
