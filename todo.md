@@ -21,7 +21,7 @@
 - [x] Add server-side tests for core challenge logic and access controls
 - [x] Validate the app build, type checks, tests, and running preview before delivery
 - [x] Save a final checkpoint after the completed first build
-- [ ] Deliver summary, limitations, and next steps to the user
+- [x] Deliver summary, limitations, and next steps to the user
 - [x] Remove Stripe from v1 scope and use a fixed Monzo payment request link for life-loss penalties
 - [x] Log every life-loss payment obligation in the database regardless of whether payment has been manually confirmed
 - [x] Add founder/admin controls to manually mark Monzo penalty payments as received
