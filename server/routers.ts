@@ -8,6 +8,7 @@ import {
   approveSignupRequest,
   captureWhatsAppMessage,
   createRedemption,
+  completeOnboarding,
   createSignupRequest,
   getAppSnapshot,
   getCurrentChallengeDay,
@@ -63,7 +64,7 @@ export const appRouter = router({
 
   challenge: router({
     snapshot: protectedProcedure.query(async ({ ctx }) => {
-      return getAppSnapshot(ctx.user.id, ctx.user.role);
+      return getAppSnapshot(ctx.user.id, ctx.user.role, ctx.user.email);
     }),
 
     updateProfile: protectedProcedure
@@ -71,9 +72,28 @@ export const appRouter = router({
         displayName: z.string().min(2).max(140),
         whatsappName: z.string().max(140).optional().default(""),
         monzoPaymentLink: z.string().max(2000).optional().default(""),
+        primaryGoal: z.string().max(220).optional().default(""),
+        biggestObstacle: z.string().max(2000).optional().default(""),
+        trainingLevel: z.string().max(80).optional().default(""),
+        motivationStyle: z.string().max(80).optional().default(""),
       }))
       .mutation(async ({ ctx, input }) => {
         return updateParticipantProfile(ctx.user.id, input);
+      }),
+
+    completeOnboarding: protectedProcedure
+      .input(z.object({
+        displayName: z.string().trim().min(2).max(140),
+        primaryGoal: z.string().trim().min(3).max(220),
+        biggestObstacle: z.string().trim().min(3).max(2000),
+        trainingLevel: z.enum(["starting", "building", "consistent", "advanced"]),
+        motivationStyle: z.enum(["direct", "supportive", "competitive", "quiet"]),
+        profilePhotoDataUrl: z.string().max(3_000_000).regex(/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/, "Profile photo must be a PNG, JPG, or WEBP data URL.").optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const participant = await completeOnboarding(ctx.user, input);
+        await logWardenMessage({ mode: "on_ramp", sourceEvent: "onboarding_complete", content: `${participant?.displayName ?? ctx.user.email ?? "A new participant"} completed the entry questionnaire and joined the 6+1 gate.` });
+        return { success: true, participant } as const;
       }),
 
     submitMyDay: protectedProcedure.input(dayLogInput).mutation(async ({ ctx, input }) => {

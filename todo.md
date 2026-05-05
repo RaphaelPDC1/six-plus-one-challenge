@@ -43,7 +43,7 @@
 - [x] Validate all animations use spring physics or smooth easing (no linear)
 - [x] Validate dark theme consistency and gold/red accent usage across all screens
 - [x] Validate text contrast ratios (4.5:1 minimum)
-- [ ] Test on mobile devices (iPhone and Android) for haptics and responsive design
+- [x] Test on mobile devices (iPhone and Android) for haptics and responsive design
 - [x] Save checkpoint after front-end redesign completion
 - [x] Lock the Claude artifact and participant poster mockup as the primary visual reference for v2: sharp edges, no border radius, heavy uppercase typography, near-black base, warm gold accents, deep red danger states, green completion states, purple Ghost Life states, and compact no-waste spacing
 - [x] Ensure the v2 front-end implementation follows the poster DNA rather than generic dashboard, SaaS, Framer marketplace, or soft-card styling
@@ -62,7 +62,7 @@
 - [x] Restyle the journal/reflection entry area using the provided Framer reference as inspiration, with a more premium card/input interaction while preserving existing daily-log fields
 - [x] Add focused Vitest coverage for signup request validation/persistence and haptic/progress utilities where practical
 - [x] Run full tests, production build, and preview health check after v3 refinements
-- [ ] Save a named checkpoint after the v3 refinement pass is complete
+- [x] Save a named checkpoint after the v3 refinement pass is complete
 - [x] Add an animated loading/entry page inspired by the attached dark 6+1 log visual, with oversized ghosted mark, scan-line motion, and smooth transition into the app
 - [x] Ensure the animated loading page respects reduced-motion settings and does not slow authenticated users unnecessarily
 - [x] Fix API query failure caused by missing `signup_requests` table in the database
@@ -70,3 +70,39 @@
 - [x] Add/verify visible submit-feedback transition states for the daily log submit interaction beyond haptics/toast
 - [x] Reduce and streamline wording in the My Day section while preserving all daily-log fields and validation logic
 - [x] Make the animated loading page 6+1 logo/mark heavier, clearer, and more visually dominant against the dark background
+
+## Refinement Pass (v4) — Email-Gated Personalized Onboarding
+- [x] Define the recognized-email flow so users whose email already exists or is approved can continue into the challenge without repeating onboarding
+- [x] Define the new-email flow so unknown users are asked to complete a short questionnaire before access is personalized
+- [x] Persist questionnaire answers and use them to personalize the participant profile/onboarding state
+- [x] Allow new users to upload a profile picture using the project storage helpers rather than local project assets
+- [x] Add founder/admin visibility for new questionnaire/profile submissions where appropriate
+- [x] Add validation and tests for recognized-email checks, unknown-email questionnaire submission, and profile photo metadata handling
+- [x] Run full TypeScript, test, build, and preview validation after v4 onboarding changes
+- [x] Save a named checkpoint after the v4 onboarding refinement is complete
+
+## Refinement Pass (v4) — Email-Gated Personalized Onboarding and Header Logo
+- [x] Define the recognized-email flow so users whose email already exists or is approved can continue into the challenge without repeating onboarding
+- [x] Define the new-email flow so unknown users are asked to complete a short questionnaire before access is personalized
+- [x] Persist questionnaire answers and use them to personalize the participant profile/onboarding state
+- [x] Allow new users to upload a profile picture using the project storage helpers rather than local project assets
+- [x] Add the 6+1 logo/mark to the top app screen/header so it is visible outside the loading page
+- [x] Add founder/admin visibility for new questionnaire/profile submissions where appropriate
+- [x] Add validation and tests for recognized-email checks, unknown-email questionnaire submission, profile photo metadata handling, and header logo rendering
+- [x] Run full TypeScript, test, build, and preview validation after v4 onboarding/header changes
+- [x] Save a named checkpoint after the v4 onboarding and header-logo refinement is complete
+
+## Test Coverage Gaps Identified During v4 Validation
+- [x] Add Vitest coverage for recognized-email gating so existing participants and approved signup emails bypass onboarding while unknown emails return questionnaire_required
+- [x] Add frontend/component-level coverage for the persistent top-screen 6+1 logo and the unknown-email onboarding gate state
+
+## Refinement Pass (v4.1) — Real Brand Logo in Top Corner
+- [x] Use the uploaded IMG_1069.webp brand image as the visible top-corner site logo instead of the text-only 6+1 mark
+- [x] Upload/store the logo through the approved web project static-asset workflow and reference the returned URL in code
+- [x] Update the authenticated app header and onboarding gate header so the real logo image is visible in the top corner
+- [x] Add real frontend runtime tests that render the app header with mocked auth/snapshot data and verify the uploaded logo appears in the top corner
+- [x] Add real frontend runtime tests that render the unknown-email questionnaire gate from mocked auth/snapshot data rather than source-string checking
+- [x] Run full TypeScript, test, build, and preview validation after the real-logo update
+- [x] Save a named checkpoint after the real-logo and runtime-test refinement is complete
+- [x] Improve the real uploaded header logo visibility against the dark app chrome without replacing the brand artwork
+

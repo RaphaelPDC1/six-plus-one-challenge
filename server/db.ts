@@ -14,6 +14,7 @@ import {
 } from "../drizzle/schema";
 import { applyLifeLoss, calculateDailyPoints, canEarnGhostLife, canSendWardenMessage, getMissedRules, isDayComplete } from "./challengeLogic";
 import { ENV } from "./_core/env";
+import { storagePut } from "./storage";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -82,6 +83,90 @@ export async function createSignupRequest(email: string, source = "landing") {
   return created[0];
 }
 
+export type OnboardingInput = {
+  displayName: string;
+  primaryGoal: string;
+  biggestObstacle: string;
+  trainingLevel: string;
+  motivationStyle: string;
+  profilePhotoDataUrl?: string;
+};
+
+export function parseProfilePhotoDataUrl(dataUrl?: string) {
+  if (!dataUrl) return null;
+  const match = dataUrl.match(/^data:(image\/(?:png|jpeg|webp));base64,([A-Za-z0-9+/=]+)$/);
+  if (!match) throw new Error("Profile photo must be a PNG, JPG, or WEBP image.");
+  const buffer = Buffer.from(match[2], "base64");
+  if (buffer.byteLength > 2_000_000) throw new Error("Profile photo must be smaller than 2MB.");
+  const extension = match[1] === "image/png" ? "png" : match[1] === "image/webp" ? "webp" : "jpg";
+  return { mimeType: match[1], buffer, extension };
+}
+
+export async function getOnboardingState(user: { id: number; email: string | null; role: "admin" | "user" }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  const participant = await getParticipantByUserId(user.id);
+  if (participant) return { status: "ready" as const, reason: "participant_exists" as const, participant };
+  if (user.role === "admin") return { status: "ready" as const, reason: "admin" as const, participant: null };
+  const normalizedEmail = user.email ? normalizeSignupEmail(user.email) : "";
+  if (!normalizedEmail) return { status: "questionnaire_required" as const, reason: "missing_email" as const, participant: null };
+  const request = (await db.select().from(signupRequests).where(eq(signupRequests.email, normalizedEmail)).limit(1))[0];
+  if (request?.status === "approved") return { status: "ready" as const, reason: "approved_email" as const, participant: null };
+  return { status: "questionnaire_required" as const, reason: request?.status === "rejected" ? "email_rejected" as const : "email_not_recognized" as const, participant: null };
+}
+
+export async function completeOnboarding(user: { id: number; name: string | null; email: string | null }, input: OnboardingInput) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  const displayName = input.displayName.trim();
+  const normalizedEmail = user.email ? normalizeSignupEmail(user.email) : null;
+  const photo = parseProfilePhotoDataUrl(input.profilePhotoDataUrl);
+  const uploaded = photo
+    ? await storagePut(
+        `profile-photos/user-${user.id}-${Date.now()}.${photo.extension}`,
+        photo.buffer,
+        photo.mimeType,
+      )
+    : null;
+  const values = {
+    displayName,
+    avatarInitials: initials(displayName),
+    primaryGoal: input.primaryGoal.trim(),
+    biggestObstacle: input.biggestObstacle.trim(),
+    trainingLevel: input.trainingLevel,
+    motivationStyle: input.motivationStyle,
+    profilePhotoUrl: uploaded?.url ?? null,
+    profilePhotoKey: uploaded?.key ?? null,
+    onboardingCompleted: true,
+    monzoPaymentLink: DEFAULT_MONZO_PAYMENT_LINK,
+  };
+  const existingParticipant = await getParticipantByUserId(user.id);
+  if (existingParticipant) {
+    await db.update(participants).set(values).where(eq(participants.id, existingParticipant.id));
+  } else {
+    await db.insert(participants).values({ userId: user.id, ...values });
+  }
+  if (normalizedEmail) {
+    const existingRequest = await db.select().from(signupRequests).where(eq(signupRequests.email, normalizedEmail)).limit(1);
+    const requestValues = {
+      source: "onboarding-questionnaire",
+      displayName,
+      primaryGoal: input.primaryGoal.trim(),
+      biggestObstacle: input.biggestObstacle.trim(),
+      trainingLevel: input.trainingLevel,
+      motivationStyle: input.motivationStyle,
+      profilePhotoUrl: uploaded?.url ?? null,
+      profilePhotoKey: uploaded?.key ?? null,
+    };
+    if (existingRequest[0]) {
+      await db.update(signupRequests).set(requestValues).where(eq(signupRequests.email, normalizedEmail));
+    } else {
+      await db.insert(signupRequests).values({ email: normalizedEmail, status: "pending", ...requestValues });
+    }
+  }
+  return getParticipantByUserId(user.id);
+}
+
 export async function listSignupRequests() {
   const db = await getDb();
   if (!db) throw new Error("Database unavailable");
@@ -129,6 +214,7 @@ export async function getOrCreateParticipant(user: { id: number; name: string | 
     displayName: user.name || user.email || `Participant ${user.id}`,
     avatarInitials: initials(user.name || user.email),
     monzoPaymentLink: DEFAULT_MONZO_PAYMENT_LINK,
+    onboardingCompleted: true,
   });
 
   const created = await db.select().from(participants).where(eq(participants.userId, user.id)).limit(1);
@@ -142,7 +228,7 @@ export async function getParticipantByUserId(userId: number) {
   return participant[0];
 }
 
-export async function updateParticipantProfile(userId: number, input: { displayName: string; whatsappName?: string; monzoPaymentLink?: string }) {
+export async function updateParticipantProfile(userId: number, input: { displayName: string; whatsappName?: string; monzoPaymentLink?: string; primaryGoal?: string; biggestObstacle?: string; trainingLevel?: string; motivationStyle?: string }) {
   const db = await getDb();
   if (!db) throw new Error("Database unavailable");
   const participant = await getOrCreateParticipant({ id: userId, name: input.displayName, email: null });
@@ -151,6 +237,11 @@ export async function updateParticipantProfile(userId: number, input: { displayN
     avatarInitials: initials(input.displayName),
     whatsappName: input.whatsappName || null,
     monzoPaymentLink: input.monzoPaymentLink || DEFAULT_MONZO_PAYMENT_LINK,
+    primaryGoal: input.primaryGoal || participant.primaryGoal || null,
+    biggestObstacle: input.biggestObstacle || participant.biggestObstacle || null,
+    trainingLevel: input.trainingLevel || participant.trainingLevel || null,
+    motivationStyle: input.motivationStyle || participant.motivationStyle || null,
+    onboardingCompleted: true,
   }).where(eq(participants.id, participant.id));
   return getParticipantByUserId(userId);
 }
@@ -283,10 +374,27 @@ export async function tryApplyGhostLife(participantId: number, exerciseDuration:
   return { applied: true, livesRemaining };
 }
 
-export async function getAppSnapshot(userId: number, role: "admin" | "user" = "user") {
+export async function getAppSnapshot(userId: number, role: "admin" | "user" = "user", email: string | null = null) {
   const db = await getDb();
   if (!db) throw new Error("Database unavailable");
-  const participant = await getOrCreateParticipant({ id: userId, name: null, email: null });
+  const onboarding = await getOnboardingState({ id: userId, email, role });
+  if (onboarding.status !== "ready") {
+    return {
+      accessState: onboarding,
+      challenge: { currentDay: getCurrentChallengeDay(), totalDays: 50, monzoPaymentLink: DEFAULT_MONZO_PAYMENT_LINK },
+      participant: null,
+      myLog: null,
+      participants: [],
+      logs: [],
+      rewards: [],
+      payments: [],
+      redemptions: [],
+      wardenMessages: [],
+      chatHistory: [],
+      signupRequests: [],
+    };
+  }
+  const participant = await getOrCreateParticipant({ id: userId, name: null, email });
   await seedRewardsIfEmpty();
   const [allParticipants, allLogs, rewards, payments, redemptions, warden, chat, accessRequests] = await Promise.all([
     db.select().from(participants),
@@ -300,6 +408,7 @@ export async function getAppSnapshot(userId: number, role: "admin" | "user" = "u
   ]);
   const myLog = await getTodayLog(participant.id);
   return {
+    accessState: { status: "ready" as const, reason: onboarding.reason },
     challenge: { currentDay: getCurrentChallengeDay(), totalDays: 50, monzoPaymentLink: DEFAULT_MONZO_PAYMENT_LINK },
     participant,
     myLog,

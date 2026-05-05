@@ -11,6 +11,7 @@ import {
   Check,
   ChevronDown,
   ChevronUp,
+  Camera,
   Crown,
   Dumbbell,
   Flame,
@@ -60,6 +61,7 @@ const RED = "#C0392B";
 const GREEN = "#2ECC71";
 const PURPLE = "#9B59B6";
 const chartColors = [GOLD, RED, GREEN, PURPLE, "#4CA3C9", "#E67E22", "#F1C40F", "#ECF0F1"];
+const BRAND_LOGO_URL = "/manus-storage/six-plus-one-brand-logo-visible_52856d30.webp";
 
 const emptyDay: MyDayForm = {
   noAlcohol: true,
@@ -191,6 +193,21 @@ function WardenPresence({ snapshot }: { snapshot: Snapshot }) {
 }
 
 
+export function LogoMark({ compact = false }: { compact?: boolean }) {
+  return (
+    <span className={classNames("flex shrink-0 items-center justify-center overflow-hidden bg-black", compact ? "h-12 w-36 sm:w-44" : "h-16 w-48 sm:w-56")}>
+      <img src={BRAND_LOGO_URL} alt="6+1 Four Lives Challenge logo" data-testid="brand-logo" className="h-full w-full object-contain drop-shadow-[0_0_18px_rgba(155,89,182,0.45)]" />
+    </span>
+  );
+}
+
+function ProfilePhoto({ participant, className = "h-11 w-11" }: { participant: any; className?: string }) {
+  if (participant?.profilePhotoUrl) {
+    return <img src={participant.profilePhotoUrl} alt={`${participant.displayName ?? "Participant"} profile`} className={classNames(className, "border border-[#C8A96E] object-cover")} />;
+  }
+  return <span className={classNames("grid place-items-center border border-[#C8A96E] text-xs font-black text-[#C8A96E]", className)}>{participant?.avatarInitials ?? "?"}</span>;
+}
+
 function SignupAccessForm() {
   const [email, setEmail] = useState("");
   const requestAccess = trpc.signup.requestAccess.useMutation({
@@ -253,10 +270,13 @@ function Landing() {
   return (
     <main className="poster-grid min-h-screen overflow-hidden bg-[#0D0D0D] text-white">
       <section className="container flex min-h-screen flex-col justify-between py-8">
-        <nav className="flex items-center justify-between border-b border-[#2A2A2A] pb-5">
-          <div>
-            <MicroLabel tone="gold">6+1 Four Lives</MicroLabel>
-            <p className="mt-2 text-sm font-black uppercase tracking-[0.22em] text-white">50 days. 4 lives. No hiding.</p>
+        <nav className="flex items-center justify-between gap-4 border-b border-[#2A2A2A] pb-5">
+          <div className="flex items-center gap-3">
+            <LogoMark />
+            <div>
+              <MicroLabel tone="gold">6+1 Four Lives</MicroLabel>
+              <p className="mt-2 text-sm font-black uppercase tracking-[0.22em] text-white">50 days. 4 lives. No hiding.</p>
+            </div>
           </div>
           <SharpButton onClick={() => (window.location.href = getLoginUrl())}>
             <UserRound className="h-4 w-4" /> Enter
@@ -573,7 +593,7 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
           {participants.map((p: any) => (
             <div key={p.id} className="border border-[#2A2A2A] bg-[#0D0D0D] p-4">
               <div className="flex items-center justify-between gap-3">
-                <span className="grid h-12 w-12 place-items-center border border-[#C8A96E] text-sm font-black text-[#C8A96E]">{p.avatarInitials}</span>
+                <ProfilePhoto participant={p} className="h-12 w-12" />
                 <span className="poster-label text-[#C0392B]">{p.livesRemaining}/4</span>
               </div>
               <p className="mt-4 text-lg font-black uppercase text-white">{p.displayName}</p>
@@ -681,7 +701,7 @@ function ProofFeed({ snapshot }: { snapshot: Snapshot }) {
             <article key={log.id} className="border border-[#2A2A2A] bg-[#0D0D0D] p-5">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
-                  <span className="grid h-11 w-11 place-items-center border border-[#C8A96E] text-xs font-black text-[#C8A96E]">{owner?.avatarInitials ?? "?"}</span>
+                  <ProfilePhoto participant={owner} className="h-11 w-11" />
                   <div>
                     <p className="font-black uppercase text-white">{owner?.displayName ?? "Participant"}</p>
                     <MicroLabel>Day {log.dayNumber}</MicroLabel>
@@ -738,6 +758,63 @@ function Rewards({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => voi
         )}
       </section>
     </div>
+  );
+}
+
+function OnboardingGate({ user, refetch }: { user: any; refetch: () => void }) {
+  const [displayName, setDisplayName] = useState(user?.name || "");
+  const [primaryGoal, setPrimaryGoal] = useState("");
+  const [biggestObstacle, setBiggestObstacle] = useState("");
+  const [trainingLevel, setTrainingLevel] = useState("building");
+  const [motivationStyle, setMotivationStyle] = useState("direct");
+  const [profilePhotoDataUrl, setProfilePhotoDataUrl] = useState<string | undefined>();
+  const complete = trpc.challenge.completeOnboarding.useMutation({
+    onSuccess: () => { haptics.success(); toast("Profile personalised. Welcome into the challenge."); refetch(); },
+    onError: error => { haptics.warning(); toast(error.message || "Could not complete onboarding."); },
+  });
+
+  function handlePhoto(file?: File) {
+    if (!file) return;
+    if (!file.type.match(/^image\/(png|jpeg|webp)$/)) { toast.error("Use a PNG, JPG, or WEBP profile photo."); return; }
+    if (file.size > 2_000_000) { toast.error("Profile photo must be under 2MB."); return; }
+    const reader = new FileReader();
+    reader.onload = () => setProfilePhotoDataUrl(String(reader.result));
+    reader.readAsDataURL(file);
+  }
+
+  return (
+    <main className="poster-grid min-h-screen bg-[#0D0D0D] text-white">
+      <section className="container py-6 md:py-8">
+        <div className="mb-6 flex items-center gap-3 border-b border-[#2A2A2A] pb-5">
+          <LogoMark />
+          <div>
+            <MicroLabel tone="gold">6+1 entry gate</MicroLabel>
+            <p className="mt-1 text-xs font-black uppercase tracking-[0.18em] text-white">New email found. Personalise the challenge first.</p>
+          </div>
+        </div>
+        <form className="mx-auto max-w-3xl border border-[#2A2A2A] bg-[#101010] p-5 shadow-[0_22px_90px_rgba(0,0,0,0.38)]" onSubmit={event => { event.preventDefault(); haptics.submit(); complete.mutate({ displayName, primaryGoal, biggestObstacle, trainingLevel: trainingLevel as any, motivationStyle: motivationStyle as any, profilePhotoDataUrl }); }}>
+          <MicroLabel tone="red">Unknown email</MicroLabel>
+          <h1 className="mt-3 text-5xl font-black uppercase leading-none tracking-[-0.08em] text-white">Make it yours.</h1>
+          <p className="mt-4 text-sm font-bold leading-6 text-[#999]">{user?.email ?? "This account"} is signed in, but it is not yet recognised in the 6+1 platform. Answer the quick setup and the app will open with your profile, goal, and photo.</p>
+          <div className="mt-6 grid gap-4 md:grid-cols-[160px_1fr]">
+            <label className="grid min-h-40 cursor-pointer place-items-center border border-dashed border-[#C8A96E]/70 bg-black/40 p-4 text-center text-[#C8A96E] transition hover:bg-[#17120A]">
+              {profilePhotoDataUrl ? <img src={profilePhotoDataUrl} alt="Profile preview" className="h-28 w-28 object-cover" /> : <span className="flex flex-col items-center gap-2 text-[10px] font-black uppercase tracking-[0.16em]"><Camera className="h-6 w-6" />Upload photo</span>}
+              <input type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={event => handlePhoto(event.target.files?.[0])} />
+            </label>
+            <div className="space-y-3">
+              <Field label="Display name"><TextInput value={displayName} onChange={event => setDisplayName(event.target.value)} placeholder="How the board should show you" /></Field>
+              <Field label="Main goal"><TextInput value={primaryGoal} onChange={event => setPrimaryGoal(event.target.value)} placeholder="Lose weight, rebuild discipline, build fitness..." /></Field>
+            </div>
+          </div>
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            <Field label="Training level"><select value={trainingLevel} onChange={event => setTrainingLevel(event.target.value)} className="min-h-12 w-full border border-[#2A2A2A] bg-black px-4 text-sm font-bold text-white outline-none focus:border-[#C8A96E]"><option value="starting">Starting again</option><option value="building">Building consistency</option><option value="consistent">Already consistent</option><option value="advanced">Advanced</option></select></Field>
+            <Field label="Motivation style"><select value={motivationStyle} onChange={event => setMotivationStyle(event.target.value)} className="min-h-12 w-full border border-[#2A2A2A] bg-black px-4 text-sm font-bold text-white outline-none focus:border-[#C8A96E]"><option value="direct">Direct pressure</option><option value="supportive">Supportive nudge</option><option value="competitive">Leaderboard chase</option><option value="quiet">Quiet accountability</option></select></Field>
+          </div>
+          <Field label="What usually gets in the way?"><TextArea value={biggestObstacle} onChange={event => setBiggestObstacle(event.target.value)} placeholder="Time, weekends, travel, stress, motivation dips..." /></Field>
+          <SharpButton type="submit" disabled={complete.isPending} className="mt-5 w-full">{complete.isPending ? "Personalising" : "Enter personalised challenge"}</SharpButton>
+        </form>
+      </section>
+    </main>
   );
 }
 
@@ -804,6 +881,10 @@ function AdminPanel({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => 
                 <div>
                   <p className="break-all font-black uppercase text-white">{request.email}</p>
                   <p className="mt-2 text-[10px] font-black uppercase tracking-[0.18em] text-[#777]">{request.source} · {new Date(request.createdAt).toLocaleString()}</p>
+                  {request.displayName && <p className="mt-3 text-sm font-black uppercase text-[#C8A96E]">{request.displayName}</p>}
+                  {request.primaryGoal && <p className="mt-2 text-sm font-bold text-[#D8D8D8]">Goal: {request.primaryGoal}</p>}
+                  {request.biggestObstacle && <p className="mt-2 text-xs font-bold leading-5 text-[#999]">Obstacle: {request.biggestObstacle}</p>}
+                  {(request.trainingLevel || request.motivationStyle) && <p className="mt-2 text-[10px] font-black uppercase tracking-[0.16em] text-[#777]">{request.trainingLevel} · {request.motivationStyle}</p>}
                 </div>
                 <span className={classNames("border px-3 py-1 text-[9px] font-black uppercase tracking-[0.18em]", request.status === "approved" ? "border-[#2ECC71] text-[#2ECC71]" : request.status === "rejected" ? "border-[#C0392B] text-[#C0392B]" : "border-[#C8A96E] text-[#C8A96E]")}>{request.status}</span>
               </div>
@@ -856,6 +937,7 @@ export default function Home() {
 
   if (loading || entryVisible) return <AnimatedLoadPage label={loading ? "Authenticating" : "Entering the log"} />;
   if (!isAuthenticated) return <Landing />;
+  if (snapshot?.accessState?.status === "questionnaire_required") return <OnboardingGate user={user} refetch={snapshotQuery.refetch} />;
 
   const visibleTabs = tabs.filter(tab => tab.key !== "admin" || user?.role === "admin");
 
@@ -864,7 +946,7 @@ export default function Home() {
       <header className="sticky top-0 z-40 border-b border-[#2A2A2A] bg-[#0D0D0D]/95 backdrop-blur">
         <div className="container flex items-center justify-between gap-4 py-4">
           <button onClick={() => setActiveTab("myday")} className="flex items-center gap-3 text-left">
-            <div className="grid h-11 w-11 place-items-center border border-[#C8A96E] font-black text-[#C8A96E]">6+1</div>
+            <LogoMark compact />
             <div>
               <MicroLabel tone="gold">Four Lives Challenge</MicroLabel>
               <p className="mt-1 hidden text-xs font-black uppercase tracking-[0.18em] text-white sm:block">Today’s log first. Everything else second.</p>

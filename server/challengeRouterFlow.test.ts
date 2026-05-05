@@ -5,6 +5,7 @@ const dbMocks = vi.hoisted(() => ({
   approveSignupRequest: vi.fn(),
   captureWhatsAppMessage: vi.fn(),
   createRedemption: vi.fn(),
+  completeOnboarding: vi.fn(),
   createSignupRequest: vi.fn(),
   getAppSnapshot: vi.fn(),
   getCurrentChallengeDay: vi.fn(() => 1),
@@ -129,6 +130,39 @@ describe("challenge router flow", () => {
 
     await expect(caller.signup.requestAccess({ email: "not-an-email", source: "landing" })).rejects.toThrow();
     expect(dbMocks.createSignupRequest).not.toHaveBeenCalled();
+  });
+
+  it("routes personalized onboarding through the completion helper", async () => {
+    dbMocks.completeOnboarding.mockResolvedValue({ id: 9, displayName: "New Person", profilePhotoUrl: "/manus-storage/profile.jpg" });
+    dbMocks.logWardenMessage.mockResolvedValue({ created: true });
+
+    const caller = appRouter.createCaller(createParticipantContext());
+    const result = await caller.challenge.completeOnboarding({
+      displayName: "New Person",
+      primaryGoal: "Build discipline",
+      biggestObstacle: "Weekend drift",
+      trainingLevel: "building",
+      motivationStyle: "direct",
+      profilePhotoDataUrl: "data:image/png;base64,aGVsbG8=",
+    });
+
+    expect(result.success).toBe(true);
+    expect(dbMocks.completeOnboarding).toHaveBeenCalledWith(expect.objectContaining({ email: "participant@example.com" }), expect.objectContaining({ primaryGoal: "Build discipline" }));
+    expect(dbMocks.logWardenMessage).toHaveBeenCalledWith(expect.objectContaining({ sourceEvent: "onboarding_complete" }));
+  });
+
+  it("rejects onboarding profile photos that are not supported data URLs before persistence", async () => {
+    const caller = appRouter.createCaller(createParticipantContext());
+
+    await expect(caller.challenge.completeOnboarding({
+      displayName: "New Person",
+      primaryGoal: "Build discipline",
+      biggestObstacle: "Weekend drift",
+      trainingLevel: "building",
+      motivationStyle: "direct",
+      profilePhotoDataUrl: "data:text/plain;base64,aGVsbG8=",
+    })).rejects.toThrow();
+    expect(dbMocks.completeOnboarding).not.toHaveBeenCalled();
   });
 
   it("routes founder signup approval and rejection through admin helpers", async () => {
