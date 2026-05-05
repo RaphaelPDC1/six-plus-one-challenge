@@ -114,3 +114,13 @@
 - [x] Run full TypeScript, test, build, and preview validation after the white-logo update
 - [x] Save a named checkpoint after the v4.2 white-logo correction
 - [x] Apply the white logo treatment to the landing/loading page as well as the in-app top-corner header logo
+
+## Refinement Pass (v4.3) — Logo Placement, Loading Animation, and Responsive Polish
+- [x] Reposition the white 6+1 header logo so it sits naturally in the top corner without disrupting the poster-style header hierarchy
+- [x] Remove the black-box visual artifact around the logo while preserving legibility on dark app chrome
+- [x] Improve the public landing and loading-page logo presentation so it feels integrated rather than pasted on
+- [x] Redesign the loading animation to better match the sharp 6+1 poster aesthetic with smoother entry timing
+- [x] Make header logo, landing logo, and loading animation responsive across desktop, tablet, and mobile breakpoints
+- [x] Add or update runtime tests for responsive logo/loading markup where practical
+- [x] Run full TypeScript, test, build, and preview validation after the logo/loading responsive polish
+- [x] Save a named checkpoint after the v4.3 logo placement and loading animation refinement

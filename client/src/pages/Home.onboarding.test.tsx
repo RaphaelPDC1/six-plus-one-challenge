@@ -91,6 +91,8 @@ describe("Home onboarding shell", () => {
     expect(markup).toContain("/manus-storage/six-plus-one-brand-logo-white-strong_2949fb51.webp");
     expect(markup).toContain("alt=\"6+1 Four Lives Challenge logo\"");
     expect(markup).toContain("data-testid=\"brand-logo\"");
+    expect(markup).toContain("brand-logo-shell");
+    expect(markup).not.toContain("bg-black");
     expect(markup).not.toContain(">6+1</");
   });
 
@@ -124,7 +126,11 @@ describe("Home onboarding shell", () => {
 
     expect(markup).toContain("animated-load-page");
     expect(markup).toContain("load-mark-image");
+    expect(markup).toContain("load-crosshair");
+    expect(markup).toContain("load-status-panel");
+    expect(markup).toContain("load-progress");
     expect(markup).toContain("/manus-storage/six-plus-one-brand-logo-white-strong_2949fb51.webp");
+    expect(markup).not.toContain("bg-black/62");
     expect(markup).not.toContain(">6+1</");
   });
 

@@ -96,9 +96,13 @@ function AnimatedLoadPage({ label = "Loading the challenge" }: { label?: string 
         <img src={BRAND_LOGO_URL} alt="" />
       </div>
       <div className="load-lines" aria-hidden="true" />
-      <div className="relative z-10 border border-[#191919] bg-black/62 px-6 py-5 text-center backdrop-blur-sm">
-        <p className="poster-label text-[#211832]">Four Lives Challenge</p>
-        <p className="mt-3 text-xs font-black uppercase tracking-[0.28em] text-[#C8A96E]">{label}</p>
+      <div className="load-crosshair" aria-hidden="true" />
+      <div className="load-status-panel relative z-10 text-center">
+        <p className="poster-label text-[#C8A96E]">Four Lives Challenge</p>
+        <p className="mt-3 text-[10px] font-black uppercase tracking-[0.28em] text-white sm:text-xs">{label}</p>
+        <div className="mt-5 h-[2px] w-full overflow-hidden bg-white/10" aria-hidden="true">
+          <div className="load-progress h-full bg-[#C8A96E]" />
+        </div>
       </div>
     </div>
   );
@@ -197,8 +201,13 @@ function WardenPresence({ snapshot }: { snapshot: Snapshot }) {
 
 export function LogoMark({ compact = false }: { compact?: boolean }) {
   return (
-    <span className={classNames("flex shrink-0 items-center justify-center overflow-hidden bg-black", compact ? "h-12 w-36 sm:w-44" : "h-16 w-48 sm:w-56")}>
-      <img src={BRAND_LOGO_URL} alt="6+1 Four Lives Challenge logo" data-testid="brand-logo" className="h-full w-full object-contain drop-shadow-[0_0_18px_rgba(255,255,255,0.22)]" />
+    <span
+      className={classNames(
+        "brand-logo-shell flex shrink-0 items-center justify-center",
+        compact ? "h-9 w-24 sm:h-10 sm:w-28 md:w-32" : "h-11 w-28 sm:h-12 sm:w-36 md:h-14 md:w-40",
+      )}
+    >
+      <img src={BRAND_LOGO_URL} alt="6+1 Four Lives Challenge logo" data-testid="brand-logo" className="brand-logo-image h-full w-full object-contain" />
     </span>
   );
 }
@@ -272,15 +281,15 @@ function Landing() {
   return (
     <main className="poster-grid min-h-screen overflow-hidden bg-[#0D0D0D] text-white">
       <section className="container flex min-h-screen flex-col justify-between py-8">
-        <nav className="flex items-center justify-between gap-4 border-b border-[#2A2A2A] pb-5">
-          <div className="flex items-center gap-3">
+        <nav className="flex flex-col items-start gap-5 border-b border-[#2A2A2A] pb-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex min-w-0 items-center gap-3 sm:gap-4">
             <LogoMark />
-            <div>
+            <div className="min-w-0">
               <MicroLabel tone="gold">6+1 Four Lives</MicroLabel>
-              <p className="mt-2 text-sm font-black uppercase tracking-[0.22em] text-white">50 days. 4 lives. No hiding.</p>
+              <p className="mt-2 max-w-[15rem] text-xs font-black uppercase tracking-[0.18em] text-white sm:max-w-none sm:text-sm sm:tracking-[0.22em]">50 days. 4 lives. No hiding.</p>
             </div>
           </div>
-          <SharpButton onClick={() => (window.location.href = getLoginUrl())}>
+          <SharpButton className="w-full sm:w-auto" onClick={() => (window.location.href = getLoginUrl())}>
             <UserRound className="h-4 w-4" /> Enter
           </SharpButton>
         </nav>
@@ -946,17 +955,17 @@ export default function Home() {
   return (
     <main className="poster-grid min-h-screen bg-[#0D0D0D] pb-24 text-white md:pb-0">
       <header className="sticky top-0 z-40 border-b border-[#2A2A2A] bg-[#0D0D0D]/95 backdrop-blur">
-        <div className="container flex items-center justify-between gap-4 py-4">
-          <button onClick={() => setActiveTab("myday")} className="flex items-center gap-3 text-left">
+        <div className="container flex items-center justify-between gap-3 py-3 sm:gap-4 sm:py-4">
+          <button onClick={() => setActiveTab("myday")} className="flex min-w-0 items-center gap-3 text-left">
             <LogoMark compact />
-            <div>
+            <div className="min-w-0">
               <MicroLabel tone="gold">Four Lives Challenge</MicroLabel>
               <p className="mt-1 hidden text-xs font-black uppercase tracking-[0.18em] text-white sm:block">Today’s log first. Everything else second.</p>
             </div>
           </button>
-          <div className="flex items-center gap-3">
+          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             <span className="hidden border border-[#2A2A2A] px-3 py-2 text-[9px] font-black uppercase tracking-[0.22em] text-[#777] sm:inline-block">{user?.role === "admin" ? "Founder" : "Participant"}</span>
-            <button className="border border-[#2A2A2A] px-4 py-3 text-[10px] font-black uppercase tracking-[0.18em] text-white hover:border-[#C8A96E] hover:text-[#C8A96E]" onClick={() => logout()}>Logout</button>
+            <button className="border border-[#2A2A2A] px-3 py-2.5 text-[9px] font-black uppercase tracking-[0.16em] text-white hover:border-[#C8A96E] hover:text-[#C8A96E] sm:px-4 sm:py-3 sm:text-[10px] sm:tracking-[0.18em]" onClick={() => logout()}>Logout</button>
           </div>
         </div>
       </header>
