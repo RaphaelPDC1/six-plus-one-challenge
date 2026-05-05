@@ -219,27 +219,38 @@ function ProfilePhoto({ participant, className = "h-11 w-11" }: { participant: a
   return <span className={classNames("grid place-items-center border border-[#C8A96E] text-xs font-black text-[#C8A96E]", className)}>{participant?.avatarInitials ?? "?"}</span>;
 }
 
-function SignupAccessForm() {
+function scrollToEntryPanel() {
+  haptics.tap();
+  if (typeof document === "undefined") return;
+  document.getElementById("site-entry-panel")?.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+function SiteEntryPanel() {
   const [email, setEmail] = useState("");
-  const requestAccess = trpc.signup.requestAccess.useMutation({
-    onSuccess: () => {
+  const [displayName, setDisplayName] = useState("");
+  const [accessCode, setAccessCode] = useState("");
+  const utils = trpc.useUtils();
+  const siteLogin = trpc.auth.siteLogin.useMutation({
+    onSuccess: async () => {
       haptics.success();
-      toast("Request received. Founder approval happens in the database/admin queue.");
-      setEmail("");
+      toast("You are in. Finish the setup and start logging inside the site.");
+      await utils.auth.me.invalidate();
+      await utils.challenge.snapshot.invalidate();
     },
     onError: error => {
       haptics.warning();
-      toast(error.message || "Could not submit access request.");
+      toast(error.message || "Could not start your 6+1 session.");
     },
   });
 
   return (
     <form
-      className="mt-8 border border-[#2A2A2A] bg-[#090909]/92 p-4 shadow-[0_18px_70px_rgba(0,0,0,0.42)] transition duration-500 hover:border-[#C8A96E]/70"
+      id="site-entry-panel"
+      className="mt-8 scroll-mt-10 border border-[#2A2A2A] bg-[#090909]/92 p-4 shadow-[0_18px_70px_rgba(0,0,0,0.42)] transition duration-500 hover:border-[#C8A96E]/70 sm:p-5"
       onSubmit={event => {
         event.preventDefault();
         haptics.submit();
-        requestAccess.mutate({ email, source: "landing-load-gate" });
+        siteLogin.mutate({ email, displayName: displayName || undefined, accessCode });
       }}
     >
       <div className="flex items-start gap-3">
@@ -247,13 +258,13 @@ function SignupAccessForm() {
           <Mail className="h-4 w-4" />
         </div>
         <div>
-          <MicroLabel tone="gold">Need access?</MicroLabel>
+          <MicroLabel tone="gold">Enter inside the site</MicroLabel>
           <p className="mt-2 text-sm font-bold leading-6 text-[#AFAFAF]">
-            Drop your email. The founder approves it from the database/admin section before you join the challenge.
+            Use your email and private access code to create or reopen your 6+1 participant session. No Manus account is needed for challengers.
           </p>
         </div>
       </div>
-      <div className="mt-4 grid gap-2 sm:grid-cols-[1fr_auto]">
+      <div className="mt-4 grid gap-2 sm:grid-cols-3">
         <input
           required
           type="email"
@@ -262,8 +273,29 @@ function SignupAccessForm() {
           placeholder="you@email.com"
           className="min-h-12 border border-[#2A2A2A] bg-black px-4 text-sm font-bold text-white outline-none transition placeholder:text-[#555] focus:border-[#C8A96E]"
         />
-        <SharpButton type="submit" disabled={requestAccess.isPending} className="min-w-40">
-          {requestAccess.isPending ? "Sending" : "Request access"}
+        <input
+          type="text"
+          value={displayName}
+          onChange={event => setDisplayName(event.target.value)}
+          placeholder="Display name optional"
+          className="min-h-12 border border-[#2A2A2A] bg-black px-4 text-sm font-bold text-white outline-none transition placeholder:text-[#555] focus:border-[#C8A96E]"
+        />
+        <input
+          required
+          type="password"
+          minLength={6}
+          value={accessCode}
+          onChange={event => setAccessCode(event.target.value)}
+          placeholder="Private access code"
+          className="min-h-12 border border-[#2A2A2A] bg-black px-4 text-sm font-bold text-white outline-none transition placeholder:text-[#555] focus:border-[#C8A96E]"
+        />
+      </div>
+      <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto] sm:items-center">
+        <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#777]">
+          Returning challengers must use the same code. Founder/admin access stays separate for approvals, payments, and fulfilment.
+        </p>
+        <SharpButton type="submit" disabled={siteLogin.isPending} className="min-w-40">
+          {siteLogin.isPending ? "Opening" : "Enter challenge"}
         </SharpButton>
       </div>
       <button
@@ -271,7 +303,7 @@ function SignupAccessForm() {
         onClick={() => { haptics.tap(); window.location.href = getLoginUrl(); }}
         className="mt-3 text-[10px] font-black uppercase tracking-[0.2em] text-[#777] transition hover:text-[#C8A96E]"
       >
-        Already approved? Log in.
+        Founder login only.
       </button>
     </form>
   );
@@ -289,7 +321,7 @@ function Landing() {
               <p className="mt-2 max-w-[15rem] text-xs font-black uppercase tracking-[0.18em] text-white sm:max-w-none sm:text-sm sm:tracking-[0.22em]">50 days. 4 lives. No hiding.</p>
             </div>
           </div>
-          <SharpButton className="w-full sm:w-auto" onClick={() => (window.location.href = getLoginUrl())}>
+          <SharpButton className="w-full sm:w-auto" onClick={scrollToEntryPanel}>
             <UserRound className="h-4 w-4" /> Enter
           </SharpButton>
         </nav>
@@ -303,12 +335,12 @@ function Landing() {
               Daily rules. Public pressure. Four lives. Offline Monzo penalties. Warden commentary. This is not a dashboard — it is the scoreboard for whether the group keeps its word.
             </p>
             <div className="mt-8 grid gap-3 sm:grid-cols-2">
-              <SharpButton onClick={() => { haptics.tap(); window.location.href = getLoginUrl(); }}>Start today’s log</SharpButton>
+              <SharpButton onClick={scrollToEntryPanel}>Start today’s log</SharpButton>
               <button onClick={() => haptics.tap()} className="min-h-12 border border-[#2A2A2A] bg-[#111] px-5 py-3 text-xs font-black uppercase tracking-[0.18em] text-white transition hover:border-[#C8A96E] hover:text-[#C8A96E]">
                 See the rules
               </button>
             </div>
-            <SignupAccessForm />
+            <SiteEntryPanel />
           </div>
           <div className="bg-[#2A2A2A] p-[2px]">
             {[

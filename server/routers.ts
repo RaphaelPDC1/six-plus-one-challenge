@@ -2,11 +2,13 @@ import { COOKIE_NAME } from "@shared/const";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import { getSessionCookieOptions } from "./_core/cookies";
+import { sdk } from "./_core/sdk";
 import { systemRouter } from "./_core/systemRouter";
 import { adminProcedure, protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import {
   approveSignupRequest,
   captureWhatsAppMessage,
+  createSiteNativeUser,
   createRedemption,
   completeOnboarding,
   createSignupRequest,
@@ -14,6 +16,7 @@ import {
   getCurrentChallengeDay,
   getOrCreateParticipant,
   getParticipantByUserId,
+  normalizeSignupEmail,
   logWardenMessage,
   markPaymentReceived,
   markRedemptionFulfilled,
@@ -28,6 +31,12 @@ import { generateWardenCommentary } from "./warden";
 const signupRequestInput = z.object({
   email: z.string().trim().email().max(320),
   source: z.string().max(120).optional().default("landing"),
+});
+
+const siteLoginInput = z.object({
+  email: z.string().trim().email().max(320),
+  displayName: z.string().trim().min(2).max(140).optional(),
+  accessCode: z.string().trim().min(6).max(80),
 });
 
 const dayLogInput = z.object({
@@ -48,6 +57,18 @@ export const appRouter = router({
   system: systemRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
+    siteLogin: publicProcedure.input(siteLoginInput).mutation(async ({ ctx, input }) => {
+      const email = normalizeSignupEmail(input.email);
+      const user = await createSiteNativeUser({
+        email,
+        displayName: input.displayName || email,
+        accessCode: input.accessCode,
+      });
+      const token = await sdk.createSessionToken(user.openId, { name: user.name || user.email || "6+1 participant" });
+      const cookieOptions = getSessionCookieOptions(ctx.req);
+      ctx.res.cookie(COOKIE_NAME, token, cookieOptions);
+      return { success: true, user } as const;
+    }),
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });

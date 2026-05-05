@@ -1,4 +1,5 @@
-import { and, desc, eq, gte } from "drizzle-orm";
+import { createHash } from "crypto";
+import { and, desc, eq, gte, inArray, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   dailyLogs,
@@ -66,6 +67,59 @@ export async function getUserByOpenId(openId: string) {
   if (!db) return undefined;
   const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
   return result[0];
+}
+
+function hashSiteAccessCode(email: string, accessCode: string) {
+  return createHash("sha256").update(`${normalizeSignupEmail(email)}:${accessCode}`).digest("hex");
+}
+
+export async function getUserByEmail(email: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(users).where(eq(users.email, normalizeSignupEmail(email))).limit(1);
+  return result[0];
+}
+
+export async function createSiteNativeUser(input: { email: string; displayName: string; accessCode: string }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  const email = normalizeSignupEmail(input.email);
+  const displayName = input.displayName.trim() || email;
+  const openId = `site-native:${email}`;
+  const accessCodeHash = hashSiteAccessCode(email, input.accessCode);
+  const existingSiteUser = await getUserByOpenId(openId);
+
+  if (existingSiteUser) {
+    if (existingSiteUser.loginMethod !== accessCodeHash) {
+      throw new Error("That email already has a 6+1 access code. Use the same code or ask the founder to reset it.");
+    }
+    await upsertUser({
+      openId,
+      name: existingSiteUser.name || displayName,
+      email,
+      loginMethod: accessCodeHash,
+      role: "user",
+      lastSignedIn: new Date(),
+    });
+    return { ...existingSiteUser, loginMethod: "site-native" };
+  }
+
+  const existingEmailUser = await getUserByEmail(email);
+  if (existingEmailUser) {
+    throw new Error("That email is already attached to a protected account. Ask the founder to enable site access for it.");
+  }
+
+  await upsertUser({
+    openId,
+    name: displayName,
+    email,
+    loginMethod: accessCodeHash,
+    role: "user",
+    lastSignedIn: new Date(),
+  });
+  const user = await getUserByOpenId(openId);
+  if (!user) throw new Error("Could not create participant session");
+  return { ...user, loginMethod: "site-native" };
 }
 
 export function normalizeSignupEmail(email: string) {

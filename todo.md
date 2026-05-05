@@ -124,3 +124,13 @@
 - [x] Add or update runtime tests for responsive logo/loading markup where practical
 - [x] Run full TypeScript, test, build, and preview validation after the logo/loading responsive polish
 - [x] Save a named checkpoint after the v4.3 logo placement and loading animation refinement
+
+## Refinement Pass (v4.4) — Site-Native Challenger Login
+- [x] Replace public Enter and Start buttons so challengers are not sent to Manus OAuth login
+- [x] Add an in-site participant signup/login panel suitable for people who do not have Manus accounts
+- [x] Preserve founder/admin Manus access separately from normal challenger entry
+- [x] Wire the site-native participant session into My Day, onboarding, leaderboard, proof, rewards, and challenge submission flows
+- [x] Add backend/session safeguards so participant identity is not spoofed by plain client-only state
+- [x] Add Vitest coverage for public challenger login/signup and founder/admin access separation
+- [x] Run full TypeScript, test, build, and preview validation after replacing the public login flow
+- [x] Save a named checkpoint after the v4.4 site-native challenger login refinement
