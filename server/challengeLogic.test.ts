@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  DAILY_PASS_THRESHOLD,
   DAILY_RULE_KEYS,
   calculateCheckpointAward,
   canPostWardenMessage,
@@ -17,22 +18,40 @@ import {
 } from "./db";
 
 describe("challengeLogic", () => {
-  it("marks a day complete only when all six rules are satisfied", () => {
+  it("marks a day complete once five of six rules are satisfied", () => {
     const complete = evaluateDailyRules({
       noAlcohol: true,
       cleanEating: true,
       exerciseDone: true,
       reflectionDone: true,
       readTeachDone: true,
-      trackedEverything: true,
+      trackedEverything: false,
     });
 
     expect(complete.complete).toBe(true);
-    expect(complete.missedRules).toEqual([]);
+    expect(complete.completedRules).toBe(DAILY_PASS_THRESHOLD);
+    expect(complete.requiredRules).toBe(5);
+    expect(complete.totalRules).toBe(6);
+    expect(complete.missedRules).toEqual(["Track Everything"]);
     expect(DAILY_RULE_KEYS).toHaveLength(6);
   });
 
-  it("identifies missed rules for life-loss context", () => {
+  it("identifies missed rules while passing a five-rule day", () => {
+    const result = evaluateDailyRules({
+      noAlcohol: true,
+      cleanEating: false,
+      exerciseDone: true,
+      reflectionDone: true,
+      readTeachDone: true,
+      trackedEverything: true,
+    });
+
+    expect(result.complete).toBe(true);
+    expect(result.completedRules).toBe(5);
+    expect(result.missedRules).toEqual(["Clean Eating"]);
+  });
+
+  it("keeps days incomplete below the five-rule threshold", () => {
     const result = evaluateDailyRules({
       noAlcohol: true,
       cleanEating: false,
@@ -43,10 +62,11 @@ describe("challengeLogic", () => {
     });
 
     expect(result.complete).toBe(false);
+    expect(result.completedRules).toBe(4);
     expect(result.missedRules).toEqual(["Clean Eating", "Daily Reflection"]);
   });
 
-  it("treats Track Everything as a life-loss rule when it is missed", () => {
+  it("still reports Track Everything as a missed rule when it is the one open item", () => {
     const result = evaluateDailyRules({
       noAlcohol: true,
       cleanEating: true,
@@ -56,7 +76,8 @@ describe("challengeLogic", () => {
       trackedEverything: false,
     });
 
-    expect(result.complete).toBe(false);
+    expect(result.complete).toBe(true);
+    expect(result.completedRules).toBe(5);
     expect(result.missedRules).toEqual(["Track Everything"]);
   });
 

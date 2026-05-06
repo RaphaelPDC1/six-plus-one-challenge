@@ -47,7 +47,7 @@ vi.mock("@/lib/trpc", () => ({
         useMutation: () => mockState.mutation,
       },
       logoUrl: {
-        useQuery: () => ({ data: { url: "/six-plus-one-logo.svg" } }),
+        useQuery: () => ({ data: { url: "/manus-storage/six-plus-one-reference-palette-logo-transparent_9ff37cae.png" } }),
       },
     },
     signup: {
@@ -113,7 +113,7 @@ describe("Home onboarding shell", () => {
     expect(markup).toContain("brand-logo-shell");
     expect(markup).toContain("brand-logo-top-left");
     expect(markup).toContain("brand-logo-image");
-    expect(markup).toContain('src="/six-plus-one-logo.svg"');
+    expect(markup).toContain('src="/manus-storage/six-plus-one-reference-palette-logo-transparent_9ff37cae.png"');
     expect(markup).toContain('data-logo-placement="top-left-corner"');
     expect(markup).not.toContain("brand-wordmark");
     expect(markup).not.toContain("bg-black");
@@ -125,7 +125,7 @@ describe("Home onboarding shell", () => {
     expect(markup).toContain("sticky top-0");
     expect(markup).toContain("brand-logo-top-left");
     expect(markup).toContain("brand-logo-image");
-    expect(markup).toContain('src="/six-plus-one-logo.svg"');
+    expect(markup).toContain('src="/manus-storage/six-plus-one-reference-palette-logo-transparent_9ff37cae.png"');
     expect(markup).toContain('data-logo-placement="top-left-corner"');
     expect(markup).toContain("Four Lives Challenge");
   });
@@ -249,7 +249,7 @@ describe("Home onboarding shell", () => {
     expect(markup).toContain("load-status-panel");
     expect(markup).toContain("load-progress");
     expect(markup).toContain("brand-logo-image");
-    expect(markup).toContain('src="/six-plus-one-logo.svg"');
+    expect(markup).toContain('src="/manus-storage/six-plus-one-reference-palette-logo-transparent_9ff37cae.png"');
     expect(markup).toContain('data-logo-placement="loading-page"');
     expect(markup).not.toContain("sticky top-0");
     expect(markup).not.toContain("bg-black/62");
@@ -270,23 +270,22 @@ describe("Home onboarding shell", () => {
     expect(cssSource).toContain("width: clamp(13rem, 78vw, 21rem);");
   });
 
-  it("uses the supplied reference-style palette logo without old-asset swaps or text fallback paths", () => {
+  it("uses the previously generated image logo without reverting to the broken SVG or older asset swaps", () => {
     const homeSource = readFileSync(new URL("./Home.tsx", import.meta.url), "utf8");
     const registerSource = readFileSync(new URL("./Register.tsx", import.meta.url), "utf8");
     const htmlSource = readFileSync(new URL("../../index.html", import.meta.url), "utf8");
     const manifestSource = readFileSync(new URL("../../public/site.webmanifest", import.meta.url), "utf8");
     const routerSource = readFileSync(new URL("../../../server/routers.ts", import.meta.url), "utf8");
     const storageProxySource = readFileSync(new URL("../../../server/_core/storageProxy.ts", import.meta.url), "utf8");
-    const logoSvgSource = readFileSync(new URL("../../public/six-plus-one-logo.svg", import.meta.url), "utf8");
     const appIconSvgSource = readFileSync(new URL("../../public/app-icon.svg", import.meta.url), "utf8");
 
-    expect(homeSource).toContain('const BRAND_LOGO_URL = "/six-plus-one-logo.svg";');
+    expect(homeSource).toContain('const BRAND_LOGO_URL = "/manus-storage/six-plus-one-reference-palette-logo-transparent_9ff37cae.png";');
     expect(homeSource).toContain('data-logo-source="reference-palette-logo"');
     expect(homeSource).not.toContain("six-plus-one-original-uploaded-logo_aefa948f.webp");
     expect(homeSource).not.toContain("BrandWordmark");
     expect(homeSource).not.toContain("six-plus-one-brand-logo-white-strong_2665284a.png");
 
-    expect(registerSource).toContain('const BRAND_LOGO_URL = "/six-plus-one-logo.svg";');
+    expect(registerSource).toContain('const BRAND_LOGO_URL = "/manus-storage/six-plus-one-reference-palette-logo-transparent_9ff37cae.png";');
     expect(registerSource).toContain('data-logo-source="reference-palette-logo"');
     expect(registerSource).not.toContain("setLogoFailed");
     expect(registerSource).not.toContain("onError={() => setLogoFailed(true)}");
@@ -294,15 +293,17 @@ describe("Home onboarding shell", () => {
 
     expect(htmlSource).toContain("/app-icon.svg");
     expect(manifestSource).toContain("/app-icon.svg");
-    expect(routerSource).toContain('return { url: "/six-plus-one-logo.svg" };');
+    expect(routerSource).toContain('return { url: "/manus-storage/six-plus-one-reference-palette-logo-transparent_9ff37cae.png" };');
     expect(routerSource).not.toContain("six-plus-one-original-uploaded-logo_aefa948f.webp");
     expect(routerSource).not.toContain("six-plus-one-clean-stacked-logo_a45938fa.png");
     expect(routerSource).not.toContain("six-plus-one-brand-logo-white-strong_2665284a.png");
 
-    expect(homeSource).toContain("six-plus-one-logo.svg");
-    expect(registerSource).toContain("six-plus-one-logo.svg");
-    expect(routerSource).toContain("six-plus-one-logo.svg");
-    expect(logoSvgSource).toContain('fill="#FFFFFF"');
+    expect(homeSource).toContain("six-plus-one-reference-palette-logo-transparent_9ff37cae.png");
+    expect(registerSource).toContain("six-plus-one-reference-palette-logo-transparent_9ff37cae.png");
+    expect(routerSource).toContain("six-plus-one-reference-palette-logo-transparent_9ff37cae.png");
+    expect(homeSource).not.toContain('BRAND_LOGO_URL = "/six-plus-one-logo.svg"');
+    expect(registerSource).not.toContain('BRAND_LOGO_URL = "/six-plus-one-logo.svg"');
+    expect(routerSource).not.toContain('url: "/six-plus-one-logo.svg"');
     expect(appIconSvgSource).toContain('fill="#FFFFFF"');
 
     expect(storageProxySource).toContain("assetResp.arrayBuffer()");
@@ -319,9 +320,11 @@ describe("Home onboarding shell", () => {
     expect(homeSource).toContain('data-testid="overview-metrics-dashboard"');
     expect(homeSource).toContain("Overview · all participants");
     expect(homeSource).toContain("Group command centre.");
-    expect(homeSource).toContain("7-day compliance trend");
-    expect(homeSource).toContain("Rule pressure matrix");
+    expect(homeSource).toContain("Overview simplified");
+    expect(homeSource).toContain("High-level signal only.");
+    expect(homeSource).toContain("Compliance drill-downs moved to the Board");
     expect(homeSource).toContain("Participant comparison");
+    expect(homeSource).toContain("Board compliance");
     expect(homeSource).toContain("playAllGreenSubmitHaptic();");
     expect(homeSource).toContain("if (data.complete)");
     expect(hapticsSource).toContain("submit: [35, 50, 35, 80, 65]");
@@ -373,9 +376,9 @@ describe("Home onboarding shell", () => {
     const homeSource = readFileSync(new URL("./Home.tsx", import.meta.url), "utf8");
 
     expect(homeSource).toContain("Must-do today");
-    expect(homeSource).toContain("Six rules. No misses.");
-    expect(homeSource).toContain("still required");
-    expect(homeSource).toContain("Done — locked in");
+    expect(homeSource).toContain("Six rules. Five gets the day.");
+    expect(homeSource).toContain("5/6 is a pass. Submit the day.");
+    expect(homeSource).toContain("Draft only until 5/6 is reached. Lives judged after rollover.");
     expect(homeSource).toContain("function pulse(pattern: number | number[] = 18)");
     expect(homeSource).toContain("navigator.vibrate(pattern)");
     expect(homeSource).toContain("function playDoneCue()");
@@ -384,7 +387,7 @@ describe("Home onboarding shell", () => {
     expect(homeSource).toContain('data-ghost-life-state={ghostLifeLocked ? "locked" : "available"}');
     expect(homeSource).toContain("Ghost Life locked");
     expect(homeSource).toContain("Your Purple Ghost Life has already restored a life. It is now locked for the rest of the challenge.");
-    expect(homeSource).toContain("Draft only. Lives judged after rollover.");
+    expect(homeSource).toContain("Draft only until 5/6 is reached. Lives judged after rollover.");
     expect(homeSource).toContain("window.setTimeout(() => setSaveNotice(null), 2200);");
     expect(homeSource).not.toContain("Progress saved quietly");
     expect(homeSource).not.toContain("No life lost before rollover");

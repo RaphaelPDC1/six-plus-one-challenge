@@ -28,6 +28,7 @@ import {
 } from "./db";
 import { generateWardenCommentary } from "./warden";
 import { storagePut } from "./storage";
+import { notifyOwner } from "./_core/notification";
 
 const signupRequestInput = z.object({
   email: z.string().trim().email().max(320),
@@ -69,7 +70,7 @@ export const appRouter = router({
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logoUrl: publicProcedure.query(async () => {
-      return { url: "/six-plus-one-logo.svg" };
+      return { url: "/manus-storage/six-plus-one-reference-palette-logo-transparent_9ff37cae.png" };
     }),
     siteLogin: publicProcedure.input(siteLoginInput).mutation(async ({ ctx, input }) => {
       const email = normalizeSignupEmail(input.email);
@@ -181,16 +182,29 @@ export const appRouter = router({
     redeemReward: protectedProcedure
       .input(z.object({
         rewardId: z.number().int(),
-        deliveryName: z.string().min(2).max(180),
-        deliveryAddress: z.string().min(8).max(2000),
-        checkpointEarned: z.string().min(2).max(80),
+        deliveryName: z.string().min(2).max(180).optional(),
+        deliveryAddress: z.string().min(2).max(2000).optional(),
+        checkpointEarned: z.string().min(2).max(80).optional(),
       }))
       .mutation(async ({ ctx, input }) => {
         const participant = await getParticipantByUserId(ctx.user.id);
         if (!participant) throw new TRPCError({ code: "NOT_FOUND", message: "Participant profile not found" });
-        await createRedemption(participant.id, input);
-        await logWardenMessage({ mode: "commentary", sourceEvent: "reward_redeemed", content: `${participant.displayName} has requested a Pure Sport reward. The earn side is now visible.` });
-        return { success: true } as const;
+        const redemption = await createRedemption(participant.id, {
+          rewardId: input.rewardId,
+          deliveryName: input.deliveryName?.trim() || participant.displayName || ctx.user.name || ctx.user.email || "6+1 participant",
+          deliveryAddress: input.deliveryAddress?.trim() || "Tap-to-redeem request — admin to confirm fulfilment details directly with participant.",
+          checkpointEarned: input.checkpointEarned?.trim() || `${participant.totalPoints ?? 0} points`,
+        });
+        await logWardenMessage({ mode: "commentary", sourceEvent: "reward_redeemed", content: `${participant.displayName} requested ${redemption.reward.name}. Admin fulfilment is now pending.` });
+        try {
+          await notifyOwner({
+            title: "6+1 reward redemption request",
+            content: `${participant.displayName} tapped to redeem ${redemption.reward.name} (${redemption.reward.pointsCost} points). Current points: ${participant.totalPoints ?? 0}. Please contact them to confirm fulfilment details.`,
+          });
+        } catch (error) {
+          console.warn("[Rewards] Owner notification failed", error);
+        }
+        return { success: true, reward: redemption.reward } as const;
       }),
   }),
 

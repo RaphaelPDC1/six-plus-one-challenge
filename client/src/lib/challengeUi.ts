@@ -1,3 +1,6 @@
+export const DAILY_PASS_THRESHOLD = 5;
+export const DAILY_RULE_COUNT = 6;
+
 export type DailyLogRuleInput = {
   noAlcohol: boolean;
   cleanEating: boolean;
@@ -41,12 +44,16 @@ export function getDailyLogProgress(form: DailyLogRuleInput): {
   rules: DailyLogRuleState[];
   completedRules: number;
   allAddressed: boolean;
+  passThreshold: number;
+  totalRules: number;
 } {
   const rules = getDailyLogRuleStates(form);
   const completedRules = rules.filter(rule => rule.done).length;
   return {
     rules,
     completedRules,
-    allAddressed: completedRules === 6,
+    allAddressed: completedRules >= DAILY_PASS_THRESHOLD,
+    passThreshold: DAILY_PASS_THRESHOLD,
+    totalRules: DAILY_RULE_COUNT,
   };
 }

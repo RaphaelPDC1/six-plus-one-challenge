@@ -22,6 +22,12 @@ let _db: ReturnType<typeof drizzle> | null = null;
 export const CHALLENGE_START_DATE = "2026-05-06";
 export const DEFAULT_MONZO_PAYMENT_LINK = "https://monzo.me/6plus1challenge/25";
 
+const REQUESTED_REWARD_CATALOGUE = [
+  { name: "Puresport Mystery Item", description: "A founder-approved Puresport mystery reward for reaching the first redemption tier.", pointsCost: 150, category: "Puresport" },
+  { name: "6plus1 T-Shirt", description: "A 6plus1 challenge T-shirt unlocked through consistent completed days.", pointsCost: 300, category: "6plus1" },
+  { name: "Group Meal Unlocked", description: "A group meal reward unlocked for the highest consistency tier.", pointsCost: 500, category: "6plus1" },
+] as const;
+
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
@@ -652,21 +658,35 @@ export async function getAppSnapshot(userId: number, role: "admin" | "user" = "u
 export async function seedRewardsIfEmpty() {
   const db = await getDb();
   if (!db) throw new Error("Database unavailable");
-  const existing = await db.select().from(rewardCatalogue).limit(1);
-  if (existing.length) return;
-  await db.insert(rewardCatalogue).values([
-    { name: "Pure Sport Bottle", description: "A practical reward for consistency at the early checkpoint.", pointsCost: 60 },
-    { name: "Pure Sport Tee", description: "Visible social proof for participants building a streak.", pointsCost: 140 },
-    { name: "Pure Sport Supplement Pack", description: "Recovery-focused reward for sustained challenge execution.", pointsCost: 260 },
-    { name: "Founder Choice Bundle", description: "Manual founder-approved bundle for the strongest finishers.", pointsCost: 520 },
-  ]);
+  const existing = await db.select().from(rewardCatalogue);
+  const requestedNames = new Set<string>(REQUESTED_REWARD_CATALOGUE.map(reward => reward.name));
+
+  for (const reward of REQUESTED_REWARD_CATALOGUE) {
+    const existingReward = existing.find(item => item.name === reward.name);
+    if (existingReward) {
+      await db.update(rewardCatalogue).set({ ...reward, active: true }).where(eq(rewardCatalogue.id, existingReward.id));
+    } else {
+      await db.insert(rewardCatalogue).values({ ...reward, active: true });
+    }
+  }
+
+  for (const reward of existing) {
+    if (!requestedNames.has(reward.name) && reward.active) {
+      await db.update(rewardCatalogue).set({ active: false }).where(eq(rewardCatalogue.id, reward.id));
+    }
+  }
 }
 
 export async function createRedemption(participantId: number, input: { rewardId: number; deliveryName: string; deliveryAddress: string; checkpointEarned: string }) {
   const db = await getDb();
   if (!db) throw new Error("Database unavailable");
+  const participant = (await db.select().from(participants).where(eq(participants.id, participantId)).limit(1))[0];
+  if (!participant) throw new Error("Participant not found");
+  const reward = (await db.select().from(rewardCatalogue).where(and(eq(rewardCatalogue.id, input.rewardId), eq(rewardCatalogue.active, true))).limit(1))[0];
+  if (!reward) throw new Error("Reward not found");
+  if ((participant.totalPoints ?? 0) < reward.pointsCost) throw new Error(`You need ${reward.pointsCost} points to redeem ${reward.name}.`);
   await db.insert(redemptionRequests).values({ participantId, ...input, status: "pending" });
-  return true;
+  return { success: true as const, reward, participant };
 }
 
 export async function markPaymentReceived(paymentId: number, founderUserId: number) {

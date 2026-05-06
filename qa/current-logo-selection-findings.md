@@ -1,0 +1,3 @@
+# Current Logo Selection Findings
+
+The existing logo contact sheet shows several earlier generated/uploaded assets. The white-strong logo variants are visible on black but are the older stark white treatment. The generated `six-plus-one-reference-palette-logo-transparent.png` is a wide, high-contrast palette-correct image with warm white, gold, and red styling on a transparent/black-compatible background. It matches the recent requested “previously generated logo image” direction better than the current app-origin SVG and should be used for the header and loading placements if the asset uploads successfully through the web project static-asset workflow.

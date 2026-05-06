@@ -3,7 +3,7 @@ import { Link } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { CalendarView } from "./Calendar";
 import { trpc } from "@/lib/trpc";
-import { clampLives, getDailyLogProgress } from "@/lib/challengeUi";
+import { DAILY_PASS_THRESHOLD, DAILY_RULE_COUNT, clampLives, getDailyLogProgress } from "@/lib/challengeUi";
 import { haptics } from "@/lib/haptics";
 import { toast } from "sonner";
 import {
@@ -63,8 +63,8 @@ const RED = "#C0392B";
 const GREEN = "#2ECC71";
 const PURPLE = "#9B59B6";
 const chartColors = [GOLD, RED, GREEN, PURPLE, "#4CA3C9", "#E67E22", "#F1C40F", "#ECF0F1"];
-// Use the user-provided 6+1 speed-mark style recoloured into the app gold/red/white palette.
-const BRAND_LOGO_URL = "/six-plus-one-logo.svg";
+// Use the previously generated transparent logo image so mobile browsers load the same durable asset everywhere.
+const BRAND_LOGO_URL = "/manus-storage/six-plus-one-reference-palette-logo-transparent_9ff37cae.png";
 
 function BrandLogoImageWithRetry({ alt, className = "h-full w-full object-contain", decorative = false, placement }: { alt: string; className?: string; decorative?: boolean; placement?: "top-left-corner" | "loading-page" }) {
   return (
@@ -797,7 +797,7 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
   const currentDayNumber = snapshot?.challenge?.currentDay ?? 1;
   const draftStorageKey = getDraftStorageKey(participant?.userId ?? participant?.id, currentDayNumber);
   const latestWarden = [...(snapshot?.wardenMessages ?? [])].reverse()[0];
-  const { rules, completedRules, allAddressed } = getDailyLogProgress(form);
+  const { rules, completedRules, allAddressed, passThreshold, totalRules } = getDailyLogProgress(form);
   const ghostLifeLocked = Boolean(participant?.ghostLifeUsed);
 
   useEffect(() => {
@@ -901,7 +901,7 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
             <HealthBar lives={participant?.livesRemaining ?? 4} label="Your lives" />
           </div>
           <div className="mt-5 grid gap-2 bg-[#2A2A2A] p-[2px] sm:grid-cols-3">
-            <PosterStat label="Rules addressed" value={`${completedRules}/6`} tone={allAddressed ? "green" : "gold"} />
+            <PosterStat label="Rules addressed" value={`${completedRules}/${totalRules}`} tone={allAddressed ? "green" : "gold"} />
             <PosterStat label="Current streak" value={participant?.currentStreak ?? 0} tone="green" />
             <PosterStat label="Points" value={participant?.totalPoints ?? 0} tone="gold" />
           </div>
@@ -910,12 +910,12 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
         <div className={classNames("must-do-rules border-2 p-3 transition-all duration-300 sm:p-4", allAddressed ? "must-do-rules-complete border-[#2ECC71] bg-[#07150D]" : "border-[#C0392B] bg-[#190B0A]")}> 
           <div className="mb-3 flex flex-col gap-2 border-b border-white/10 pb-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <MicroLabel tone={allAddressed ? "green" : "red"}>{allAddressed ? "Must-do complete" : "Must-do today"}</MicroLabel>
-              <h2 className="mt-2 text-2xl font-black uppercase leading-none tracking-[-0.06em] text-white">Six rules. No misses.</h2>
+              <MicroLabel tone={allAddressed ? "green" : "red"}>{allAddressed ? "Pass secured" : "Must-do today"}</MicroLabel>
+              <h2 className="mt-2 text-2xl font-black uppercase leading-none tracking-[-0.06em] text-white">Six rules. Five gets the day.</h2>
             </div>
-            <div className={classNames("border px-3 py-2 text-[10px] font-black uppercase tracking-[0.18em]", allAddressed ? "border-[#2ECC71] bg-[#0F2A18] text-[#2ECC71]" : "border-[#C0392B] bg-[#2A0F0C] text-[#FFB3A8]")}>{allAddressed ? "Done — locked in" : `${6 - completedRules} still required`}</div>
+            <div className={classNames("border px-3 py-2 text-[10px] font-black uppercase tracking-[0.18em]", allAddressed ? "border-[#2ECC71] bg-[#0F2A18] text-[#2ECC71]" : "border-[#C0392B] bg-[#2A0F0C] text-[#FFB3A8]")}>{allAddressed ? `${completedRules}/${totalRules} passed` : `${Math.max(0, passThreshold - completedRules)} more for pass`}</div>
           </div>
-          {allAddressed && <div className="mb-3 border border-[#2ECC71]/50 bg-[#0F2A18] p-3 text-xs font-black uppercase tracking-[0.16em] text-[#2ECC71]">All six are green. Submit the day.</div>}
+          {allAddressed && <div className="mb-3 border border-[#2ECC71]/50 bg-[#0F2A18] p-3 text-xs font-black uppercase tracking-[0.16em] text-[#2ECC71]">5/6 is a pass. Submit the day.</div>}
           <div className="space-y-2">
           <RuleCard title="No alcohol" label="Rule 01" icon={Shield} complete={form.noAlcohol} active={openRule === "noAlcohol"} onToggle={() => setOpenRule(openRule === "noAlcohol" ? "exercise" : "noAlcohol")}>
             <label className="flex items-center justify-between gap-4 border border-[#2A2A2A] bg-[#0D0D0D] p-4">
@@ -973,9 +973,9 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
 
         <div className={classNames("submit-dock relative sticky bottom-[74px] z-20 border border-[#2A2A2A] bg-[#0D0D0D]/95 p-3 backdrop-blur transition-all duration-300 md:static md:bg-transparent md:p-0", submit.isPending && "submit-dock-pending", allAddressed && !submit.isPending && "submit-dock-ready")}>
           <SharpButton className={classNames("w-full py-5 text-sm transition-all duration-300", submit.isPending && "submit-button-pending")} disabled={submit.isPending} onClick={() => submit.mutate({ ...form, reflectionShared: false, dayNumber: snapshot?.challenge.currentDay ?? 1 })}>
-            {submit.isPending ? (allAddressed ? "Submitting the log" : "Saving progress") : allAddressed ? `Submit day ${snapshot?.challenge.currentDay ?? 1}` : `Save progress — ${6 - completedRules} still open`}
+            {submit.isPending ? (allAddressed ? "Submitting the log" : "Saving progress") : allAddressed ? `Submit day ${snapshot?.challenge.currentDay ?? 1}` : `Save progress — ${Math.max(0, passThreshold - completedRules)} more for pass`}
           </SharpButton>
-          {!allAddressed && <p className="mt-2 text-center text-[10px] font-black uppercase tracking-[0.16em] text-[#C8A96E]/80">Draft only. Lives judged after rollover.</p>}
+          {!allAddressed && <p className="mt-2 text-center text-[10px] font-black uppercase tracking-[0.16em] text-[#C8A96E]/80">Draft only until 5/6 is reached. Lives judged after rollover.</p>}
           {saveNotice && <div role="status" className={classNames("pointer-events-none absolute -top-3 right-3 rounded-full border bg-black/90 px-2 py-1 text-[9px] font-black uppercase leading-none tracking-[0.16em] shadow-[0_0_18px_rgba(0,0,0,0.45)]", saveNotice.complete ? "border-[#2ECC71]/70 text-[#2ECC71]" : "border-[#C8A96E]/70 text-[#C8A96E]")}>{saveNotice.title}</div>}
           {draftRestored && <div role="status" className="pointer-events-none absolute -top-3 left-3 rounded-full border border-[#C8A96E]/70 bg-black/90 px-2 py-1 text-[9px] font-black uppercase leading-none tracking-[0.16em] text-[#C8A96E] shadow-[0_0_18px_rgba(0,0,0,0.45)]">Draft restored</div>}
           {lastMissed.length > 0 && <div className="mt-3 border-l-4 border-[#C0392B] bg-[#180F0F] p-4 text-sm font-bold text-[#F0B7AE]">Missed after rollover: {lastMissed.join(", ")}. Penalty logged.</div>}
@@ -1117,12 +1117,12 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
             <MicroLabel tone="gold">Overview · all participants</MicroLabel>
             <h2 className="mt-2 text-3xl font-black uppercase leading-none tracking-[-0.07em] text-white sm:text-5xl">Group command centre.</h2>
           </div>
-          <p className="max-w-md text-[10px] font-black uppercase leading-5 tracking-[0.16em] text-[#777]">Every participant, every day, lives pressure, compliance, streaks, money, rewards, and submission risk in one view.</p>
+          <p className="max-w-md text-[10px] font-black uppercase leading-5 tracking-[0.16em] text-[#777]">A lighter command view for progress, lives, streaks, payments, and rewards. Detailed compliance now lives inside tapped Board profiles.</p>
         </div>
         <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-6">
           <OverviewMetricCard label="Participants" value={participantCount} detail="Active competitors tracked" tone="white" />
           <OverviewMetricCard label="Today green" value={`${todayComplete}/${participantCount}`} detail={`Yesterday closed ${yesterdayComplete}/${participantCount}`} tone={todayComplete === participantCount && participantCount > 0 ? "green" : "gold"} />
-          <OverviewMetricCard label="Group compliance" value={`${pct(completedLogs.length, expectedSlots)}%`} detail={`${completedLogs.length}/${expectedSlots || 0} day slots complete`} tone="green" />
+          <OverviewMetricCard label="Group pass rate" value={`${pct(completedLogs.length, expectedSlots)}%`} detail={`${completedLogs.length}/${expectedSlots || 0} 5/6 pass slots`} tone="green" />
           <OverviewMetricCard label="Average streak" value={averageStreak} detail={`Best active/longest: ${strongestStreak}`} tone="gold" />
           <OverviewMetricCard label="Lives lost" value={totalLivesLost} detail={`${atRisk.length} participant risk flags`} tone={totalLivesLost > 0 ? "red" : "green"} />
           <OverviewMetricCard label="Ops queue" value={pendingPayments + pendingRewards} detail={`${pendingPayments} payments · ${pendingRewards} rewards`} tone={pendingPayments + pendingRewards ? "purple" : "white"} />
@@ -1152,32 +1152,18 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
         </div>
       </section>
 
-      <section className="grid gap-5 xl:grid-cols-[1fr_0.9fr]">
-        <div className="border border-[#2A2A2A] bg-[#101010] p-4 sm:p-5">
-          <MicroLabel tone="gold">7-day compliance trend</MicroLabel>
-          <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
-            {trendRows.map(row => (
-              <div key={row.day} className="border border-[#2A2A2A] bg-black p-3">
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-xs font-black uppercase tracking-[0.16em] text-white">Day {row.day}</p>
-                  <span className={classNames("text-xs font-black", row.completeRate >= 80 ? "text-[#2ECC71]" : row.completeRate >= 50 ? "text-[#C8A96E]" : "text-[#C0392B]")}>{row.completeRate}%</span>
-                </div>
-                <div className="mt-3 h-20 bg-[#171717] p-1 flex items-end gap-1" aria-hidden="true">
-                  <div className="w-1/2 bg-[#C8A96E]" style={{ height: `${Math.max(4, row.submittedRate)}%` }} />
-                  <div className="w-1/2 bg-[#2ECC71]" style={{ height: `${Math.max(4, row.completeRate)}%` }} />
-                </div>
-                <p className="mt-2 text-[9px] font-black uppercase tracking-[0.14em] text-[#777]">{row.missing} missing</p>
-              </div>
-            ))}
+      <section className="border border-[#2A2A2A] bg-[#101010] p-4 sm:p-5">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <MicroLabel tone="gold">Overview simplified</MicroLabel>
+            <h3 className="mt-2 text-2xl font-black uppercase tracking-[-0.06em] text-white sm:text-4xl">High-level signal only.</h3>
           </div>
+          <p className="max-w-sm text-[10px] font-black uppercase tracking-[0.16em] text-[#777]">Compliance drill-downs moved to the Board: tap any participant to see their latest rule breakdown and recent pass history.</p>
         </div>
-        <div className="border border-[#2A2A2A] bg-[#101010] p-4 sm:p-5">
-          <MicroLabel tone="red">Rule pressure matrix</MicroLabel>
-          <div className="mt-4 space-y-2">
-            {ruleMetrics.map((metric, index) => (
-              <OverviewBar key={metric.label} label={metric.label} value={pct(metric.done, logs.length)} detail={`${metric.done}/${logs.length || 0} submitted logs`} tone={index === 2 ? "red" : index >= 3 ? "purple" : "gold"} />
-            ))}
-          </div>
+        <div className="mt-4 grid gap-2 sm:grid-cols-3">
+          <OverviewMetricCard label="Today submitted" value={`${todayLogs.length}/${participantCount}`} detail="Tap Board rows for individual rule detail" tone="gold" />
+          <OverviewMetricCard label="Today passed" value={`${todayComplete}/${participantCount}`} detail={`Pass now means ${DAILY_PASS_THRESHOLD}/${DAILY_RULE_COUNT} rules`} tone={todayComplete === participantCount && participantCount > 0 ? "green" : "gold"} />
+          <OverviewMetricCard label="Need attention" value={atRisk.length} detail="Missed today or low lives" tone={atRisk.length ? "red" : "green"} />
         </div>
       </section>
 
@@ -1187,7 +1173,7 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
             <MicroLabel tone="red">Participant comparison</MicroLabel>
             <h3 className="mt-2 text-2xl font-black uppercase tracking-[-0.06em] text-white sm:text-4xl">Who is safe. Who needs heat.</h3>
           </div>
-          <p className="max-w-sm text-[10px] font-black uppercase tracking-[0.16em] text-[#777]">Sorted by risk score: missed today, low lives, and weaker completion rate rise to the top.</p>
+          <p className="max-w-sm text-[10px] font-black uppercase tracking-[0.16em] text-[#777]">Sorted by risk score. Tap a participant to open the Board-style compliance drill-down.</p>
         </div>
         <div className="mt-5 space-y-2">
           {participantMetrics.map((p: any, index: number) => (
@@ -1200,9 +1186,9 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
                 <span className="mt-2 block max-w-[260px]"><HealthBar lives={p.livesRemaining} label="" compact /></span>
               </span>
               <span className="grid gap-2 sm:grid-cols-3">
-                <OverviewBar label="Complete" value={p.completionRate} detail="green days" tone="green" />
-                <OverviewBar label="Submit" value={p.submitRate} detail={todayLoggedIds.has(p.id) ? "today logged" : "not today"} tone={todayLoggedIds.has(p.id) ? "gold" : "red"} />
-                <OverviewBar label="Risk" value={Math.min(100, Math.round(p.riskScore))} detail={`${p.livesRemaining ?? 4}/4 lives`} tone={p.riskScore > 45 ? "red" : "purple"} />
+                <span className="border border-[#2A2A2A] bg-black px-3 py-2 text-[10px] font-black uppercase tracking-[0.14em] text-[#2ECC71]">{p.completionRate}% passed</span>
+                <span className={classNames("border bg-black px-3 py-2 text-[10px] font-black uppercase tracking-[0.14em]", todayLoggedIds.has(p.id) ? "border-[#C8A96E] text-[#C8A96E]" : "border-[#C0392B] text-[#FFB3A8]")}>{todayLoggedIds.has(p.id) ? "Today logged" : "Not today"}</span>
+                <span className="border border-[#2A2A2A] bg-black px-3 py-2 text-[10px] font-black uppercase tracking-[0.14em] text-[#777]">Tap for rules</span>
               </span>
             </button>
           ))}
@@ -1211,6 +1197,30 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
       <ParticipantSheet participant={selected} onClose={() => setSelected(null)} />
     </div>
   );
+}
+
+const COMPLIANCE_RULE_LABELS = [
+  { key: "noAlcohol", label: "No alcohol" },
+  { key: "cleanEating", label: "Clean eating" },
+  { key: "exercise", label: "30m exercise" },
+  { key: "reflection", label: "Reflection" },
+  { key: "readTeach", label: "Read / teach" },
+  { key: "trackedEverything", label: "Tracked all" },
+] as const;
+
+function getLogRuleStates(log: any) {
+  return [
+    { key: "noAlcohol", done: Boolean(log?.noAlcohol) },
+    { key: "cleanEating", done: Boolean(log?.cleanEating) },
+    { key: "exercise", done: Number(log?.exerciseDuration ?? 0) >= 30 && String(log?.exerciseType ?? "").trim().length > 1 },
+    { key: "reflection", done: String(log?.reflectionText ?? "").trim().length > 1 },
+    { key: "readTeach", done: String(log?.readTeachText ?? "").trim().length > 1 },
+    { key: "trackedEverything", done: Boolean(log?.trackedEverything) },
+  ];
+}
+
+function getLogCompletedRuleCount(log: any) {
+  return getLogRuleStates(log).filter(rule => rule.done).length;
 }
 
 function ParticipantSheet({ participant, onClose }: { participant: any; onClose: () => void }) {
@@ -1243,6 +1253,12 @@ function ParticipantSheet({ participant, onClose }: { participant: any; onClose:
   }, [participant, visibleParticipant]);
 
   if (!visibleParticipant) return null;
+  const sheetLogs = [...(visibleParticipant.ownedLogs ?? [])].sort((a: any, b: any) => Number(b.dayNumber ?? 0) - Number(a.dayNumber ?? 0));
+  const latestLog = sheetLogs[0];
+  const latestRules = latestLog ? getLogRuleStates(latestLog) : [];
+  const latestCompletedRules = latestLog ? latestRules.filter(rule => rule.done).length : 0;
+  const recentLogs = sheetLogs.slice(0, 7);
+  const recentPassed = recentLogs.filter((log: any) => log.completed || getLogCompletedRuleCount(log) >= DAILY_PASS_THRESHOLD).length;
   return (
     <div className={classNames("sheet-backdrop fixed inset-0 z-50 flex items-end bg-black/70", closing && "sheet-backdrop-out")} onClick={onClose}>
       <div className={classNames("sheet-panel w-full border-t-2 border-[#C8A96E] bg-[#0D0D0D] p-5 shadow-2xl md:mx-auto md:mb-8 md:max-w-xl md:border", closing && "sheet-panel-out")} onClick={event => event.stopPropagation()}>
@@ -1263,6 +1279,30 @@ function ParticipantSheet({ participant, onClose }: { participant: any; onClose:
           <PosterStat label="Days" value={visibleParticipant.daysComplete} tone="white" />
         </div>
         <div className="mt-5"><HealthBar lives={visibleParticipant.livesRemaining} label="Lives status" /></div>
+        <section className="mt-5 border border-[#2A2A2A] bg-black/35 p-4">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <MicroLabel tone="green">Board compliance</MicroLabel>
+              <h4 className="mt-2 text-2xl font-black uppercase tracking-[-0.06em] text-white">Tapped profile detail.</h4>
+            </div>
+            <span className={classNames("border px-3 py-2 text-[10px] font-black uppercase tracking-[0.16em]", latestLog && latestCompletedRules >= DAILY_PASS_THRESHOLD ? "border-[#2ECC71] text-[#2ECC71]" : "border-[#C8A96E] text-[#C8A96E]")}>{latestLog ? `${latestCompletedRules}/${DAILY_RULE_COUNT} latest` : "No log yet"}</span>
+          </div>
+          <div className="mt-4 grid gap-2 sm:grid-cols-3">
+            <PosterStat label="Recent passes" value={`${recentPassed}/${recentLogs.length || 0}`} tone="green" />
+            <PosterStat label="Latest day" value={latestLog?.dayNumber ?? "—"} tone="gold" />
+            <PosterStat label="Pass rule" value={`${DAILY_PASS_THRESHOLD}/${DAILY_RULE_COUNT}`} tone="white" />
+          </div>
+          {latestLog ? (
+            <div className="mt-4 grid gap-2 sm:grid-cols-2">
+              {COMPLIANCE_RULE_LABELS.map(label => {
+                const state = latestRules.find(rule => rule.key === label.key);
+                return <div key={label.key} className={classNames("flex items-center justify-between gap-3 border px-3 py-2 text-[10px] font-black uppercase tracking-[0.14em]", state?.done ? "border-[#2ECC71]/50 bg-[#07150D] text-[#2ECC71]" : "border-[#C0392B]/55 bg-[#190B0A] text-[#FFB3A8]")}><span>{label.label}</span><span>{state?.done ? "Done" : "Open"}</span></div>;
+              })}
+            </div>
+          ) : (
+            <p className="mt-4 border border-[#2A2A2A] bg-[#0D0D0D] p-4 text-xs font-black uppercase tracking-[0.14em] text-[#777]">No submitted rules yet for this participant.</p>
+          )}
+        </section>
         {photoExpanded && normaliseProfilePhotoUrl(visibleParticipant.profilePhotoUrl) && (
           <div className="fixed inset-0 z-[60] grid place-items-center bg-black/88 p-5" onClick={() => setPhotoExpanded(false)} role="dialog" aria-modal="true" aria-label={`${visibleParticipant.displayName} display picture`}>
             <button type="button" className="absolute right-4 top-4 border border-[#2A2A2A] bg-black p-3 text-[#C8A96E]" onClick={() => setPhotoExpanded(false)} aria-label="Close enlarged display picture"><X className="h-5 w-5" /></button>
@@ -1302,7 +1342,21 @@ function ProofImage({ url, dayNumber }: { url: string; dayNumber: number }) {
 
 function Leaderboard({ snapshot }: { snapshot: Snapshot }) {
   const [selected, setSelected] = useState<any>(null);
-  const ranked = [...(snapshot?.participants ?? [])].sort((a: any, b: any) => b.totalPoints - a.totalPoints || b.currentStreak - a.currentStreak);
+  const logs = snapshot?.logs ?? [];
+  const currentDay = snapshot?.challenge?.currentDay ?? 1;
+  const ranked = [...(snapshot?.participants ?? [])]
+    .map((participant: any) => {
+      const ownedLogs = logs.filter((log: any) => log.participantId === participant.id);
+      const expectedDays = Math.max(1, currentDay);
+      const passedLogs = ownedLogs.filter((log: any) => log.completed || getLogCompletedRuleCount(log) >= DAILY_PASS_THRESHOLD);
+      return {
+        ...participant,
+        ownedLogs,
+        completionRate: pct(passedLogs.length, expectedDays),
+        submitRate: pct(ownedLogs.length, expectedDays),
+      };
+    })
+    .sort((a: any, b: any) => b.totalPoints - a.totalPoints || b.currentStreak - a.currentStreak);
   return (
     <section className="border border-[#2A2A2A] bg-[#101010] p-5">
       <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
@@ -1310,7 +1364,7 @@ function Leaderboard({ snapshot }: { snapshot: Snapshot }) {
           <MicroLabel tone="gold">Leaderboard</MicroLabel>
           <h2 className="mt-2 break-words text-3xl font-black uppercase leading-none tracking-[-0.07em] text-white sm:text-4xl">Tap a line. Feel the chase.</h2>
         </div>
-        <p className="max-w-sm text-xs font-bold uppercase tracking-[0.14em] text-[#777]">Ranked by points first, then streak. Tap any row for the stat sheet.</p>
+        <p className="max-w-sm text-xs font-bold uppercase tracking-[0.14em] text-[#777]">Ranked by points first, then streak. Tap any row for the individual compliance board.</p>
       </div>
       <div className="space-y-2">
         {ranked.map((p: any, index) => (
@@ -1367,43 +1421,32 @@ function ProofFeed({ snapshot }: { snapshot: Snapshot }) {
 }
 
 function Rewards({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void }) {
-  const [selected, setSelected] = useState<number | null>(null);
-  const [deliveryName, setDeliveryName] = useState("");
-  const [deliveryAddress, setDeliveryAddress] = useState("");
-  const redeem = trpc.challenge.redeemReward.useMutation({ onSuccess: () => { pulse([15, 35, 15]); toast("Redemption request logged for founders."); refetch(); }, onError: e => toast.error(e.message) });
+  const participantPoints = snapshot?.participant?.totalPoints ?? 0;
+  const redeem = trpc.challenge.redeemReward.useMutation({ onSuccess: () => { pulse([15, 35, 15]); toast("Redemption request sent to the admin."); refetch(); }, onError: e => toast.error(e.message) });
   return (
-    <div className="grid gap-5 lg:grid-cols-[1fr_380px]">
-      <div className="grid gap-3 md:grid-cols-2">
-        {snapshot?.rewards.map((reward: any) => (
-          <button key={reward.id} className={classNames("border bg-[#101010] p-5 text-left transition hover:border-[#C8A96E]", selected === reward.id ? "border-[#C8A96E]" : "border-[#2A2A2A]")} onClick={() => { pulse(12); setSelected(reward.id); }}>
-            <RewardVisual reward={reward} />
-            <MicroLabel tone="gold">Pure Sport</MicroLabel>
-            <h3 className="mt-3 text-2xl font-black uppercase tracking-[-0.05em] text-white">{reward.name}</h3>
-            <p className="mt-3 text-sm font-bold leading-6 text-[#999]">{reward.description}</p>
-            <p className="mt-5 text-3xl font-black text-[#C8A96E]">{reward.pointsCost}</p>
-            <MicroLabel>points</MicroLabel>
-          </button>
-        ))}
+    <section className="border border-[#2A2A2A] bg-[#101010] p-5">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <MicroLabel tone="gold">Rewards</MicroLabel>
+          <h2 className="mt-2 text-3xl font-black uppercase tracking-[-0.07em] text-white sm:text-4xl">Tap to redeem.</h2>
+        </div>
+        <p className="max-w-sm text-xs font-bold uppercase tracking-[0.14em] text-[#777]">Only the three agreed rewards are shown. A tap logs the request and sends an admin notification.</p>
       </div>
-      <section className={classNames("reward-detail-panel border border-[#2A2A2A] bg-[#101010] p-5 transition-all duration-300", selected ? "reward-detail-panel-open" : "reward-detail-panel-closed")}>
-        <MicroLabel tone="gold">Redemption desk</MicroLabel>
-        {selected ? (
-          <div className="reward-detail-content">
-            <h3 className="mt-2 text-3xl font-black uppercase tracking-[-0.06em] text-white">Earned, then fulfilled manually.</h3>
-            <div className="mt-5 space-y-3">
-              <Field label="Delivery name"><TextInput value={deliveryName} onChange={event => setDeliveryName(event.target.value)} /></Field>
-              <Field label="Delivery address"><TextArea value={deliveryAddress} onChange={event => setDeliveryAddress(event.target.value)} /></Field>
-              <SharpButton className="w-full" disabled={redeem.isPending} onClick={() => redeem.mutate({ rewardId: selected, deliveryName, deliveryAddress, checkpointEarned: `Day ${snapshot?.challenge.currentDay ?? 1}` })}>{redeem.isPending ? "Submitting redemption" : "Submit redemption"}</SharpButton>
-            </div>
-          </div>
-        ) : (
-          <div className="reward-detail-empty">
-            <h3 className="mt-2 text-3xl font-black uppercase tracking-[-0.06em] text-white">Choose a reward to open the desk.</h3>
-            <p className="mt-4 text-sm font-bold leading-6 text-[#777]">The delivery form stays closed until a Pure Sport reward is selected, keeping the redemption step intentional.</p>
-          </div>
-        )}
-      </section>
-    </div>
+      <div className="mt-5 grid gap-3 md:grid-cols-3">
+        {snapshot?.rewards.map((reward: any) => {
+          const canRedeem = participantPoints >= reward.pointsCost;
+          return (
+            <button key={reward.id} className={classNames("border bg-[#101010] p-5 text-left transition hover:border-[#C8A96E] disabled:cursor-not-allowed disabled:opacity-60", canRedeem ? "border-[#2A2A2A]" : "border-[#2A2A2A]/70")} disabled={!canRedeem || redeem.isPending} onClick={() => { pulse(12); redeem.mutate({ rewardId: reward.id }); }}>
+              <RewardVisual reward={reward} />
+              <MicroLabel tone="gold">{reward.pointsCost} points</MicroLabel>
+              <h3 className="mt-3 text-2xl font-black uppercase tracking-[-0.05em] text-white">{reward.name}</h3>
+              <p className="mt-3 text-sm font-bold leading-6 text-[#999]">{reward.description}</p>
+              <span className={classNames("mt-5 inline-flex border px-3 py-2 text-[10px] font-black uppercase tracking-[0.16em]", canRedeem ? "border-[#2ECC71] text-[#2ECC71]" : "border-[#C8A96E] text-[#C8A96E]")}>{canRedeem ? (redeem.isPending ? "Sending" : "Tap to redeem") : `${reward.pointsCost - participantPoints} pts needed`}</span>
+            </button>
+          );
+        })}
+      </div>
+    </section>
   );
 }
 

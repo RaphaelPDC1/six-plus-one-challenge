@@ -7,6 +7,9 @@ export const DAILY_RULE_KEYS = [
   "trackedEverything",
 ] as const;
 
+export const DAILY_PASS_THRESHOLD = 5;
+export const DAILY_RULE_COUNT = DAILY_RULE_KEYS.length;
+
 export type DailyRuleKey = (typeof DAILY_RULE_KEYS)[number];
 
 export type DailyRuleState = {
@@ -23,14 +26,12 @@ export type CompletionInput = DailyRuleState & {
   deadline?: Date | null;
 };
 
+export function countCompletedDailyRules(input: DailyRuleState): number {
+  return DAILY_RULE_KEYS.reduce((total, key) => total + (input[key] ? 1 : 0), 0);
+}
+
 export function isDayComplete(input: CompletionInput): boolean {
-  const rulesDone =
-    input.noAlcohol &&
-    input.cleanEating &&
-    input.exerciseDone &&
-    input.reflectionDone &&
-    input.readTeachDone &&
-    (input.trackedEverything ?? true);
+  const rulesDone = countCompletedDailyRules(input) >= DAILY_PASS_THRESHOLD;
 
   if (!rulesDone) return false;
   if (!input.submittedAt || !input.deadline) return true;
@@ -39,7 +40,8 @@ export function isDayComplete(input: CompletionInput): boolean {
 
 export function evaluateDailyRules(input: Required<DailyRuleState>) {
   const missedRules = getMissedRules(input);
-  return { complete: missedRules.length === 0, missedRules };
+  const completedRules = countCompletedDailyRules(input);
+  return { complete: completedRules >= DAILY_PASS_THRESHOLD, missedRules, completedRules, requiredRules: DAILY_PASS_THRESHOLD, totalRules: DAILY_RULE_COUNT };
 }
 
 export function calculateCheckpointBonus(dayNumber: number): number {

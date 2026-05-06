@@ -432,3 +432,19 @@
 ## Current Continuation — Mobile Logo Reliability and Streak Integrity
 - [x] Replace all failing storage-backed brand logo references with the durable app-origin `/six-plus-one-logo.svg` path in UI, registration, server endpoint, and regression tests
 - [x] Close the draft-toggle streak exploit with backend one-completion-per-day enforcement and regression tests
+
+## Requested Update — Overview Declutter, Board Compliance, 5/6 Pass Rule, and Logo Replacement
+- [x] Remove or reduce crowded compliance-detail data from the Overview tab so it focuses on higher-level progress only
+- [x] Add participant compliance details to the Board individual drill-down view when a user taps a participant
+- [x] Update backend completion rules so 5 out of 6 completed daily rules counts as a passed/completed day
+- [x] Update visible copy and counters from strict 6/6 completion language to the new 5/6 pass threshold where applicable
+- [x] Replace the current top-left header logo and loading-screen logo with the previously generated logo image asset instead of the current SVG/logo treatment
+- [x] Update regression tests for the 5/6 pass rule, Board compliance drill-down, Overview decluttering, and logo source behavior
+- [x] Run full tests, production build, preview health checks, and save a checkpoint
+
+## Requested Update — Rewards Catalogue and Tap-to-Redeem Admin Notification
+- [x] Limit the rewards section to exactly three rewards: 150 Puresport Mystery Item, 300 6plus1 T-Shirt, and 500 Group Meal Unlocked
+- [x] Update reward seeding or catalogue defaults so old rewards no longer appear in fresh catalogue views
+- [x] Make reward redemption a simple tap action that creates the redemption request when the participant has enough points
+- [x] Notify the admin/owner through the built-in Manus notification flow whenever a participant redeems a reward
+- [x] Update reward UI copy and tests to verify the exact three rewards and admin notification behavior

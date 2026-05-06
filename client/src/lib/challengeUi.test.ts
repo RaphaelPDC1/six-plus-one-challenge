@@ -12,22 +12,25 @@ const completeForm = {
 };
 
 describe("challenge UI redesign helpers", () => {
-  it("only unlocks the daily submit state after all six rules are addressed", () => {
+  it("unlocks the daily submit state once five of six rules are addressed", () => {
     expect(getDailyLogProgress(completeForm)).toMatchObject({
       completedRules: 6,
       allAddressed: true,
+      passThreshold: 5,
     });
 
     expect(getDailyLogProgress({ ...completeForm, exerciseType: "" })).toMatchObject({
       completedRules: 5,
-      allAddressed: false,
+      allAddressed: true,
+      passThreshold: 5,
     });
   });
 
-  it("counts the auto-tracking rule as the sixth addressed rule when enabled", () => {
-    expect(getDailyLogProgress({ ...completeForm, trackedEverything: false })).toMatchObject({
-      completedRules: 5,
+  it("keeps the daily submit state locked below the 5-of-6 pass rule", () => {
+    expect(getDailyLogProgress({ ...completeForm, trackedEverything: false, readTeachText: "" })).toMatchObject({
+      completedRules: 4,
       allAddressed: false,
+      passThreshold: 5,
     });
   });
 
