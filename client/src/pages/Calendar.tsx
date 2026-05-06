@@ -92,41 +92,44 @@ export function CalendarView() {
       </div>
 
       {/* Legend */}
-      <div className="grid gap-3 md:grid-cols-4">
-        <div className="flex items-center gap-3 border border-[#2A2A2A] bg-[#101010] p-4">
-          <div className="h-4 w-4 border border-[#2ECC71] bg-[#2ECC71]"></div>
-          <span className="text-sm font-bold text-white">Completed</span>
-        </div>
-        <div className="flex items-center gap-3 border border-[#2A2A2A] bg-[#101010] p-4">
-          <div className="h-4 w-4 border border-[#E74C3C] bg-[#E74C3C]"></div>
-          <span className="text-sm font-bold text-white">Missed</span>
-        </div>
-        <div className="flex items-center gap-3 border border-[#2A2A2A] bg-[#101010] p-4">
-          <div className="h-4 w-4 border border-[#F39C12] bg-[#F39C12]"></div>
-          <span className="text-sm font-bold text-white">In Progress</span>
-        </div>
-        <div className="flex items-center gap-3 border border-[#2A2A2A] bg-[#101010] p-4">
-          <div className="h-4 w-4 border border-[#444] bg-[#444]"></div>
-          <span className="text-sm font-bold text-white">Future</span>
+      <div className="border border-[#2A2A2A] bg-[#101010] p-4">
+        <p className="text-[10px] font-black uppercase tracking-[0.14em] text-[#777] mb-3">Status Legend</p>
+        <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-4">
+          <div className="flex items-center gap-2">
+            <div className="h-3 w-3 border border-[#2ECC71] bg-[#2ECC71]"></div>
+            <span className="text-xs font-bold text-white">Completed</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="h-3 w-3 border border-[#E74C3C] bg-[#E74C3C]"></div>
+            <span className="text-xs font-bold text-white">Missed</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="h-3 w-3 border border-[#F39C12] bg-[#F39C12]"></div>
+            <span className="text-xs font-bold text-white">In Progress</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="h-3 w-3 border border-[#444] bg-[#444]"></div>
+            <span className="text-xs font-bold text-white">Future</span>
+          </div>
         </div>
       </div>
 
-      {/* Calendar Grid */}
+      {/* Calendar Grid — Month-style layout */}
       <div className="border border-[#2A2A2A] bg-[#101010] p-5">
-        <div className="grid gap-2 sm:grid-cols-5 md:grid-cols-10">
+        <div className="grid gap-1 grid-cols-5 sm:grid-cols-7 md:grid-cols-10">
           {calendarDays.map(({ dayNumber, status, isMilestone }) => (
             <div
               key={dayNumber}
               className={classNames(
-                "relative flex flex-col items-center justify-center rounded border p-3 text-center transition hover:border-[#C8A96E]",
+                "relative flex flex-col items-center justify-center aspect-square border p-1 text-center transition",
                 getStatusColor(status.status),
-                isMilestone && "ring-2 ring-[#C8A96E] ring-offset-2 ring-offset-[#0D0D0D]"
+                isMilestone && "ring-2 ring-[#C8A96E]"
               )}
               title={`Day ${dayNumber}: ${status.label}`}
             >
-              <span className="text-xs font-black text-white">{dayNumber}</span>
+              <span className="text-[11px] font-black text-white leading-none">{dayNumber}</span>
               {isMilestone && (
-                <span className="mt-1 text-[8px] font-black uppercase tracking-[0.1em] text-[#C8A96E]">
+                <span className="text-[7px] font-black uppercase tracking-[0.05em] text-[#C8A96E] mt-0.5">
                   {dayNumber === 10 && "10%"}
                   {dayNumber === 25 && "50%"}
                   {dayNumber === 40 && "80%"}

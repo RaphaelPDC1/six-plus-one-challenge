@@ -1311,17 +1311,28 @@ export default function Home() {
         )}
       </section>
 
-      <nav className="fixed bottom-0 left-0 right-0 z-40 grid grid-cols-5 border-t border-[#2A2A2A] bg-[#0D0D0D] md:hidden">
-        {visibleTabs.filter(tab => tab.key !== "admin").map(tab => {
-          const Icon = tab.icon;
-          const active = activeTab === tab.key;
-          return (
-            <button key={tab.key} onClick={() => { pulse(10); setActiveTab(tab.key); }} className={classNames("flex flex-col items-center justify-center gap-1 border-r border-[#2A2A2A] px-2 py-3 text-[9px] font-black uppercase tracking-[0.12em]", active ? "border-t-2 border-t-[#C8A96E] text-[#C8A96E]" : "text-[#777]")}> 
-              <Icon className="h-4 w-4" />
-              {tab.label}
-            </button>
-          );
-        })}
+      <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-[#2A2A2A] bg-[#0D0D0D] md:hidden overflow-x-auto">
+        <div className="flex min-w-full">
+          {visibleTabs.filter(tab => tab.key !== "admin").map((tab, idx) => {
+            const Icon = tab.icon;
+            const active = activeTab === tab.key;
+            const isLast = idx === visibleTabs.filter(t => t.key !== "admin").length - 1;
+            return (
+              <button 
+                key={tab.key} 
+                onClick={() => { pulse(10); setActiveTab(tab.key); }} 
+                className={classNames(
+                  "flex flex-col items-center justify-center gap-1 flex-1 min-w-max px-2 py-3 text-[9px] font-black uppercase tracking-[0.12em] transition",
+                  !isLast && "border-r border-[#2A2A2A]",
+                  active ? "border-t-2 border-t-[#C8A96E] text-[#C8A96E]" : "text-[#777]"
+                )}
+              > 
+                <Icon className="h-4 w-4" />
+                <span className="whitespace-nowrap">{tab.label}</span>
+              </button>
+            );
+          })}
+        </div>
       </nav>
     </main>
   );

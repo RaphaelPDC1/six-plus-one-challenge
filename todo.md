@@ -238,8 +238,8 @@
 
 ## Refinement Pass (v5.2) — Logo Fix, Calendar Redesign, Mobile Nav Fix
 - [x] Fix logo rendering to display brand image instead of stacked text "6+1" — implemented via trpc.auth.logoUrl server procedure
-- [ ] Redesign Calendar as proper grid (like month view) with color-coded dots for each day
-- [ ] Add legend/key to calendar explaining what each color means (completed, missed, life lost, future, etc.)
-- [ ] Fix mobile navigation bar stacking — keep tabs horizontal on small screens
+- [x] Redesign Calendar as proper grid (like month view) with color-coded dots for each day — implemented responsive grid with aspect-square cells
+- [x] Add legend/key to calendar explaining what each color means (completed, missed, life lost, future, etc.) — added Status Legend section
+- [x] Fix mobile navigation bar stacking — keep tabs horizontal on small screens — changed from grid-cols-5 to flex with min-w-full and overflow-x-auto
 - [x] Run full validation, tests, build, and preview health check — 47 tests passing, build successful, dev server running
 - [ ] Save checkpoint after v5.2 logo fix, calendar redesign, and mobile nav fix
