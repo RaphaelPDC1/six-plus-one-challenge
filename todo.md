@@ -225,3 +225,13 @@
 - [x] Fix mobile public landing hero/body text clipping so all challenge copy wraps within the viewport
 
 - [x] Fix public landing page logo rendering so the brand image loads instead of stacked text characters in the top-left corner
+
+## Refinement Pass (v5.1) — Logo Fix, Profile Pictures, and Calendar View
+- [x] Diagnose why the 6+1 logo is still not rendering on the app header and loading page
+- [x] Fix the logo rendering by computing the absolute URL in useEffect at runtime
+- [ ] Add participant profile picture upload during onboarding and settings
+- [ ] Build calendar view with color-coded status markers (completed, missed, life lost, etc.)
+- [ ] Add milestone waypoint markers for Day 10, 25, 40, and 50 in the calendar
+- [ ] Integrate calendar view into the app navigation (new tab or section)
+- [ ] Run full validation, tests, build, and preview health check
+- [ ] Save checkpoint after v5.1 logo fix, profile pictures, and calendar implementation
