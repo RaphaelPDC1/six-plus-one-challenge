@@ -82,15 +82,7 @@ function BrandLogoImageWithRetry({ alt, className = "h-full w-full object-contai
   }, [logoUrlData]);
   
   if (failed) {
-    return (
-      <span
-        aria-hidden={decorative ? "true" : undefined}
-        aria-label={decorative ? undefined : alt}
-        className="grid h-full w-full place-items-center text-center text-[clamp(1.65rem,7vw,4rem)] font-black leading-none tracking-[-0.14em] text-white"
-      >
-        6<span className="text-[#C8A96E]">+</span>1
-      </span>
-    );
+    return <BrandWordmark alt={alt} decorative={decorative} className={className} />;
   }
   
   // Use signed URL from server if available, fallback to relative path
@@ -110,6 +102,30 @@ function BrandLogoImageWithRetry({ alt, className = "h-full w-full object-contai
   );
 }
 
+function BrandWordmark({ alt, decorative = false, className = "" }: { alt: string; decorative?: boolean; className?: string }) {
+  return (
+    <span
+      data-testid="brand-wordmark"
+      aria-hidden={decorative ? "true" : undefined}
+      aria-label={decorative ? undefined : alt}
+      className={classNames("brand-wordmark inline-flex items-center justify-center whitespace-nowrap", className)}
+    >
+      <span className="brand-wordmark-number">6</span>
+      <span className="brand-wordmark-plus">+</span>
+      <span className="brand-wordmark-number">1</span>
+    </span>
+  );
+}
+
+function CleanBrandMark({ compact = false, decorative = false }: { compact?: boolean; decorative?: boolean }) {
+  return (
+    <BrandWordmark
+      alt="6+1 Four Lives Challenge logo"
+      decorative={decorative}
+      className={compact ? "h-9 min-w-[5.5rem] text-[2rem] sm:h-10 sm:min-w-[6.25rem] sm:text-[2.25rem]" : "h-14 min-w-[7rem] text-[3.15rem] sm:h-16 sm:min-w-[8rem] sm:text-[3.75rem]"}
+    />
+  );
+}
 const emptyDay: MyDayForm = {
   noAlcohol: false,
   cleanEating: false,
@@ -144,8 +160,8 @@ function BrandLogoImage({ alt, className = "h-full w-full object-contain", decor
 function AnimatedLoadPage({ label = "Loading the challenge" }: { label?: string }) {
   return (
     <div className="poster-grid animated-load-page grid min-h-screen place-items-center overflow-hidden bg-black text-white">
-      <div className="load-mark load-mark-image" aria-hidden="true">
-        <BrandLogoImage alt="6+1 Four Lives Challenge logo" decorative />
+      <div className="load-mark load-mark-wordmark" aria-hidden="true">
+        <CleanBrandMark decorative />
       </div>
       <div className="load-lines" aria-hidden="true" />
       <div className="load-crosshair" aria-hidden="true" />
@@ -255,11 +271,11 @@ export function LogoMark({ compact = false }: { compact?: boolean }) {
   return (
     <span
       className={classNames(
-        "brand-logo-shell flex shrink-0 items-center justify-center",
-        compact ? "h-9 w-24 sm:h-10 sm:w-28 md:w-32" : "h-11 w-28 sm:h-12 sm:w-36 md:h-14 md:w-40",
+        "brand-logo-shell flex shrink-0 items-center justify-center overflow-visible",
+        compact ? "h-9 w-[5.75rem] sm:h-10 sm:w-[6.5rem]" : "h-12 w-[7rem] sm:h-14 sm:w-[8rem]",
       )}
     >
-      <BrandLogoImage alt="6+1 Four Lives Challenge logo" className="brand-logo-image h-full w-full object-contain" />
+      <CleanBrandMark compact={compact} />
     </span>
   );
 }
@@ -281,9 +297,10 @@ function SiteEntryPanel() {
   const [email, setEmail] = useState("");
   const utils = trpc.useUtils();
   const siteLogin = trpc.auth.siteLogin.useMutation({
-    onSuccess: async () => {
+    onSuccess: async data => {
       haptics.success();
       toast("Welcome back. You are in.");
+      utils.auth.me.setData(undefined, data.user);
       await utils.auth.me.invalidate();
       await utils.challenge.snapshot.invalidate();
     },

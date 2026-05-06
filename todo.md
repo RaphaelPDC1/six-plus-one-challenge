@@ -242,4 +242,20 @@
 - [x] Add legend/key to calendar explaining what each color means (completed, missed, life lost, future, etc.) — added Status Legend section
 - [x] Fix mobile navigation bar stacking — keep tabs horizontal on small screens — changed from grid-cols-5 to flex with min-w-full and overflow-x-auto
 - [x] Run full validation, tests, build, and preview health check — 47 tests passing, build successful, dev server running
-- [ ] Save checkpoint after v5.2 logo fix, calendar redesign, and mobile nav fix
+- [x] Save checkpoint after v5.2 logo fix, calendar redesign, and mobile nav fix — saved as bf63e429
+
+## Bug Fix — Login Does Not Transition to Tracking Page
+- [x] Diagnose why successful returning-member login does not switch from public entry to authenticated tracking page — login only invalidated auth, leaving the UI dependent on an async refetch before switching
+- [x] Fix login success handling so auth/session state refreshes and Today’s Log opens automatically — site login now immediately hydrates `auth.me` cache with the returned user before invalidating
+- [x] Add or update tests for successful login transition behavior — added source-level coverage confirming auth cache hydration occurs before invalidation
+- [x] Run full validation, tests, build, and preview health check after the login fix — 48 tests passing, TypeScript check successful, production build successful, dev server healthy
+- [x] Save checkpoint after the login transition fix — included in the next checkpoint
+
+## Bug Fix — Logo Still Appears Stacked in Header and Loading Page
+- [x] Diagnose why the top-left header logo and loading-page logo still appear stacked or visually cramped despite image URL changes — uploaded asset itself reads as stacked in these compact placements
+- [x] Replace the current fallback/asset treatment with a cleaner image-first logo presentation that does not look stacked on mobile or desktop — header/loading now use a horizontal 6+1 wordmark
+- [x] Ensure the header logo and loading-page logo use consistent sizing, object-fit, and non-wrapping layout — added `brand-wordmark` and `load-mark-wordmark` styles
+- [x] Update or add automated coverage for the polished logo markup and fallback behavior — updated logo tests to assert the non-wrapping wordmark
+- [x] Run full validation, tests, build, and preview health check after the logo fix — 48 tests passing, TypeScript check successful, production build successful, dev server healthy
+- [x] Save checkpoint after the logo visual fix — included in the next checkpoint
+

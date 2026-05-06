@@ -39,7 +39,7 @@ vi.mock("@/const", () => ({
 vi.mock("@/lib/trpc", () => ({
   trpc: {
     useUtils: () => ({
-      auth: { me: { invalidate: vi.fn() } },
+      auth: { me: { invalidate: vi.fn(), setData: vi.fn() } },
       challenge: { snapshot: { invalidate: vi.fn() } },
     }),
     auth: {
@@ -107,22 +107,21 @@ describe("Home onboarding shell", () => {
     }
   });
 
-  it("renders the uploaded brand image in the reusable logo mark instead of text-only 6+1 lettering", () => {
+  it("renders the clean horizontal wordmark in the reusable logo mark instead of the stacked uploaded image", () => {
     const markup = renderToStaticMarkup(<LogoMark compact />);
 
-    // Logo is now fetched via trpc.auth.logoUrl and rendered as an image
-    expect(markup).toContain('src="/manus-storage/six-plus-one-brand-logo-white-strong_2665284a.png"');
+    expect(markup).toContain("brand-wordmark");
     expect(markup).toContain("brand-logo-shell");
+    expect(markup).toContain("whitespace-nowrap");
+    expect(markup).not.toContain('src="/manus-storage/six-plus-one-brand-logo-white-strong_2665284a.png"');
     expect(markup).not.toContain("bg-black");
-    expect(markup).not.toContain(">6+1</");
   });
 
   it("renders the real authenticated top header with the uploaded logo in the top corner", () => {
     const markup = renderToStaticMarkup(<Home />);
 
     expect(markup).toContain("sticky top-0");
-    // Logo is now fetched via trpc.auth.logoUrl and rendered as an image
-    expect(markup).toContain('src="/manus-storage/six-plus-one-brand-logo-white-strong_2665284a.png"');
+    expect(markup).toContain("brand-wordmark");
     expect(markup).toContain("Four Lives Challenge");
   });
 
@@ -137,8 +136,7 @@ describe("Home onboarding shell", () => {
     expect(markup).toContain("Remember you&#x27;re");
     expect(markup).toContain("not a civilian.");
     expect(markup).toContain("block sm:inline");
-    // Logo is now fetched via trpc.auth.logoUrl and rendered as an image
-    expect(markup).toContain('src="/manus-storage/six-plus-one-brand-logo-white-strong_2665284a.png"');
+    expect(markup).toContain("brand-wordmark");
     expect(markup).toContain("overflow-hidden border-b");
     expect(markup).toContain("whitespace-normal break-words");
     expect(markup).toContain("max-w-[12.5rem]");
@@ -159,6 +157,14 @@ describe("Home onboarding shell", () => {
     expect(markup).not.toContain("data-testid=\"registration-personalization\"");
     expect(markup).not.toContain("What are you here to change?");
     expect(markup).not.toContain("Display name");
+  });
+
+  it("hydrates the auth cache immediately after returning-member login so the app can open Today’s Log", () => {
+    const homeSource = readFileSync(new URL("./Home.tsx", import.meta.url), "utf8");
+
+    expect(homeSource).toContain("onSuccess: async data =>");
+    expect(homeSource).toContain("utils.auth.me.setData(undefined, data.user);");
+    expect(homeSource.indexOf("utils.auth.me.setData(undefined, data.user);")).toBeLessThan(homeSource.indexOf("await utils.auth.me.invalidate();"));
   });
 
   it("keeps registration on a dedicated route with back-home navigation and universal Warden copy", () => {
@@ -232,15 +238,14 @@ describe("Home onboarding shell", () => {
     const markup = renderToStaticMarkup(<Home />);
 
     expect(markup).toContain("animated-load-page");
-    expect(markup).toContain("load-mark-image");
+    expect(markup).toContain("load-mark-wordmark");
     expect(markup).toContain("load-crosshair");
     expect(markup).toContain("load-status-panel");
     expect(markup).toContain("load-progress");
-    // Logo is now fetched via trpc.auth.logoUrl and rendered as an image
-    expect(markup).toContain('src="/manus-storage/six-plus-one-brand-logo-white-strong_2665284a.png"');
+    expect(markup).toContain("brand-wordmark");
     expect(markup).not.toContain("sticky top-0");
     expect(markup).not.toContain("bg-black/62");
-    expect(markup).not.toContain(">6+1</");
+    expect(markup).toContain("brand-wordmark");
   });
 
   it("keeps the animated loading logo on a fixed overlay above the sticky app header on mobile", () => {
@@ -264,7 +269,6 @@ describe("Home onboarding shell", () => {
     expect(markup).toContain("New email found. Set your profile first.");
     expect(markup).toContain("Make it yours.");
     expect(markup).toContain("new@example.com");
-    // Logo is now fetched via trpc.auth.logoUrl and rendered as an image
-    expect(markup).toContain('src="/manus-storage/six-plus-one-brand-logo-white-strong_2665284a.png"');
+    expect(markup).toContain("brand-wordmark");
   });
 });
