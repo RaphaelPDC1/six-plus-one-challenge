@@ -221,6 +221,10 @@
   mix-blend-mode: normal;
 }
 
+.brand-logo-top-left {
+  filter: drop-shadow(0 0 14px rgba(255, 241, 184, 0.18));
+}
+
 .brand-logo-shell::after {
   content: "";
   position: absolute;
@@ -239,8 +243,8 @@
   object-fit: contain;
   object-position: left center;
   filter:
-    drop-shadow(0 0 10px rgba(255, 255, 255, 0.2))
-    drop-shadow(0 0 24px rgba(200, 169, 110, 0.08));
+    drop-shadow(0 0 12px rgba(255, 255, 255, 0.28))
+    drop-shadow(0 0 28px rgba(200, 169, 110, 0.16));
 }
 
 .brand-wordmark {
@@ -313,11 +317,12 @@
 }
 
 .load-mark-image {
-  width: min(72vw, 18rem);
-  height: clamp(5.5rem, 18vw, 9rem);
+  width: min(86vw, 28rem);
+  height: clamp(7rem, 25vw, 12rem);
   display: flex;
   align-items: center;
   justify-content: center;
+  filter: drop-shadow(0 0 30px rgba(255, 241, 184, 0.22));
 }
 
 .load-mark-image .brand-logo-image {
@@ -407,8 +412,9 @@
   }
 
   .load-mark-image {
-    width: clamp(8.5rem, 54vw, 13rem);
-    max-width: 70vw;
+    width: clamp(13rem, 78vw, 21rem);
+    max-width: 86vw;
+    height: clamp(6rem, 31vw, 9.5rem);
   }
 
   .load-crosshair {

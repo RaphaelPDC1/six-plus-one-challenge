@@ -393,3 +393,11 @@
 - [x] Add or update regression coverage for high-contrast logo asset content and app-origin references
 - [x] Run TypeScript, tests, production build, preview health check, and direct logo response checks after the logo artwork fix
 - [x] Save checkpoint after the high-contrast logo artwork fix
+
+## Bug Fix — Visible Header and Loading Logo Replacement
+
+- [x] Ensure the replacement high-contrast logo is the actual visible logo in the top-left app/header corner
+- [x] Ensure the replacement high-contrast logo is the actual visible logo on the loading page
+- [x] Remove or bypass any old logo rendering path that can still appear in those two locations
+- [x] Update regression coverage for top-left header and loading-page logo rendering
+- [x] Run focused validation, build checks, preview confirmation, and save checkpoint

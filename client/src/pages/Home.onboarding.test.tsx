@@ -111,8 +111,10 @@ describe("Home onboarding shell", () => {
     const markup = renderToStaticMarkup(<LogoMark compact />);
 
     expect(markup).toContain("brand-logo-shell");
+    expect(markup).toContain("brand-logo-top-left");
     expect(markup).toContain("brand-logo-image");
     expect(markup).toContain('src="/six-plus-one-logo.svg"');
+    expect(markup).toContain('data-logo-placement="top-left-corner"');
     expect(markup).not.toContain("brand-wordmark");
     expect(markup).not.toContain("bg-black");
   });
@@ -121,8 +123,10 @@ describe("Home onboarding shell", () => {
     const markup = renderToStaticMarkup(<Home />);
 
     expect(markup).toContain("sticky top-0");
+    expect(markup).toContain("brand-logo-top-left");
     expect(markup).toContain("brand-logo-image");
     expect(markup).toContain('src="/six-plus-one-logo.svg"');
+    expect(markup).toContain('data-logo-placement="top-left-corner"');
     expect(markup).toContain("Four Lives Challenge");
   });
 
@@ -246,6 +250,7 @@ describe("Home onboarding shell", () => {
     expect(markup).toContain("load-progress");
     expect(markup).toContain("brand-logo-image");
     expect(markup).toContain('src="/six-plus-one-logo.svg"');
+    expect(markup).toContain('data-logo-placement="loading-page"');
     expect(markup).not.toContain("sticky top-0");
     expect(markup).not.toContain("bg-black/62");
     expect(markup).not.toContain("brand-wordmark");
@@ -260,6 +265,9 @@ describe("Home onboarding shell", () => {
     expect(cssSource).toContain("contain: layout paint style;");
     expect(cssSource).toContain(".load-mark {\n  position: absolute;");
     expect(cssSource).toContain("z-index: 0;");
+    expect(cssSource).toContain(".brand-logo-top-left");
+    expect(cssSource).toContain("width: min(86vw, 28rem);");
+    expect(cssSource).toContain("width: clamp(13rem, 78vw, 21rem);");
   });
 
   it("uses one stable inverted logo image source without old-asset swaps or text fallback paths", () => {

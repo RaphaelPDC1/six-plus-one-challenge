@@ -66,13 +66,14 @@ const chartColors = [GOLD, RED, GREEN, PURPLE, "#4CA3C9", "#E67E22", "#F1C40F", 
 // Use an app-origin SVG so live mobile refreshes never depend on expiring storage redirects.
 const BRAND_LOGO_URL = "/six-plus-one-logo.svg";
 
-function BrandLogoImageWithRetry({ alt, className = "h-full w-full object-contain", decorative = false }: { alt: string; className?: string; decorative?: boolean }) {
+function BrandLogoImageWithRetry({ alt, className = "h-full w-full object-contain", decorative = false, placement }: { alt: string; className?: string; decorative?: boolean; placement?: "top-left-corner" | "loading-page" }) {
   return (
     <img
       src={BRAND_LOGO_URL}
       alt={decorative ? "" : alt}
       data-testid="brand-logo"
       data-logo-source="app-origin-brand-svg"
+      data-logo-placement={placement}
       className={className}
       decoding="async"
       loading="eager"
@@ -81,14 +82,15 @@ function BrandLogoImageWithRetry({ alt, className = "h-full w-full object-contai
   );
 }
 
-function CleanBrandMark({ compact = false, decorative = false }: { compact?: boolean; decorative?: boolean }) {
+function CleanBrandMark({ compact = false, decorative = false, placement }: { compact?: boolean; decorative?: boolean; placement?: "top-left-corner" | "loading-page" }) {
   return (
     <BrandLogoImageWithRetry
       alt="6+1 Four Lives Challenge logo"
       decorative={decorative}
+      placement={placement}
       className={classNames(
         "brand-logo-image block h-full w-full object-contain",
-        compact ? "max-h-10" : "max-h-24",
+        compact ? "max-h-12" : "max-h-32",
       )}
     />
   );
@@ -197,7 +199,7 @@ function AnimatedLoadPage({ label = "Loading the challenge" }: { label?: string 
   return (
     <div className="poster-grid animated-load-page grid min-h-screen place-items-center overflow-hidden bg-black text-white">
       <div className="load-mark load-mark-image" aria-hidden="true">
-        <CleanBrandMark decorative />
+        <CleanBrandMark decorative placement="loading-page" />
       </div>
       <div className="load-lines" aria-hidden="true" />
       <div className="load-crosshair" aria-hidden="true" />
@@ -307,11 +309,11 @@ export function LogoMark({ compact = false }: { compact?: boolean }) {
   return (
     <span
       className={classNames(
-        "brand-logo-shell flex shrink-0 items-center justify-center overflow-visible",
-        compact ? "h-9 w-[5.75rem] sm:h-10 sm:w-[6.5rem]" : "h-12 w-[7rem] sm:h-14 sm:w-[8rem]",
+        "brand-logo-shell brand-logo-top-left flex shrink-0 items-center justify-center overflow-visible",
+        compact ? "h-12 w-[8.5rem] sm:h-12 sm:w-[9.75rem]" : "h-16 w-[10rem] sm:h-20 sm:w-[12.5rem]",
       )}
     >
-      <CleanBrandMark compact={compact} />
+      <CleanBrandMark compact={compact} placement="top-left-corner" />
     </span>
   );
 }
