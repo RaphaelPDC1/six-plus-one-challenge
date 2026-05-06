@@ -56,6 +56,11 @@ type MyDayForm = {
 
 type TabKey = "myday" | "overview" | "leaderboard" | "proof" | "rewards" | "calendar" | "admin";
 
+type BeforeInstallPromptEvent = Event & {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
+};
+
 type RuleKey = keyof MyDayForm | "exercise" | "reflection" | "readTeach";
 
 const GOLD = "#C8A96E";
@@ -919,11 +924,6 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
             </div>
             <HealthBar lives={participant?.livesRemaining ?? 4} label="Your lives" />
           </div>
-          <div className="mt-5 grid gap-2 bg-[#2A2A2A] p-[2px] sm:grid-cols-3">
-            <PosterStat label="Rules addressed" value={`${completedRules}/${totalRules}`} tone={allAddressed ? "green" : "gold"} />
-            <PosterStat label="Current streak" value={participant?.currentStreak ?? 0} tone="green" />
-            <PosterStat label="Points" value={participant?.totalPoints ?? 0} tone="gold" />
-          </div>
         </div>
 
         <div className={classNames("must-do-rules border-2 p-3 transition-all duration-300 sm:p-4", allAddressed ? "must-do-rules-complete border-[#2ECC71] bg-[#07150D]" : "border-[#C0392B] bg-[#190B0A]")}> 
@@ -990,7 +990,13 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
           </div>
         </div>
 
-        <div className={classNames("submit-dock relative sticky bottom-[74px] z-20 border border-[#2A2A2A] bg-[#0D0D0D]/95 p-3 backdrop-blur transition-all duration-300 md:static md:bg-transparent md:p-0", submit.isPending && "submit-dock-pending", allAddressed && !submit.isPending && "submit-dock-ready")}>
+        <div className="grid gap-2 bg-[#2A2A2A] p-[2px] sm:grid-cols-3" data-testid="myday-stats-after-must-do">
+          <PosterStat label="Rules addressed" value={`${completedRules}/${totalRules}`} tone={allAddressed ? "green" : "gold"} />
+          <PosterStat label="Current streak" value={participant?.currentStreak ?? 0} tone="green" />
+          <PosterStat label="Points" value={participant?.totalPoints ?? 0} tone="gold" />
+        </div>
+
+        <div className={classNames("submit-dock relative sticky bottom-[106px] z-20 border border-[#2A2A2A] bg-[#0D0D0D]/95 p-3 backdrop-blur transition-all duration-300 md:static md:bg-transparent md:p-0", submit.isPending && "submit-dock-pending", allAddressed && !submit.isPending && "submit-dock-ready")}>
           <SharpButton className={classNames("w-full py-5 text-sm transition-all duration-300", submit.isPending && "submit-button-pending")} disabled={submit.isPending} onClick={() => submit.mutate({ ...form, reflectionShared: false, dayNumber: snapshot?.challenge.currentDay ?? 1 })}>
             {submit.isPending ? (allAddressed ? "Submitting the log" : "Saving progress") : allAddressed ? `Submit day ${snapshot?.challenge.currentDay ?? 1}` : `Save progress — ${Math.max(0, passThreshold - completedRules)} more for pass`}
           </SharpButton>
@@ -1643,6 +1649,9 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<TabKey>("myday");
   const [entryVisible, setEntryVisible] = useState(() => typeof window !== "undefined" && window.sessionStorage.getItem("sixone-entry-seen") !== "true");
   const [loginEntryVisible, setLoginEntryVisible] = useState(false);
+  const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [installDismissed, setInstallDismissed] = useState(() => typeof window !== "undefined" && window.sessionStorage.getItem("sixone-install-dismissed") === "true");
+  const [standaloneMode, setStandaloneMode] = useState(false);
   const previousAuthRef = useRef(isAuthenticated);
   const snapshotQuery = trpc.challenge.snapshot.useQuery(undefined, { enabled: isAuthenticated });
   const snapshot = snapshotQuery.data;
@@ -1656,6 +1665,30 @@ export default function Home() {
     }, prefersReducedMotion ? 120 : 950);
     return () => window.clearTimeout(timer);
   }, [entryVisible, loading]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const nav = navigator as Navigator & { standalone?: boolean };
+    const standalone = window.matchMedia("(display-mode: standalone)").matches || nav.standalone === true;
+    setStandaloneMode(standalone);
+
+    const handleBeforeInstall = (event: Event) => {
+      event.preventDefault();
+      if (!installDismissed) setInstallPrompt(event as BeforeInstallPromptEvent);
+    };
+    const handleInstalled = () => {
+      setStandaloneMode(true);
+      setInstallPrompt(null);
+      window.sessionStorage.setItem("sixone-install-dismissed", "true");
+      setInstallDismissed(true);
+    };
+    window.addEventListener("beforeinstallprompt", handleBeforeInstall);
+    window.addEventListener("appinstalled", handleInstalled);
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstall);
+      window.removeEventListener("appinstalled", handleInstalled);
+    };
+  }, [installDismissed]);
 
   useEffect(() => {
     if (loading) return;
@@ -1673,9 +1706,35 @@ export default function Home() {
   if (snapshot?.accessState?.status === "questionnaire_required") return <OnboardingGate user={user} refetch={snapshotQuery.refetch} />;
 
   const visibleTabs = tabs.filter(tab => tab.key !== "admin" || user?.role === "admin");
+  const mobileTabs = visibleTabs.filter(tab => tab.key !== "admin");
+  const activeMobileIndex = Math.max(0, mobileTabs.findIndex(tab => tab.key === activeTab));
+  const showInstallGuide = isAuthenticated && !standaloneMode && !installDismissed;
+
+  async function handleInstallApp() {
+    if (!installPrompt) {
+      toast("Use your browser menu or Share button, then choose Add to Home Screen / Install app.");
+      return;
+    }
+    const prompt = installPrompt;
+    setInstallPrompt(null);
+    await prompt.prompt();
+    const choice = await prompt.userChoice;
+    if (choice.outcome === "accepted") {
+      window.sessionStorage.setItem("sixone-install-dismissed", "true");
+      setInstallDismissed(true);
+      toast("6+1 Four Lives Challenge is being added to your home screen.");
+    } else {
+      setInstallPrompt(prompt);
+    }
+  }
+
+  function dismissInstallGuide() {
+    if (typeof window !== "undefined") window.sessionStorage.setItem("sixone-install-dismissed", "true");
+    setInstallDismissed(true);
+  }
 
   return (
-    <main className="poster-grid min-h-screen bg-[#0D0D0D] pb-24 text-white md:pb-0">
+    <main className="poster-grid min-h-screen bg-[#0D0D0D] pb-32 text-white md:pb-0">
       <header className="sticky top-0 z-40 border-b border-[#2A2A2A] bg-[#0D0D0D]/95 backdrop-blur">
         <div className="container flex items-center justify-between gap-3 py-3 sm:gap-4 sm:py-4">
           <button onClick={() => setActiveTab("myday")} className="flex min-w-0 items-center gap-3 text-left">
@@ -1709,6 +1768,20 @@ export default function Home() {
               })}
             </div>
 
+            {showInstallGuide && (
+              <div className="mb-5 flex flex-col gap-3 border border-[#C8A96E]/45 bg-[#110F0A]/95 p-4 shadow-[0_16px_40px_rgba(0,0,0,0.32)] sm:flex-row sm:items-center sm:justify-between" data-testid="pwa-install-guide">
+                <div className="min-w-0">
+                  <MicroLabel tone="gold">Save the app</MicroLabel>
+                  <p className="mt-2 text-sm font-black uppercase leading-5 tracking-[0.12em] text-white">6+1 Four Lives Challenge can live on your phone or desktop home screen.</p>
+                  <p className="mt-2 text-xs font-bold leading-5 text-[#A7A7A7]">Browsers control installation, so the app cannot force auto-save. Tap install when available, or use the browser menu / Share button and choose Add to Home Screen.</p>
+                </div>
+                <div className="flex shrink-0 gap-2">
+                  <button type="button" className="border border-[#C8A96E] bg-[#C8A96E] px-4 py-3 text-[10px] font-black uppercase tracking-[0.18em] text-black" onClick={handleInstallApp}>{installPrompt ? "Install app" : "How to save"}</button>
+                  <button type="button" className="grid min-h-10 min-w-10 place-items-center border border-[#2A2A2A] text-[#777]" onClick={dismissInstallGuide} aria-label="Dismiss install guidance"><X className="h-4 w-4" /></button>
+                </div>
+              </div>
+            )}
+
             <div key={activeTab} className="tab-stage">
               {activeTab === "myday" && <MyDay snapshot={snapshot} refetch={snapshotQuery.refetch} />}
               {activeTab === "overview" && <Overview snapshot={snapshot} />}
@@ -1722,24 +1795,31 @@ export default function Home() {
         )}
       </section>
 
-      <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-[#2A2A2A] bg-[#0D0D0D] md:hidden overflow-x-auto">
-        <div className="flex min-w-full">
-          {visibleTabs.filter(tab => tab.key !== "admin").map((tab, idx) => {
+      <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-3 pb-[calc(0.7rem+env(safe-area-inset-bottom))] md:hidden" aria-label="Mobile primary navigation" data-testid="mobile-floating-nav">
+        <div className="pointer-events-auto relative mx-auto flex max-w-[26rem] items-center justify-between overflow-hidden rounded-[1.35rem] border border-[#C8A96E]/35 bg-[#070707]/94 px-1.5 py-2 shadow-[0_18px_44px_rgba(0,0,0,0.72)] backdrop-blur-xl">
+          <div
+            className="absolute top-0 z-0 h-[3px] rounded-full bg-[#C8A96E] shadow-[0_24px_28px_rgba(200,169,110,0.48)] transition-transform duration-300 ease-out"
+            style={{ width: `${100 / Math.max(1, mobileTabs.length)}%`, transform: `translateX(${activeMobileIndex * 100}%)` }}
+            aria-hidden="true"
+          />
+          {mobileTabs.map(tab => {
             const Icon = tab.icon;
             const active = activeTab === tab.key;
-            const isLast = idx === visibleTabs.filter(t => t.key !== "admin").length - 1;
             return (
-              <button 
-                key={tab.key} 
-                onClick={() => { pulse(10); setActiveTab(tab.key); }} 
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => { pulse(10); setActiveTab(tab.key); }}
                 className={classNames(
-                  "flex flex-col items-center justify-center gap-1 flex-1 min-w-max px-2 py-3 text-[9px] font-black uppercase tracking-[0.12em] transition",
-                  !isLast && "border-r border-[#2A2A2A]",
-                  active ? "border-t-2 border-t-[#C8A96E] text-[#C8A96E]" : "text-[#777]"
+                  "relative z-10 flex min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-[1rem] px-1 py-2 text-[7px] font-black uppercase leading-none tracking-[0.08em] transition min-[380px]:text-[8px]",
+                  active ? "bg-[#151108] text-[#C8A96E]" : "text-[#777] hover:text-white"
                 )}
-              > 
-                <Icon className="h-4 w-4" />
-                <span className="whitespace-nowrap">{tab.label}</span>
+                aria-current={active ? "page" : undefined}
+              >
+                <span className={classNames("grid h-7 w-7 place-items-center rounded-full transition", active ? "bg-[#C8A96E] text-black shadow-[0_0_24px_rgba(200,169,110,0.35)]" : "bg-white/[0.03] text-[#777]")}>
+                  <Icon className="h-4 w-4 shrink-0" />
+                </span>
+                <span className="block max-w-full truncate whitespace-nowrap">{tab.label}</span>
               </button>
             );
           })}

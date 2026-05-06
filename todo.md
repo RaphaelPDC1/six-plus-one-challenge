@@ -468,3 +468,14 @@
 - [x] Add iPhone/Safari-safe visual haptic fallback for unsupported vibration environments.
 - [x] Add or update regression coverage for logo fallback and haptic trigger behavior.
 - [x] Run validation, production build, preview health check, and save a checkpoint after the logo and haptics fixes.
+
+## Fix Batch — Mobile App Polish and PWA Install
+
+- [x] Move the Log Today stat cards for Rules addressed, Current streak, and Points below the Must Do section.
+- [x] Configure the saved home-screen web app name to use the game name, 6+1 4 Lives Challenge.
+- [x] Configure the saved home-screen web app icon to use the same lightweight 6+1 logo treatment as the in-app header.
+- [x] Add install guidance or an install button/help flow, noting that browsers require the user to confirm saving the app to home screen or desktop.
+- [x] Fix mobile bottom navigation safe-area spacing so the far-left and far-right tabs are not cropped in home-screen app mode.
+- [x] Add a limelight-style active state to the mobile bottom navigation while preserving the current 6+1 dark/gold visual system.
+- [x] Add or update regression coverage for the reordered Log Today layout, PWA metadata, and bottom navigation cropping/active-state behavior.
+- [x] Run validation, production build, preview health check, and save a checkpoint after the mobile app polish fixes.

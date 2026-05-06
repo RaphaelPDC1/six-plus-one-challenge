@@ -226,12 +226,15 @@ describe("Home onboarding shell", () => {
     const htmlSource = readFileSync(new URL("../../index.html", import.meta.url), "utf8");
     const manifestSource = readFileSync(new URL("../../public/site.webmanifest", import.meta.url), "utf8");
 
-    expect(htmlSource).toContain('rel="icon" type="image/svg+xml" sizes="any" href="/app-icon.svg"');
-    expect(htmlSource).toContain('rel="apple-touch-icon" href="/app-icon.svg"');
+    expect(htmlSource).toContain('rel="icon" type="image/png" sizes="192x192" href="/app-icon-192.png"');
+    expect(htmlSource).toContain('rel="apple-touch-icon" sizes="180x180" href="/app-icon-180.png"');
+    expect(htmlSource).toContain('name="apple-mobile-web-app-title" content="6+1 Four Lives Challenge"');
     expect(htmlSource).not.toContain("/manus-storage/six-plus-one-app-icon");
     expect(manifestSource).toContain('"name": "6+1 Four Lives Challenge"');
+    expect(manifestSource).toContain('"short_name": "6+1 Challenge"');
     expect(manifestSource).toContain('"purpose": "any maskable"');
-    expect(manifestSource).toContain('"src": "/app-icon.svg"');
+    expect(manifestSource).toContain('"src": "/app-icon-192.png"');
+    expect(manifestSource).toContain('"src": "/app-icon-512.png"');
     expect(manifestSource).not.toContain("/manus-storage/");
   });
 
@@ -296,8 +299,10 @@ describe("Home onboarding shell", () => {
     expect(registerSource).toContain("onError={() => setFailed(true)}");
     expect(registerSource).not.toContain("six-plus-one-brand-logo-white-strong_2665284a.png");
 
-    expect(htmlSource).toContain("/app-icon.svg");
-    expect(manifestSource).toContain("/app-icon.svg");
+    expect(htmlSource).toContain("/app-icon-192.png");
+    expect(htmlSource).toContain("/app-icon-180.png");
+    expect(manifestSource).toContain("/app-icon-192.png");
+    expect(manifestSource).toContain("/app-icon-512.png");
     expect(routerSource).toContain('return { url: "/manus-storage/six-plus-one-reference-palette-logo-transparent-optimized_2e84b980.webp" };');
     expect(routerSource).not.toContain("six-plus-one-original-uploaded-logo_aefa948f.webp");
     expect(routerSource).not.toContain("six-plus-one-clean-stacked-logo_a45938fa.png");

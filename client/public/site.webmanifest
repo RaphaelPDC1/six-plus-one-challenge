@@ -1,17 +1,25 @@
 {
   "name": "6+1 Four Lives Challenge",
-  "short_name": "6+1",
+  "short_name": "6+1 Challenge",
   "description": "Daily logging, lives, proof, leaderboard, and accountability for the 6+1 Four Lives Challenge.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
+  "orientation": "portrait-primary",
   "background_color": "#0D0D0D",
   "theme_color": "#0D0D0D",
+  "categories": ["health", "fitness", "productivity"],
   "icons": [
     {
-      "src": "/app-icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "/app-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/app-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
       "purpose": "any maskable"
     }
   ]
