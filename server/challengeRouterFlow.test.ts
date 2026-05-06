@@ -64,7 +64,7 @@ describe("challenge router flow", () => {
     dbMocks.getCurrentChallengeDay.mockReturnValue(1);
   });
 
-  it("creates a life-loss payment obligation when Track Everything is missed", async () => {
+  it("saves an incomplete same-day log as a draft without manually creating a life-loss obligation", async () => {
     dbMocks.getOrCreateParticipant.mockResolvedValue({ id: 7, displayName: "Marcus" });
     dbMocks.submitDailyLog.mockResolvedValue({
       complete: false,
@@ -91,7 +91,7 @@ describe("challenge router flow", () => {
 
     expect(result.complete).toBe(false);
     expect(dbMocks.submitDailyLog).toHaveBeenCalledWith(7, expect.objectContaining({ trackedEverything: false }));
-    expect(dbMocks.triggerLifeLoss).toHaveBeenCalledWith(7, "Missed rule(s): Track Everything", 99);
+    expect(dbMocks.triggerLifeLoss).not.toHaveBeenCalled();
   });
 
   it("routes Ghost Life redemption through the one-time persistence helper", async () => {

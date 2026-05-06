@@ -288,3 +288,35 @@
 - [x] Update automated tests for the must-do checklist states and expandable calendar behavior
 - [x] Run full validation, tests, production build, and preview health check after these UX refinements
 - [x] Save checkpoint after the must-do checklist and compact calendar refinements
+
+## Bug Fix — Logo, Submission Life Loss, and Proof Images
+- [x] Fix the logo image so it appears correctly on the loading page
+- [x] Fix the logo image so it appears correctly on the Today’s Log header/log view
+- [x] Diagnose why completed read and teach submissions can still be treated as missed rules
+- [x] Fix submission completion/life-loss logic so completed rules do not incorrectly remove a life
+- [x] Diagnose why uploaded proof images are not loading in the Proof section
+- [x] Fix proof image storage/retrieval/rendering so uploaded images display reliably
+- [x] Add regression tests for logo rendering, submission completion logic, and proof image display paths
+- [x] Run full validation, production build, and preview health check after these bug fixes
+- [x] Save checkpoint after the logo/submission/proof bug fixes
+
+## Change Request — Draft Save and Next-Day Auto-Submit
+- [x] Allow users to save or submit partial daily progress during the same day without immediately losing a life
+- [x] Rename or adjust the daily action UI so incomplete entries are clearly saved as progress rather than treated as final failure
+- [x] Apply life-loss penalties only when an incomplete day reaches the next-day deadline or auto-submit condition
+- [x] Add backend logic or endpoint support for deadline-based auto-submit/life-loss handling without double-penalizing a day
+- [x] Add regression tests proving partial same-day saves do not lose lives and overdue incomplete days do lose a life once
+
+## Bug Fix / Change Request — Fair Daily Logging and Ghost Life
+
+- [x] Enforce one daily log record per participant per day so repeated saves update the same day rather than creating duplicate submissions
+- [x] Allow users to save partial progress during the day without triggering manual life loss
+- [x] Prevent the main daily action from acting like a penalty submit unless all six rules are complete
+- [x] Automatically finalize the previous day on the next-day rollover and apply penalties only for genuinely incomplete rules at that point
+- [x] Remove the default “0” visual value from exercise minutes so the field starts blank until the user enters training minutes
+- [x] Fix read and teach completion so a hidden or overly strict word limit does not unfairly mark users incomplete when they have provided a teaching
+- [x] Ensure proof images uploaded for exercise display reliably in the proof section and remain attached to the saved daily log
+- [x] Make Ghost Life a clear purple once-only recovery action when tapped, with the participant receiving the ghost life only once
+- [x] Add regression coverage for one-log-per-day saves, partial draft saves, next-day finalization, read/teach completion, proof image rendering, and Ghost Life once-only behavior
+- [x] Run full validation, production build, and preview health check after these fixes
+- [x] Save checkpoint after the fair daily logging and Ghost Life fixes

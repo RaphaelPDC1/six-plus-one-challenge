@@ -67,23 +67,8 @@ export const appRouter = router({
   system: systemRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
-    logoUrl: publicProcedure.query(async ({ ctx }) => {
-      // Return the signed CloudFront URL for the stable brand logo image.
-      try {
-        const response = await fetch(`${ctx.req.protocol}://${ctx.req.get('host')}/manus-storage/six-plus-one-clean-stacked-logo_5d45a828.png`, {
-          method: 'HEAD',
-          redirect: 'manual',
-        });
-        if (response.status === 307 || response.status === 302) {
-          const location = response.headers.get('location');
-          if (location) {
-            return { url: location };
-          }
-        }
-      } catch (error) {
-        console.error('[Logo URL] Failed to get signed URL:', error);
-      }
-      return { url: '/manus-storage/six-plus-one-clean-stacked-logo_5d45a828.png' };
+    logoUrl: publicProcedure.query(async () => {
+      return { url: "/manus-storage/six-plus-one-clean-stacked-logo_a45938fa.png" };
     }),
     siteLogin: publicProcedure.input(siteLoginInput).mutation(async ({ ctx, input }) => {
       const email = normalizeSignupEmail(input.email);
@@ -153,11 +138,7 @@ export const appRouter = router({
 
     submitMyDay: protectedProcedure.input(dayLogInput).mutation(async ({ ctx, input }) => {
       const participant = await getOrCreateParticipant(ctx.user);
-      const result = await submitDailyLog(participant.id, input);
-      if (!result.complete) {
-        await triggerLifeLoss(participant.id, `Missed rule(s): ${result.missedRules.join(", ")}`, result.log?.id ?? null);
-      }
-      return result;
+      return submitDailyLog(participant.id, input);
     }),
 
     uploadProof: protectedProcedure

@@ -398,9 +398,10 @@ export async function submitDailyLog(participantId: number, input: {
   }
   const logDate = getChallengeDateForDay(input.dayNumber);
   const deadline = getChallengeDeadlineForDay(input.dayNumber);
-  const exerciseDone = input.exerciseDuration >= 30 && input.exerciseProofUrl.trim().length > 0;
+  const deadlinePassed = submittedAt.getTime() > deadline.getTime();
+  const exerciseDone = input.exerciseDuration >= 30 && input.exerciseType.trim().length > 0;
   const reflectionDone = input.reflectionText.trim().length > 0;
-  const readTeachDone = input.readTeachText.trim().length >= 30;
+  const readTeachDone = input.readTeachText.trim().length > 0;
   const complete = isDayComplete({
     noAlcohol: input.noAlcohol,
     cleanEating: input.cleanEating,
@@ -408,12 +409,12 @@ export async function submitDailyLog(participantId: number, input: {
     reflectionDone,
     readTeachDone,
     trackedEverything: input.trackedEverything,
-    submittedAt,
+    submittedAt: deadlinePassed ? submittedAt : undefined,
     deadline,
   });
-  const pointsAwarded = calculateDailyPoints(input.dayNumber, complete);
-
   const existing = await getTodayLog(participantId, input.dayNumber);
+  const newlyComplete = complete && !existing?.dayComplete;
+  const pointsAwarded = complete ? (existing?.dayComplete ? existing.pointsAwarded : calculateDailyPoints(input.dayNumber, true)) : 0;
   const values = {
     participantId,
     dayNumber: input.dayNumber,
@@ -433,7 +434,7 @@ export async function submitDailyLog(participantId: number, input: {
     trackedEverything: input.trackedEverything,
     dayComplete: complete,
     pointsAwarded,
-    submittedAt,
+    submittedAt: deadlinePassed || complete ? submittedAt : null,
   };
 
   if (existing) {
@@ -442,7 +443,7 @@ export async function submitDailyLog(participantId: number, input: {
     await db.insert(dailyLogs).values(values);
   }
 
-  if (complete) {
+  if (newlyComplete) {
     const participant = await db.select().from(participants).where(eq(participants.id, participantId)).limit(1);
     const current = participant[0];
     const newStreak = (current?.currentStreak ?? 0) + 1;
@@ -463,7 +464,7 @@ export async function submitDailyLog(participantId: number, input: {
     trackedEverything: input.trackedEverything,
   });
 
-  return { complete, pointsAwarded, missedRules, log: await getTodayLog(participantId, input.dayNumber) };
+  return { complete, pointsAwarded, missedRules, deadlinePassed, draftSaved: !deadlinePassed && !complete, log: await getTodayLog(participantId, input.dayNumber) };
 }
 
 export async function triggerLifeLoss(participantId: number, reason: string, dailyLogId?: number | null) {
@@ -490,12 +491,66 @@ export async function triggerLifeLoss(participantId: number, reason: string, dai
   return { livesRemaining: newLives };
 }
 
+export async function finalizePreviousDayIfNeeded(participantId: number, now = new Date()) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  const currentDay = getCurrentChallengeDay(now);
+  const dayToFinalize = currentDay - 1;
+  if (dayToFinalize < 1 || now.getTime() <= getChallengeDeadlineForDay(dayToFinalize).getTime()) {
+    return { finalized: false as const, reason: "no_overdue_day" as const };
+  }
+
+  let log = await getTodayLog(participantId, dayToFinalize);
+  if (!log) {
+    await db.insert(dailyLogs).values({
+      participantId,
+      dayNumber: dayToFinalize,
+      logDate: getChallengeDateForDay(dayToFinalize),
+      noAlcohol: false,
+      cleanEating: false,
+      cleanEatingNote: null,
+      exerciseDone: false,
+      exerciseDuration: 0,
+      exerciseType: "",
+      exerciseProofUrl: "",
+      reflectionDone: false,
+      reflectionText: "",
+      reflectionShared: false,
+      readTeachDone: false,
+      readTeachText: "",
+      trackedEverything: false,
+      dayComplete: false,
+      pointsAwarded: 0,
+      submittedAt: getChallengeDeadlineForDay(dayToFinalize),
+    });
+    log = await getTodayLog(participantId, dayToFinalize);
+  }
+  if (!log || log.dayComplete) return { finalized: false as const, reason: "already_complete" as const };
+
+  const existingPenalty = await db.select().from(paymentEvents).where(eq(paymentEvents.dailyLogId, log.id)).limit(1);
+  if (existingPenalty[0]) return { finalized: false as const, reason: "already_penalized" as const };
+
+  const exerciseDone = Boolean(log.exerciseDone) || ((log.exerciseDuration ?? 0) >= 30 && String(log.exerciseType ?? "").trim().length > 0);
+  const readTeachDone = Boolean(log.readTeachDone) || String(log.readTeachText ?? "").trim().length > 0;
+  const missedRules = getMissedRules({
+    noAlcohol: Boolean(log.noAlcohol),
+    cleanEating: Boolean(log.cleanEating),
+    exerciseDone,
+    reflectionDone: Boolean(log.reflectionDone),
+    readTeachDone,
+    trackedEverything: Boolean(log.trackedEverything),
+  });
+  await triggerLifeLoss(participantId, `Deadline passed for day ${dayToFinalize}. Missed rule(s): ${missedRules.join(", ")}`, log.id);
+  await db.update(dailyLogs).set({ submittedAt: log.submittedAt ?? getChallengeDeadlineForDay(dayToFinalize) }).where(eq(dailyLogs.id, log.id));
+  return { finalized: true as const, dayNumber: dayToFinalize, missedRules };
+}
+
 export async function tryApplyGhostLife(participantId: number, exerciseDuration: number, insightCount: number) {
   const db = await getDb();
   if (!db) throw new Error("Database unavailable");
   const participant = (await db.select().from(participants).where(eq(participants.id, participantId)).limit(1))[0];
   if (!participant) throw new Error("Participant not found");
-  if (!canEarnGhostLife({ ghostLifeUsed: participant.ghostLifeUsed, livesRemaining: participant.livesRemaining, exerciseDuration, insightCount })) {
+  if (participant.ghostLifeUsed || participant.livesRemaining >= 4) {
     return { applied: false, livesRemaining: participant.livesRemaining };
   }
   const livesRemaining = Math.min(4, participant.livesRemaining + 1);
@@ -524,6 +579,7 @@ export async function getAppSnapshot(userId: number, role: "admin" | "user" = "u
     };
   }
   const participant = await getOrCreateParticipant({ id: userId, name: null, email });
+  await finalizePreviousDayIfNeeded(participant.id);
   await seedRewardsIfEmpty();
   const [allParticipants, allLogs, rewards, payments, redemptions, warden, chat, accessRequests] = await Promise.all([
     db.select().from(participants),

@@ -64,7 +64,7 @@ const GREEN = "#2ECC71";
 const PURPLE = "#9B59B6";
 const chartColors = [GOLD, RED, GREEN, PURPLE, "#4CA3C9", "#E67E22", "#F1C40F", "#ECF0F1"];
 // Use relative path - server handles the signed CloudFront redirect
-const BRAND_LOGO_URL = "/manus-storage/six-plus-one-clean-stacked-logo_5d45a828.png";
+const BRAND_LOGO_URL = "/manus-storage/six-plus-one-clean-stacked-logo_a45938fa.png";
 
 function BrandLogoImageWithRetry({ alt, className = "h-full w-full object-contain", decorative = false }: { alt: string; className?: string; decorative?: boolean }) {
   return (
@@ -92,6 +92,14 @@ function CleanBrandMark({ compact = false, decorative = false }: { compact?: boo
       )}
     />
   );
+}
+
+function proofImageSrc(url: string) {
+  const trimmed = url.trim();
+  if (!trimmed) return "";
+  if (trimmed.startsWith("/manus-storage/")) return encodeURI(trimmed);
+  if (/^https?:\/\//i.test(trimmed) && /\.(png|jpe?g|webp)(\?|#|$)/i.test(trimmed)) return trimmed;
+  return "";
 }
 const emptyDay: MyDayForm = {
   noAlcohol: false,
@@ -704,12 +712,12 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
 
   const submit = trpc.challenge.submitMyDay.useMutation({
     onSuccess: data => {
-      setLastMissed(data.missedRules);
-      pulse(data.complete ? [20, 40, 20] : [120, 40, 120]);
+      setLastMissed(data.deadlinePassed ? data.missedRules : []);
+      pulse(data.complete ? [20, 40, 20] : [18, 28, 45]);
       toast.custom(() => (
         <div className="border border-[#C8A96E] bg-[#0D0D0D] p-4 text-white shadow-2xl">
-          <p className="poster-label text-[#C8A96E]">Day submitted</p>
-          <p className="mt-2 text-sm font-black uppercase tracking-[-0.02em]">{data.complete ? "Complete. Points added." : "Incomplete. Life-loss obligation logged."}</p>
+          <p className="poster-label text-[#C8A96E]">{data.complete ? "Day submitted" : "Progress saved"}</p>
+          <p className="mt-2 text-sm font-black uppercase tracking-[-0.02em]">{data.complete ? "Complete. Points added once." : "Draft saved. No life lost before rollover."}</p>
         </div>
       ));
       refetch();
@@ -717,9 +725,9 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
     onError: error => toast.error(error.message),
   });
   const ghost = trpc.challenge.applyGhostLife.useMutation({
-    onSuccess: () => {
-      pulse([16, 35, 16]);
-      toast("Ghost Life check complete.");
+    onSuccess: data => {
+      pulse(data.applied ? [22, 40, 22, 80, 22] : [90, 35, 90]);
+      toast(data.applied ? "Purple Ghost Life restored. This one-shot is now used." : "Ghost Life not applied — it only works once after a life has been lost.");
       refetch();
     },
     onError: error => toast.error(error.message),
@@ -798,7 +806,7 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
 
           <RuleCard title="Exercise" label="Rule 03" icon={Dumbbell} complete={rules[2].done} active={openRule === "exercise"} onToggle={() => setOpenRule(openRule === "exercise" ? "reflection" : "exercise")}>
             <div className="grid gap-3 sm:grid-cols-2">
-              <Field label="Minutes"><TextInput type="number" value={form.exerciseDuration} onChange={event => setForm({ ...form, exerciseDuration: Number(event.target.value) })} /></Field>
+              <Field label="Minutes"><TextInput type="number" value={form.exerciseDuration || ""} onChange={event => setForm({ ...form, exerciseDuration: event.target.value === "" ? 0 : Number(event.target.value) })} placeholder="30+" /></Field>
               <Field label="Workout type"><TextInput value={form.exerciseType} onChange={event => setForm({ ...form, exerciseType: event.target.value })} placeholder="Run, gym, mobility..." /></Field>
               <div className="sm:col-span-2">
                 <Field label="Proof image / link"><TextInput value={form.exerciseProofUrl} onChange={event => setForm({ ...form, exerciseProofUrl: event.target.value })} placeholder="Upload a gym proof image, paste Strava, or add a proof note" /></Field>
@@ -834,10 +842,11 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
         </div>
 
         <div className={classNames("submit-dock sticky bottom-[74px] z-20 border border-[#2A2A2A] bg-[#0D0D0D]/95 p-3 backdrop-blur transition-all duration-300 md:static md:bg-transparent md:p-0", submit.isPending && "submit-dock-pending", allAddressed && !submit.isPending && "submit-dock-ready")}>
-          <SharpButton className={classNames("w-full py-5 text-sm transition-all duration-300", submit.isPending && "submit-button-pending")} disabled={!allAddressed || submit.isPending} onClick={() => submit.mutate({ ...form, reflectionShared: false, dayNumber: snapshot?.challenge.currentDay ?? 1 })}>
-            {submit.isPending ? "Submitting the log" : allAddressed ? `Submit day ${snapshot?.challenge.currentDay ?? 1}` : `Address ${6 - completedRules} more`}
+          <SharpButton className={classNames("w-full py-5 text-sm transition-all duration-300", submit.isPending && "submit-button-pending")} disabled={submit.isPending} onClick={() => submit.mutate({ ...form, reflectionShared: false, dayNumber: snapshot?.challenge.currentDay ?? 1 })}>
+            {submit.isPending ? (allAddressed ? "Submitting the log" : "Saving progress") : allAddressed ? `Submit day ${snapshot?.challenge.currentDay ?? 1}` : `Save progress — ${6 - completedRules} still open`}
           </SharpButton>
-          {lastMissed.length > 0 && <div className="mt-3 border-l-4 border-[#C0392B] bg-[#180F0F] p-4 text-sm font-bold text-[#F0B7AE]">Missed: {lastMissed.join(", ")}. Penalty logged.</div>}
+          {!allAddressed && <p className="mt-3 border-l-4 border-[#C8A96E] bg-[#16130B] p-4 text-xs font-black uppercase leading-5 tracking-[0.14em] text-[#C8A96E]">This is a draft save. Lives are only judged automatically after the day rolls over.</p>}
+          {lastMissed.length > 0 && <div className="mt-3 border-l-4 border-[#C0392B] bg-[#180F0F] p-4 text-sm font-bold text-[#F0B7AE]">Missed after rollover: {lastMissed.join(", ")}. Penalty logged.</div>}
         </div>
       </section>
 
@@ -847,9 +856,9 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
         <div className="border border-[#2A2A2A] bg-[#101010] p-4">
           <MicroLabel tone="purple">Ghost Life</MicroLabel>
           <p className="mt-3 text-2xl font-black uppercase leading-none text-white">One shot. No repeats.</p>
-          <p className="mt-3 text-sm font-bold leading-6 text-[#999]">Double-down recovery requires 60 minutes exercise and 2 insights. Backend eligibility stays unchanged.</p>
-          <SharpButton className="mt-4 w-full border-[#9B59B6] bg-[#9B59B6]" disabled={ghost.isPending || participant?.ghostLifeUsed} onClick={() => ghost.mutate({ exerciseDuration: form.exerciseDuration, insightCount: form.readTeachText.split(".").filter(Boolean).length })}>
-            {participant?.ghostLifeUsed ? "Ghost used" : "Check ghost life"}
+          <p className="mt-3 text-sm font-bold leading-6 text-[#999]">Tap once after a lost life to restore one purple Ghost Life. It cannot be used twice.</p>
+          <SharpButton className="mt-4 w-full border-[#9B59B6] bg-[#9B59B6] text-white shadow-[0_0_28px_rgba(155,89,182,0.24)]" disabled={ghost.isPending || participant?.ghostLifeUsed} onClick={() => ghost.mutate({ exerciseDuration: form.exerciseDuration, insightCount: form.readTeachText.split(".").filter(Boolean).length })}>
+            {participant?.ghostLifeUsed ? "Purple Ghost used" : ghost.isPending ? "Summoning ghost life" : "Use purple Ghost Life"}
           </SharpButton>
         </div>
         <div className="border border-[#2A2A2A] bg-[#101010] p-4">
@@ -1036,7 +1045,7 @@ function ProofFeed({ snapshot }: { snapshot: Snapshot }) {
                 <span className="border border-[#2ECC71]/50 bg-[#102018] px-3 py-1 text-[9px] font-black uppercase tracking-[0.2em] text-[#2ECC71]">Proof</span>
               </div>
               {log.readTeachText && <p className="mt-4 border-l-2 border-[#C8A96E] pl-4 text-sm font-bold leading-6 text-[#D8D8D8]">{log.readTeachText}</p>}
-              {log.exerciseProofUrl && (log.exerciseProofUrl.startsWith("/manus-storage/") ? <img src={log.exerciseProofUrl} alt={`Exercise proof for day ${log.dayNumber}`} className="mt-3 max-h-72 w-full border border-[#2A2A2A] object-cover" /> : <p className="mt-3 break-all border border-[#2A2A2A] bg-[#111] p-3 text-xs font-bold text-[#C8A96E]">Proof: {log.exerciseProofUrl}</p>)}
+              {log.exerciseProofUrl && (proofImageSrc(log.exerciseProofUrl) ? <a href={log.exerciseProofUrl} target="_blank" rel="noreferrer" className="mt-3 block"><img src={proofImageSrc(log.exerciseProofUrl)} alt={`Exercise proof for day ${log.dayNumber}`} className="max-h-72 w-full border border-[#2A2A2A] bg-black object-cover" loading="lazy" onError={event => { event.currentTarget.style.display = "none"; }} /><span className="mt-2 block break-all text-[10px] font-black uppercase tracking-[0.14em] text-[#C8A96E]">Open proof image</span></a> : <p className="mt-3 break-all border border-[#2A2A2A] bg-[#111] p-3 text-xs font-bold text-[#C8A96E]">Proof: {log.exerciseProofUrl}</p>)}
             </article>
           );
         })}
