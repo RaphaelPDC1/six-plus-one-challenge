@@ -2,6 +2,7 @@ import { getChallengeState } from "./challengeState";
 import { generateWardenMessage, shouldSendMessage } from "./messageGenerator";
 import { logWardenMessage, hasHitDailyLimit } from "./messageLogger";
 import { sendWardenMessage } from "./whatsappClient";
+import { notifyMakeWebhook } from "./makeNotifier";
 
 /**
  * Main Warden runner: orchestrates message generation, logging, and posting
