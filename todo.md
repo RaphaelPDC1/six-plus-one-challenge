@@ -361,3 +361,13 @@
 - [x] Add or update regression coverage for daily draft persistence, user/day scoping, restore behavior, and session-friendly login continuity
 - [x] Run TypeScript, tests, production build, and preview health check after persistence fixes
 - [x] Save checkpoint after the persistent session and draft-recovery improvements
+
+## Bug Fix — Stable Logo Assets and Mobile Proof Images
+
+- [x] Diagnose why header/loading logos degrade to the blue missing-image question mark after time on deployed/mobile sessions
+- [x] Replace or rework fragile logo URL handling so the same intended 6+1 logo remains visible on the header and loading page without expiry or fallback flicker
+- [x] Diagnose why proof images fail to load on mobile phones despite being attached to daily logs
+- [x] Fix proof image URL storage/rendering so uploaded proof images load reliably on deployed mobile browsers
+- [x] Add or update regression coverage for stable logo sources and proof image rendering paths
+- [x] Run TypeScript, tests, production build, and preview health check after image-loading fixes
+- [x] Save checkpoint after the stable logo and mobile proof-image fixes

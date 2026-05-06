@@ -265,6 +265,7 @@ describe("Home onboarding shell", () => {
     const homeSource = readFileSync(new URL("./Home.tsx", import.meta.url), "utf8");
     const registerSource = readFileSync(new URL("./Register.tsx", import.meta.url), "utf8");
     const routerSource = readFileSync(new URL("../../../server/routers.ts", import.meta.url), "utf8");
+    const storageProxySource = readFileSync(new URL("../../../server/_core/storageProxy.ts", import.meta.url), "utf8");
 
     expect(homeSource).toContain('const BRAND_LOGO_URL = "/manus-storage/six-plus-one-logo-inverted-gold_e742b8d3.webp";');
     expect(homeSource).toContain('data-logo-source="stable-inverted-brand-image"');
@@ -282,6 +283,27 @@ describe("Home onboarding shell", () => {
     expect(routerSource).not.toContain("six-plus-one-original-uploaded-logo_aefa948f.webp");
     expect(routerSource).not.toContain("six-plus-one-clean-stacked-logo_a45938fa.png");
     expect(routerSource).not.toContain("six-plus-one-brand-logo-white-strong_2665284a.png");
+
+    expect(storageProxySource).toContain("assetResp.arrayBuffer()");
+    expect(storageProxySource).toContain("cachePolicyForKey(key)");
+    expect(storageProxySource).toContain("stale-while-revalidate=604800");
+    expect(storageProxySource).not.toContain("res.redirect(307, url)");
+    expect(storageProxySource).not.toContain('res.set("Cache-Control", "no-store")');
+  });
+
+  it("keeps proof uploads on origin-stable storage URLs for deployed mobile browsers", () => {
+    const homeSource = readFileSync(new URL("./Home.tsx", import.meta.url), "utf8");
+    const routerSource = readFileSync(new URL("../../../server/routers.ts", import.meta.url), "utf8");
+    const storageProxySource = readFileSync(new URL("../../../server/_core/storageProxy.ts", import.meta.url), "utf8");
+
+    expect(homeSource).toContain('if (trimmed.startsWith("/manus-storage/")) return encodeURI(trimmed);');
+    expect(homeSource).toContain("src={proofImageSrc(log.exerciseProofUrl)}");
+    expect(homeSource).toContain('loading="lazy"');
+    expect(homeSource).toContain('decoding="async"');
+    expect(routerSource).toContain("const stored = await storagePut(`exercise-proof/participant-${participant.id}/${Date.now()}-${safeName}.${extension}`, bytes, input.mimeType);");
+    expect(routerSource).toContain("url: stored.url");
+    expect(storageProxySource).toContain("Content-Type");
+    expect(storageProxySource).toContain("X-Content-Type-Options");
   });
 
   it("keeps participant display pictures and paid reward visuals wired through real image-aware components", () => {
