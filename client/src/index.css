@@ -629,3 +629,7 @@ html.haptic-visual-feedback body {
     animation: none;
   }
 }
+
+.tab-stage-stable {
+  animation: none;
+}

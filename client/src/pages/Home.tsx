@@ -56,10 +56,6 @@ type MyDayForm = {
 
 type TabKey = "myday" | "overview" | "leaderboard" | "proof" | "rewards" | "calendar" | "admin";
 
-type BeforeInstallPromptEvent = Event & {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
-};
 
 type RuleKey = keyof MyDayForm | "exercise" | "reflection" | "readTeach";
 
@@ -1649,9 +1645,6 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<TabKey>("myday");
   const [entryVisible, setEntryVisible] = useState(() => typeof window !== "undefined" && window.sessionStorage.getItem("sixone-entry-seen") !== "true");
   const [loginEntryVisible, setLoginEntryVisible] = useState(false);
-  const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
-  const [installDismissed, setInstallDismissed] = useState(() => typeof window !== "undefined" && window.sessionStorage.getItem("sixone-install-dismissed") === "true");
-  const [standaloneMode, setStandaloneMode] = useState(false);
   const previousAuthRef = useRef(isAuthenticated);
   const snapshotQuery = trpc.challenge.snapshot.useQuery(undefined, { enabled: isAuthenticated });
   const snapshot = snapshotQuery.data;
@@ -1665,30 +1658,6 @@ export default function Home() {
     }, prefersReducedMotion ? 120 : 950);
     return () => window.clearTimeout(timer);
   }, [entryVisible, loading]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const nav = navigator as Navigator & { standalone?: boolean };
-    const standalone = window.matchMedia("(display-mode: standalone)").matches || nav.standalone === true;
-    setStandaloneMode(standalone);
-
-    const handleBeforeInstall = (event: Event) => {
-      event.preventDefault();
-      if (!installDismissed) setInstallPrompt(event as BeforeInstallPromptEvent);
-    };
-    const handleInstalled = () => {
-      setStandaloneMode(true);
-      setInstallPrompt(null);
-      window.sessionStorage.setItem("sixone-install-dismissed", "true");
-      setInstallDismissed(true);
-    };
-    window.addEventListener("beforeinstallprompt", handleBeforeInstall);
-    window.addEventListener("appinstalled", handleInstalled);
-    return () => {
-      window.removeEventListener("beforeinstallprompt", handleBeforeInstall);
-      window.removeEventListener("appinstalled", handleInstalled);
-    };
-  }, [installDismissed]);
 
   useEffect(() => {
     if (loading) return;
@@ -1708,31 +1677,6 @@ export default function Home() {
   const visibleTabs = tabs.filter(tab => tab.key !== "admin" || user?.role === "admin");
   const mobileTabs = visibleTabs.filter(tab => tab.key !== "admin");
   const activeMobileIndex = Math.max(0, mobileTabs.findIndex(tab => tab.key === activeTab));
-  const showInstallGuide = isAuthenticated && !standaloneMode && !installDismissed;
-
-  async function handleInstallApp() {
-    if (!installPrompt) {
-      toast("Use your browser menu or Share button, then choose Add to Home Screen / Install app.");
-      return;
-    }
-    const prompt = installPrompt;
-    setInstallPrompt(null);
-    await prompt.prompt();
-    const choice = await prompt.userChoice;
-    if (choice.outcome === "accepted") {
-      window.sessionStorage.setItem("sixone-install-dismissed", "true");
-      setInstallDismissed(true);
-      toast("6+1 Four Lives Challenge is being added to your home screen.");
-    } else {
-      setInstallPrompt(prompt);
-    }
-  }
-
-  function dismissInstallGuide() {
-    if (typeof window !== "undefined") window.sessionStorage.setItem("sixone-install-dismissed", "true");
-    setInstallDismissed(true);
-  }
-
   return (
     <main className="poster-grid min-h-screen bg-[#0D0D0D] pb-32 text-white md:pb-0">
       <header className="sticky top-0 z-40 border-b border-[#2A2A2A] bg-[#0D0D0D]/95 backdrop-blur">
@@ -1768,21 +1712,7 @@ export default function Home() {
               })}
             </div>
 
-            {showInstallGuide && (
-              <div className="mb-5 flex flex-col gap-3 border border-[#C8A96E]/45 bg-[#110F0A]/95 p-4 shadow-[0_16px_40px_rgba(0,0,0,0.32)] sm:flex-row sm:items-center sm:justify-between" data-testid="pwa-install-guide">
-                <div className="min-w-0">
-                  <MicroLabel tone="gold">Save the app</MicroLabel>
-                  <p className="mt-2 text-sm font-black uppercase leading-5 tracking-[0.12em] text-white">6+1 Four Lives Challenge can live on your phone or desktop home screen.</p>
-                  <p className="mt-2 text-xs font-bold leading-5 text-[#A7A7A7]">Browsers control installation, so the app cannot force auto-save. Tap install when available, or use the browser menu / Share button and choose Add to Home Screen.</p>
-                </div>
-                <div className="flex shrink-0 gap-2">
-                  <button type="button" className="border border-[#C8A96E] bg-[#C8A96E] px-4 py-3 text-[10px] font-black uppercase tracking-[0.18em] text-black" onClick={handleInstallApp}>{installPrompt ? "Install app" : "How to save"}</button>
-                  <button type="button" className="grid min-h-10 min-w-10 place-items-center border border-[#2A2A2A] text-[#777]" onClick={dismissInstallGuide} aria-label="Dismiss install guidance"><X className="h-4 w-4" /></button>
-                </div>
-              </div>
-            )}
-
-            <div key={activeTab} className="tab-stage">
+            <div className="tab-stage tab-stage-stable">
               {activeTab === "myday" && <MyDay snapshot={snapshot} refetch={snapshotQuery.refetch} />}
               {activeTab === "overview" && <Overview snapshot={snapshot} />}
               {activeTab === "leaderboard" && <Leaderboard snapshot={snapshot} />}
@@ -1811,7 +1741,7 @@ export default function Home() {
                 type="button"
                 onClick={() => { pulse(10); setActiveTab(tab.key); }}
                 className={classNames(
-                  "relative z-10 flex min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-[1rem] px-1 py-2 text-[7px] font-black uppercase leading-none tracking-[0.08em] transition min-[380px]:text-[8px]",
+                  "relative z-10 flex min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-[1rem] px-1 py-2 text-[7px] font-black uppercase leading-none tracking-[0.08em] transition-colors duration-200 min-[380px]:text-[8px]",
                   active ? "bg-[#151108] text-[#C8A96E]" : "text-[#777] hover:text-white"
                 )}
                 aria-current={active ? "page" : undefined}

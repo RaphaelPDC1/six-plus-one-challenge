@@ -317,7 +317,8 @@ describe("Home onboarding shell", () => {
     expect(homeSource).not.toContain('BRAND_LOGO_URL = "/six-plus-one-logo.svg"');
     expect(registerSource).not.toContain('BRAND_LOGO_URL = "/six-plus-one-logo.svg"');
     expect(routerSource).not.toContain('url: "/six-plus-one-logo.svg"');
-    expect(appIconSvgSource).toContain('fill="#FFFFFF"');
+    expect(appIconSvgSource).toContain('fill="#FF5B00"');
+    expect(appIconSvgSource).toContain('fill="#050505"');
 
     expect(storageProxySource).toContain("assetResp.arrayBuffer()");
     expect(storageProxySource).toContain("cachePolicyForKey(key)");

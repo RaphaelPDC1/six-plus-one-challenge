@@ -479,3 +479,15 @@
 - [x] Add a limelight-style active state to the mobile bottom navigation while preserving the current 6+1 dark/gold visual system.
 - [x] Add or update regression coverage for the reordered Log Today layout, PWA metadata, and bottom navigation cropping/active-state behavior.
 - [x] Run validation, production build, preview health check, and save a checkpoint after the mobile app polish fixes.
+
+## Follow-up Fix — Bottom Navigation Flash and Install Banner Removal
+- [x] Remove the save-to-desktop/home-screen install banner from the authenticated app UI.
+- [x] Fix the mobile bottom navigation tab transition so tapping a new tab does not flash off/on before moving to the selected tab.
+- [x] Update regression coverage for the removed banner and smoother mobile navigation behavior.
+- [x] Run validation, production build, preview health check, and save a checkpoint after this follow-up fix.
+
+## Follow-up Fix — Correct Home-Screen Logo Artwork
+- [x] Replace the circled installed PWA/home-screen icon artwork with the correct orange 6+1 logo style shown by the user.
+- [x] Keep the install banner removed and the bottom navigation flash fix intact while updating the icon artwork.
+- [x] Update regression coverage so the PWA icon generation expects the orange background treatment rather than the dark badge-style icon.
+- [x] Run validation, production build, preview health check, and save a checkpoint after the corrected home-screen icon fix.
