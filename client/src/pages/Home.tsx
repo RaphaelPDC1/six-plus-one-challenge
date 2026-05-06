@@ -346,7 +346,7 @@ function WardenPresence({ snapshot }: { snapshot: Snapshot }) {
       <p className="mt-3 text-sm font-bold leading-6 text-[#D8D8D8]">
         <span className="type-caret pr-1">{latest?.content ?? "Log honestly. The group sees momentum. The Warden sees patterns."}</span>
       </p>
-      <p className="mt-3 text-[10px] font-black uppercase tracking-[0.28em] text-[#777]">Max 3 unprompted messages per day</p>
+      <p className="mt-3 text-[10px] font-black uppercase tracking-[0.28em] text-[#777]">1–4 organic messages per day · drama-driven</p>
     </aside>
   );
 }

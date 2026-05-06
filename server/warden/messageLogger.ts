@@ -15,7 +15,8 @@ export interface WardenMessageLog {
 export async function logWardenMessage(
   content: string,
   mode: "surveillance" | "commentary" | "on_ramp" | "system" = "commentary",
-  sourceEvent?: string
+  sourceEvent?: string,
+  postedToWhatsapp = false
 ): Promise<void> {
   try {
     const db = await getDb();
@@ -25,7 +26,7 @@ export async function logWardenMessage(
       mode,
       content,
       sourceEvent: sourceEvent || null,
-      postedToWhatsapp: false,
+      postedToWhatsapp,
       createdAt: new Date(),
     });
 
@@ -86,11 +87,41 @@ export async function getMessagesCountToday(): Promise<number> {
 }
 
 /**
- * Check if we've hit the daily message limit (3 messages per day)
+ * Check if we've hit the dynamic daily message limit.
  */
-export async function hasHitDailyLimit(): Promise<boolean> {
+export async function hasHitDailyLimit(limit = 4): Promise<boolean> {
   const count = await getMessagesCountToday();
-  return count >= 3;
+  return count >= limit;
+}
+
+/**
+ * Check whether this organic window has already produced a Warden decision today.
+ */
+export async function hasDecisionForWindowToday(windowId: string): Promise<boolean> {
+  try {
+    const db = await getDb();
+    if (!db) throw new Error("Database unavailable");
+
+    const today = new Date();
+    const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const todayEnd = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
+    const sourceEvent = `scheduled_runner_${windowId}`;
+
+    const result = await db
+      .select()
+      .from(wardenMessages)
+      .where(
+        and(
+          gte(wardenMessages.createdAt, todayStart),
+          lt(wardenMessages.createdAt, todayEnd)
+        )
+      );
+
+    return result.some((msg: any) => msg.sourceEvent === sourceEvent);
+  } catch (error) {
+    console.error("Error checking Warden window decision:", error);
+    throw error;
+  }
 }
 
 /**

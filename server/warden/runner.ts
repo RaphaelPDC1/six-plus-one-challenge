@@ -1,12 +1,13 @@
 import { getChallengeState } from "./challengeState";
 import { generateWardenMessage, shouldSendMessage } from "./messageGenerator";
-import { logWardenMessage, hasHitDailyLimit } from "./messageLogger";
+import { logWardenMessage, hasHitDailyLimit, hasDecisionForWindowToday } from "./messageLogger";
 import { sendWardenMessage } from "./whatsappClient";
 import { notifyMakeWebhook } from "./makeNotifier";
+import { shouldRunOrganicWardenCycle } from "./organicScheduler";
 
 /**
  * Main Warden runner: orchestrates message generation, logging, and posting
- * Called every 2 hours (06:00–22:00 GMT)
+ * Called by Make/scheduled automation during organic randomized Warden windows
  */
 export async function runWardenCycle(): Promise<{
   messageGenerated: boolean;
@@ -17,10 +18,40 @@ export async function runWardenCycle(): Promise<{
   try {
     console.log("[Warden] Starting cycle...");
 
-    // Check if we've hit the daily limit
-    const hitLimit = await hasHitDailyLimit();
+    // Get the current challenge state first because the daily cap is drama-driven.
+    const challengeState = await getChallengeState();
+    console.log(
+      `[Warden] Challenge state assembled for day ${challengeState.challenge_day}; drama score ${challengeState.daily_drama_score}; max ${challengeState.max_warden_messages_today}`
+    );
+
+    const organicDecision = shouldRunOrganicWardenCycle(challengeState);
+    if (!organicDecision.shouldRun) {
+      console.log(`[Warden] Organic schedule skipped: ${organicDecision.reason}`);
+      return {
+        messageGenerated: false,
+        messageSent: false,
+        reason: organicDecision.reason,
+      };
+    }
+
+    const windowId = organicDecision.windowId || "unknown";
+    const sourceEvent = `scheduled_runner_${windowId}`;
+
+    if (await hasDecisionForWindowToday(windowId)) {
+      console.log(`[Warden] Organic ${windowId} window already had a decision today.`);
+      return {
+        messageGenerated: false,
+        messageSent: false,
+        reason: "Organic window already used today",
+      };
+    }
+
+    // Check if we've hit the drama-driven daily limit
+    const hitLimit = await hasHitDailyLimit(challengeState.max_warden_messages_today);
     if (hitLimit) {
-      console.log("[Warden] Daily message limit reached (3 messages). Skipping cycle.");
+      console.log(
+        `[Warden] Daily message limit reached (${challengeState.max_warden_messages_today} messages). Skipping cycle.`
+      );
       await logWardenMessage(
         "NO_MESSAGE",
         "system",
@@ -33,10 +64,6 @@ export async function runWardenCycle(): Promise<{
       };
     }
 
-    // Get the current challenge state
-    const challengeState = await getChallengeState();
-    console.log(`[Warden] Challenge state assembled for day ${challengeState.challenge_day}`);
-
     // Generate a message from Claude
     const generatedMessage = await generateWardenMessage(challengeState);
     console.log(`[Warden] Message generated: "${generatedMessage}"`);
@@ -47,7 +74,7 @@ export async function runWardenCycle(): Promise<{
       await logWardenMessage(
         generatedMessage,
         "surveillance",
-        "no_message_decision"
+        sourceEvent
       );
       return {
         messageGenerated: true,
@@ -57,18 +84,17 @@ export async function runWardenCycle(): Promise<{
       };
     }
 
-    // Log the message (before posting)
-    await logWardenMessage(
-      generatedMessage,
-      "commentary",
-      "scheduled_runner"
-    );
-
     console.log("[Warden] Message ready to post to WhatsApp");
 
     // Post to WhatsApp via Whapi
     try {
       await sendWardenMessage(generatedMessage);
+      await logWardenMessage(
+        generatedMessage,
+        "commentary",
+        sourceEvent,
+        true
+      );
       console.log("[Warden] Message posted to WhatsApp successfully");
     } catch (whatsappError) {
       console.error("[Warden] Failed to post to WhatsApp:", whatsappError);
@@ -100,15 +126,15 @@ export async function triggerImmediateMessage(
   try {
     console.log(`[Warden] Immediate trigger: ${triggerType}`);
 
+    // Get the current challenge state first because immediate triggers also respect the drama-driven cap.
+    const challengeState = await getChallengeState();
+
     // Check if we've hit the daily limit
-    const hitLimit = await hasHitDailyLimit();
+    const hitLimit = await hasHitDailyLimit(challengeState.max_warden_messages_today);
     if (hitLimit) {
       console.log("[Warden] Daily limit reached, skipping immediate trigger");
       return { messageSent: false };
     }
-
-    // Get the current challenge state
-    const challengeState = await getChallengeState();
 
     // Generate a message
     const generatedMessage = await generateWardenMessage(challengeState);
@@ -123,18 +149,17 @@ export async function triggerImmediateMessage(
       return { messageSent: false };
     }
 
-    // Log and prepare to send
-    await logWardenMessage(
-      generatedMessage,
-      "commentary",
-      `immediate_${triggerType}`
-    );
-
     console.log(`[Warden] Immediate message ready: "${generatedMessage}"`);
 
     // Post to WhatsApp via Whapi
     try {
       await sendWardenMessage(generatedMessage);
+      await logWardenMessage(
+        generatedMessage,
+        "commentary",
+        `immediate_${triggerType}`,
+        true
+      );
       console.log(`[Warden] Immediate message (${triggerType}) posted to WhatsApp successfully`);
     } catch (whatsappError) {
       console.error(`[Warden] Failed to post immediate message (${triggerType}) to WhatsApp:`, whatsappError);

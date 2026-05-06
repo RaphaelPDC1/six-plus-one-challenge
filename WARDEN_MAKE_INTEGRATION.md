@@ -1,68 +1,118 @@
-# Warden + Make.com Integration Guide
+# Warden Make.com Integration Guide
 
-This document describes how to integrate the Warden bot with Make.com for scheduled message generation and WhatsApp posting via Whapi.Cloud.
+This document describes how to integrate the Warden with Make.com and Whapi.Cloud so challenge messages feel like a **presence** rather than a fixed notification cycle. The Warden should not speak every time Make calls the endpoint. Make creates the opportunities; the backend decides whether the moment is worth using.
 
 ## Architecture
 
+```text
+Make.com scheduled probes during organic windows
+  ↓
+tRPC webhook: /api/trpc/warden.runCycle
+  ↓
+CHALLENGE_STATE assembly with daily_drama_score
+  ↓
+Organic window gate + data-driven daily limit
+  ↓
+Warden message generation
+  ↓
+Whapi.Cloud posting to WhatsApp group
 ```
-Make.com (Scheduler) 
-  ↓ (every 2 hours, 06:00–22:00 GMT)
-tRPC Webhook: /api/trpc/warden.runCycle
-  ↓
-Claude API (Warden message generation)
-  ↓
-Whapi.Cloud (WhatsApp Business API)
-  ↓
-WhatsApp Group Chat
-```
+
+The system is intentionally split this way. Make.com should run light scheduled probes inside the approved time windows, while the application enforces randomized timing, late-window restraint, message deduplication, and the drama-driven cap.
+
+## Organic Warden Timing Model
+
+The old fixed two-hour cadence has been replaced. The Warden now works from four daily windows, each with a deterministic randomized target minute for that calendar day. This means Make.com can probe at a simple cadence, but the actual Warden decision happens at a different moment each day.
+
+| Window | UTC Time Range | Behaviour |
+|---|---:|---|
+| Morning | 07:00–09:00 | May speak if the morning data or carry-over story warrants it. |
+| Midday | 12:00–14:00 | May speak if the group has produced useful mid-day evidence. |
+| Evening | 18:00–20:00 | May speak as the day’s accountability picture becomes clearer. |
+| Late | 21:00–22:00 | Only fires when there is enough drama or insight to justify a late intervention. |
+
+The endpoint returns a normal success response even when no message is sent. Reasons such as `outside_organic_window_slot`, `late_window_without_enough_drama`, `Organic window already used today`, `Daily limit reached`, or `NO_MESSAGE decision` should be treated as healthy outcomes, not failures.
+
+## Drama-Driven Frequency
+
+`CHALLENGE_STATE` now includes a daily drama calculation. The Warden’s daily ceiling is no longer a flat value. Quiet days should stay quiet; dramatic days get more oxygen.
+
+| Drama Signal | Score Contribution |
+|---|---:|
+| Each life lost today | +3 |
+| Each non-streak milestone hit today | +2 |
+| Each streak milestone hit today | +2 |
+| Each sharp insight shared today | +1 |
+| Each participant who logged after 20:00 UTC | +1 |
+
+The total score determines the maximum number of Warden messages for the day.
+
+| `daily_drama_score` | Maximum Warden Messages Today |
+|---:|---:|
+| 0–2 | 2 |
+| 3–5 | 3 |
+| 6+ | 4 |
+
+The absolute daily hard cap is **4 messages**. The Warden may still send fewer. A day with no life losses, no milestones, and no sharp group insight may only produce one message or none at all.
 
 ## tRPC Webhook Endpoints
 
-All Warden endpoints are **public** and callable by Make.com without authentication.
+All Warden endpoints are public and callable by Make.com without authentication.
 
-### 1. Run Scheduled Cycle
+### Run Scheduled Cycle
 
 **Endpoint:** `POST /api/trpc/warden.runCycle`
 
-**Purpose:** Generate a Warden message based on the current challenge state and post it to WhatsApp (if warranted).
+**Purpose:** Give the Warden a chance to speak during an organic window. The backend checks the randomized slot, the daily drama score, the dynamic cap, and whether that window has already had a decision today.
 
-**Request Body (JSON):**
+**Request body:**
+
 ```json
 {
-  "source": "make-scheduler"
+  "source": "make-organic-window"
 }
 ```
 
-**Response:**
+**Message sent response:**
+
 ```json
 {
   "success": true,
   "messageGenerated": true,
   "messageSent": true,
-  "message": "Day 12. Marcus — life 3 gone. The group has now lost 4 lives total.",
+  "message": "Day 12. Marcus lost a life before lunch. The scoreboard has started naming names.",
   "timestamp": "2026-05-06T12:30:00.000Z"
 }
 ```
 
+**Healthy skip response:**
+
+```json
+{
+  "success": true,
+  "messageGenerated": false,
+  "messageSent": false,
+  "reason": "outside_organic_window_slot",
+  "timestamp": "2026-05-06T10:30:00.000Z"
+}
+```
+
 **Example curl:**
+
 ```bash
 curl -X POST https://sixplusone-hpubf4au.manus.space/api/trpc/warden.runCycle \
   -H "Content-Type: application/json" \
-  -d '{"source":"make-scheduler"}'
+  -d '{"source":"make-organic-window"}'
 ```
 
-**Response Codes:**
-- `200 OK` — Message generated (may or may not have been sent)
-- `400 Bad Request` — Invalid input
-- `500 Internal Server Error` — Database or LLM error
-
-### 2. Trigger Immediate Message
+### Trigger Immediate Message
 
 **Endpoint:** `POST /api/trpc/warden.triggerImmediate`
 
-**Purpose:** Trigger an immediate Warden message for a specific event (life loss, milestone, etc.).
+**Purpose:** Trigger an immediate Warden response for high-signal events such as a life loss, milestone, streak, or emergency manual call. Immediate triggers still respect the drama-driven daily limit.
 
-**Request Body (JSON):**
+**Request body:**
+
 ```json
 {
   "triggerType": "life_loss",
@@ -75,147 +125,81 @@ curl -X POST https://sixplusone-hpubf4au.manus.space/api/trpc/warden.runCycle \
 }
 ```
 
-**Supported Trigger Types:**
-- `life_loss` — A participant lost a life
-- `milestone` — A milestone was hit (Day 10, 25, 40, 50)
-- `streak` — A participant hit a streak milestone (7, 14, 21 days)
-- `emergency` — Manual emergency trigger
+| Trigger Type | Use Case |
+|---|---|
+| `life_loss` | A participant has lost a life. |
+| `milestone` | The group has hit Day 10, 25, 40, or 50. |
+| `streak` | A participant has hit a 7, 14, or 21-day streak. |
+| `emergency` | Manual intervention by the operator. |
 
-**Response:**
-```json
-{
-  "success": true,
-  "messageSent": true,
-  "message": "Day 12. Marcus — life 3 gone. The group has now lost 4 lives total.",
-  "triggerType": "life_loss",
-  "timestamp": "2026-05-06T12:25:00.000Z"
-}
-```
-
-**Example curl:**
-```bash
-curl -X POST https://sixplusone-hpubf4au.manus.space/api/trpc/warden.triggerImmediate \
-  -H "Content-Type: application/json" \
-  -d '{
-    "triggerType": "life_loss",
-    "context": {
-      "participantName": "Marcus",
-      "livesRemaining": 3
-    },
-    "source": "make-event"
-  }'
-```
-
-### 3. Get Challenge State
+### Get Challenge State
 
 **Endpoint:** `GET /api/trpc/warden.getState`
 
-**Purpose:** Retrieve the current challenge state for debugging/monitoring.
+**Purpose:** Inspect the Warden’s live data, including the drama score and supporting signals.
 
-**Response:**
-```json
-{
-  "success": true,
-  "state": {
-    "challenge_day": 12,
-    "participants": [...],
-    "group_average_completion": 0.85,
-    "recent_chat_messages": [...],
-    "lives_lost_today": [...],
-    "milestones_hit_today": [...]
-  },
-  "timestamp": "2026-05-06T12:30:00.000Z"
-}
-```
-
-**Example curl:**
 ```bash
-curl https://sixplusone-hpubf4au.manus.space/api/trpc/warden.getState
+curl https://sixplusone-hpubf4au.manus.space/api/trpc/warden.getState | jq .
 ```
 
-### 4. Get Daily Stats
+The returned `state` includes `daily_drama_score`, `max_warden_messages_today`, `drama_score_breakdown`, `sharp_insights_shared_today`, and `late_logs_today` alongside the existing participant, life-loss, milestone, and chat context.
+
+### Get Daily Stats
 
 **Endpoint:** `GET /api/trpc/warden.getDailyStats`
 
-**Purpose:** Get today's message count and daily limit status.
+**Purpose:** Monitor current Warden usage against the data-driven daily limit.
 
-**Response:**
 ```json
 {
   "success": true,
   "messagesSentToday": 2,
-  "noMessageDecisions": 5,
+  "noMessageDecisions": 3,
   "dailyLimitHit": false,
-  "remainingMessages": 1,
-  "timestamp": "2026-05-06T12:30:00.000Z"
+  "dailyDramaScore": 6,
+  "dailyMessageLimit": 4,
+  "remainingMessages": 2,
+  "timestamp": "2026-05-06T18:30:00.000Z"
 }
-```
-
-**Example curl:**
-```bash
-curl https://sixplusone-hpubf4au.manus.space/api/trpc/warden.getDailyStats
 ```
 
 ## Make.com Workflow Setup
 
-### Step 1: Create a Scheduled Trigger
+### Recommended Scheduler Pattern
 
-1. In Make.com, create a new scenario
-2. Add a **Scheduler** module set to trigger every 2 hours (06:00–22:00 GMT)
-3. Configure the schedule:
-   - Repeat: Every 2 hours
-   - Start time: 06:00 GMT
-   - End time: 22:00 GMT
+Create one Make.com scenario that probes every 15 minutes inside the Warden windows. The backend’s randomized slot logic ensures that only one decision is used per window, even if Make probes several times.
 
-### Step 2: Call runCycle Webhook
+| Window | Make Probe Times |
+|---|---|
+| Morning | Every 15 minutes from 07:00 to 08:45 UTC |
+| Midday | Every 15 minutes from 12:00 to 13:45 UTC |
+| Evening | Every 15 minutes from 18:00 to 19:45 UTC |
+| Late | Every 15 minutes from 21:00 to 21:45 UTC |
 
-1. Add an **HTTP** module (POST request)
-2. Set URL to: `https://sixplusone-hpubf4au.manus.space/api/trpc/warden.runCycle`
-3. Set body to:
-   ```json
-   {
-     "source": "make-scheduler"
-   }
-   ```
-4. Map the response to extract `message` and `messageSent` fields
+If Make.com cannot express those windows in one scheduler module, create four scheduler routes or four scenarios using the same HTTP call. Do not return to a fixed every-two-hours cycle.
 
-### Step 3: Post to WhatsApp via Whapi
+### HTTP Module
 
-1. Add a **Whapi.Cloud** module (or HTTP POST to Whapi API)
-2. If message was sent (`messageSent === true`):
-   - Post the message to the WhatsApp group
-   - Use the Whapi API token (provided separately)
-   - Target the group chat ID
+Add an HTTP `POST` module with this URL:
 
-### Step 4: Log Results (Optional)
-
-1. Add a **Google Sheets** or database module to log:
-   - Timestamp
-   - Message content
-   - Whether it was sent
-   - Any errors
-
-## Daily Limit Enforcement
-
-The Warden has a hard limit of **3 unprompted messages per day**. This is enforced at the backend level:
-
-- Each call to `runCycle` or `triggerImmediate` checks the daily limit
-- If 3 messages have already been posted today, the endpoint returns `messageSent: false`
-- The daily count resets at midnight GMT
-
-**To monitor the daily limit:**
-```bash
-curl https://sixplusone-hpubf4au.manus.space/api/trpc/warden.getDailyStats
+```text
+https://sixplusone-hpubf4au.manus.space/api/trpc/warden.runCycle
 ```
+
+Use this JSON body:
+
+```json
+{
+  "source": "make-organic-window"
+}
+```
+
+Make.com should not post to WhatsApp itself after this call. The backend posts through Whapi when `messageSent` is true and logs the result in `warden_messages` with `postedToWhatsapp: true`.
 
 ## Error Handling in Make
 
-If the webhook returns `success: false`, Make should:
-1. Log the error to a monitoring channel
-2. Retry after 5 minutes (configurable)
-3. Alert the admin if it fails 3 times in a row
+If the webhook returns `success: false`, Make should log the error, retry after five minutes, and alert the admin if the same failure happens repeatedly. If the webhook returns `success: true` with `messageSent: false`, Make should normally do nothing. That is usually the Warden choosing silence.
 
-Example error response:
 ```json
 {
   "success": false,
@@ -226,14 +210,16 @@ Example error response:
 
 ## Testing
 
-### Test the scheduled runner:
+Use the scheduled runner test only when you are inside one of the randomized active slots. Outside the slot, a skip response is expected.
+
 ```bash
 curl -X POST https://sixplusone-hpubf4au.manus.space/api/trpc/warden.runCycle \
   -H "Content-Type: application/json" \
-  -d '{"source":"test-manual"}'
+  -d '{"source":"test-organic-window"}'
 ```
 
-### Test an immediate trigger:
+For event-specific tests, use the immediate trigger endpoint.
+
 ```bash
 curl -X POST https://sixplusone-hpubf4au.manus.space/api/trpc/warden.triggerImmediate \
   -H "Content-Type: application/json" \
@@ -244,45 +230,24 @@ curl -X POST https://sixplusone-hpubf4au.manus.space/api/trpc/warden.triggerImme
   }'
 ```
 
-### Check current state:
+Inspect the current drama score and cap with:
+
 ```bash
-curl https://sixplusone-hpubf4au.manus.space/api/trpc/warden.getState | jq .
+curl https://sixplusone-hpubf4au.manus.space/api/trpc/warden.getDailyStats | jq .
 ```
 
-## Whapi.Cloud Integration
+## Monitoring and Logging
 
-Once you have the Whapi API token, integrate it with Make.com:
+All Warden decisions are logged in the `warden_messages` table. Commentary messages posted to WhatsApp are saved with `postedToWhatsapp: true`. `NO_MESSAGE` decisions and scheduler skips are saved as surveillance or system decisions where appropriate.
 
-1. In Make, add a **Whapi.Cloud** module or use HTTP POST
-2. Endpoint: `https://api.whapi.cloud/messages/text`
-3. Headers:
-   - `Authorization: Bearer {WHAPI_API_TOKEN}`
-   - `Content-Type: application/json`
-4. Body:
-   ```json
-   {
-     "to": "{WHATSAPP_GROUP_ID}",
-     "body": "{MESSAGE_CONTENT}"
-   }
-   ```
+| Field | Meaning |
+|---|---|
+| `mode` | `commentary`, `surveillance`, `on_ramp`, or `system`. |
+| `content` | The Warden text or `NO_MESSAGE`. |
+| `sourceEvent` | The trigger source, such as `scheduled_runner_morning` or `immediate_life_loss`. |
+| `postedToWhatsapp` | Whether the message was actually sent to WhatsApp. |
+| `createdAt` | Timestamp of the decision. |
 
-The `MESSAGE_CONTENT` should come from the `message` field returned by `warden.runCycle`.
+## Operating Principle
 
-## Monitoring & Logging
-
-All Warden messages are logged to the `warden_messages` table in Supabase:
-- `mode`: "commentary" or "surveillance"
-- `content`: The message text
-- `sourceEvent`: Where the message came from (e.g., "make-scheduler", "make-event")
-- `postedToWhatsapp`: Whether it was actually posted
-- `createdAt`: Timestamp
-
-You can query this table to audit all Warden activity.
-
-## Next Steps
-
-1. Set up Whapi.Cloud account and get API token
-2. Create Make.com scenario with scheduler + webhook calls
-3. Test with manual triggers
-4. Deploy and monitor for 24 hours
-5. Adjust trigger thresholds based on message frequency
+The Warden should feel like someone who has been watching all day and chooses the right moment. Make.com is only the clock. The backend is the judgment layer. If the day is quiet, the Warden stays mostly quiet. If the day breaks open, the Warden has permission to speak up to four times.

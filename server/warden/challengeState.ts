@@ -6,10 +6,11 @@ import {
   paymentEvents,
   whatsappChatHistory,
 } from "../../drizzle/schema";
+import { getMaxMessagesForDramaScore } from "./organicScheduler";
 
 /**
  * CHALLENGE_STATE: Complete snapshot of challenge data for the Warden bot
- * Assembled every 2 hours and sent to Claude API for message generation
+ * Assembled for organic Warden windows and sent to Claude API for message generation
  */
 export interface ChallengeState {
   challenge_day: number;
@@ -42,6 +43,25 @@ export interface ChallengeState {
     value: number;
     timestamp: string;
   }>;
+  sharp_insights_shared_today: Array<{
+    participant_name: string;
+    type: "reflection" | "reading";
+    excerpt: string;
+    timestamp: string;
+  }>;
+  late_logs_today: Array<{
+    participant_name: string;
+    timestamp: string;
+  }>;
+  daily_drama_score: number;
+  max_warden_messages_today: number;
+  drama_score_breakdown: {
+    life_losses: number;
+    milestones: number;
+    streak_milestones: number;
+    sharp_insights: number;
+    late_loggers: number;
+  };
 }
 
 /**
@@ -164,9 +184,8 @@ export async function getChallengeState(): Promise<ChallengeState> {
         (totalParticipants * 7)
       : 0;
 
-  // Build lives lost today snapshot
+  // Build lives lost today snapshot. Count the life-loss event as drama even while payment is pending.
   const livesLostToday = todayPayments
-    .filter((payment: typeof paymentEvents.$inferSelect) => payment.status === "received")
     .map((payment: typeof paymentEvents.$inferSelect) => {
       const participant = allParticipants.find((p: typeof participants.$inferSelect) => p.id === payment.participantId);
       return {
@@ -200,6 +219,59 @@ export async function getChallengeState(): Promise<ChallengeState> {
     });
   }
 
+  const sharpInsightsToday = todayLogs
+    .flatMap((log: typeof dailyLogs.$inferSelect) => {
+      const participant = allParticipants.find((p: typeof participants.$inferSelect) => p.id === log.participantId);
+      const timestamp = (log.submittedAt || log.createdAt).toISOString();
+      const insights: ChallengeState["sharp_insights_shared_today"] = [];
+
+      if (log.reflectionShared && log.reflectionText && log.reflectionText.trim().length >= 80) {
+        insights.push({
+          participant_name: participant?.displayName || "Unknown",
+          type: "reflection",
+          excerpt: log.reflectionText.trim().slice(0, 180),
+          timestamp,
+        });
+      }
+
+      if (log.readTeachText && log.readTeachText.trim().length >= 80) {
+        insights.push({
+          participant_name: participant?.displayName || "Unknown",
+          type: "reading",
+          excerpt: log.readTeachText.trim().slice(0, 180),
+          timestamp,
+        });
+      }
+
+      return insights;
+    });
+
+  const lateLogsToday = todayLogs
+    .filter((log: typeof dailyLogs.$inferSelect) => {
+      const submittedAt = log.submittedAt || log.createdAt;
+      return submittedAt.getUTCHours() >= 20;
+    })
+    .map((log: typeof dailyLogs.$inferSelect) => {
+      const participant = allParticipants.find((p: typeof participants.$inferSelect) => p.id === log.participantId);
+      const submittedAt = log.submittedAt || log.createdAt;
+      return {
+        participant_name: participant?.displayName || "Unknown",
+        timestamp: submittedAt.toISOString(),
+      };
+    });
+
+  const uniqueLateLoggers = new Set(lateLogsToday.map((log) => log.participant_name)).size;
+  const streakMilestoneCount = milestonesToday.filter((milestone) => milestone.type.startsWith("streak_")).length;
+  const nonStreakMilestoneCount = milestonesToday.length - streakMilestoneCount;
+  const dramaScoreBreakdown = {
+    life_losses: livesLostToday.length * 3,
+    milestones: nonStreakMilestoneCount * 2,
+    streak_milestones: streakMilestoneCount * 2,
+    sharp_insights: sharpInsightsToday.length,
+    late_loggers: uniqueLateLoggers,
+  };
+  const dailyDramaScore = Object.values(dramaScoreBreakdown).reduce((sum, value) => sum + value, 0);
+
   return {
     challenge_day: challengeDay,
     participants: participantSnapshots,
@@ -211,5 +283,10 @@ export async function getChallengeState(): Promise<ChallengeState> {
     })),
     lives_lost_today: livesLostToday,
     milestones_hit_today: milestonesToday,
+    sharp_insights_shared_today: sharpInsightsToday,
+    late_logs_today: lateLogsToday,
+    daily_drama_score: dailyDramaScore,
+    max_warden_messages_today: getMaxMessagesForDramaScore(dailyDramaScore),
+    drama_score_breakdown: dramaScoreBreakdown,
   };
 }

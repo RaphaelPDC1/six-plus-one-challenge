@@ -523,3 +523,19 @@ User priority: do not wipe anyone’s work from today; if people have completed 
 - [x] Re-verify that any participant who completed rules today keeps those rule cards green through refreshes, draft recovery, same-day edits, and Warden/scheduler work.
 - [x] Add or strengthen regression coverage if any path can overwrite a completed same-day rule with an older or incomplete draft.
 - [x] Confirm in the delivery notes that today’s work remains preserved until the next calendar day reset.
+
+
+## Current Requested Changes — Organic Warden Scheduling
+
+- [x] Increase the Warden daily hard cap from 3 to 4 messages maximum.
+- [x] Add daily_drama_score to CHALLENGE_STATE using life losses, milestones, streak milestones, sharp insights, and late logs after 20:00.
+- [x] Make daily message frequency data-driven: score 0–2 allows max 2 messages, score 3–5 allows max 3 messages, and score 6+ allows max 4 messages.
+- [x] Replace the fixed two-hour Warden cadence with randomized organic windows: 07:00–09:00, 12:00–14:00, 18:00–20:00, and 21:00–22:00.
+- [x] Ensure the late 21:00–22:00 Warden window only fires when there is something worth saying.
+- [x] Update Warden prompt/logic so messages feel like a watched-all-day presence rather than a cron job.
+- [x] Update Make.com/scheduler setup guidance to match the new organic scheduling design.
+- [x] Add or update regression tests for dynamic Warden limits, drama scoring, and organic scheduling behavior.
+- [x] Run full validation, save a checkpoint, and deliver concise manual setup instructions.
+
+User priority: the Warden should feel alive and unpredictable, choosing moments based on the day’s drama rather than posting mechanically.
+

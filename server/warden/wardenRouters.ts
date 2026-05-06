@@ -9,7 +9,7 @@ import { runWardenCycle, triggerImmediateMessage } from "./runner";
  */
 export const wardenRouter = router({
   /**
-   * Run a scheduled Warden cycle (every 2 hours, 06:00–22:00 GMT)
+   * Run a scheduled Warden cycle during randomized organic windows.
    * Called by Make.com automation
    * Returns the generated message and whether it was sent
    */
@@ -118,17 +118,22 @@ export const wardenRouter = router({
     .query(async () => {
       try {
         const { getMessagesCountToday, getNoMessageCountToday, hasHitDailyLimit } = await import("./messageLogger");
+        const { getChallengeState } = await import("./challengeState");
 
         const messageCount = await getMessagesCountToday();
         const noMessageCount = await getNoMessageCountToday();
-        const hitLimit = await hasHitDailyLimit();
+        const state = await getChallengeState();
+        const dailyLimit = state.max_warden_messages_today;
+        const hitLimit = await hasHitDailyLimit(dailyLimit);
 
         return {
           success: true,
           messagesSentToday: messageCount,
           noMessageDecisions: noMessageCount,
           dailyLimitHit: hitLimit,
-          remainingMessages: Math.max(0, 3 - messageCount),
+          dailyDramaScore: state.daily_drama_score,
+          dailyMessageLimit: dailyLimit,
+          remainingMessages: Math.max(0, dailyLimit - messageCount),
           timestamp: new Date().toISOString(),
         };
       } catch (error) {
