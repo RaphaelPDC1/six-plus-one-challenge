@@ -9,15 +9,9 @@
   "theme_color": "#0D0D0D",
   "icons": [
     {
-      "src": "/manus-storage/six-plus-one-app-icon-192_b161f0b8.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/manus-storage/six-plus-one-app-icon-512_a8ccf7b2.png",
-      "sizes": "512x512",
-      "type": "image/png",
+      "src": "/app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
       "purpose": "any maskable"
     }
   ]

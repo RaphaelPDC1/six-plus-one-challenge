@@ -371,3 +371,16 @@
 - [x] Add or update regression coverage for stable logo sources and proof image rendering paths
 - [x] Run TypeScript, tests, production build, and preview health check after image-loading fixes
 - [x] Save checkpoint after the stable logo and mobile proof-image fixes
+
+## Bug Fix and UX — Live Mobile Images and Board Participant Cards
+
+- [x] Diagnose why the live mobile logo still becomes a blue missing-image question mark after login refresh
+- [x] Replace fragile logo delivery with a refresh-safe embedded or locally generated app asset that works on live mobile without storage expiry
+- [x] Diagnose why proof feed cards on the live phone view show only an "Open proof image" link instead of the uploaded proof image
+- [x] Fix proof feed mobile rendering so proof images display inline when the stored file is an image, with a clear link fallback only for non-image or failed loads
+- [x] Make Board participant identity cards tappable on mobile and desktop
+- [x] Add a participant stats detail panel/modal showing their challenge stats when a Board card is tapped
+- [x] Allow participant display pictures to be enlarged from the Board detail view
+- [x] Add or update regression coverage for live-safe logo assets, inline proof image rendering, tappable Board cards, participant stats, and enlarged display pictures
+- [x] Run TypeScript, tests, production build, preview health check, and live-style image URL checks after the fixes
+- [x] Save checkpoint after the live mobile image and Board participant-card fixes

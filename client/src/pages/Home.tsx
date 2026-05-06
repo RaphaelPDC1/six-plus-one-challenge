@@ -63,8 +63,8 @@ const RED = "#C0392B";
 const GREEN = "#2ECC71";
 const PURPLE = "#9B59B6";
 const chartColors = [GOLD, RED, GREEN, PURPLE, "#4CA3C9", "#E67E22", "#F1C40F", "#ECF0F1"];
-// Use relative path - server handles the signed CloudFront redirect
-const BRAND_LOGO_URL = "/manus-storage/six-plus-one-logo-inverted-gold_e742b8d3.webp";
+// Use an app-origin SVG so live mobile refreshes never depend on expiring storage redirects.
+const BRAND_LOGO_URL = "/six-plus-one-logo.svg";
 
 function BrandLogoImageWithRetry({ alt, className = "h-full w-full object-contain", decorative = false }: { alt: string; className?: string; decorative?: boolean }) {
   return (
@@ -72,7 +72,7 @@ function BrandLogoImageWithRetry({ alt, className = "h-full w-full object-contai
       src={BRAND_LOGO_URL}
       alt={decorative ? "" : alt}
       data-testid="brand-logo"
-      data-logo-source="stable-inverted-brand-image"
+      data-logo-source="app-origin-brand-svg"
       className={className}
       decoding="async"
       loading="eager"
@@ -97,7 +97,8 @@ function CleanBrandMark({ compact = false, decorative = false }: { compact?: boo
 function proofImageSrc(url: string) {
   const trimmed = url.trim();
   if (!trimmed) return "";
-  if (trimmed.startsWith("/manus-storage/")) return encodeURI(trimmed);
+  if (trimmed.startsWith("/manus-storage/")) return `/api/storage-image/${encodeURIComponent(trimmed.slice("/manus-storage/".length))}`;
+  if (trimmed.startsWith("/api/storage-image/")) return encodeURI(trimmed);
   if (/^https?:\/\//i.test(trimmed) && /\.(png|jpe?g|webp)(\?|#|$)/i.test(trimmed)) return trimmed;
   return "";
 }
@@ -318,18 +319,25 @@ export function LogoMark({ compact = false }: { compact?: boolean }) {
 function normaliseProfilePhotoUrl(value?: string | null) {
   const trimmed = value?.trim() ?? "";
   if (!trimmed) return "";
-  if (trimmed.startsWith("/manus-storage/")) return encodeURI(trimmed);
+  if (trimmed.startsWith("/manus-storage/")) return `/api/storage-image/${encodeURIComponent(trimmed.slice("/manus-storage/".length))}`;
+  if (trimmed.startsWith("/api/storage-image/")) return encodeURI(trimmed);
   if (/^https?:\/\//i.test(trimmed)) return trimmed;
   if (/^data:image\/(png|jpeg|webp);base64,/i.test(trimmed)) return trimmed;
   return "";
 }
 
-function ProfilePhoto({ participant, className = "h-11 w-11" }: { participant: any; className?: string }) {
+function ProfilePhoto({ participant, className = "h-11 w-11", enlargeable = false, onOpen }: { participant: any; className?: string; enlargeable?: boolean; onOpen?: () => void }) {
   const photoUrl = normaliseProfilePhotoUrl(participant?.profilePhotoUrl);
-  if (photoUrl) {
-    return <img src={photoUrl} alt={`${participant?.displayName ?? "Participant"} profile`} className={classNames(className, "border border-[#C8A96E] bg-black object-cover")} loading="lazy" decoding="async" onError={event => { event.currentTarget.style.display = "none"; }} />;
-  }
-  return <span className={classNames("grid place-items-center border border-[#C8A96E] bg-black text-xs font-black text-[#C8A96E]", className)} aria-label={`${participant?.displayName ?? "Participant"} initials`}>{participant?.avatarInitials ?? "?"}</span>;
+  const image = photoUrl ? <img src={photoUrl} alt={`${participant?.displayName ?? "Participant"} profile`} className={classNames(className, "border border-[#C8A96E] bg-black object-cover")} loading="lazy" decoding="async" onError={event => { event.currentTarget.style.display = "none"; }} /> : <span className={classNames("grid place-items-center border border-[#C8A96E] bg-black text-xs font-black text-[#C8A96E]", className)} aria-label={`${participant?.displayName ?? "Participant"} initials`}>{participant?.avatarInitials ?? "?"}</span>;
+
+  if (!enlargeable || !photoUrl || !onOpen) return image;
+
+  return (
+    <button type="button" className="group relative shrink-0 text-left" onClick={event => { event.stopPropagation(); pulse(12); onOpen(); }} aria-label={`Enlarge ${participant?.displayName ?? "participant"} display picture`}>
+      {image}
+      <span className="absolute inset-x-0 bottom-0 bg-black/70 px-1 py-0.5 text-center text-[8px] font-black uppercase tracking-[0.12em] text-[#C8A96E] opacity-0 transition group-hover:opacity-100 group-focus-visible:opacity-100">View</span>
+    </button>
+  );
 }
 
 function RewardVisual({ reward, compact = false }: { reward: any; compact?: boolean }) {
@@ -985,6 +993,7 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
 }
 
 function Overview({ snapshot }: { snapshot: Snapshot }) {
+  const [selected, setSelected] = useState<any>(null);
   const participants = snapshot?.participants ?? [];
   const logs = snapshot?.logs ?? [];
   const chartKeys = participants.map((participant: any, index: number) => ({ ...participant, chartKey: `participant_${participant.id ?? index}` }));
@@ -1040,28 +1049,32 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
         <MicroLabel tone="red">Lives grid</MicroLabel>
         <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
           {participants.map((p: any) => (
-            <div key={p.id} className="border border-[#2A2A2A] bg-[#0D0D0D] p-4">
+            <button key={p.id} type="button" onClick={() => { pulse(14); setSelected(p); }} className="border border-[#2A2A2A] bg-[#0D0D0D] p-4 text-left transition hover:border-[#C8A96E] focus-visible:border-[#C8A96E] focus-visible:outline-none" aria-label={`Open ${p.displayName} participant stats`}>
               <div className="flex items-center justify-between gap-3">
                 <ProfilePhoto participant={p} className="h-12 w-12" />
                 <span className="poster-label text-[#C0392B]">{p.livesRemaining}/4</span>
               </div>
               <p className="mt-4 min-w-0 overflow-hidden text-ellipsis break-words text-base font-black uppercase text-white sm:text-lg">{p.displayName}</p>
               <div className="mt-3"><HealthBar lives={p.livesRemaining} label="" compact /></div>
-            </div>
+              <p className="mt-3 text-[9px] font-black uppercase tracking-[0.16em] text-[#C8A96E]">Tap for stats</p>
+            </button>
           ))}
         </div>
       </section>
+      <ParticipantSheet participant={selected} onClose={() => setSelected(null)} />
     </div>
   );
 }
 
 function ParticipantSheet({ participant, onClose }: { participant: any; onClose: () => void }) {
   const [visibleParticipant, setVisibleParticipant] = useState<any>(participant);
+  const [photoExpanded, setPhotoExpanded] = useState(false);
   const [closing, setClosing] = useState(false);
 
   useEffect(() => {
     if (participant) {
       setVisibleParticipant(participant);
+      setPhotoExpanded(false);
       setClosing(false);
       return;
     }
@@ -1087,11 +1100,15 @@ function ParticipantSheet({ participant, onClose }: { participant: any; onClose:
     <div className={classNames("sheet-backdrop fixed inset-0 z-50 flex items-end bg-black/70", closing && "sheet-backdrop-out")} onClick={onClose}>
       <div className={classNames("sheet-panel w-full border-t-2 border-[#C8A96E] bg-[#0D0D0D] p-5 shadow-2xl md:mx-auto md:mb-8 md:max-w-xl md:border", closing && "sheet-panel-out")} onClick={event => event.stopPropagation()}>
         <div className="flex items-start justify-between gap-4">
-          <div>
-            <MicroLabel tone="gold">Participant stats</MicroLabel>
-            <h3 className="mt-2 break-words text-3xl font-black uppercase tracking-[-0.07em] text-white sm:text-4xl">{visibleParticipant.displayName}</h3>
+          <div className="flex min-w-0 items-start gap-4">
+            <ProfilePhoto participant={visibleParticipant} className="h-16 w-16 sm:h-20 sm:w-20" enlargeable onOpen={() => setPhotoExpanded(true)} />
+            <div className="min-w-0">
+              <MicroLabel tone="gold">Participant stats</MicroLabel>
+              <h3 className="mt-2 break-words text-3xl font-black uppercase tracking-[-0.07em] text-white sm:text-4xl">{visibleParticipant.displayName}</h3>
+              <p className="mt-2 text-[10px] font-black uppercase tracking-[0.16em] text-[#777]">Tap the display picture to enlarge it.</p>
+            </div>
           </div>
-          <button onClick={onClose} className="border border-[#2A2A2A] p-3 text-[#777] hover:border-[#C8A96E] hover:text-[#C8A96E]"><X className="h-5 w-5" /></button>
+          <button onClick={onClose} className="shrink-0 border border-[#2A2A2A] p-3 text-[#777] hover:border-[#C8A96E] hover:text-[#C8A96E]"><X className="h-5 w-5" /></button>
         </div>
         <div className="mt-5 grid grid-cols-3 gap-2 bg-[#2A2A2A] p-[2px]">
           <PosterStat label="Points" value={visibleParticipant.totalPoints} tone="gold" />
@@ -1099,7 +1116,39 @@ function ParticipantSheet({ participant, onClose }: { participant: any; onClose:
           <PosterStat label="Days" value={visibleParticipant.daysComplete} tone="white" />
         </div>
         <div className="mt-5"><HealthBar lives={visibleParticipant.livesRemaining} label="Lives status" /></div>
+        {photoExpanded && normaliseProfilePhotoUrl(visibleParticipant.profilePhotoUrl) && (
+          <div className="fixed inset-0 z-[60] grid place-items-center bg-black/88 p-5" onClick={() => setPhotoExpanded(false)} role="dialog" aria-modal="true" aria-label={`${visibleParticipant.displayName} display picture`}>
+            <button type="button" className="absolute right-4 top-4 border border-[#2A2A2A] bg-black p-3 text-[#C8A96E]" onClick={() => setPhotoExpanded(false)} aria-label="Close enlarged display picture"><X className="h-5 w-5" /></button>
+            <img src={normaliseProfilePhotoUrl(visibleParticipant.profilePhotoUrl)} alt={`${visibleParticipant.displayName} enlarged display picture`} className="max-h-[82vh] max-w-full border border-[#C8A96E] bg-black object-contain" loading="eager" decoding="async" onClick={event => event.stopPropagation()} />
+          </div>
+        )}
       </div>
+    </div>
+  );
+}
+
+function ProofImage({ url, dayNumber }: { url: string; dayNumber: number }) {
+  const [failed, setFailed] = useState(false);
+  const src = proofImageSrc(url);
+
+  if (!src) {
+    return <p className="mt-3 break-all border border-[#2A2A2A] bg-[#111] p-3 text-xs font-bold text-[#C8A96E]">Proof: {url}</p>;
+  }
+
+  return (
+    <div className="mt-3">
+      {!failed && (
+        <a href={src} target="_blank" rel="noreferrer" className="block" aria-label={`Open proof image for day ${dayNumber}`}>
+          <img src={src} alt={`Exercise proof for day ${dayNumber}`} className="max-h-80 w-full border border-[#2A2A2A] bg-black object-contain" loading="lazy" decoding="async" onError={() => setFailed(true)} />
+        </a>
+      )}
+      {failed && (
+        <div className="border border-[#2A2A2A] bg-[#111] p-4 text-xs font-bold leading-5 text-[#D8D8D8]">
+          <p className="font-black uppercase tracking-[0.14em] text-[#C8A96E]">Proof image could not preview inline.</p>
+          <p className="mt-2 text-[#777]">Tap the link below to open the stored image directly.</p>
+        </div>
+      )}
+      <a href={src} target="_blank" rel="noreferrer" className="mt-2 block break-all text-[10px] font-black uppercase tracking-[0.14em] text-[#C8A96E]">Open proof image</a>
     </div>
   );
 }
@@ -1118,8 +1167,9 @@ function Leaderboard({ snapshot }: { snapshot: Snapshot }) {
       </div>
       <div className="space-y-2">
         {ranked.map((p: any, index) => (
-          <button key={p.id} onClick={() => { pulse(14); setSelected(p); }} className={classNames("grid w-full grid-cols-[40px_minmax(0,1fr)] items-center gap-3 border bg-[#0D0D0D] p-3 text-left transition hover:border-[#C8A96E] sm:grid-cols-[56px_minmax(0,1fr)_auto] sm:gap-4 sm:p-4", index === 0 ? "border-l-4 border-l-[#C8A96E] border-[#3C3423]" : "border-[#2A2A2A]")}> 
+          <button key={p.id} onClick={() => { pulse(14); setSelected(p); }} className={classNames("grid w-full grid-cols-[48px_minmax(0,1fr)] items-center gap-3 border bg-[#0D0D0D] p-3 text-left transition hover:border-[#C8A96E] sm:grid-cols-[56px_56px_minmax(0,1fr)_auto] sm:gap-4 sm:p-4", index === 0 ? "border-l-4 border-l-[#C8A96E] border-[#3C3423]" : "border-[#2A2A2A]")}> 
             <span className={classNames("text-2xl font-black sm:text-3xl", index === 0 ? "text-[#C8A96E]" : "text-[#777]")}>#{index + 1}</span>
+            <span className="hidden sm:block"><ProfilePhoto participant={p} className="h-12 w-12" /></span>
             <span className="min-w-0">
               <span className="block break-words text-lg font-black uppercase tracking-[-0.04em] text-white sm:text-xl">{p.displayName}</span>
               <span className="mt-1 block break-words text-[11px] font-bold uppercase tracking-[0.1em] text-[#777] sm:text-xs sm:tracking-[0.14em]">{p.currentStreak} day streak · {p.daysComplete} days complete</span>
@@ -1159,7 +1209,7 @@ function ProofFeed({ snapshot }: { snapshot: Snapshot }) {
                 <span className="border border-[#2ECC71]/50 bg-[#102018] px-3 py-1 text-[9px] font-black uppercase tracking-[0.2em] text-[#2ECC71]">Proof</span>
               </div>
               {log.readTeachText && <p className="mt-4 border-l-2 border-[#C8A96E] pl-4 text-sm font-bold leading-6 text-[#D8D8D8]">{log.readTeachText}</p>}
-              {log.exerciseProofUrl && (proofImageSrc(log.exerciseProofUrl) ? <a href={proofImageSrc(log.exerciseProofUrl)} target="_blank" rel="noreferrer" className="mt-3 block"><img src={proofImageSrc(log.exerciseProofUrl)} alt={`Exercise proof for day ${log.dayNumber}`} className="max-h-72 w-full border border-[#2A2A2A] bg-black object-cover" loading="lazy" decoding="async" referrerPolicy="no-referrer" onError={event => { event.currentTarget.style.display = "none"; }} /><span className="mt-2 block break-all text-[10px] font-black uppercase tracking-[0.14em] text-[#C8A96E]">Open proof image</span></a> : <p className="mt-3 break-all border border-[#2A2A2A] bg-[#111] p-3 text-xs font-bold text-[#C8A96E]">Proof: {log.exerciseProofUrl}</p>)}
+              {log.exerciseProofUrl && <ProofImage url={log.exerciseProofUrl} dayNumber={log.dayNumber} />}
             </article>
           );
         })}

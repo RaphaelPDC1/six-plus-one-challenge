@@ -47,7 +47,7 @@ vi.mock("@/lib/trpc", () => ({
         useMutation: () => mockState.mutation,
       },
       logoUrl: {
-        useQuery: () => ({ data: { url: "/manus-storage/six-plus-one-logo-inverted-gold_e742b8d3.webp" } }),
+        useQuery: () => ({ data: { url: "/six-plus-one-logo.svg" } }),
       },
     },
     signup: {
@@ -112,7 +112,7 @@ describe("Home onboarding shell", () => {
 
     expect(markup).toContain("brand-logo-shell");
     expect(markup).toContain("brand-logo-image");
-    expect(markup).toContain('src="/manus-storage/six-plus-one-logo-inverted-gold_e742b8d3.webp"');
+    expect(markup).toContain('src="/six-plus-one-logo.svg"');
     expect(markup).not.toContain("brand-wordmark");
     expect(markup).not.toContain("bg-black");
   });
@@ -122,7 +122,7 @@ describe("Home onboarding shell", () => {
 
     expect(markup).toContain("sticky top-0");
     expect(markup).toContain("brand-logo-image");
-    expect(markup).toContain('src="/manus-storage/six-plus-one-logo-inverted-gold_e742b8d3.webp"');
+    expect(markup).toContain('src="/six-plus-one-logo.svg"');
     expect(markup).toContain("Four Lives Challenge");
   });
 
@@ -218,16 +218,17 @@ describe("Home onboarding shell", () => {
     expect(homeSource).not.toContain("No public proof yet");
   });
 
-  it("wires installable web-app metadata to generated 6+1 PNG app icons", () => {
+  it("wires installable web-app metadata to live-safe app-origin SVG icons", () => {
     const htmlSource = readFileSync(new URL("../../index.html", import.meta.url), "utf8");
     const manifestSource = readFileSync(new URL("../../public/site.webmanifest", import.meta.url), "utf8");
 
-    expect(htmlSource).toContain('rel="icon" type="image/png" sizes="192x192"');
-    expect(htmlSource).toContain('rel="apple-touch-icon" sizes="180x180"');
-    expect(htmlSource).toContain("/manus-storage/six-plus-one-app-icon-180_");
+    expect(htmlSource).toContain('rel="icon" type="image/svg+xml" sizes="any" href="/app-icon.svg"');
+    expect(htmlSource).toContain('rel="apple-touch-icon" href="/app-icon.svg"');
+    expect(htmlSource).not.toContain("/manus-storage/six-plus-one-app-icon");
     expect(manifestSource).toContain('"name": "6+1 Four Lives Challenge"');
     expect(manifestSource).toContain('"purpose": "any maskable"');
-    expect(manifestSource).toContain("/manus-storage/six-plus-one-app-icon-512_");
+    expect(manifestSource).toContain('"src": "/app-icon.svg"');
+    expect(manifestSource).not.toContain("/manus-storage/");
   });
 
   it("renders the animated landing/loading page with the inverted uploaded logo image instead of blue text", () => {
@@ -244,7 +245,7 @@ describe("Home onboarding shell", () => {
     expect(markup).toContain("load-status-panel");
     expect(markup).toContain("load-progress");
     expect(markup).toContain("brand-logo-image");
-    expect(markup).toContain('src="/manus-storage/six-plus-one-logo-inverted-gold_e742b8d3.webp"');
+    expect(markup).toContain('src="/six-plus-one-logo.svg"');
     expect(markup).not.toContain("sticky top-0");
     expect(markup).not.toContain("bg-black/62");
     expect(markup).not.toContain("brand-wordmark");
@@ -264,22 +265,26 @@ describe("Home onboarding shell", () => {
   it("uses one stable inverted logo image source without old-asset swaps or text fallback paths", () => {
     const homeSource = readFileSync(new URL("./Home.tsx", import.meta.url), "utf8");
     const registerSource = readFileSync(new URL("./Register.tsx", import.meta.url), "utf8");
+    const htmlSource = readFileSync(new URL("../../index.html", import.meta.url), "utf8");
+    const manifestSource = readFileSync(new URL("../../public/site.webmanifest", import.meta.url), "utf8");
     const routerSource = readFileSync(new URL("../../../server/routers.ts", import.meta.url), "utf8");
     const storageProxySource = readFileSync(new URL("../../../server/_core/storageProxy.ts", import.meta.url), "utf8");
 
-    expect(homeSource).toContain('const BRAND_LOGO_URL = "/manus-storage/six-plus-one-logo-inverted-gold_e742b8d3.webp";');
-    expect(homeSource).toContain('data-logo-source="stable-inverted-brand-image"');
+    expect(homeSource).toContain('const BRAND_LOGO_URL = "/six-plus-one-logo.svg";');
+    expect(homeSource).toContain('data-logo-source="app-origin-brand-svg"');
     expect(homeSource).not.toContain("six-plus-one-original-uploaded-logo_aefa948f.webp");
     expect(homeSource).not.toContain("BrandWordmark");
     expect(homeSource).not.toContain("six-plus-one-brand-logo-white-strong_2665284a.png");
 
-    expect(registerSource).toContain('const BRAND_LOGO_URL = "/manus-storage/six-plus-one-logo-inverted-gold_e742b8d3.webp";');
-    expect(registerSource).toContain('data-logo-source="stable-inverted-brand-image"');
+    expect(registerSource).toContain('const BRAND_LOGO_URL = "/six-plus-one-logo.svg";');
+    expect(registerSource).toContain('data-logo-source="app-origin-brand-svg"');
     expect(registerSource).not.toContain("setLogoFailed");
     expect(registerSource).not.toContain("onError={() => setLogoFailed(true)}");
     expect(registerSource).not.toContain("six-plus-one-brand-logo-white-strong_2665284a.png");
 
-    expect(routerSource).toContain("six-plus-one-logo-inverted-gold_e742b8d3.webp");
+    expect(htmlSource).toContain("/app-icon.svg");
+    expect(manifestSource).toContain("/app-icon.svg");
+    expect(routerSource).toContain('return { url: "/six-plus-one-logo.svg" };');
     expect(routerSource).not.toContain("six-plus-one-original-uploaded-logo_aefa948f.webp");
     expect(routerSource).not.toContain("six-plus-one-clean-stacked-logo_a45938fa.png");
     expect(routerSource).not.toContain("six-plus-one-brand-logo-white-strong_2665284a.png");
@@ -296,12 +301,14 @@ describe("Home onboarding shell", () => {
     const routerSource = readFileSync(new URL("../../../server/routers.ts", import.meta.url), "utf8");
     const storageProxySource = readFileSync(new URL("../../../server/_core/storageProxy.ts", import.meta.url), "utf8");
 
-    expect(homeSource).toContain('if (trimmed.startsWith("/manus-storage/")) return encodeURI(trimmed);');
-    expect(homeSource).toContain("src={proofImageSrc(log.exerciseProofUrl)}");
+    expect(homeSource).toContain('if (trimmed.startsWith("/manus-storage/")) return `/api/storage-image/${encodeURIComponent(trimmed.slice("/manus-storage/".length))}`;');
+    expect(homeSource).toContain("function ProofImage");
+    expect(homeSource).toContain("src={src}");
     expect(homeSource).toContain('loading="lazy"');
     expect(homeSource).toContain('decoding="async"');
     expect(routerSource).toContain("const stored = await storagePut(`exercise-proof/participant-${participant.id}/${Date.now()}-${safeName}.${extension}`, bytes, input.mimeType);");
     expect(routerSource).toContain("url: stored.url");
+    expect(storageProxySource).toContain("/api/storage-image/*");
     expect(storageProxySource).toContain("Content-Type");
     expect(storageProxySource).toContain("X-Content-Type-Options");
   });
@@ -375,4 +382,16 @@ describe("Home onboarding shell", () => {
     expect(calendarSource).toContain("setExpanded(value => !value)");
     expect(calendarSource).toContain("full journey map");
   });
+
+  it("makes Board participant cards tappable and lets display pictures enlarge from the stats sheet", () => {
+    const homeSource = readFileSync(new URL("./Home.tsx", import.meta.url), "utf8");
+
+    expect(homeSource).toContain("const [selected, setSelected] = useState<any>(null);");
+    expect(homeSource).toContain("aria-label={`Open ${p.displayName} participant stats`}");
+    expect(homeSource).toContain("<ParticipantSheet participant={selected} onClose={() => setSelected(null)} />");
+    expect(homeSource).toContain("const [photoExpanded, setPhotoExpanded] = useState(false);");
+    expect(homeSource).toContain("enlargeable onOpen={() => setPhotoExpanded(true)}");
+    expect(homeSource).toContain("Close enlarged display picture");
+  });
+
 });

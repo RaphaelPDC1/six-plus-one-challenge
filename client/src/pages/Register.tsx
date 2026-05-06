@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { haptics } from "@/lib/haptics";
 
-const BRAND_LOGO_URL = "/manus-storage/six-plus-one-logo-inverted-gold_e742b8d3.webp";
+const BRAND_LOGO_URL = "/six-plus-one-logo.svg";
 
 type TrainingLevel = "starting" | "building" | "consistent" | "advanced";
 
@@ -33,7 +33,7 @@ function LogoMark() {
         src={BRAND_LOGO_URL}
         alt="6+1"
         data-testid="brand-logo"
-        data-logo-source="stable-inverted-brand-image"
+        data-logo-source="app-origin-brand-svg"
         className="h-full w-full object-contain"
         decoding="async"
         loading="eager"
