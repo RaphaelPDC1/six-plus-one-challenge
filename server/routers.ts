@@ -69,7 +69,7 @@ export const appRouter = router({
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logoUrl: publicProcedure.query(async () => {
-      return { url: "/six-plus-one-logo.svg" };
+      return { url: "/manus-storage/six-plus-one-reference-palette-logo-transparent-optimized_92105e77.webp" };
     }),
     siteLogin: publicProcedure.input(siteLoginInput).mutation(async ({ ctx, input }) => {
       const email = normalizeSignupEmail(input.email);

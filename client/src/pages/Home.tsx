@@ -63,8 +63,8 @@ const RED = "#C0392B";
 const GREEN = "#2ECC71";
 const PURPLE = "#9B59B6";
 const chartColors = [GOLD, RED, GREEN, PURPLE, "#4CA3C9", "#E67E22", "#F1C40F", "#ECF0F1"];
-// Use an app-origin SVG so live mobile refreshes never depend on expiring storage redirects.
-const BRAND_LOGO_URL = "/six-plus-one-logo.svg";
+// Use the user-provided 6+1 speed-mark style recoloured into the app gold/red/white palette.
+const BRAND_LOGO_URL = "/manus-storage/six-plus-one-reference-palette-logo-transparent-optimized_92105e77.webp";
 
 function BrandLogoImageWithRetry({ alt, className = "h-full w-full object-contain", decorative = false, placement }: { alt: string; className?: string; decorative?: boolean; placement?: "top-left-corner" | "loading-page" }) {
   return (
@@ -72,7 +72,7 @@ function BrandLogoImageWithRetry({ alt, className = "h-full w-full object-contai
       src={BRAND_LOGO_URL}
       alt={decorative ? "" : alt}
       data-testid="brand-logo"
-      data-logo-source="app-origin-brand-svg"
+      data-logo-source="reference-palette-logo"
       data-logo-placement={placement}
       className={className}
       decoding="async"
@@ -167,6 +167,12 @@ function pulse(pattern: number | number[] = 18) {
 function hapticFallback(pattern: number | number[] = 18) {
   if (typeof navigator !== "undefined" && "vibrate" in navigator) {
     navigator.vibrate(pattern);
+  }
+}
+
+function playAllGreenSubmitHaptic() {
+  if (!haptics.submit()) {
+    hapticFallback([35, 50, 35, 80, 65]);
   }
 }
 
@@ -830,7 +836,12 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
   const submit = trpc.challenge.submitMyDay.useMutation({
     onSuccess: data => {
       setLastMissed(data.deadlinePassed ? data.missedRules : []);
-      pulse(data.complete ? [20, 40, 20] : [18, 28, 45]);
+      if (data.complete) {
+        playAllGreenSubmitHaptic();
+        playDoneCue();
+      } else {
+        pulse([18, 28, 45]);
+      }
       setSaveNotice({
         title: data.complete ? "Submitted" : "Saved",
         complete: data.complete,
@@ -994,19 +1005,69 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
   );
 }
 
+function pct(part: number, whole: number) {
+  if (!whole) return 0;
+  return Math.round((part / whole) * 100);
+}
+
+function OverviewMetricCard({ label, value, detail, tone = "gold" }: { label: string; value: string | number; detail: string; tone?: "gold" | "red" | "green" | "purple" | "white" }) {
+  const tones = {
+    gold: "text-[#C8A96E] border-[#C8A96E]/45 bg-[#16130B]",
+    red: "text-[#C0392B] border-[#C0392B]/45 bg-[#190B0A]",
+    green: "text-[#2ECC71] border-[#2ECC71]/45 bg-[#07150D]",
+    purple: "text-[#9B59B6] border-[#9B59B6]/45 bg-[#150E1A]",
+    white: "text-white border-[#444] bg-[#111]",
+  };
+  return (
+    <article className={classNames("border p-4", tones[tone])}>
+      <MicroLabel tone={tone === "white" ? "muted" : tone}>{label}</MicroLabel>
+      <p className="mt-3 text-4xl font-black uppercase leading-none tracking-[-0.08em]">{value}</p>
+      <p className="mt-3 text-[10px] font-black uppercase leading-5 tracking-[0.14em] text-[#BDBDBD]">{detail}</p>
+    </article>
+  );
+}
+
+function OverviewBar({ label, value, detail, tone = "gold" }: { label: string; value: number; detail: string; tone?: "gold" | "red" | "green" | "purple" }) {
+  const fill = tone === "green" ? "bg-[#2ECC71]" : tone === "red" ? "bg-[#C0392B]" : tone === "purple" ? "bg-[#9B59B6]" : "bg-[#C8A96E]";
+  return (
+    <div className="border border-[#2A2A2A] bg-black p-3">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-[10px] font-black uppercase tracking-[0.16em] text-white">{label}</p>
+        <span className="text-sm font-black text-[#C8A96E]">{value}%</span>
+      </div>
+      <div className="mt-3 h-2 overflow-hidden bg-[#242424]" aria-hidden="true">
+        <div className={classNames("h-full", fill)} style={{ width: `${Math.max(0, Math.min(100, value))}%` }} />
+      </div>
+      <p className="mt-2 text-[10px] font-bold uppercase tracking-[0.12em] text-[#777]">{detail}</p>
+    </div>
+  );
+}
+
 function Overview({ snapshot }: { snapshot: Snapshot }) {
   const [selected, setSelected] = useState<any>(null);
   const participants = snapshot?.participants ?? [];
   const logs = snapshot?.logs ?? [];
+  const payments = snapshot?.payments ?? [];
+  const redemptions = snapshot?.redemptions ?? [];
+  const currentDay = Math.max(Number(snapshot?.challenge?.currentDay ?? 1), 1);
+  const participantCount = participants.length;
+  const expectedSlots = participantCount * currentDay;
+  const completedLogs = logs.filter((log: any) => log.dayComplete);
+  const todayLogs = logs.filter((log: any) => log.dayNumber === currentDay);
+  const todayComplete = todayLogs.filter((log: any) => log.dayComplete).length;
+  const yesterdayLogs = logs.filter((log: any) => log.dayNumber === currentDay - 1);
+  const yesterdayComplete = yesterdayLogs.filter((log: any) => log.dayComplete).length;
+  const totalLivesLost = participants.reduce((sum: number, p: any) => sum + Math.max(0, 4 - Number(p.livesRemaining ?? 4)), 0);
+  const averageStreak = participantCount ? Math.round(participants.reduce((sum: number, p: any) => sum + Number(p.currentStreak ?? 0), 0) / participantCount) : 0;
+  const strongestStreak = participants.reduce((max: number, p: any) => Math.max(max, Number(p.currentStreak ?? 0), Number(p.longestStreak ?? 0)), 0);
+  const pendingPayments = payments.filter((p: any) => p.status === "pending").length;
+  const pendingRewards = redemptions.filter((r: any) => r.status === "pending").length;
+  const todayLoggedIds = new Set(todayLogs.map((log: any) => log.participantId));
+  const atRisk = participants.filter((p: any) => Number(p.livesRemaining ?? 4) <= 1 || !todayLoggedIds.has(p.id));
+
   const chartKeys = participants.map((participant: any, index: number) => ({ ...participant, chartKey: `participant_${participant.id ?? index}` }));
-  const calendar = snapshot?.challenge?.calendar ?? [];
-  const trackedDays = calendar.map((day: any) => {
-    const dayLogs = logs.filter((log: any) => log.dayNumber === day.dayNumber);
-    const completed = dayLogs.filter((log: any) => log.dayComplete).length;
-    return { ...day, logged: dayLogs.length, completed, missing: Math.max(participants.length - dayLogs.length, 0) };
-  });
   const chartData = useMemo(() => {
-    const dayCount = Math.max(snapshot?.challenge?.currentDay ?? 1, 10);
+    const dayCount = Math.max(currentDay, 10);
     return Array.from({ length: dayCount }, (_, index) => {
       const day = index + 1;
       const row: Record<string, number> = { day };
@@ -1015,27 +1076,70 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
       });
       return row;
     });
-  }, [chartKeys, logs, snapshot?.challenge?.currentDay]);
+  }, [chartKeys, currentDay, logs]);
+
+  const recentDays = Array.from({ length: Math.min(7, currentDay) }, (_, index) => currentDay - Math.min(6, currentDay - 1) + index);
+  const trendRows = recentDays.map(day => {
+    const dayLogs = logs.filter((log: any) => log.dayNumber === day);
+    const dayComplete = dayLogs.filter((log: any) => log.dayComplete).length;
+    return {
+      day,
+      submittedRate: pct(dayLogs.length, participantCount),
+      completeRate: pct(dayComplete, participantCount),
+      missing: Math.max(participantCount - dayLogs.length, 0),
+    };
+  });
+
+  const ruleMetrics = [
+    { label: "No alcohol", done: logs.filter((log: any) => log.noAlcohol).length },
+    { label: "Clean eating", done: logs.filter((log: any) => log.cleanEating).length },
+    { label: "Exercise proof", done: logs.filter((log: any) => Number(log.exerciseDuration ?? 0) >= 30 && String(log.exerciseType ?? "").trim()).length },
+    { label: "Reflect", done: logs.filter((log: any) => String(log.reflectionText ?? "").trim()).length },
+    { label: "Read & Teach", done: logs.filter((log: any) => String(log.readTeachText ?? "").trim()).length },
+    { label: "Track everything", done: logs.filter((log: any) => log.trackedEverything).length },
+  ];
+
+  const participantMetrics = participants.map((p: any) => {
+    const ownedLogs = logs.filter((log: any) => log.participantId === p.id);
+    const completeCount = ownedLogs.filter((log: any) => log.dayComplete).length;
+    const submitRate = pct(ownedLogs.length, currentDay);
+    const completionRate = pct(completeCount, currentDay);
+    const latestLog = ownedLogs.reduce((latest: any, log: any) => Number(log.dayNumber ?? 0) > Number(latest?.dayNumber ?? 0) ? log : latest, null);
+    const riskScore = Math.max(0, 100 - completionRate) + Math.max(0, 4 - Number(p.livesRemaining ?? 4)) * 12 + (todayLoggedIds.has(p.id) ? 0 : 18);
+    return { ...p, ownedLogs, completeCount, submitRate, completionRate, latestLog, riskScore };
+  }).sort((a: any, b: any) => b.riskScore - a.riskScore || b.totalPoints - a.totalPoints);
 
   return (
-    <div className="space-y-5">
-      <div className="grid min-w-0 gap-2 bg-[#2A2A2A] p-[2px] sm:grid-cols-2 md:grid-cols-4">
-        <PosterStat label="Challenge day" value={snapshot?.challenge?.currentDay ?? 1} tone="gold" />
-        <PosterStat label="Participants" value={participants.length} tone="white" />
-        <PosterStat label="Pending payments" value={(snapshot?.payments ?? []).filter((p: any) => p.status === "pending").length} tone="red" />
-        <PosterStat label="Reward requests" value={(snapshot?.redemptions ?? []).filter((r: any) => r.status === "pending").length} tone="purple" />
-      </div>
+    <div className="space-y-5" data-testid="overview-metrics-dashboard">
+      <section className="border border-[#2A2A2A] bg-[#101010] p-4 sm:p-5">
+        <div className="flex flex-wrap items-end justify-between gap-4 border-b border-[#2A2A2A] pb-4">
+          <div>
+            <MicroLabel tone="gold">Overview · all participants</MicroLabel>
+            <h2 className="mt-2 text-3xl font-black uppercase leading-none tracking-[-0.07em] text-white sm:text-5xl">Group command centre.</h2>
+          </div>
+          <p className="max-w-md text-[10px] font-black uppercase leading-5 tracking-[0.16em] text-[#777]">Every participant, every day, lives pressure, compliance, streaks, money, rewards, and submission risk in one view.</p>
+        </div>
+        <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-6">
+          <OverviewMetricCard label="Participants" value={participantCount} detail="Active competitors tracked" tone="white" />
+          <OverviewMetricCard label="Today green" value={`${todayComplete}/${participantCount}`} detail={`Yesterday closed ${yesterdayComplete}/${participantCount}`} tone={todayComplete === participantCount && participantCount > 0 ? "green" : "gold"} />
+          <OverviewMetricCard label="Group compliance" value={`${pct(completedLogs.length, expectedSlots)}%`} detail={`${completedLogs.length}/${expectedSlots || 0} day slots complete`} tone="green" />
+          <OverviewMetricCard label="Average streak" value={averageStreak} detail={`Best active/longest: ${strongestStreak}`} tone="gold" />
+          <OverviewMetricCard label="Lives lost" value={totalLivesLost} detail={`${atRisk.length} participant risk flags`} tone={totalLivesLost > 0 ? "red" : "green"} />
+          <OverviewMetricCard label="Ops queue" value={pendingPayments + pendingRewards} detail={`${pendingPayments} payments · ${pendingRewards} rewards`} tone={pendingPayments + pendingRewards ? "purple" : "white"} />
+        </div>
+      </section>
+
       <section className="sticky top-[58px] z-30 min-w-0 overflow-hidden border border-[#2A2A2A] bg-[#101010]/98 p-3 shadow-[0_18px_55px_rgba(0,0,0,0.35)] backdrop-blur sm:top-[68px] sm:p-5 md:top-[78px]">
         <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
           <div className="min-w-0">
-            <MicroLabel tone="gold">Live tracker</MicroLabel>
-            <h2 className="mt-2 break-words text-xl font-black uppercase tracking-[-0.06em] text-white sm:text-3xl">People plotted, not listed.</h2>
+            <MicroLabel tone="gold">Complex tracker</MicroLabel>
+            <h2 className="mt-2 break-words text-xl font-black uppercase tracking-[-0.06em] text-white sm:text-3xl">Progress curves by participant.</h2>
           </div>
-          <p className="max-w-sm text-[10px] font-bold uppercase tracking-[0.12em] text-[#777] sm:text-xs">Each line shows completed days by participant.</p>
+          <p className="max-w-sm text-[10px] font-bold uppercase tracking-[0.12em] text-[#777] sm:text-xs">Lines show cumulative complete days, not just raw check-ins.</p>
         </div>
         <div className="h-56 min-w-0 overflow-hidden sm:h-80">
           <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData} margin={{ left: -18, right: 4, top: 10, bottom: 0 }}>
+            <LineChart data={chartData} margin={{ left: -18, right: 4, top: 10, bottom: 0 }}>
               <CartesianGrid stroke="#242424" strokeDasharray="3 3" />
               <XAxis dataKey="day" stroke="#777" tick={{ fill: "#777", fontSize: 11, fontWeight: 900 }} />
               <YAxis allowDecimals={false} stroke="#777" tick={{ fill: "#777", fontSize: 11, fontWeight: 900 }} />
@@ -1047,18 +1151,59 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
           </ResponsiveContainer>
         </div>
       </section>
-      <section className="border border-[#2A2A2A] bg-[#101010] p-5">
-        <MicroLabel tone="red">Lives grid</MicroLabel>
-        <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-          {participants.map((p: any) => (
-            <button key={p.id} type="button" onClick={() => { pulse(14); setSelected(p); }} className="border border-[#2A2A2A] bg-[#0D0D0D] p-4 text-left transition hover:border-[#C8A96E] focus-visible:border-[#C8A96E] focus-visible:outline-none" aria-label={`Open ${p.displayName} participant stats`}>
-              <div className="flex items-center justify-between gap-3">
-                <ProfilePhoto participant={p} className="h-12 w-12" />
-                <span className="poster-label text-[#C0392B]">{p.livesRemaining}/4</span>
+
+      <section className="grid gap-5 xl:grid-cols-[1fr_0.9fr]">
+        <div className="border border-[#2A2A2A] bg-[#101010] p-4 sm:p-5">
+          <MicroLabel tone="gold">7-day compliance trend</MicroLabel>
+          <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
+            {trendRows.map(row => (
+              <div key={row.day} className="border border-[#2A2A2A] bg-black p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs font-black uppercase tracking-[0.16em] text-white">Day {row.day}</p>
+                  <span className={classNames("text-xs font-black", row.completeRate >= 80 ? "text-[#2ECC71]" : row.completeRate >= 50 ? "text-[#C8A96E]" : "text-[#C0392B]")}>{row.completeRate}%</span>
+                </div>
+                <div className="mt-3 h-20 bg-[#171717] p-1 flex items-end gap-1" aria-hidden="true">
+                  <div className="w-1/2 bg-[#C8A96E]" style={{ height: `${Math.max(4, row.submittedRate)}%` }} />
+                  <div className="w-1/2 bg-[#2ECC71]" style={{ height: `${Math.max(4, row.completeRate)}%` }} />
+                </div>
+                <p className="mt-2 text-[9px] font-black uppercase tracking-[0.14em] text-[#777]">{row.missing} missing</p>
               </div>
-              <p className="mt-4 min-w-0 overflow-hidden text-ellipsis break-words text-base font-black uppercase text-white sm:text-lg">{p.displayName}</p>
-              <div className="mt-3"><HealthBar lives={p.livesRemaining} label="" compact /></div>
-              <p className="mt-3 text-[9px] font-black uppercase tracking-[0.16em] text-[#C8A96E]">Tap for stats</p>
+            ))}
+          </div>
+        </div>
+        <div className="border border-[#2A2A2A] bg-[#101010] p-4 sm:p-5">
+          <MicroLabel tone="red">Rule pressure matrix</MicroLabel>
+          <div className="mt-4 space-y-2">
+            {ruleMetrics.map((metric, index) => (
+              <OverviewBar key={metric.label} label={metric.label} value={pct(metric.done, logs.length)} detail={`${metric.done}/${logs.length || 0} submitted logs`} tone={index === 2 ? "red" : index >= 3 ? "purple" : "gold"} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="border border-[#2A2A2A] bg-[#101010] p-4 sm:p-5">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <MicroLabel tone="red">Participant comparison</MicroLabel>
+            <h3 className="mt-2 text-2xl font-black uppercase tracking-[-0.06em] text-white sm:text-4xl">Who is safe. Who needs heat.</h3>
+          </div>
+          <p className="max-w-sm text-[10px] font-black uppercase tracking-[0.16em] text-[#777]">Sorted by risk score: missed today, low lives, and weaker completion rate rise to the top.</p>
+        </div>
+        <div className="mt-5 space-y-2">
+          {participantMetrics.map((p: any, index: number) => (
+            <button key={p.id} type="button" onClick={() => { pulse(14); setSelected(p); }} className="grid w-full gap-3 border border-[#2A2A2A] bg-[#0D0D0D] p-3 text-left transition hover:border-[#C8A96E] focus-visible:border-[#C8A96E] focus-visible:outline-none sm:grid-cols-[2.5rem_3.5rem_minmax(0,1fr)_minmax(220px,0.9fr)] sm:items-center" aria-label={`Open ${p.displayName} participant stats`}>
+              <span className={classNames("text-2xl font-black", index === 0 && p.riskScore > 30 ? "text-[#C0392B]" : "text-[#777]")}>#{index + 1}</span>
+              <ProfilePhoto participant={p} className="h-12 w-12" />
+              <span className="min-w-0">
+                <span className="block break-words text-lg font-black uppercase tracking-[-0.04em] text-white">{p.displayName}</span>
+                <span className="mt-1 block text-[10px] font-black uppercase tracking-[0.14em] text-[#777]">{p.completeCount}/{currentDay} complete · {p.currentStreak ?? 0} streak · {p.totalPoints ?? 0} pts</span>
+                <span className="mt-2 block max-w-[260px]"><HealthBar lives={p.livesRemaining} label="" compact /></span>
+              </span>
+              <span className="grid gap-2 sm:grid-cols-3">
+                <OverviewBar label="Complete" value={p.completionRate} detail="green days" tone="green" />
+                <OverviewBar label="Submit" value={p.submitRate} detail={todayLoggedIds.has(p.id) ? "today logged" : "not today"} tone={todayLoggedIds.has(p.id) ? "gold" : "red"} />
+                <OverviewBar label="Risk" value={Math.min(100, Math.round(p.riskScore))} detail={`${p.livesRemaining ?? 4}/4 lives`} tone={p.riskScore > 45 ? "red" : "purple"} />
+              </span>
             </button>
           ))}
         </div>

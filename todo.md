@@ -401,3 +401,13 @@
 - [x] Remove or bypass any old logo rendering path that can still appear in those two locations
 - [x] Update regression coverage for top-left header and loading-page logo rendering
 - [x] Run focused validation, build checks, preview confirmation, and save checkpoint
+
+## Change Request — Reference Logo, Overview Metrics, and Submit Haptics
+
+- [x] Recreate the attached 6+1 logo style in the app’s dark/gold/red/white palette so it is visible and premium on black backgrounds
+- [x] Replace the current bad top-left header logo with the palette-correct reference-style logo
+- [x] Replace the loading-page logo with the same palette-correct reference-style logo
+- [x] Redesign the Overview tab as a participant-wide dashboard with group progress, participant comparison, compliance trends, complex metrics, and risk/streak insights
+- [x] Add strong haptic vibration feedback after a successful day submission when all six rules are green/completed
+- [x] Update regression tests for the reference-style logo placements, Overview dashboard metrics, and all-green submit haptic feedback
+- [x] Run full tests, TypeScript, production build, preview validation, and save checkpoint

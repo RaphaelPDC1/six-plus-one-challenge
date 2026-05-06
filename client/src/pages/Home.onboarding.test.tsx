@@ -47,7 +47,7 @@ vi.mock("@/lib/trpc", () => ({
         useMutation: () => mockState.mutation,
       },
       logoUrl: {
-        useQuery: () => ({ data: { url: "/six-plus-one-logo.svg" } }),
+        useQuery: () => ({ data: { url: "/manus-storage/six-plus-one-reference-palette-logo-transparent-optimized_92105e77.webp" } }),
       },
     },
     signup: {
@@ -113,7 +113,7 @@ describe("Home onboarding shell", () => {
     expect(markup).toContain("brand-logo-shell");
     expect(markup).toContain("brand-logo-top-left");
     expect(markup).toContain("brand-logo-image");
-    expect(markup).toContain('src="/six-plus-one-logo.svg"');
+    expect(markup).toContain('src="/manus-storage/six-plus-one-reference-palette-logo-transparent-optimized_92105e77.webp"');
     expect(markup).toContain('data-logo-placement="top-left-corner"');
     expect(markup).not.toContain("brand-wordmark");
     expect(markup).not.toContain("bg-black");
@@ -125,7 +125,7 @@ describe("Home onboarding shell", () => {
     expect(markup).toContain("sticky top-0");
     expect(markup).toContain("brand-logo-top-left");
     expect(markup).toContain("brand-logo-image");
-    expect(markup).toContain('src="/six-plus-one-logo.svg"');
+    expect(markup).toContain('src="/manus-storage/six-plus-one-reference-palette-logo-transparent-optimized_92105e77.webp"');
     expect(markup).toContain('data-logo-placement="top-left-corner"');
     expect(markup).toContain("Four Lives Challenge");
   });
@@ -222,7 +222,7 @@ describe("Home onboarding shell", () => {
     expect(homeSource).not.toContain("No public proof yet");
   });
 
-  it("wires installable web-app metadata to live-safe app-origin SVG icons", () => {
+  it("wires installable web-app metadata to live-safe reference palette image icons", () => {
     const htmlSource = readFileSync(new URL("../../index.html", import.meta.url), "utf8");
     const manifestSource = readFileSync(new URL("../../public/site.webmanifest", import.meta.url), "utf8");
 
@@ -235,7 +235,7 @@ describe("Home onboarding shell", () => {
     expect(manifestSource).not.toContain("/manus-storage/");
   });
 
-  it("renders the animated landing/loading page with the inverted uploaded logo image instead of blue text", () => {
+  it("renders the animated landing/loading page with the reference-style palette logo image instead of blue text", () => {
     if (typeof window !== "undefined") {
       window.sessionStorage.removeItem("sixone-entry-seen");
     }
@@ -249,7 +249,7 @@ describe("Home onboarding shell", () => {
     expect(markup).toContain("load-status-panel");
     expect(markup).toContain("load-progress");
     expect(markup).toContain("brand-logo-image");
-    expect(markup).toContain('src="/six-plus-one-logo.svg"');
+    expect(markup).toContain('src="/manus-storage/six-plus-one-reference-palette-logo-transparent-optimized_92105e77.webp"');
     expect(markup).toContain('data-logo-placement="loading-page"');
     expect(markup).not.toContain("sticky top-0");
     expect(markup).not.toContain("bg-black/62");
@@ -270,7 +270,7 @@ describe("Home onboarding shell", () => {
     expect(cssSource).toContain("width: clamp(13rem, 78vw, 21rem);");
   });
 
-  it("uses one stable inverted logo image source without old-asset swaps or text fallback paths", () => {
+  it("uses the supplied reference-style palette logo without old-asset swaps or text fallback paths", () => {
     const homeSource = readFileSync(new URL("./Home.tsx", import.meta.url), "utf8");
     const registerSource = readFileSync(new URL("./Register.tsx", import.meta.url), "utf8");
     const htmlSource = readFileSync(new URL("../../index.html", import.meta.url), "utf8");
@@ -280,38 +280,51 @@ describe("Home onboarding shell", () => {
     const logoSvgSource = readFileSync(new URL("../../public/six-plus-one-logo.svg", import.meta.url), "utf8");
     const appIconSvgSource = readFileSync(new URL("../../public/app-icon.svg", import.meta.url), "utf8");
 
-    expect(homeSource).toContain('const BRAND_LOGO_URL = "/six-plus-one-logo.svg";');
-    expect(homeSource).toContain('data-logo-source="app-origin-brand-svg"');
+    expect(homeSource).toContain('const BRAND_LOGO_URL = "/manus-storage/six-plus-one-reference-palette-logo-transparent-optimized_92105e77.webp";');
+    expect(homeSource).toContain('data-logo-source="reference-palette-logo"');
     expect(homeSource).not.toContain("six-plus-one-original-uploaded-logo_aefa948f.webp");
     expect(homeSource).not.toContain("BrandWordmark");
     expect(homeSource).not.toContain("six-plus-one-brand-logo-white-strong_2665284a.png");
 
-    expect(registerSource).toContain('const BRAND_LOGO_URL = "/six-plus-one-logo.svg";');
-    expect(registerSource).toContain('data-logo-source="app-origin-brand-svg"');
+    expect(registerSource).toContain('const BRAND_LOGO_URL = "/manus-storage/six-plus-one-reference-palette-logo-transparent-optimized_92105e77.webp";');
+    expect(registerSource).toContain('data-logo-source="reference-palette-logo"');
     expect(registerSource).not.toContain("setLogoFailed");
     expect(registerSource).not.toContain("onError={() => setLogoFailed(true)}");
     expect(registerSource).not.toContain("six-plus-one-brand-logo-white-strong_2665284a.png");
 
     expect(htmlSource).toContain("/app-icon.svg");
     expect(manifestSource).toContain("/app-icon.svg");
-    expect(routerSource).toContain('return { url: "/six-plus-one-logo.svg" };');
+    expect(routerSource).toContain('return { url: "/manus-storage/six-plus-one-reference-palette-logo-transparent-optimized_92105e77.webp" };');
     expect(routerSource).not.toContain("six-plus-one-original-uploaded-logo_aefa948f.webp");
     expect(routerSource).not.toContain("six-plus-one-clean-stacked-logo_a45938fa.png");
     expect(routerSource).not.toContain("six-plus-one-brand-logo-white-strong_2665284a.png");
 
+    expect(homeSource).toContain("six-plus-one-reference-palette-logo-transparent-optimized_92105e77.webp");
+    expect(registerSource).toContain("six-plus-one-reference-palette-logo-transparent-optimized_92105e77.webp");
+    expect(routerSource).toContain("six-plus-one-reference-palette-logo-transparent-optimized_92105e77.webp");
     expect(logoSvgSource).toContain('fill="#FFFFFF"');
-    expect(logoSvgSource).toContain('stroke="#F2D37C"');
-    expect(logoSvgSource).toContain('stop-color="#FFF1B8"');
-    expect(logoSvgSource).toContain('fill="#FFF4C7"');
-    expect(logoSvgSource).not.toContain('opacity="0.32"');
     expect(appIconSvgSource).toContain('fill="#FFFFFF"');
-    expect(appIconSvgSource).toContain('stroke="#F2D37C"');
 
     expect(storageProxySource).toContain("assetResp.arrayBuffer()");
     expect(storageProxySource).toContain("cachePolicyForKey(key)");
     expect(storageProxySource).toContain("stale-while-revalidate=604800");
     expect(storageProxySource).not.toContain("res.redirect(307, url)");
     expect(storageProxySource).not.toContain('res.set("Cache-Control", "no-store")');
+  });
+
+  it("documents the upgraded Overview dashboard and all-green haptic submit flow", () => {
+    const homeSource = readFileSync(new URL("./Home.tsx", import.meta.url), "utf8");
+    const hapticsSource = readFileSync(new URL("../lib/haptics.ts", import.meta.url), "utf8");
+
+    expect(homeSource).toContain('data-testid="overview-metrics-dashboard"');
+    expect(homeSource).toContain("Overview · all participants");
+    expect(homeSource).toContain("Group command centre.");
+    expect(homeSource).toContain("7-day compliance trend");
+    expect(homeSource).toContain("Rule pressure matrix");
+    expect(homeSource).toContain("Participant comparison");
+    expect(homeSource).toContain("playAllGreenSubmitHaptic();");
+    expect(homeSource).toContain("if (data.complete)");
+    expect(hapticsSource).toContain("submit: [35, 50, 35, 80, 65]");
   });
 
   it("keeps proof uploads on origin-stable storage URLs for deployed mobile browsers", () => {

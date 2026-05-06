@@ -21,7 +21,7 @@ describe("haptics helper", () => {
     expect(haptics.success()).toBe(true);
     expect(haptics.submit()).toBe(true);
     expect(vibrate).toHaveBeenNthCalledWith(1, [18, 36, 18]);
-    expect(vibrate).toHaveBeenNthCalledWith(2, [18, 28, 45]);
+    expect(vibrate).toHaveBeenNthCalledWith(2, [35, 50, 35, 80, 65]);
   });
 
   it("passes custom numeric patterns through safely", () => {

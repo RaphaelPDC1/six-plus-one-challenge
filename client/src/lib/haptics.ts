@@ -5,7 +5,7 @@ const HAPTIC_PATTERNS: Record<HapticPattern, number | number[]> = {
   success: [18, 36, 18],
   warning: [110, 40, 110],
   drawer: [8, 24, 8],
-  submit: [18, 28, 45],
+  submit: [35, 50, 35, 80, 65],
 };
 
 export function haptic(pattern: HapticPattern | number | number[] = "tap") {
