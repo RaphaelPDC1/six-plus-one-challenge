@@ -144,8 +144,8 @@ function getDraftStorageKey(userId: string | number | undefined, dayNumber: numb
   return `${DRAFT_STORAGE_PREFIX}_${userId}_day${dayNumber}`;
 }
 
-function dailyLogToForm(log: Partial<MyDayForm> | null | undefined): MyDayForm {
-  if (!log) return emptyDay;
+export function dailyLogToForm(log: Partial<MyDayForm> | null | undefined): MyDayForm {
+  if (!log) return { ...emptyDay };
   return {
     noAlcohol: Boolean(log.noAlcohol),
     cleanEating: Boolean(log.cleanEating),
@@ -157,6 +157,27 @@ function dailyLogToForm(log: Partial<MyDayForm> | null | undefined): MyDayForm {
     reflectionShared: Boolean(log.reflectionShared),
     readTeachText: String(log.readTeachText ?? ""),
     trackedEverything: Boolean(log.trackedEverything),
+  };
+}
+
+function preferFilledText(primary: string, fallback: string) {
+  return primary.trim().length > 0 ? primary : fallback;
+}
+
+export function mergeTodayFormWithoutWipingSavedWork(saved: MyDayForm, draft: MyDayForm): MyDayForm {
+  const savedExerciseComplete = saved.exerciseDuration >= 30 && saved.exerciseType.trim().length > 1;
+  const draftExerciseComplete = draft.exerciseDuration >= 30 && draft.exerciseType.trim().length > 1;
+  return {
+    noAlcohol: saved.noAlcohol || draft.noAlcohol,
+    cleanEating: saved.cleanEating || draft.cleanEating,
+    cleanEatingNote: preferFilledText(draft.cleanEatingNote, saved.cleanEatingNote),
+    exerciseDuration: Math.max(saved.exerciseDuration, draft.exerciseDuration),
+    exerciseType: savedExerciseComplete && !draftExerciseComplete ? saved.exerciseType : preferFilledText(draft.exerciseType, saved.exerciseType),
+    exerciseProofUrl: preferFilledText(draft.exerciseProofUrl, saved.exerciseProofUrl),
+    reflectionText: preferFilledText(draft.reflectionText, saved.reflectionText),
+    reflectionShared: saved.reflectionShared || draft.reflectionShared,
+    readTeachText: preferFilledText(draft.readTeachText, saved.readTeachText),
+    trackedEverything: saved.trackedEverything || draft.trackedEverything,
   };
 }
 
@@ -828,16 +849,17 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
       return;
     }
 
+    const savedToday = dailyLogToForm(snapshot?.myLog);
     const storedDraft = readStoredDraft(draftStorageKey);
     if (storedDraft) {
-      setForm(storedDraft);
+      setForm(mergeTodayFormWithoutWipingSavedWork(savedToday, storedDraft));
       setDraftRestored(true);
       window.setTimeout(() => setDraftRestored(false), 2600);
       setDraftReady(true);
       return;
     }
 
-    setForm(dailyLogToForm(snapshot?.myLog));
+    setForm(savedToday);
     setDraftReady(true);
   }, [draftStorageKey, snapshot?.myLog]);
 

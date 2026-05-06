@@ -417,7 +417,7 @@ export function resolveDailyCompletionAward(existing: Pick<DailyLog, "dayComplet
   } as const;
 }
 
-export async function submitDailyLog(participantId: number, input: {
+export type SubmitDailyLogInput = {
   dayNumber: number;
   noAlcohol: boolean;
   cleanEating: boolean;
@@ -429,7 +429,35 @@ export async function submitDailyLog(participantId: number, input: {
   reflectionShared: boolean;
   readTeachText: string;
   trackedEverything: boolean;
-}) {
+};
+
+function preferExistingWhenInputIsBlank(inputValue: string | undefined | null, existingValue: string | undefined | null) {
+  const inputText = String(inputValue ?? "").trim();
+  const existingText = String(existingValue ?? "").trim();
+  return inputText.length > 0 ? String(inputValue ?? "") : existingText;
+}
+
+export function mergeDailyLogInputWithoutWipingExistingWork(existing: DailyLog | undefined, input: SubmitDailyLogInput): SubmitDailyLogInput {
+  if (!existing) return input;
+  const existingExerciseComplete = Boolean(existing.exerciseDone) || ((existing.exerciseDuration ?? 0) >= 30 && String(existing.exerciseType ?? "").trim().length > 0);
+  const inputExerciseComplete = input.exerciseDuration >= 30 && input.exerciseType.trim().length > 0;
+
+  return {
+    ...input,
+    noAlcohol: Boolean(existing.noAlcohol) || input.noAlcohol,
+    cleanEating: Boolean(existing.cleanEating) || input.cleanEating,
+    cleanEatingNote: preferExistingWhenInputIsBlank(input.cleanEatingNote, existing.cleanEatingNote),
+    exerciseDuration: existingExerciseComplete && !inputExerciseComplete ? Math.max(existing.exerciseDuration ?? 0, input.exerciseDuration) : input.exerciseDuration,
+    exerciseType: existingExerciseComplete && !inputExerciseComplete ? String(existing.exerciseType ?? "") : preferExistingWhenInputIsBlank(input.exerciseType, existing.exerciseType),
+    exerciseProofUrl: preferExistingWhenInputIsBlank(input.exerciseProofUrl, existing.exerciseProofUrl),
+    reflectionText: Boolean(existing.reflectionDone) && input.reflectionText.trim().length === 0 ? String(existing.reflectionText ?? "") : preferExistingWhenInputIsBlank(input.reflectionText, existing.reflectionText),
+    reflectionShared: Boolean(existing.reflectionShared) || input.reflectionShared,
+    readTeachText: Boolean(existing.readTeachDone) && input.readTeachText.trim().length === 0 ? String(existing.readTeachText ?? "") : preferExistingWhenInputIsBlank(input.readTeachText, existing.readTeachText),
+    trackedEverything: Boolean(existing.trackedEverything) || input.trackedEverything,
+  };
+}
+
+export async function submitDailyLog(participantId: number, input: SubmitDailyLogInput) {
   const db = await getDb();
   if (!db) throw new Error("Database unavailable");
   const submittedAt = new Date();
@@ -437,41 +465,42 @@ export async function submitDailyLog(participantId: number, input: {
   if (input.dayNumber > currentChallengeDay) {
     throw new Error(`Day ${input.dayNumber} is not open yet. The challenge is currently on day ${currentChallengeDay}.`);
   }
-  const logDate = getChallengeDateForDay(input.dayNumber);
-  const deadline = getChallengeDeadlineForDay(input.dayNumber);
+  const existing = await getTodayLog(participantId, input.dayNumber);
+  const protectedInput = mergeDailyLogInputWithoutWipingExistingWork(existing, input);
+  const logDate = getChallengeDateForDay(protectedInput.dayNumber);
+  const deadline = getChallengeDeadlineForDay(protectedInput.dayNumber);
   const deadlinePassed = submittedAt.getTime() > deadline.getTime();
-  const exerciseDone = input.exerciseDuration >= 30 && input.exerciseType.trim().length > 0;
-  const reflectionDone = input.reflectionText.trim().length > 0;
-  const readTeachDone = input.readTeachText.trim().length > 0;
+  const exerciseDone = protectedInput.exerciseDuration >= 30 && protectedInput.exerciseType.trim().length > 0;
+  const reflectionDone = protectedInput.reflectionText.trim().length > 0;
+  const readTeachDone = protectedInput.readTeachText.trim().length > 0;
   const complete = isDayComplete({
-    noAlcohol: input.noAlcohol,
-    cleanEating: input.cleanEating,
+    noAlcohol: protectedInput.noAlcohol,
+    cleanEating: protectedInput.cleanEating,
     exerciseDone,
     reflectionDone,
     readTeachDone,
-    trackedEverything: input.trackedEverything,
+    trackedEverything: protectedInput.trackedEverything,
     submittedAt: deadlinePassed ? submittedAt : undefined,
     deadline,
   });
-  const existing = await getTodayLog(participantId, input.dayNumber);
-  const awardState = resolveDailyCompletionAward(existing, { complete, dayNumber: input.dayNumber, submittedAt, deadlinePassed });
+  const awardState = resolveDailyCompletionAward(existing, { complete, dayNumber: protectedInput.dayNumber, submittedAt, deadlinePassed });
   const values = {
     participantId,
-    dayNumber: input.dayNumber,
+    dayNumber: protectedInput.dayNumber,
     logDate,
-    noAlcohol: input.noAlcohol,
-    cleanEating: input.cleanEating,
-    cleanEatingNote: input.cleanEatingNote || null,
+    noAlcohol: protectedInput.noAlcohol,
+    cleanEating: protectedInput.cleanEating,
+    cleanEatingNote: protectedInput.cleanEatingNote || null,
     exerciseDone,
-    exerciseDuration: input.exerciseDuration,
-    exerciseType: input.exerciseType,
-    exerciseProofUrl: input.exerciseProofUrl,
+    exerciseDuration: protectedInput.exerciseDuration,
+    exerciseType: protectedInput.exerciseType,
+    exerciseProofUrl: protectedInput.exerciseProofUrl,
     reflectionDone,
-    reflectionText: input.reflectionText,
-    reflectionShared: input.reflectionShared,
+    reflectionText: protectedInput.reflectionText,
+    reflectionShared: protectedInput.reflectionShared,
     readTeachDone,
-    readTeachText: input.readTeachText,
-    trackedEverything: input.trackedEverything,
+    readTeachText: protectedInput.readTeachText,
+    trackedEverything: protectedInput.trackedEverything,
     dayComplete: awardState.dayComplete,
     pointsAwarded: awardState.pointsAwarded,
     submittedAt: awardState.submittedAt,
@@ -496,15 +525,15 @@ export async function submitDailyLog(participantId: number, input: {
   }
 
   const missedRules = getMissedRules({
-    noAlcohol: input.noAlcohol,
-    cleanEating: input.cleanEating,
+    noAlcohol: protectedInput.noAlcohol,
+    cleanEating: protectedInput.cleanEating,
     exerciseDone,
     reflectionDone,
     readTeachDone,
-    trackedEverything: input.trackedEverything,
+    trackedEverything: protectedInput.trackedEverything,
   });
 
-  return { complete: awardState.dayComplete, pointsAwarded: awardState.pointsAwarded, missedRules, deadlinePassed, draftSaved: awardState.draftSaved, log: await getTodayLog(participantId, input.dayNumber) };
+  return { complete: awardState.dayComplete, pointsAwarded: awardState.pointsAwarded, missedRules, deadlinePassed, draftSaved: awardState.draftSaved, log: await getTodayLog(participantId, protectedInput.dayNumber) };
 }
 
 export async function triggerLifeLoss(participantId: number, reason: string, dailyLogId?: number | null) {

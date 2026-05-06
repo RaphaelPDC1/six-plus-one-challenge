@@ -504,3 +504,22 @@
 - [x] Keep the motion aligned with the dark/gold 6+1 challenge style without adding distracting or slow effects.
 - [x] Update regression coverage for the motion-system hooks, reduced-motion safeguards, and key animated interaction markers.
 - [x] Run validation, production build, preview health check, and save a checkpoint after the motion polish pass.
+
+
+## Current Requested Changes — Daily Status and Warden Autonomy
+
+- [x] Preserve each participant’s completed rule status for the current day so rules already done today remain green.
+- [x] Ensure the home page resets daily rule cards only on the next calendar day, not after same-day refreshes or edits.
+- [x] Make the home page feel more personalized by loading the signed-in participant’s latest same-day log into their visible rule cards.
+- [x] Confirm `/api/whatsapp/webhook` is live for Whapi incoming messages and document the exact public webhook URL.
+- [x] Schedule recurring Warden cycles every two hours between 06:00 and 22:00 for hands-free operation.
+- [x] Run tests and save a checkpoint after the daily-status and automation changes are verified.
+
+User priority: do not wipe anyone’s work from today; if people have completed some rules today, those rules must stay green until the next day.
+
+
+## Immediate Safeguard Verification — Same-Day Progress Must Not Be Wiped
+
+- [x] Re-verify that any participant who completed rules today keeps those rule cards green through refreshes, draft recovery, same-day edits, and Warden/scheduler work.
+- [x] Add or strengthen regression coverage if any path can overwrite a completed same-day rule with an older or incomplete draft.
+- [x] Confirm in the delivery notes that today’s work remains preserved until the next calendar day reset.

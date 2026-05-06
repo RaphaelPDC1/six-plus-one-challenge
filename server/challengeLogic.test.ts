@@ -14,6 +14,7 @@ import {
   getChallengeDateIsoForDay,
   getChallengeDeadlineForDay,
   getCurrentChallengeDay,
+  mergeDailyLogInputWithoutWipingExistingWork,
   resolveDailyCompletionAward,
 } from "./db";
 
@@ -155,6 +156,53 @@ describe("challengeLogic", () => {
     expect(firstCompletion).toMatchObject({ dayComplete: true, newlyComplete: true, pointsAwarded: 10, draftSaved: false });
     expect(repeatedCompletion).toMatchObject({ dayComplete: true, newlyComplete: false, pointsAwarded: 10, draftSaved: false });
     expect(repeatedCompletion.submittedAt).toBe(submittedAt);
+  });
+
+  it("merges same-day edits without wiping rule work that was already completed today", () => {
+    const existingTodayLog = {
+      noAlcohol: true,
+      cleanEating: true,
+      cleanEatingNote: "Clean breakfast and lunch.",
+      exerciseDone: true,
+      exerciseDuration: 35,
+      exerciseType: "Run",
+      exerciseProofUrl: "https://example.com/run.jpg",
+      reflectionDone: true,
+      reflectionText: "Stayed focused this morning.",
+      reflectionShared: true,
+      readTeachDone: true,
+      readTeachText: "Atomic Habits: make it obvious.",
+      trackedEverything: true,
+    } as any;
+
+    const accidentalSparseDraft = {
+      dayNumber: 1,
+      noAlcohol: false,
+      cleanEating: false,
+      cleanEatingNote: "",
+      exerciseDuration: 0,
+      exerciseType: "",
+      exerciseProofUrl: "",
+      reflectionText: "",
+      reflectionShared: false,
+      readTeachText: "",
+      trackedEverything: false,
+    };
+
+    const merged = mergeDailyLogInputWithoutWipingExistingWork(existingTodayLog, accidentalSparseDraft);
+
+    expect(merged).toMatchObject({
+      noAlcohol: true,
+      cleanEating: true,
+      cleanEatingNote: "Clean breakfast and lunch.",
+      exerciseDuration: 35,
+      exerciseType: "Run",
+      exerciseProofUrl: "https://example.com/run.jpg",
+      reflectionText: "Stayed focused this morning.",
+      reflectionShared: true,
+      readTeachText: "Atomic Habits: make it obvious.",
+      trackedEverything: true,
+    });
   });
 
   it("does not let a completed-to-draft-to-completed toggle re-open streak credit", () => {

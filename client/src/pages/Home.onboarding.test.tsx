@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import Home, { LogoMark } from "./Home";
+import Home, { LogoMark, dailyLogToForm, mergeTodayFormWithoutWipingSavedWork } from "./Home";
 
 const mockState = vi.hoisted(() => ({
   auth: {
@@ -105,6 +105,66 @@ describe("Home onboarding shell", () => {
     if (typeof window !== "undefined") {
       window.sessionStorage.setItem("sixone-entry-seen", "true");
     }
+  });
+
+  it("preserves saved same-day completed rules when a local draft is restored", () => {
+    const savedToday = dailyLogToForm({
+      noAlcohol: true,
+      cleanEating: true,
+      exerciseDuration: 35,
+      exerciseType: "Run",
+      reflectionText: "Kept my promise today.",
+      readTeachText: "Shared a lesson with the group.",
+      trackedEverything: true,
+    });
+
+    const staleDraft = dailyLogToForm({
+      cleanEatingNote: "Draft note only",
+      exerciseDuration: 5,
+      exerciseType: "",
+      reflectionText: "",
+      readTeachText: "",
+    });
+
+    const merged = mergeTodayFormWithoutWipingSavedWork(savedToday, staleDraft);
+
+    expect(merged.noAlcohol).toBe(true);
+    expect(merged.cleanEating).toBe(true);
+    expect(merged.exerciseDuration).toBe(35);
+    expect(merged.exerciseType).toBe("Run");
+    expect(merged.reflectionText).toBe("Kept my promise today.");
+    expect(merged.readTeachText).toBe("Shared a lesson with the group.");
+    expect(merged.trackedEverything).toBe(true);
+  });
+
+  it("allows new same-day draft progress to add green rules without removing saved work", () => {
+    const savedToday = dailyLogToForm({
+      noAlcohol: true,
+      cleanEating: false,
+      exerciseDuration: 0,
+      exerciseType: "",
+      reflectionText: "Morning reflection done.",
+      readTeachText: "",
+      trackedEverything: false,
+    });
+
+    const currentDraft = dailyLogToForm({
+      cleanEating: true,
+      exerciseDuration: 45,
+      exerciseType: "Gym",
+      readTeachText: "Discipline compounds.",
+      trackedEverything: true,
+    });
+
+    const merged = mergeTodayFormWithoutWipingSavedWork(savedToday, currentDraft);
+
+    expect(merged.noAlcohol).toBe(true);
+    expect(merged.cleanEating).toBe(true);
+    expect(merged.exerciseDuration).toBe(45);
+    expect(merged.exerciseType).toBe("Gym");
+    expect(merged.reflectionText).toBe("Morning reflection done.");
+    expect(merged.readTeachText).toBe("Discipline compounds.");
+    expect(merged.trackedEverything).toBe(true);
   });
 
   it("renders the actual image logo in the reusable logo mark without a stacked text fallback", () => {
@@ -421,7 +481,9 @@ describe("Home onboarding shell", () => {
     expect(homeSource).toContain("window.localStorage.setItem(draftStorageKey");
     expect(homeSource).toContain("window.localStorage.removeItem(draftStorageKey);");
     expect(homeSource).toContain("Draft restored");
-    expect(homeSource).toContain("setForm(dailyLogToForm(snapshot?.myLog));");
+    expect(homeSource).toContain("const savedToday = dailyLogToForm(snapshot?.myLog);");
+    expect(homeSource).toContain("setForm(mergeTodayFormWithoutWipingSavedWork(savedToday, storedDraft));");
+    expect(homeSource).toContain("setForm(savedToday);");
   });
 
   it("uses a compact flick-card calendar with an expandable full journey view", () => {
