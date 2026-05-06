@@ -47,7 +47,7 @@ vi.mock("@/lib/trpc", () => ({
         useMutation: () => mockState.mutation,
       },
       logoUrl: {
-        useQuery: () => ({ data: { url: "/manus-storage/six-plus-one-original-uploaded-logo_aefa948f.webp" } }),
+        useQuery: () => ({ data: { url: "/manus-storage/six-plus-one-logo-inverted-gold_e742b8d3.webp" } }),
       },
     },
     signup: {
@@ -112,7 +112,7 @@ describe("Home onboarding shell", () => {
 
     expect(markup).toContain("brand-logo-shell");
     expect(markup).toContain("brand-logo-image");
-    expect(markup).toContain('src="/manus-storage/six-plus-one-original-uploaded-logo_aefa948f.webp"');
+    expect(markup).toContain('src="/manus-storage/six-plus-one-logo-inverted-gold_e742b8d3.webp"');
     expect(markup).not.toContain("brand-wordmark");
     expect(markup).not.toContain("bg-black");
   });
@@ -122,11 +122,11 @@ describe("Home onboarding shell", () => {
 
     expect(markup).toContain("sticky top-0");
     expect(markup).toContain("brand-logo-image");
-    expect(markup).toContain('src="/manus-storage/six-plus-one-original-uploaded-logo_aefa948f.webp"');
+    expect(markup).toContain('src="/manus-storage/six-plus-one-logo-inverted-gold_e742b8d3.webp"');
     expect(markup).toContain("Four Lives Challenge");
   });
 
-  it("renders the public landing page with the white uploaded logo", () => {
+  it("renders the public landing page with the inverted uploaded logo", () => {
     mockState.auth.isAuthenticated = false;
     mockState.snapshotQuery.isLoading = false;
 
@@ -230,7 +230,7 @@ describe("Home onboarding shell", () => {
     expect(manifestSource).toContain("/manus-storage/six-plus-one-app-icon-512_");
   });
 
-  it("renders the animated landing/loading page with the white uploaded logo image instead of blue text", () => {
+  it("renders the animated landing/loading page with the inverted uploaded logo image instead of blue text", () => {
     if (typeof window !== "undefined") {
       window.sessionStorage.removeItem("sixone-entry-seen");
     }
@@ -244,7 +244,7 @@ describe("Home onboarding shell", () => {
     expect(markup).toContain("load-status-panel");
     expect(markup).toContain("load-progress");
     expect(markup).toContain("brand-logo-image");
-    expect(markup).toContain('src="/manus-storage/six-plus-one-original-uploaded-logo_aefa948f.webp"');
+    expect(markup).toContain('src="/manus-storage/six-plus-one-logo-inverted-gold_e742b8d3.webp"');
     expect(markup).not.toContain("sticky top-0");
     expect(markup).not.toContain("bg-black/62");
     expect(markup).not.toContain("brand-wordmark");
@@ -261,23 +261,25 @@ describe("Home onboarding shell", () => {
     expect(cssSource).toContain("z-index: 0;");
   });
 
-  it("uses one stable logo image source without old-asset swaps or text fallback paths", () => {
+  it("uses one stable inverted logo image source without old-asset swaps or text fallback paths", () => {
     const homeSource = readFileSync(new URL("./Home.tsx", import.meta.url), "utf8");
     const registerSource = readFileSync(new URL("./Register.tsx", import.meta.url), "utf8");
     const routerSource = readFileSync(new URL("../../../server/routers.ts", import.meta.url), "utf8");
 
-    expect(homeSource).toContain('const BRAND_LOGO_URL = "/manus-storage/six-plus-one-original-uploaded-logo_aefa948f.webp";');
-    expect(homeSource).toContain('data-logo-source="stable-brand-image"');
+    expect(homeSource).toContain('const BRAND_LOGO_URL = "/manus-storage/six-plus-one-logo-inverted-gold_e742b8d3.webp";');
+    expect(homeSource).toContain('data-logo-source="stable-inverted-brand-image"');
+    expect(homeSource).not.toContain("six-plus-one-original-uploaded-logo_aefa948f.webp");
     expect(homeSource).not.toContain("BrandWordmark");
     expect(homeSource).not.toContain("six-plus-one-brand-logo-white-strong_2665284a.png");
 
-    expect(registerSource).toContain('const BRAND_LOGO_URL = "/manus-storage/six-plus-one-original-uploaded-logo_aefa948f.webp";');
-    expect(registerSource).toContain('data-logo-source="stable-brand-image"');
+    expect(registerSource).toContain('const BRAND_LOGO_URL = "/manus-storage/six-plus-one-logo-inverted-gold_e742b8d3.webp";');
+    expect(registerSource).toContain('data-logo-source="stable-inverted-brand-image"');
     expect(registerSource).not.toContain("setLogoFailed");
     expect(registerSource).not.toContain("onError={() => setLogoFailed(true)}");
     expect(registerSource).not.toContain("six-plus-one-brand-logo-white-strong_2665284a.png");
 
-    expect(routerSource).toContain("six-plus-one-original-uploaded-logo_aefa948f.webp");
+    expect(routerSource).toContain("six-plus-one-logo-inverted-gold_e742b8d3.webp");
+    expect(routerSource).not.toContain("six-plus-one-original-uploaded-logo_aefa948f.webp");
     expect(routerSource).not.toContain("six-plus-one-clean-stacked-logo_a45938fa.png");
     expect(routerSource).not.toContain("six-plus-one-brand-logo-white-strong_2665284a.png");
   });
@@ -307,7 +309,7 @@ describe("Home onboarding shell", () => {
     expect(markup).toContain("brand-logo-image");
   });
 
-  it("keeps the six-rule log framed as a must-do checklist with completion feedback hooks", () => {
+  it("keeps the six-rule log framed as a must-do checklist with compact feedback and locked Ghost Life hooks", () => {
     const homeSource = readFileSync(new URL("./Home.tsx", import.meta.url), "utf8");
 
     expect(homeSource).toContain("Must-do today");
@@ -318,6 +320,28 @@ describe("Home onboarding shell", () => {
     expect(homeSource).toContain("navigator.vibrate(pattern)");
     expect(homeSource).toContain("function playDoneCue()");
     expect(homeSource).toContain("AudioContext");
+    expect(homeSource).toContain("const ghostLifeLocked = Boolean(participant?.ghostLifeUsed);");
+    expect(homeSource).toContain('data-ghost-life-state={ghostLifeLocked ? "locked" : "available"}');
+    expect(homeSource).toContain("Ghost Life locked");
+    expect(homeSource).toContain("Your Purple Ghost Life has already restored a life. It is now locked for the rest of the challenge.");
+    expect(homeSource).toContain("Draft only. Lives judged after rollover.");
+    expect(homeSource).toContain("window.setTimeout(() => setSaveNotice(null), 2200);");
+    expect(homeSource).not.toContain("Progress saved quietly");
+    expect(homeSource).not.toContain("No life lost before rollover");
+  });
+
+  it("uses persistent cookies and local daily draft recovery for returning participants", () => {
+    const homeSource = readFileSync(new URL("./Home.tsx", import.meta.url), "utf8");
+    const cookieSource = readFileSync(new URL("../../../server/_core/cookies.ts", import.meta.url), "utf8");
+
+    expect(cookieSource).toContain('import { ONE_YEAR_MS } from "@shared/const";');
+    expect(cookieSource).toContain("maxAge: ONE_YEAR_MS");
+    expect(homeSource).toContain('const DRAFT_STORAGE_PREFIX = "draft_6plus1";');
+    expect(homeSource).toContain('`${DRAFT_STORAGE_PREFIX}_${userId}_day${dayNumber}`');
+    expect(homeSource).toContain("window.localStorage.setItem(draftStorageKey");
+    expect(homeSource).toContain("window.localStorage.removeItem(draftStorageKey);");
+    expect(homeSource).toContain("Draft restored");
+    expect(homeSource).toContain("setForm(dailyLogToForm(snapshot?.myLog));");
   });
 
   it("uses a compact flick-card calendar with an expandable full journey view", () => {

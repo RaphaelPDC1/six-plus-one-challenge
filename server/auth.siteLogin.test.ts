@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { COOKIE_NAME } from "../shared/const";
+import { COOKIE_NAME, ONE_YEAR_MS } from "../shared/const";
 import type { TrpcContext } from "./_core/context";
 
 const siteUser = {
@@ -88,6 +88,7 @@ describe("auth.siteLogin", () => {
         secure: true,
         sameSite: "none",
         httpOnly: true,
+        maxAge: ONE_YEAR_MS,
         path: "/",
       },
     });

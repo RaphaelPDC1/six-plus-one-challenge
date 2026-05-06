@@ -341,3 +341,23 @@
 
 - [x] Exclude users tagged as admin/founder from competitor-facing game views and rankings so admin accounts do not appear as challenge participants
 - [x] Add or update regression coverage proving admin-tagged accounts are filtered out of participant game lists while remaining able to manage the app
+
+## Bug Fix — Ghost Life Lock, Compact Save Feedback, and Permanent Inverted Logo
+
+- [x] Make Ghost Life visibly and functionally locked once it has already been used so users cannot attempt it again
+- [x] Reduce the save-progress confirmation footprint so it no longer takes up too much screen space
+- [x] Permanently replace the unreliable logo source with a stable inverted logo asset that matches the dark/gold site colour scheme
+- [x] Ensure the loading-page logo and top-left app logo both use the same reliable inverted asset without fallback flicker
+- [x] Add or update regression coverage for Ghost Life used-state locking, compact save feedback, and permanent inverted-logo rendering
+- [x] Run TypeScript, tests, production build, and preview health check after these fixes
+- [x] Save checkpoint after the Ghost Life, compact save feedback, and inverted-logo fixes
+
+## Change Request — Persistent Session and Draft Recovery
+
+- [x] Preserve in-progress daily log draft replies when a participant leaves, refreshes, or reopens the web app before final submission
+- [x] Restore saved draft fields automatically for the correct participant and challenge day without mixing users or days
+- [x] Make the login experience keep users in a logged-in state where the existing platform/session cookies allow it, with a clear fallback if the session has expired
+- [x] Add explicit draft-saved and draft-restored source behavior without using large intrusive pop-ups
+- [x] Add or update regression coverage for daily draft persistence, user/day scoping, restore behavior, and session-friendly login continuity
+- [x] Run TypeScript, tests, production build, and preview health check after persistence fixes
+- [x] Save checkpoint after the persistent session and draft-recovery improvements

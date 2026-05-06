@@ -14,3 +14,8 @@ The reward/paid section has no image field in `reward_catalogue`; if the UI prev
 `IMG_8843.PNG` is a mobile screenshot of the unauthenticated landing/entry page. It shows the intended dark grid poster system, a vertical 6+1 mark at the left edge, a gold register/login bar, and the challenge pitch with the fail cost shown as £25. It appears to be a styling/reference screenshot rather than a separate reward or participant image asset.
 
 `IMG_8844.PNG` is a mobile screenshot of the authenticated My Day view. It confirms the desired left/top 6+1 logo placement and sharp poster hierarchy, but it is also a full-page reference screenshot rather than a standalone image that should be used inside reward cards or paid/payment records.
+
+
+## 2026-05-06 Permanent Inverted Logo Pass
+
+The currently referenced original uploaded logo asset is technically the correct artwork, but it renders as a very dark purple/blue mark on a black background. On the app’s near-black header and loading page it appears effectively invisible, which matches the user’s report that the logo is “still not loading.” The existing white-strong logo file appears as a mostly white field in direct inspection, so it is not a reliable final candidate without transparent-background correction. The next asset pass should preserve the original 6+1 shape, remove or neutralize the black background, and render the mark in a high-contrast warm ivory/gold treatment that fits the dark/gold challenge palette.

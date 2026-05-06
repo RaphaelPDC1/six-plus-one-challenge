@@ -64,7 +64,7 @@ const GREEN = "#2ECC71";
 const PURPLE = "#9B59B6";
 const chartColors = [GOLD, RED, GREEN, PURPLE, "#4CA3C9", "#E67E22", "#F1C40F", "#ECF0F1"];
 // Use relative path - server handles the signed CloudFront redirect
-const BRAND_LOGO_URL = "/manus-storage/six-plus-one-original-uploaded-logo_aefa948f.webp";
+const BRAND_LOGO_URL = "/manus-storage/six-plus-one-logo-inverted-gold_e742b8d3.webp";
 
 function BrandLogoImageWithRetry({ alt, className = "h-full w-full object-contain", decorative = false }: { alt: string; className?: string; decorative?: boolean }) {
   return (
@@ -72,7 +72,7 @@ function BrandLogoImageWithRetry({ alt, className = "h-full w-full object-contai
       src={BRAND_LOGO_URL}
       alt={decorative ? "" : alt}
       data-testid="brand-logo"
-      data-logo-source="stable-brand-image"
+      data-logo-source="stable-inverted-brand-image"
       className={className}
       decoding="async"
       loading="eager"
@@ -113,6 +113,46 @@ const emptyDay: MyDayForm = {
   readTeachText: "",
   trackedEverything: false,
 };
+
+const DRAFT_STORAGE_PREFIX = "draft_6plus1";
+
+function getDraftStorageKey(userId: string | number | undefined, dayNumber: number | undefined) {
+  if (!userId || !dayNumber) return "";
+  return `${DRAFT_STORAGE_PREFIX}_${userId}_day${dayNumber}`;
+}
+
+function dailyLogToForm(log: Partial<MyDayForm> | null | undefined): MyDayForm {
+  if (!log) return emptyDay;
+  return {
+    noAlcohol: Boolean(log.noAlcohol),
+    cleanEating: Boolean(log.cleanEating),
+    cleanEatingNote: String(log.cleanEatingNote ?? ""),
+    exerciseDuration: Number(log.exerciseDuration ?? 0),
+    exerciseType: String(log.exerciseType ?? ""),
+    exerciseProofUrl: String(log.exerciseProofUrl ?? ""),
+    reflectionText: String(log.reflectionText ?? ""),
+    reflectionShared: Boolean(log.reflectionShared),
+    readTeachText: String(log.readTeachText ?? ""),
+    trackedEverything: Boolean(log.trackedEverything),
+  };
+}
+
+function hasDraftContent(draft: MyDayForm) {
+  return draft.noAlcohol || draft.cleanEating || draft.cleanEatingNote.trim().length > 0 || draft.exerciseDuration > 0 || draft.exerciseType.trim().length > 0 || draft.exerciseProofUrl.trim().length > 0 || draft.reflectionText.trim().length > 0 || draft.reflectionShared || draft.readTeachText.trim().length > 0 || draft.trackedEverything;
+}
+
+function readStoredDraft(storageKey: string): MyDayForm | null {
+  if (typeof window === "undefined" || !storageKey) return null;
+  try {
+    const raw = window.localStorage.getItem(storageKey);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { form?: Partial<MyDayForm> } | Partial<MyDayForm>;
+    const restored = dailyLogToForm("form" in parsed && parsed.form ? parsed.form : parsed as Partial<MyDayForm>);
+    return hasDraftContent(restored) ? restored : null;
+  } catch {
+    return null;
+  }
+}
 
 function pulse(pattern: number | number[] = 18) {
   haptics.tap();
@@ -732,22 +772,63 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
   const [form, setForm] = useState<MyDayForm>(emptyDay);
   const [openRule, setOpenRule] = useState<RuleKey>("exercise");
   const [lastMissed, setLastMissed] = useState<string[]>([]);
-  const [saveNotice, setSaveNotice] = useState<{ title: string; detail: string; complete: boolean } | null>(null);
+  const [saveNotice, setSaveNotice] = useState<{ title: string; complete: boolean } | null>(null);
+  const [draftRestored, setDraftRestored] = useState(false);
+  const [draftReady, setDraftReady] = useState(false);
   const cameraProofInputRef = useRef<HTMLInputElement | null>(null);
   const libraryProofInputRef = useRef<HTMLInputElement | null>(null);
   const participant = snapshot?.participant;
+  const currentDayNumber = snapshot?.challenge?.currentDay ?? 1;
+  const draftStorageKey = getDraftStorageKey(participant?.userId ?? participant?.id, currentDayNumber);
   const latestWarden = [...(snapshot?.wardenMessages ?? [])].reverse()[0];
   const { rules, completedRules, allAddressed } = getDailyLogProgress(form);
+  const ghostLifeLocked = Boolean(participant?.ghostLifeUsed);
+
+  useEffect(() => {
+    setDraftReady(false);
+    setDraftRestored(false);
+    if (!draftStorageKey) {
+      setForm(emptyDay);
+      return;
+    }
+
+    const storedDraft = readStoredDraft(draftStorageKey);
+    if (storedDraft) {
+      setForm(storedDraft);
+      setDraftRestored(true);
+      window.setTimeout(() => setDraftRestored(false), 2600);
+      setDraftReady(true);
+      return;
+    }
+
+    setForm(dailyLogToForm(snapshot?.myLog));
+    setDraftReady(true);
+  }, [draftStorageKey, snapshot?.myLog]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !draftReady || !draftStorageKey) return;
+    const timeout = window.setTimeout(() => {
+      if (hasDraftContent(form)) {
+        window.localStorage.setItem(draftStorageKey, JSON.stringify({ savedAt: Date.now(), form }));
+      } else {
+        window.localStorage.removeItem(draftStorageKey);
+      }
+    }, 800);
+    return () => window.clearTimeout(timeout);
+  }, [draftReady, draftStorageKey, form]);
 
   const submit = trpc.challenge.submitMyDay.useMutation({
     onSuccess: data => {
       setLastMissed(data.deadlinePassed ? data.missedRules : []);
       pulse(data.complete ? [20, 40, 20] : [18, 28, 45]);
       setSaveNotice({
-        title: data.complete ? "Day submitted" : "Progress saved quietly",
-        detail: data.complete ? "Complete. Points added once." : "Draft saved. No life lost before rollover.",
+        title: data.complete ? "Submitted" : "Saved",
         complete: data.complete,
       });
+      if (draftStorageKey && typeof window !== "undefined") {
+        window.localStorage.removeItem(draftStorageKey);
+      }
+      window.setTimeout(() => setSaveNotice(null), 2200);
       refetch();
     },
     onError: error => toast.error(error.message),
@@ -869,12 +950,13 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
           </div>
         </div>
 
-        <div className={classNames("submit-dock sticky bottom-[74px] z-20 border border-[#2A2A2A] bg-[#0D0D0D]/95 p-3 backdrop-blur transition-all duration-300 md:static md:bg-transparent md:p-0", submit.isPending && "submit-dock-pending", allAddressed && !submit.isPending && "submit-dock-ready")}>
+        <div className={classNames("submit-dock relative sticky bottom-[74px] z-20 border border-[#2A2A2A] bg-[#0D0D0D]/95 p-3 backdrop-blur transition-all duration-300 md:static md:bg-transparent md:p-0", submit.isPending && "submit-dock-pending", allAddressed && !submit.isPending && "submit-dock-ready")}>
           <SharpButton className={classNames("w-full py-5 text-sm transition-all duration-300", submit.isPending && "submit-button-pending")} disabled={submit.isPending} onClick={() => submit.mutate({ ...form, reflectionShared: false, dayNumber: snapshot?.challenge.currentDay ?? 1 })}>
             {submit.isPending ? (allAddressed ? "Submitting the log" : "Saving progress") : allAddressed ? `Submit day ${snapshot?.challenge.currentDay ?? 1}` : `Save progress — ${6 - completedRules} still open`}
           </SharpButton>
-          {!allAddressed && <p className="mt-3 border-l-4 border-[#C8A96E] bg-[#16130B] p-4 text-xs font-black uppercase leading-5 tracking-[0.14em] text-[#C8A96E]">This is a draft save. Lives are only judged automatically after the day rolls over.</p>}
-          {saveNotice && <div className={classNames("mt-3 border-l-4 bg-black/30 px-4 py-3 text-xs font-black uppercase leading-5 tracking-[0.14em]", saveNotice.complete ? "border-[#2ECC71] text-[#2ECC71]" : "border-[#C8A96E]/70 text-[#C8A96E]")}><span>{saveNotice.title}.</span> <span className="text-[#9A9A9A]">{saveNotice.detail}</span></div>}
+          {!allAddressed && <p className="mt-2 text-center text-[10px] font-black uppercase tracking-[0.16em] text-[#C8A96E]/80">Draft only. Lives judged after rollover.</p>}
+          {saveNotice && <div role="status" className={classNames("pointer-events-none absolute -top-3 right-3 rounded-full border bg-black/90 px-2 py-1 text-[9px] font-black uppercase leading-none tracking-[0.16em] shadow-[0_0_18px_rgba(0,0,0,0.45)]", saveNotice.complete ? "border-[#2ECC71]/70 text-[#2ECC71]" : "border-[#C8A96E]/70 text-[#C8A96E]")}>{saveNotice.title}</div>}
+          {draftRestored && <div role="status" className="pointer-events-none absolute -top-3 left-3 rounded-full border border-[#C8A96E]/70 bg-black/90 px-2 py-1 text-[9px] font-black uppercase leading-none tracking-[0.16em] text-[#C8A96E] shadow-[0_0_18px_rgba(0,0,0,0.45)]">Draft restored</div>}
           {lastMissed.length > 0 && <div className="mt-3 border-l-4 border-[#C0392B] bg-[#180F0F] p-4 text-sm font-bold text-[#F0B7AE]">Missed after rollover: {lastMissed.join(", ")}. Penalty logged.</div>}
         </div>
       </section>
@@ -882,12 +964,15 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
       <aside className="space-y-5">
         <WardenPresence snapshot={snapshot} />
         <HealthBar lives={participant?.livesRemaining ?? 4} label="Lives remain" />
-        <div className="border border-[#2A2A2A] bg-[#101010] p-4">
-          <MicroLabel tone="purple">Ghost Life</MicroLabel>
-          <p className="mt-3 text-2xl font-black uppercase leading-none text-white">One shot. No repeats.</p>
-          <p className="mt-3 text-sm font-bold leading-6 text-[#999]">Tap once after a lost life to restore one purple Ghost Life. It cannot be used twice.</p>
-          <SharpButton className="mt-4 w-full border-[#9B59B6] bg-[#9B59B6] text-white shadow-[0_0_28px_rgba(155,89,182,0.24)]" disabled={ghost.isPending || participant?.ghostLifeUsed} onClick={() => ghost.mutate({ exerciseDuration: form.exerciseDuration, insightCount: form.readTeachText.split(".").filter(Boolean).length })}>
-            {participant?.ghostLifeUsed ? "Purple Ghost used" : ghost.isPending ? "Summoning ghost life" : "Use purple Ghost Life"}
+        <div className={classNames("border p-4 transition", ghostLifeLocked ? "border-[#4A315D] bg-[#120F18] opacity-80" : "border-[#2A2A2A] bg-[#101010]")} data-ghost-life-state={ghostLifeLocked ? "locked" : "available"}>
+          <div className="flex items-start justify-between gap-3">
+            <MicroLabel tone="purple">Ghost Life</MicroLabel>
+            {ghostLifeLocked && <span className="border border-[#9B59B6]/60 bg-[#1B1024] px-2 py-1 text-[9px] font-black uppercase tracking-[0.16em] text-[#D8B4FE]">Locked</span>}
+          </div>
+          <p className="mt-3 text-2xl font-black uppercase leading-none text-white">{ghostLifeLocked ? "Used. Locked." : "One shot. No repeats."}</p>
+          <p className="mt-3 text-sm font-bold leading-6 text-[#999]">{ghostLifeLocked ? "Your Purple Ghost Life has already restored a life. It is now locked for the rest of the challenge." : "Tap once after a lost life to restore one purple Ghost Life. It cannot be used twice."}</p>
+          <SharpButton className={classNames("mt-4 w-full", ghostLifeLocked ? "border-[#4A315D] bg-[#1B1420] text-[#8D7898] shadow-none" : "border-[#9B59B6] bg-[#9B59B6] text-white shadow-[0_0_28px_rgba(155,89,182,0.24)]")} disabled={ghost.isPending || ghostLifeLocked} aria-disabled={ghostLifeLocked} onClick={() => ghost.mutate({ exerciseDuration: form.exerciseDuration, insightCount: form.readTeachText.split(".").filter(Boolean).length })}>
+            {ghostLifeLocked ? "Ghost Life locked" : ghost.isPending ? "Summoning ghost life" : "Use purple Ghost Life"}
           </SharpButton>
         </div>
         <div className="border border-[#2A2A2A] bg-[#101010] p-4">
