@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { CalendarView } from "./Calendar";
 import { trpc } from "@/lib/trpc";
 import { clampLives, getDailyLogProgress } from "@/lib/challengeUi";
 import { haptics } from "@/lib/haptics";
@@ -26,6 +27,7 @@ import {
   UserRound,
   Utensils,
   X,
+  Calendar,
 } from "lucide-react";
 import {
   CartesianGrid,
@@ -52,7 +54,7 @@ type MyDayForm = {
   trackedEverything: boolean;
 };
 
-type TabKey = "myday" | "overview" | "leaderboard" | "proof" | "rewards" | "admin";
+type TabKey = "myday" | "overview" | "leaderboard" | "proof" | "rewards" | "calendar" | "admin";
 
 type RuleKey = keyof MyDayForm | "exercise" | "reflection" | "readTeach";
 
@@ -1221,6 +1223,7 @@ const tabs: Array<{ key: TabKey; label: string; icon: any }> = [
   { key: "leaderboard", label: "Board", icon: Trophy },
   { key: "proof", label: "Proof", icon: MessageSquare },
   { key: "rewards", label: "Rewards", icon: Gift },
+  { key: "calendar", label: "Journey", icon: Calendar },
   { key: "admin", label: "Founder", icon: Crown },
 ];
 
@@ -1301,6 +1304,7 @@ export default function Home() {
               {activeTab === "leaderboard" && <Leaderboard snapshot={snapshot} />}
               {activeTab === "proof" && <ProofFeed snapshot={snapshot} />}
               {activeTab === "rewards" && <Rewards snapshot={snapshot} refetch={snapshotQuery.refetch} />}
+              {activeTab === "calendar" && <CalendarView />}
               {activeTab === "admin" && (user?.role === "admin" ? <AdminPanel snapshot={snapshot} refetch={snapshotQuery.refetch} /> : <div className="border border-[#2A2A2A] bg-[#101010] p-8"><MicroLabel tone="red">Restricted</MicroLabel><p className="mt-3 text-xl font-black uppercase text-white">Founder dashboard is restricted to admin users.</p></div>)}
             </div>
           </>
