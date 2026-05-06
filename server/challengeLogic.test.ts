@@ -103,11 +103,13 @@ describe("challengeLogic", () => {
     expect(calculateCheckpointAward(10, false)).toBe(0);
   });
 
-  it("enforces a hard cap of three Warden messages per day", () => {
+  it("enforces the organic Warden message ceiling and dynamic lower limits", () => {
     expect(canPostWardenMessage(0)).toBe(true);
-    expect(canPostWardenMessage(2)).toBe(true);
-    expect(canPostWardenMessage(3)).toBe(false);
+    expect(canPostWardenMessage(3)).toBe(true);
+    expect(canPostWardenMessage(4)).toBe(false);
     expect(canPostWardenMessage(9)).toBe(false);
+    expect(canPostWardenMessage(2, 2)).toBe(false);
+    expect(canPostWardenMessage(3, 3)).toBe(false);
   });
 
   it("anchors challenge day calculations to 6 May and clamps before/after the 50-day window", () => {

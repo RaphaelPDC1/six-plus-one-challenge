@@ -116,8 +116,21 @@ export function hasLateWindowDrama(state: ChallengeState): boolean {
   const lifeLosses = state.lives_lost_today?.length ?? 0;
   const milestones = state.milestones_hit_today?.length ?? 0;
   const sharpInsights = state.sharp_insights_shared_today?.length ?? 0;
+  const sharedThemes = state.shared_themes?.length ?? 0;
+  const personalBests = state.personal_bests_today?.length ?? 0;
+  const silentReturns = state.silent_returns_today?.length ?? 0;
+  const ghostLifeSignals = state.ghost_life_signals_today?.length ?? 0;
 
-  return score >= 3 || lifeLosses > 0 || milestones > 0 || sharpInsights >= 2;
+  return (
+    score >= 3 ||
+    lifeLosses > 0 ||
+    milestones > 0 ||
+    sharpInsights >= 2 ||
+    sharedThemes > 0 ||
+    personalBests > 0 ||
+    silentReturns > 0 ||
+    ghostLifeSignals > 0
+  );
 }
 
 export function shouldRunOrganicWardenCycle(

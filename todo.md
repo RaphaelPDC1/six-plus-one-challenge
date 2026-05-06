@@ -539,3 +539,18 @@ User priority: do not wipe anyone’s work from today; if people have completed 
 
 User priority: the Warden should feel alive and unpredictable, choosing moments based on the day’s drama rather than posting mechanically.
 
+
+
+## Current Requested Changes — Richer Warden Intelligence
+
+- [x] Expand CHALLENGE_STATE with recent_insights from shared read/teach text, including participant, insight text, timestamp, and rule.
+- [x] Expand CHALLENGE_STATE with recent_reflections from shared public reflections, including participant, reflection text, logged time, and sharing status.
+- [x] Expand CHALLENGE_STATE with exercise_logs including participant, activity type, duration, proof status, and logged time.
+- [x] Add performance pattern lists for improving, declining, silent, and consistent participants.
+- [x] Add cross-participant shared_themes so the Warden can connect similar writing across participants.
+- [x] Expand daily_drama_score with shared themes, personal bests, deep insights, late-night logs after 21:00, silent-participant returns, Ghost Life use, and before-midday full-rule completions.
+- [x] Update the Warden prompt so it explicitly uses recent insights, reflections, exercise logs, shared themes, and participant pattern lists to read the room.
+- [x] Add seeded regression coverage with 2–3 sample participants proving enriched state and drama scoring behavior.
+- [x] Run tests, production build, health check, save a checkpoint, and report what changed.
+
+User priority: the Warden should read the room, find tensions between words and actions, and speak like a presence rather than a number-watching bot.

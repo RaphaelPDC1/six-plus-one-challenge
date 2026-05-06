@@ -92,8 +92,8 @@ export function getGhostLifeEligibility(params: {
   return { eligible: true, reason: "Eligible" };
 }
 
-export function canSendWardenMessage(messagesSentToday: number): boolean {
-  return messagesSentToday < 3;
+export function canSendWardenMessage(messagesSentToday: number, maxMessagesToday = 4): boolean {
+  return messagesSentToday < Math.min(Math.max(maxMessagesToday, 0), 4);
 }
 
 export const canPostWardenMessage = canSendWardenMessage;

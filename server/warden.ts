@@ -14,7 +14,8 @@ Rules:
 - Keep the message short enough for WhatsApp.
 - Mention specific people only when the data supports it.
 - Assume every message is public to the group.
-- Do not exceed the product cap of three unprompted Warden messages per day; the caller enforces this too.`;
+- Do not exceed the organic Warden ceiling of four unprompted messages per day, and expect most days to use fewer.
+- Read the room from participant writing, exercise effort, silence, returns, streaks, payments, and WhatsApp tone instead of sounding like a scheduled bot.`;
 
 export async function generateWardenCommentary(userIdForContext: number, mode: WardenMode) {
   const snapshot = await getAppSnapshot(userIdForContext);
@@ -33,7 +34,12 @@ export async function generateWardenCommentary(userIdForContext: number, mode: W
       day: l.dayNumber,
       complete: l.dayComplete,
       readTeach: l.readTeachText,
+      reflection: l.reflectionText,
       reflectionShared: l.reflectionShared,
+      exerciseType: l.exerciseType,
+      exerciseDuration: l.exerciseDuration,
+      proofUploaded: Boolean(l.exerciseProofUrl),
+      submittedAt: l.submittedAt,
     })),
     pendingPayments: snapshot.payments.filter((p: any) => p.status === "pending").map((p: any) => ({ participantId: p.participantId, amountPence: p.amountPence, reason: p.reason })),
     recentChatMessages: snapshot.chatHistory.slice(0, 20).map((m: any) => ({ sender: m.senderName || m.senderId, message: m.messageText, timestamp: m.messageTimestamp })),
