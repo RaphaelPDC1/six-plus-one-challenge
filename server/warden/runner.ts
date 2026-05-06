@@ -1,6 +1,7 @@
 import { getChallengeState } from "./challengeState";
 import { generateWardenMessage, shouldSendMessage } from "./messageGenerator";
 import { logWardenMessage, hasHitDailyLimit } from "./messageLogger";
+import { sendWardenMessage } from "./whatsappClient";
 
 /**
  * Main Warden runner: orchestrates message generation, logging, and posting
@@ -64,9 +65,14 @@ export async function runWardenCycle(): Promise<{
 
     console.log("[Warden] Message ready to post to WhatsApp");
 
-    // TODO: Post to WhatsApp via Wati
-    // This will be implemented in Phase 3
-    // For now, just log that it's ready
+    // Post to WhatsApp via Whapi
+    try {
+      await sendWardenMessage(generatedMessage);
+      console.log("[Warden] Message posted to WhatsApp successfully");
+    } catch (whatsappError) {
+      console.error("[Warden] Failed to post to WhatsApp:", whatsappError);
+      throw whatsappError;
+    }
 
     return {
       messageGenerated: true,
@@ -125,8 +131,14 @@ export async function triggerImmediateMessage(
 
     console.log(`[Warden] Immediate message ready: "${generatedMessage}"`);
 
-    // TODO: Post to WhatsApp via Wati
-    // This will be implemented in Phase 3
+    // Post to WhatsApp via Whapi
+    try {
+      await sendWardenMessage(generatedMessage);
+      console.log(`[Warden] Immediate message (${triggerType}) posted to WhatsApp successfully`);
+    } catch (whatsappError) {
+      console.error(`[Warden] Failed to post immediate message (${triggerType}) to WhatsApp:`, whatsappError);
+      throw whatsappError;
+    }
 
     return {
       messageSent: true,
