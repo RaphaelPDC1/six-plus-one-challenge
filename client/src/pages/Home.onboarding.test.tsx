@@ -269,6 +269,8 @@ describe("Home onboarding shell", () => {
     const manifestSource = readFileSync(new URL("../../public/site.webmanifest", import.meta.url), "utf8");
     const routerSource = readFileSync(new URL("../../../server/routers.ts", import.meta.url), "utf8");
     const storageProxySource = readFileSync(new URL("../../../server/_core/storageProxy.ts", import.meta.url), "utf8");
+    const logoSvgSource = readFileSync(new URL("../../public/six-plus-one-logo.svg", import.meta.url), "utf8");
+    const appIconSvgSource = readFileSync(new URL("../../public/app-icon.svg", import.meta.url), "utf8");
 
     expect(homeSource).toContain('const BRAND_LOGO_URL = "/six-plus-one-logo.svg";');
     expect(homeSource).toContain('data-logo-source="app-origin-brand-svg"');
@@ -288,6 +290,14 @@ describe("Home onboarding shell", () => {
     expect(routerSource).not.toContain("six-plus-one-original-uploaded-logo_aefa948f.webp");
     expect(routerSource).not.toContain("six-plus-one-clean-stacked-logo_a45938fa.png");
     expect(routerSource).not.toContain("six-plus-one-brand-logo-white-strong_2665284a.png");
+
+    expect(logoSvgSource).toContain('fill="#FFFFFF"');
+    expect(logoSvgSource).toContain('stroke="#F2D37C"');
+    expect(logoSvgSource).toContain('stop-color="#FFF1B8"');
+    expect(logoSvgSource).toContain('fill="#FFF4C7"');
+    expect(logoSvgSource).not.toContain('opacity="0.32"');
+    expect(appIconSvgSource).toContain('fill="#FFFFFF"');
+    expect(appIconSvgSource).toContain('stroke="#F2D37C"');
 
     expect(storageProxySource).toContain("assetResp.arrayBuffer()");
     expect(storageProxySource).toContain("cachePolicyForKey(key)");

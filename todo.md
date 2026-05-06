@@ -384,3 +384,12 @@
 - [x] Add or update regression coverage for live-safe logo assets, inline proof image rendering, tappable Board cards, participant stats, and enlarged display pictures
 - [x] Run TypeScript, tests, production build, preview health check, and live-style image URL checks after the fixes
 - [x] Save checkpoint after the live mobile image and Board participant-card fixes
+
+## Bug Fix — High-Contrast Logo Artwork
+
+- [x] Diagnose why the app-origin logo artwork appears almost black on the black mobile background even though it loads
+- [x] Replace the current too-dark logo SVG/artwork with a high-contrast gold/white version that is clearly visible in header and loading views
+- [x] Ensure the logo remains an app-origin asset and does not reintroduce expiring storage-backed image URLs
+- [x] Add or update regression coverage for high-contrast logo asset content and app-origin references
+- [x] Run TypeScript, tests, production build, preview health check, and direct logo response checks after the logo artwork fix
+- [x] Save checkpoint after the high-contrast logo artwork fix
