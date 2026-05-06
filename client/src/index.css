@@ -307,14 +307,14 @@
   top: 45%;
   translate: -50% -50%;
   transform-origin: center;
-  animation: load-mark-drift 1800ms cubic-bezier(0.16, 1, 0.3, 1) infinite alternate;
   user-select: none;
   z-index: 0;
+  opacity: 1;
 }
 
 .load-mark-image {
-  width: min(78vw, 25rem);
-  height: clamp(7rem, 22vw, 12rem);
+  width: min(72vw, 18rem);
+  height: clamp(5.5rem, 18vw, 9rem);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -327,13 +327,7 @@
 }
 
 .load-mark::after {
-  content: "";
-  position: absolute;
-  inset: 10% 4%;
-  background: linear-gradient(115deg, transparent 0 42%, rgba(200, 169, 110, 0.24) 44%, transparent 47% 100%);
-  opacity: 0.52;
-  pointer-events: none;
-  animation: load-slash 1600ms ease-in-out infinite alternate;
+  content: none;
 }
 
 .load-lines {
@@ -383,8 +377,8 @@
 }
 
 @keyframes load-mark-drift {
-  from { transform: translate3d(-0.6%, 0.4%, 0) scale(0.982); opacity: 0.82; }
-  to { transform: translate3d(0.6%, -0.5%, 0) scale(1.018); opacity: 1; }
+  from { transform: none; opacity: 1; }
+  to { transform: none; opacity: 1; }
 }
 
 @keyframes load-slash {
@@ -413,8 +407,8 @@
   }
 
   .load-mark-image {
-    width: clamp(11rem, 68vw, 18rem);
-    max-width: 78vw;
+    width: clamp(8.5rem, 54vw, 13rem);
+    max-width: 70vw;
   }
 
   .load-crosshair {

@@ -1,0 +1,7 @@
+# Current Logo Flicker Findings
+
+The source image `/home/ubuntu/upload/IMG_1069.webp` is a very dark horizontal logo asset. The currently referenced generated white PNG `/home/ubuntu/webdev-static-assets/six-plus-one-brand-logo-white-strong.png` appears visually blank/white in the viewer, indicating it may not be a reliable visible header/loading logo by itself. The current Home.tsx logic uses a dynamic `trpc.auth.logoUrl` query, stores a delayed `logoUrl` in state, falls back to `/manus-storage/six-plus-one-brand-logo-white-strong_2665284a.png`, and switches to a fallback wordmark on image error. This delayed source swap plus error fallback is a likely cause of flicker and unexpected logo changes.
+
+Next action: inspect remaining generated logo variants and replace the dynamic/fallback path with one stable, visibly correct logo source for both the loading screen and top-header area.
+
+Additional inspection: `/home/ubuntu/upload/IMG_8843.PNG` shows the desired on-screen direction: a stable compact logo mark in the top bar without source-swapping flicker. The generated `/home/ubuntu/webdev-static-assets/six-plus-one-brand-logo-visible.webp` is visibly the purple/dark 6+1 artwork and looks like the old eroded/dark logo the user does not want exposed during fallback. The app should therefore avoid changing from one asset URL to another after render, and it should not reveal the older visible/dark fallback when the intended white/clean image is unavailable.

@@ -47,7 +47,7 @@ vi.mock("@/lib/trpc", () => ({
         useMutation: () => mockState.mutation,
       },
       logoUrl: {
-        useQuery: () => ({ data: { url: "/manus-storage/six-plus-one-brand-logo-white-strong_2665284a.png" } }),
+        useQuery: () => ({ data: { url: "/manus-storage/six-plus-one-clean-stacked-logo_5d45a828.png" } }),
       },
     },
     signup: {
@@ -112,7 +112,7 @@ describe("Home onboarding shell", () => {
 
     expect(markup).toContain("brand-logo-shell");
     expect(markup).toContain("brand-logo-image");
-    expect(markup).toContain('src="/manus-storage/six-plus-one-brand-logo-white-strong_2665284a.png"');
+    expect(markup).toContain('src="/manus-storage/six-plus-one-clean-stacked-logo_5d45a828.png"');
     expect(markup).not.toContain("brand-wordmark");
     expect(markup).not.toContain("bg-black");
   });
@@ -122,7 +122,7 @@ describe("Home onboarding shell", () => {
 
     expect(markup).toContain("sticky top-0");
     expect(markup).toContain("brand-logo-image");
-    expect(markup).toContain('src="/manus-storage/six-plus-one-brand-logo-white-strong_2665284a.png"');
+    expect(markup).toContain('src="/manus-storage/six-plus-one-clean-stacked-logo_5d45a828.png"');
     expect(markup).toContain("Four Lives Challenge");
   });
 
@@ -244,7 +244,7 @@ describe("Home onboarding shell", () => {
     expect(markup).toContain("load-status-panel");
     expect(markup).toContain("load-progress");
     expect(markup).toContain("brand-logo-image");
-    expect(markup).toContain('src="/manus-storage/six-plus-one-brand-logo-white-strong_2665284a.png"');
+    expect(markup).toContain('src="/manus-storage/six-plus-one-clean-stacked-logo_5d45a828.png"');
     expect(markup).not.toContain("sticky top-0");
     expect(markup).not.toContain("bg-black/62");
     expect(markup).not.toContain("brand-wordmark");
@@ -272,5 +272,28 @@ describe("Home onboarding shell", () => {
     expect(markup).toContain("Make it yours.");
     expect(markup).toContain("new@example.com");
     expect(markup).toContain("brand-logo-image");
+  });
+
+  it("keeps the six-rule log framed as a must-do checklist with completion feedback hooks", () => {
+    const homeSource = readFileSync(new URL("./Home.tsx", import.meta.url), "utf8");
+
+    expect(homeSource).toContain("Must-do today");
+    expect(homeSource).toContain("Six rules. No misses.");
+    expect(homeSource).toContain("still required");
+    expect(homeSource).toContain("Done — locked in");
+    expect(homeSource).toContain("function pulse(pattern: number | number[] = 18)");
+    expect(homeSource).toContain("navigator.vibrate(pattern)");
+    expect(homeSource).toContain("function playDoneCue()");
+    expect(homeSource).toContain("AudioContext");
+  });
+
+  it("uses a compact flick-card calendar with an expandable full journey view", () => {
+    const calendarSource = readFileSync(new URL("./Calendar.tsx", import.meta.url), "utf8");
+
+    expect(calendarSource).toContain("Flick calendar");
+    expect(calendarSource).toContain("Expand full calendar");
+    expect(calendarSource).toContain("Hide full calendar");
+    expect(calendarSource).toContain("setExpanded(value => !value)");
+    expect(calendarSource).toContain("full journey map");
   });
 });

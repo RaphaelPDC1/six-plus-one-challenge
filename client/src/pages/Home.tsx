@@ -64,40 +64,19 @@ const GREEN = "#2ECC71";
 const PURPLE = "#9B59B6";
 const chartColors = [GOLD, RED, GREEN, PURPLE, "#4CA3C9", "#E67E22", "#F1C40F", "#ECF0F1"];
 // Use relative path - server handles the signed CloudFront redirect
-const BRAND_LOGO_URL = "/manus-storage/six-plus-one-brand-logo-white-strong_2665284a.png";
+const BRAND_LOGO_URL = "/manus-storage/six-plus-one-clean-stacked-logo_5d45a828.png";
 
 function BrandLogoImageWithRetry({ alt, className = "h-full w-full object-contain", decorative = false }: { alt: string; className?: string; decorative?: boolean }) {
-  const [failed, setFailed] = useState(false);
-  const [logoUrl, setLogoUrl] = useState<string | null>(null);
-  
-  // Only fetch signed URL in browser context (not in tests)
-  const { data: logoUrlData } = typeof window !== 'undefined' && trpc?.auth?.logoUrl 
-    ? trpc.auth.logoUrl.useQuery() 
-    : { data: undefined };
-  
-  useEffect(() => {
-    if (logoUrlData?.url) {
-      setLogoUrl(logoUrlData.url);
-    }
-  }, [logoUrlData]);
-  
-  if (failed) {
-    return <BrandWordmark alt={alt} decorative={decorative} className={className} />;
-  }
-  
-  // Use signed URL from server if available, fallback to relative path
-  const finalUrl = logoUrl || BRAND_LOGO_URL;
-  
   return (
-    <img 
-      src={finalUrl} 
-      alt={decorative ? "" : alt} 
-      data-testid="brand-logo" 
-      className={className} 
-      decoding="async" 
-      loading="eager" 
-      crossOrigin="anonymous"
-      onError={() => setFailed(true)}
+    <img
+      src={BRAND_LOGO_URL}
+      alt={decorative ? "" : alt}
+      data-testid="brand-logo"
+      data-logo-source="stable-brand-image"
+      className={className}
+      decoding="async"
+      loading="eager"
+      fetchPriority="high"
     />
   );
 }
@@ -152,6 +131,30 @@ function pulse(pattern: number | number[] = 18) {
 function hapticFallback(pattern: number | number[] = 18) {
   if (typeof navigator !== "undefined" && "vibrate" in navigator) {
     navigator.vibrate(pattern);
+  }
+}
+
+function playDoneCue() {
+  if (typeof window === "undefined") return;
+  const AudioContextClass = window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+  if (!AudioContextClass) return;
+
+  try {
+    const context = new AudioContextClass();
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
+    oscillator.type = "triangle";
+    oscillator.frequency.setValueAtTime(520, context.currentTime);
+    oscillator.frequency.exponentialRampToValueAtTime(760, context.currentTime + 0.08);
+    gain.gain.setValueAtTime(0.0001, context.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.045, context.currentTime + 0.015);
+    gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.14);
+    oscillator.connect(gain);
+    gain.connect(context.destination);
+    oscillator.start();
+    oscillator.stop(context.currentTime + 0.16);
+  } catch {
+    // Audio feedback is progressive enhancement only.
   }
 }
 
@@ -641,12 +644,12 @@ function RuleCard({
   children: React.ReactNode;
 }) {
   return (
-    <article className={classNames("border transition-all duration-300 hover:-translate-y-0.5", complete ? "border-[#174D2B] bg-[#0F1E15]" : active ? "border-[#C8A96E] bg-[#14120B] shadow-[0_18px_55px_rgba(200,169,110,0.08)]" : "border-[#2A2A2A] bg-[#101010]")}> 
+    <article className={classNames("border transition-all duration-300 hover:-translate-y-0.5", complete ? "border-[#2ECC71] bg-[#0F1E15] shadow-[0_0_0_1px_rgba(46,204,113,0.2)]" : active ? "border-[#C0392B] bg-[#1A0D0A] shadow-[0_18px_55px_rgba(192,57,43,0.14)]" : "border-[#7A241B] bg-[#101010]")}> 
       <button className="flex w-full items-center justify-between gap-4 p-4 text-left" onClick={() => { pulse(12); onToggle(); }}>
         <div className="flex min-w-0 items-center gap-4">
           <div className={classNames("grid h-11 w-11 place-items-center border", complete ? "border-[#2ECC71] text-[#2ECC71]" : "border-[#343434] text-[#C8A96E]")}>{complete ? <Check className="h-5 w-5 animate-gold-pop" /> : <Icon className="h-5 w-5" />}</div>
           <div className="min-w-0">
-            <MicroLabel tone={complete ? "green" : "gold"}>{label}</MicroLabel>
+            <MicroLabel tone={complete ? "green" : "red"}>{complete ? `${label} · done` : `${label} · must do`}</MicroLabel>
             <h3 className={classNames("mt-2 text-lg font-black uppercase tracking-[-0.04em] text-white", complete && "text-[#2ECC71] line-through decoration-[#2ECC71]/70")}>{title}</h3>
           </div>
         </div>
@@ -750,6 +753,12 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
     onError: error => toast.error(error.message || "Could not upload proof image."),
   });
 
+  function markChecklistItem(key: "noAlcohol" | "cleanEating" | "trackedEverything", checked: boolean) {
+    pulse(checked ? [18, 30, 18] : 12);
+    if (checked) playDoneCue();
+    setForm(current => ({ ...current, [key]: checked }));
+  }
+
   function handleProofFile(file?: File) {
     if (!file) return;
     if (!file.type.match(/^image\/(png|jpeg|webp)$/)) { toast.error("Use a PNG, JPG, or WEBP proof image."); return; }
@@ -780,11 +789,20 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
           </div>
         </div>
 
-        <div className="space-y-2">
+        <div className={classNames("must-do-rules border-2 p-3 transition-all duration-300 sm:p-4", allAddressed ? "must-do-rules-complete border-[#2ECC71] bg-[#07150D]" : "border-[#C0392B] bg-[#190B0A]")}> 
+          <div className="mb-3 flex flex-col gap-2 border-b border-white/10 pb-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <MicroLabel tone={allAddressed ? "green" : "red"}>{allAddressed ? "Must-do complete" : "Must-do today"}</MicroLabel>
+              <h2 className="mt-2 text-2xl font-black uppercase leading-none tracking-[-0.06em] text-white">Six rules. No misses.</h2>
+            </div>
+            <div className={classNames("border px-3 py-2 text-[10px] font-black uppercase tracking-[0.18em]", allAddressed ? "border-[#2ECC71] bg-[#0F2A18] text-[#2ECC71]" : "border-[#C0392B] bg-[#2A0F0C] text-[#FFB3A8]")}>{allAddressed ? "Done — locked in" : `${6 - completedRules} still required`}</div>
+          </div>
+          {allAddressed && <div className="mb-3 border border-[#2ECC71]/50 bg-[#0F2A18] p-3 text-xs font-black uppercase tracking-[0.16em] text-[#2ECC71]">All six are green. Submit the day.</div>}
+          <div className="space-y-2">
           <RuleCard title="No alcohol" label="Rule 01" icon={Shield} complete={form.noAlcohol} active={openRule === "noAlcohol"} onToggle={() => setOpenRule(openRule === "noAlcohol" ? "exercise" : "noAlcohol")}>
             <label className="flex items-center justify-between gap-4 border border-[#2A2A2A] bg-[#0D0D0D] p-4">
               <span className="text-sm font-black uppercase tracking-[0.12em] text-white">Kept clean today</span>
-              <input type="checkbox" checked={form.noAlcohol} onChange={event => { pulse(18); setForm({ ...form, noAlcohol: event.target.checked }); }} className="h-5 w-5 accent-[#C8A96E]" />
+              <input type="checkbox" checked={form.noAlcohol} onChange={event => markChecklistItem("noAlcohol", event.target.checked)} className="h-6 w-6 accent-[#2ECC71]" />
             </label>
           </RuleCard>
 
@@ -792,7 +810,7 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
             <div className="space-y-3">
               <label className="flex items-center justify-between gap-4 border border-[#2A2A2A] bg-[#0D0D0D] p-4">
                 <span className="text-sm font-black uppercase tracking-[0.12em] text-white">Food stayed inside the rules</span>
-                <input type="checkbox" checked={form.cleanEating} onChange={event => { pulse(18); setForm({ ...form, cleanEating: event.target.checked }); }} className="h-5 w-5 accent-[#C8A96E]" />
+                <input type="checkbox" checked={form.cleanEating} onChange={event => markChecklistItem("cleanEating", event.target.checked)} className="h-6 w-6 accent-[#2ECC71]" />
               </label>
               <Field label="Optional food note"><TextInput value={form.cleanEatingNote} onChange={event => setForm({ ...form, cleanEatingNote: event.target.value })} placeholder="Anything the group should know?" /></Field>
             </div>
@@ -829,9 +847,10 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
           <RuleCard title="Track everything" label="Rule 06" icon={Activity} complete={form.trackedEverything} active={openRule === "trackedEverything"} onToggle={() => setOpenRule(openRule === "trackedEverything" ? "exercise" : "trackedEverything")}>
             <label className="flex items-center justify-between gap-4 border border-[#2A2A2A] bg-[#0D0D0D] p-4">
               <span className="text-sm font-black uppercase tracking-[0.12em] text-white">Logged honestly</span>
-              <input type="checkbox" checked={form.trackedEverything} onChange={event => { pulse(18); setForm({ ...form, trackedEverything: event.target.checked }); }} className="h-5 w-5 accent-[#C8A96E]" />
+              <input type="checkbox" checked={form.trackedEverything} onChange={event => markChecklistItem("trackedEverything", event.target.checked)} className="h-6 w-6 accent-[#2ECC71]" />
             </label>
           </RuleCard>
+          </div>
         </div>
 
         <div className={classNames("submit-dock sticky bottom-[74px] z-20 border border-[#2A2A2A] bg-[#0D0D0D]/95 p-3 backdrop-blur transition-all duration-300 md:static md:bg-transparent md:p-0", submit.isPending && "submit-dock-pending", allAddressed && !submit.isPending && "submit-dock-ready")}>

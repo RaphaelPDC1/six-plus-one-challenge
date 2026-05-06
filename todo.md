@@ -266,4 +266,25 @@
 - [x] Keep the image-based logo polished with proper sizing, object-fit, and non-stacked/non-cramped layout on mobile and desktop
 - [x] Update automated tests to expect image-based logo rendering in the loading page and app header
 - [x] Run full validation, tests, production build, and preview health check after the logo image correction — 48 tests passing, TypeScript check successful, production build successful, preview healthy
-- [ ] Save checkpoint after the logo image correction
+- [x] Save checkpoint after the logo image correction — saved as 83d67ec9
+
+## Bug Fix — Loading and Header Logo Flicker / Missing Image
+- [ ] Diagnose why the loading-page logo and top-header logo flicker away, disappear, or reveal the old eroded logo
+- [ ] Remove unstable logo fallback or delayed source swapping that causes the old eroded logo to appear
+- [ ] Enforce one stable intended logo image source for the loading page and top-header/logo area
+- [ ] Ensure the logo remains visible during loading without layout jump, flicker, or fallback text/image swap
+- [ ] Update automated tests for the stable logo source and no old eroded-logo fallback behavior
+- [ ] Run full validation, production build, and preview health check after the logo flicker fix
+- [ ] Save checkpoint after the loading/header logo flicker fix
+
+## UX Refinement — Must-Do Rule Checklist and Compact Calendar
+- [x] Redesign the 6 daily rules section as an unmistakable must-do area with a red warning-style border/frame
+- [x] Add clear pending versus completed states for each rule, with completed items turning green
+- [x] Add supported haptic feedback when a rule is marked done and provide a lightweight completion sound cue
+- [x] Add a stronger “done” moment when rules are completed without making the experience distracting
+- [x] Simplify the calendar section into a compact vintage flick-card style showing one date/time by default
+- [x] Add an option to expand from the compact flick-card into the full calendar view
+- [x] Tune calendar styling so it matches the dark, gold, high-stakes challenge aesthetic more closely
+- [x] Update automated tests for the must-do checklist states and expandable calendar behavior
+- [x] Run full validation, tests, production build, and preview health check after these UX refinements
+- [x] Save checkpoint after the must-do checklist and compact calendar refinements

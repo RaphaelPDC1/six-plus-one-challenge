@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 
@@ -35,18 +35,31 @@ function getDayStatus(dayNumber: number, dailyLogs: any[]) {
   return { status: "incomplete", label: "In progress" };
 }
 
-function getStatusColor(status: string) {
+function getStatusClasses(status: string) {
   switch (status) {
     case "completed":
-      return "bg-[#2ECC71] border-[#2ECC71]";
+      return "border-[#2ECC71] bg-[#092012] text-[#2ECC71]";
     case "missed":
-      return "bg-[#E74C3C] border-[#E74C3C]";
+      return "border-[#C0392B] bg-[#240E0B] text-[#FFB3A8]";
     case "incomplete":
-      return "bg-[#F39C12] border-[#F39C12]";
+      return "border-[#C8A96E] bg-[#1E190D] text-[#C8A96E]";
     case "future":
-      return "bg-[#444] border-[#444]";
+      return "border-[#333] bg-[#0B0B0B] text-[#777]";
     default:
-      return "bg-[#444] border-[#444]";
+      return "border-[#333] bg-[#0B0B0B] text-[#777]";
+  }
+}
+
+function getStatusDot(status: string) {
+  switch (status) {
+    case "completed":
+      return "bg-[#2ECC71]";
+    case "missed":
+      return "bg-[#C0392B]";
+    case "incomplete":
+      return "bg-[#C8A96E]";
+    default:
+      return "bg-[#444]";
   }
 }
 
@@ -57,6 +70,7 @@ function isMilestoneDay(dayNumber: number) {
 export function CalendarView() {
   const { isAuthenticated } = useAuth();
   const { data: snapshot } = trpc.challenge.snapshot.useQuery(undefined, { enabled: isAuthenticated });
+  const [expanded, setExpanded] = useState(false);
 
   const participant = snapshot?.participant;
   const dailyLogs = useMemo(() => {
@@ -73,6 +87,11 @@ export function CalendarView() {
     });
   }, [dailyLogs]);
 
+  const completedDays = participant?.daysComplete ?? 0;
+  const currentDay = Math.min(snapshot?.challenge?.currentDay ?? completedDays + 1, CHALLENGE_DAYS);
+  const currentStatus = getDayStatus(currentDay, dailyLogs);
+  const today = new Date();
+
   if (!participant) {
     return (
       <div className="border border-[#2A2A2A] bg-[#101010] p-5 text-center">
@@ -82,66 +101,38 @@ export function CalendarView() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="border border-[#2A2A2A] bg-[#101010] p-5">
-        <h1 className="text-3xl font-black uppercase tracking-[-0.06em] text-white">50-Day Journey</h1>
-        <p className="mt-2 text-sm font-bold text-[#999]">
-          Track your progress through the challenge. Each day represents a commitment to the 6 rules.
-        </p>
-      </div>
-
-      {/* Legend */}
-      <div className="border border-[#2A2A2A] bg-[#101010] p-4">
-        <p className="text-[10px] font-black uppercase tracking-[0.14em] text-[#777] mb-3">Status Legend</p>
-        <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-4">
-          <div className="flex items-center gap-2">
-            <div className="h-3 w-3 border border-[#2ECC71] bg-[#2ECC71]"></div>
-            <span className="text-xs font-bold text-white">Completed</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="h-3 w-3 border border-[#E74C3C] bg-[#E74C3C]"></div>
-            <span className="text-xs font-bold text-white">Missed</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="h-3 w-3 border border-[#F39C12] bg-[#F39C12]"></div>
-            <span className="text-xs font-bold text-white">In Progress</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="h-3 w-3 border border-[#444] bg-[#444]"></div>
-            <span className="text-xs font-bold text-white">Future</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Calendar Grid — Month-style layout */}
-      <div className="border border-[#2A2A2A] bg-[#101010] p-5">
-        <div className="grid gap-1 grid-cols-5 sm:grid-cols-7 md:grid-cols-10">
-          {calendarDays.map(({ dayNumber, status, isMilestone }) => (
-            <div
-              key={dayNumber}
-              className={classNames(
-                "relative flex flex-col items-center justify-center aspect-square border p-1 text-center transition",
-                getStatusColor(status.status),
-                isMilestone && "ring-2 ring-[#C8A96E]"
-              )}
-              title={`Day ${dayNumber}: ${status.label}`}
-            >
-              <span className="text-[11px] font-black text-white leading-none">{dayNumber}</span>
-              {isMilestone && (
-                <span className="text-[7px] font-black uppercase tracking-[0.05em] text-[#C8A96E] mt-0.5">
-                  {dayNumber === 10 && "10%"}
-                  {dayNumber === 25 && "50%"}
-                  {dayNumber === 40 && "80%"}
-                  {dayNumber === 50 && "100%"}
-                </span>
-              )}
+    <div className="space-y-5">
+      <section className="relative overflow-hidden border border-[#C8A96E]/40 bg-[#070707] p-4 shadow-[0_24px_80px_rgba(0,0,0,0.45)] sm:p-6">
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#C8A96E] to-transparent" aria-hidden="true" />
+        <div className="grid gap-4 md:grid-cols-[1fr_240px] md:items-stretch">
+          <div className="border border-[#2A2A2A] bg-[#101010] p-4">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#C8A96E]">Flick calendar</p>
+            <div className="mt-4 border border-[#343434] bg-black p-4 text-center shadow-inner">
+              <p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#777]">{today.toLocaleDateString(undefined, { weekday: "long" })}</p>
+              <p className="mt-2 text-7xl font-black uppercase leading-none tracking-[-0.1em] text-white sm:text-8xl">{currentDay}</p>
+              <p className="mt-2 text-xs font-black uppercase tracking-[0.22em] text-[#C8A96E]">of 50</p>
+              <div className="mx-auto mt-4 h-px w-24 bg-[#2A2A2A]" aria-hidden="true" />
+              <p className="mt-4 text-sm font-black uppercase tracking-[0.12em] text-white">{today.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })}</p>
             </div>
-          ))}
-        </div>
-      </div>
+          </div>
 
-      {/* Progress Summary */}
+          <div className="flex flex-col justify-between border border-[#2A2A2A] bg-[#101010] p-4">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#777]">Current status</p>
+              <div className={classNames("mt-3 border px-3 py-2 text-xs font-black uppercase tracking-[0.16em]", getStatusClasses(currentStatus.status))}>{currentStatus.label}</div>
+              <p className="mt-4 text-sm font-bold leading-6 text-[#A7A7A7]">A tighter view for the day you are on. Expand only when you need the full journey map.</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setExpanded(value => !value)}
+              className="mt-5 border border-[#C8A96E] bg-[#171207] px-4 py-3 text-xs font-black uppercase tracking-[0.2em] text-[#C8A96E] transition hover:bg-[#C8A96E] hover:text-black"
+            >
+              {expanded ? "Hide full calendar" : "Expand full calendar"}
+            </button>
+          </div>
+        </div>
+      </section>
+
       <div className="grid gap-3 md:grid-cols-3">
         <div className="border border-[#2A2A2A] bg-[#101010] p-5">
           <p className="text-[10px] font-black uppercase tracking-[0.14em] text-[#777]">Days Completed</p>
@@ -149,13 +140,48 @@ export function CalendarView() {
         </div>
         <div className="border border-[#2A2A2A] bg-[#101010] p-5">
           <p className="text-[10px] font-black uppercase tracking-[0.14em] text-[#777]">Current Streak</p>
-          <p className="mt-2 text-3xl font-black text-[#F39C12]">{participant.currentStreak}</p>
+          <p className="mt-2 text-3xl font-black text-[#C8A96E]">{participant.currentStreak}</p>
         </div>
         <div className="border border-[#2A2A2A] bg-[#101010] p-5">
           <p className="text-[10px] font-black uppercase tracking-[0.14em] text-[#777]">Lives Remaining</p>
-          <p className="mt-2 text-3xl font-black text-[#C8A96E]">{participant.livesRemaining}</p>
+          <p className="mt-2 text-3xl font-black text-white">{participant.livesRemaining}</p>
         </div>
       </div>
+
+      {expanded && (
+        <section className="border border-[#2A2A2A] bg-[#101010] p-4 sm:p-5">
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#C8A96E]">Full journey</p>
+              <h1 className="mt-2 text-2xl font-black uppercase tracking-[-0.06em] text-white">50-Day map</h1>
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-[10px] font-black uppercase tracking-[0.12em] text-[#999] sm:grid-cols-4">
+              <span><i className="mr-1 inline-block h-2 w-2 bg-[#2ECC71]" />Done</span>
+              <span><i className="mr-1 inline-block h-2 w-2 bg-[#C0392B]" />Missed</span>
+              <span><i className="mr-1 inline-block h-2 w-2 bg-[#C8A96E]" />Open</span>
+              <span><i className="mr-1 inline-block h-2 w-2 bg-[#444]" />Future</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-5 gap-1 sm:grid-cols-10">
+            {calendarDays.map(({ dayNumber, status, isMilestone }) => (
+              <div
+                key={dayNumber}
+                className={classNames(
+                  "relative aspect-square border p-1 transition hover:-translate-y-0.5",
+                  getStatusClasses(status.status),
+                  dayNumber === currentDay && "ring-2 ring-[#C8A96E]",
+                  isMilestone && "shadow-[inset_0_0_0_1px_rgba(200,169,110,0.45)]",
+                )}
+                title={`Day ${dayNumber}: ${status.label}`}
+              >
+                <span className="absolute left-1 top-1 text-[10px] font-black leading-none">{dayNumber}</span>
+                <span className={classNames("absolute bottom-1 right-1 h-2 w-2", getStatusDot(status.status))} />
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }
