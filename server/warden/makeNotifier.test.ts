@@ -1,15 +1,29 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import * as envModule from "../_core/env";
 import { notifyMakeWebhook } from "./makeNotifier";
 
 describe("Make.com Webhook Notifier", () => {
   beforeEach(() => {
-    process.env.MAKE_WEBHOOK_URL = "https://hook.eu1.make.com/test-webhook-url";
+    // Mock the ENV object
+    vi.spyOn(envModule, "ENV", "get").mockReturnValue({
+      appId: "",
+      cookieSecret: "",
+      databaseUrl: "",
+      oAuthServerUrl: "",
+      ownerOpenId: "",
+      isProduction: false,
+      forgeApiUrl: "",
+      forgeApiKey: "",
+      whapiToken: "",
+      whapiGroupId: "",
+      makeWebhookUrl: "https://hook.eu1.make.com/test-webhook-url",
+    } as any);
+
     global.fetch = vi.fn();
   });
 
   afterEach(() => {
     vi.clearAllMocks();
-    delete process.env.MAKE_WEBHOOK_URL;
   });
 
   it("should send a webhook notification for life loss", async () => {
@@ -79,7 +93,20 @@ describe("Make.com Webhook Notifier", () => {
   });
 
   it("should skip webhook if MAKE_WEBHOOK_URL is not configured", async () => {
-    delete process.env.MAKE_WEBHOOK_URL;
+    vi.spyOn(envModule, "ENV", "get").mockReturnValue({
+      appId: "",
+      cookieSecret: "",
+      databaseUrl: "",
+      oAuthServerUrl: "",
+      ownerOpenId: "",
+      isProduction: false,
+      forgeApiUrl: "",
+      forgeApiKey: "",
+      whapiToken: "",
+      whapiGroupId: "",
+      makeWebhookUrl: "",
+    } as any);
+
     const mockFetch = global.fetch as any;
 
     await notifyMakeWebhook({ reason: "life_lost" });

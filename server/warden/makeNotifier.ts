@@ -3,6 +3,8 @@
  * Sends event notifications to Make.com automation scenarios
  */
 
+import { ENV } from "../_core/env";
+
 export type TriggerReason =
   | "life_lost"
   | "milestone"
@@ -17,7 +19,7 @@ export interface TriggerPayload {
 }
 
 export async function notifyMakeWebhook(payload: TriggerPayload): Promise<void> {
-  const webhookUrl = process.env.MAKE_WEBHOOK_URL;
+  const webhookUrl = ENV.makeWebhookUrl;
 
   if (!webhookUrl) {
     console.warn("[Make Notifier] MAKE_WEBHOOK_URL not configured, skipping webhook");

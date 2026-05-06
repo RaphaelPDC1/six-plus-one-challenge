@@ -1,11 +1,23 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import * as envModule from "../_core/env";
 import { sendWardenMessage } from "./whatsappClient";
 
 describe("Whapi WhatsApp Client", () => {
   beforeEach(() => {
-    // Set up environment variables for testing
-    process.env.WHAPI_TOKEN = "test-token-12345";
-    process.env.WHAPI_GROUP_ID = "120363406264492414@g.us";
+    // Mock the ENV object
+    vi.spyOn(envModule, "ENV", "get").mockReturnValue({
+      appId: "",
+      cookieSecret: "",
+      databaseUrl: "",
+      oAuthServerUrl: "",
+      ownerOpenId: "",
+      isProduction: false,
+      forgeApiUrl: "",
+      forgeApiKey: "",
+      whapiToken: "test-token-12345",
+      whapiGroupId: "120363406264492414@g.us",
+      makeWebhookUrl: "",
+    } as any);
 
     // Mock fetch globally
     global.fetch = vi.fn();
@@ -73,8 +85,19 @@ describe("Whapi WhatsApp Client", () => {
       text: vi.fn().mockResolvedValueOnce(""),
     });
 
-    process.env.WHAPI_TOKEN = "custom-token-xyz";
-    process.env.WHAPI_GROUP_ID = "999999999999999999@g.us";
+    vi.spyOn(envModule, "ENV", "get").mockReturnValue({
+      appId: "",
+      cookieSecret: "",
+      databaseUrl: "",
+      oAuthServerUrl: "",
+      ownerOpenId: "",
+      isProduction: false,
+      forgeApiUrl: "",
+      forgeApiKey: "",
+      whapiToken: "custom-token-xyz",
+      whapiGroupId: "999999999999999999@g.us",
+      makeWebhookUrl: "",
+    } as any);
 
     const testMessage = "Custom group test";
     await sendWardenMessage(testMessage);
