@@ -64,7 +64,7 @@ const GREEN = "#2ECC71";
 const PURPLE = "#9B59B6";
 const chartColors = [GOLD, RED, GREEN, PURPLE, "#4CA3C9", "#E67E22", "#F1C40F", "#ECF0F1"];
 // Use the user-provided 6+1 speed-mark style recoloured into the app gold/red/white palette.
-const BRAND_LOGO_URL = "/manus-storage/six-plus-one-reference-palette-logo-transparent-optimized_92105e77.webp";
+const BRAND_LOGO_URL = "/six-plus-one-logo.svg";
 
 function BrandLogoImageWithRetry({ alt, className = "h-full w-full object-contain", decorative = false, placement }: { alt: string; className?: string; decorative?: boolean; placement?: "top-left-corner" | "loading-page" }) {
   return (

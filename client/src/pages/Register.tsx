@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { haptics } from "@/lib/haptics";
 
-const BRAND_LOGO_URL = "/manus-storage/six-plus-one-reference-palette-logo-transparent-optimized_92105e77.webp";
+const BRAND_LOGO_URL = "/six-plus-one-logo.svg";
 
 type TrainingLevel = "starting" | "building" | "consistent" | "advanced";
 

@@ -411,3 +411,24 @@
 - [x] Add strong haptic vibration feedback after a successful day submission when all six rules are green/completed
 - [x] Update regression tests for the reference-style logo placements, Overview dashboard metrics, and all-green submit haptic feedback
 - [x] Run full tests, TypeScript, production build, preview validation, and save checkpoint
+
+## Bug Fix — Draft Toggle Duplicate Streak Exploit
+
+- [ ] Reproduce and diagnose the loophole where saving a draft after unticking a completed rule, then reticking and logging the day, can award extra completed-day streak credit
+- [ ] Enforce backend idempotency so each participant and calendar day can only increment days-complete, points, and streak once
+- [ ] Prevent draft saves from rolling back or resetting the completed-awarded state for an already completed day
+- [ ] Ensure repeated log-day submissions for the same completed day update the log safely without awarding another streak/day-complete bonus
+- [ ] Add regression tests covering draft-toggle resubmission, repeated completed submissions, and completed-to-draft-to-completed transitions
+- [ ] Run full tests, TypeScript, production build, preview validation, and save checkpoint
+
+## Bug Fix — Mobile Broken Logo Icon in Header and Loading Screen
+
+- [x] Reproduce and diagnose why mobile Safari shows a broken image icon for the top-left header logo and loading-screen logo
+- [x] Remove dependency on any failing or mobile-incompatible logo URL in those two visible render locations
+- [x] Replace the header and loading logos with a durable app-served palette-correct logo that renders on mobile browsers
+- [x] Add regression coverage that prevents broken external/storage logo references from returning in the header and loading screen
+- [x] Validate the mobile-sized preview, direct logo response, full tests, TypeScript, production build, and save checkpoint
+
+## Current Continuation — Mobile Logo Reliability and Streak Integrity
+- [x] Replace all failing storage-backed brand logo references with the durable app-origin `/six-plus-one-logo.svg` path in UI, registration, server endpoint, and regression tests
+- [ ] Close the draft-toggle streak exploit with backend one-completion-per-day enforcement and regression tests

@@ -47,7 +47,7 @@ vi.mock("@/lib/trpc", () => ({
         useMutation: () => mockState.mutation,
       },
       logoUrl: {
-        useQuery: () => ({ data: { url: "/manus-storage/six-plus-one-reference-palette-logo-transparent-optimized_92105e77.webp" } }),
+        useQuery: () => ({ data: { url: "/six-plus-one-logo.svg" } }),
       },
     },
     signup: {
@@ -113,7 +113,7 @@ describe("Home onboarding shell", () => {
     expect(markup).toContain("brand-logo-shell");
     expect(markup).toContain("brand-logo-top-left");
     expect(markup).toContain("brand-logo-image");
-    expect(markup).toContain('src="/manus-storage/six-plus-one-reference-palette-logo-transparent-optimized_92105e77.webp"');
+    expect(markup).toContain('src="/six-plus-one-logo.svg"');
     expect(markup).toContain('data-logo-placement="top-left-corner"');
     expect(markup).not.toContain("brand-wordmark");
     expect(markup).not.toContain("bg-black");
@@ -125,7 +125,7 @@ describe("Home onboarding shell", () => {
     expect(markup).toContain("sticky top-0");
     expect(markup).toContain("brand-logo-top-left");
     expect(markup).toContain("brand-logo-image");
-    expect(markup).toContain('src="/manus-storage/six-plus-one-reference-palette-logo-transparent-optimized_92105e77.webp"');
+    expect(markup).toContain('src="/six-plus-one-logo.svg"');
     expect(markup).toContain('data-logo-placement="top-left-corner"');
     expect(markup).toContain("Four Lives Challenge");
   });
@@ -249,7 +249,7 @@ describe("Home onboarding shell", () => {
     expect(markup).toContain("load-status-panel");
     expect(markup).toContain("load-progress");
     expect(markup).toContain("brand-logo-image");
-    expect(markup).toContain('src="/manus-storage/six-plus-one-reference-palette-logo-transparent-optimized_92105e77.webp"');
+    expect(markup).toContain('src="/six-plus-one-logo.svg"');
     expect(markup).toContain('data-logo-placement="loading-page"');
     expect(markup).not.toContain("sticky top-0");
     expect(markup).not.toContain("bg-black/62");
@@ -280,13 +280,13 @@ describe("Home onboarding shell", () => {
     const logoSvgSource = readFileSync(new URL("../../public/six-plus-one-logo.svg", import.meta.url), "utf8");
     const appIconSvgSource = readFileSync(new URL("../../public/app-icon.svg", import.meta.url), "utf8");
 
-    expect(homeSource).toContain('const BRAND_LOGO_URL = "/manus-storage/six-plus-one-reference-palette-logo-transparent-optimized_92105e77.webp";');
+    expect(homeSource).toContain('const BRAND_LOGO_URL = "/six-plus-one-logo.svg";');
     expect(homeSource).toContain('data-logo-source="reference-palette-logo"');
     expect(homeSource).not.toContain("six-plus-one-original-uploaded-logo_aefa948f.webp");
     expect(homeSource).not.toContain("BrandWordmark");
     expect(homeSource).not.toContain("six-plus-one-brand-logo-white-strong_2665284a.png");
 
-    expect(registerSource).toContain('const BRAND_LOGO_URL = "/manus-storage/six-plus-one-reference-palette-logo-transparent-optimized_92105e77.webp";');
+    expect(registerSource).toContain('const BRAND_LOGO_URL = "/six-plus-one-logo.svg";');
     expect(registerSource).toContain('data-logo-source="reference-palette-logo"');
     expect(registerSource).not.toContain("setLogoFailed");
     expect(registerSource).not.toContain("onError={() => setLogoFailed(true)}");
@@ -294,14 +294,14 @@ describe("Home onboarding shell", () => {
 
     expect(htmlSource).toContain("/app-icon.svg");
     expect(manifestSource).toContain("/app-icon.svg");
-    expect(routerSource).toContain('return { url: "/manus-storage/six-plus-one-reference-palette-logo-transparent-optimized_92105e77.webp" };');
+    expect(routerSource).toContain('return { url: "/six-plus-one-logo.svg" };');
     expect(routerSource).not.toContain("six-plus-one-original-uploaded-logo_aefa948f.webp");
     expect(routerSource).not.toContain("six-plus-one-clean-stacked-logo_a45938fa.png");
     expect(routerSource).not.toContain("six-plus-one-brand-logo-white-strong_2665284a.png");
 
-    expect(homeSource).toContain("six-plus-one-reference-palette-logo-transparent-optimized_92105e77.webp");
-    expect(registerSource).toContain("six-plus-one-reference-palette-logo-transparent-optimized_92105e77.webp");
-    expect(routerSource).toContain("six-plus-one-reference-palette-logo-transparent-optimized_92105e77.webp");
+    expect(homeSource).toContain("six-plus-one-logo.svg");
+    expect(registerSource).toContain("six-plus-one-logo.svg");
+    expect(routerSource).toContain("six-plus-one-logo.svg");
     expect(logoSvgSource).toContain('fill="#FFFFFF"');
     expect(appIconSvgSource).toContain('fill="#FFFFFF"');
 
