@@ -27,6 +27,7 @@ import {
   updateParticipantProfile,
 } from "./db";
 import { generateWardenCommentary } from "./warden";
+import { wardenRouter } from "./warden/wardenRouters";
 import { storagePut } from "./storage";
 import { notifyOwner } from "./_core/notification";
 
@@ -257,6 +258,9 @@ export const appRouter = router({
         return { success: true } as const;
       }),
   }),
+
+  warden: wardenRouter,
 });
 
 export type AppRouter = typeof appRouter;
+export type WardenRouter = typeof wardenRouter;
