@@ -47,7 +47,7 @@ vi.mock("@/lib/trpc", () => ({
         useMutation: () => mockState.mutation,
       },
       logoUrl: {
-        useQuery: () => ({ data: { url: "/manus-storage/six-plus-one-clean-stacked-logo_a45938fa.png" } }),
+        useQuery: () => ({ data: { url: "/manus-storage/six-plus-one-original-uploaded-logo_aefa948f.webp" } }),
       },
     },
     signup: {
@@ -112,7 +112,7 @@ describe("Home onboarding shell", () => {
 
     expect(markup).toContain("brand-logo-shell");
     expect(markup).toContain("brand-logo-image");
-    expect(markup).toContain('src="/manus-storage/six-plus-one-clean-stacked-logo_a45938fa.png"');
+    expect(markup).toContain('src="/manus-storage/six-plus-one-original-uploaded-logo_aefa948f.webp"');
     expect(markup).not.toContain("brand-wordmark");
     expect(markup).not.toContain("bg-black");
   });
@@ -122,7 +122,7 @@ describe("Home onboarding shell", () => {
 
     expect(markup).toContain("sticky top-0");
     expect(markup).toContain("brand-logo-image");
-    expect(markup).toContain('src="/manus-storage/six-plus-one-clean-stacked-logo_a45938fa.png"');
+    expect(markup).toContain('src="/manus-storage/six-plus-one-original-uploaded-logo_aefa948f.webp"');
     expect(markup).toContain("Four Lives Challenge");
   });
 
@@ -244,7 +244,7 @@ describe("Home onboarding shell", () => {
     expect(markup).toContain("load-status-panel");
     expect(markup).toContain("load-progress");
     expect(markup).toContain("brand-logo-image");
-    expect(markup).toContain('src="/manus-storage/six-plus-one-clean-stacked-logo_a45938fa.png"');
+    expect(markup).toContain('src="/manus-storage/six-plus-one-original-uploaded-logo_aefa948f.webp"');
     expect(markup).not.toContain("sticky top-0");
     expect(markup).not.toContain("bg-black/62");
     expect(markup).not.toContain("brand-wordmark");
@@ -266,19 +266,32 @@ describe("Home onboarding shell", () => {
     const registerSource = readFileSync(new URL("./Register.tsx", import.meta.url), "utf8");
     const routerSource = readFileSync(new URL("../../../server/routers.ts", import.meta.url), "utf8");
 
-    expect(homeSource).toContain('const BRAND_LOGO_URL = "/manus-storage/six-plus-one-clean-stacked-logo_a45938fa.png";');
+    expect(homeSource).toContain('const BRAND_LOGO_URL = "/manus-storage/six-plus-one-original-uploaded-logo_aefa948f.webp";');
     expect(homeSource).toContain('data-logo-source="stable-brand-image"');
     expect(homeSource).not.toContain("BrandWordmark");
     expect(homeSource).not.toContain("six-plus-one-brand-logo-white-strong_2665284a.png");
 
-    expect(registerSource).toContain('const BRAND_LOGO_URL = "/manus-storage/six-plus-one-clean-stacked-logo_a45938fa.png";');
+    expect(registerSource).toContain('const BRAND_LOGO_URL = "/manus-storage/six-plus-one-original-uploaded-logo_aefa948f.webp";');
     expect(registerSource).toContain('data-logo-source="stable-brand-image"');
     expect(registerSource).not.toContain("setLogoFailed");
     expect(registerSource).not.toContain("onError={() => setLogoFailed(true)}");
     expect(registerSource).not.toContain("six-plus-one-brand-logo-white-strong_2665284a.png");
 
-    expect(routerSource).toContain("six-plus-one-clean-stacked-logo_a45938fa.png");
+    expect(routerSource).toContain("six-plus-one-original-uploaded-logo_aefa948f.webp");
+    expect(routerSource).not.toContain("six-plus-one-clean-stacked-logo_a45938fa.png");
     expect(routerSource).not.toContain("six-plus-one-brand-logo-white-strong_2665284a.png");
+  });
+
+  it("keeps participant display pictures and paid reward visuals wired through real image-aware components", () => {
+    const homeSource = readFileSync(new URL("./Home.tsx", import.meta.url), "utf8");
+
+    expect(homeSource).toContain("function normaliseProfilePhotoUrl");
+    expect(homeSource).toContain("/^data:image\\/(png|jpeg|webp);base64,/i.test(trimmed)");
+    expect(homeSource).toContain("function ProfilePhoto");
+    expect(homeSource).toContain("loading=\"lazy\" decoding=\"async\"");
+    expect(homeSource).toContain("<RewardVisual reward={reward} />");
+    expect(homeSource).toContain("<RewardVisual reward={reward} compact />");
+    expect(homeSource).toContain("<ProfilePhoto participant={owner} className=\"h-12 w-12 shrink-0\" />");
   });
 
   it("renders the real unknown-email questionnaire gate from mocked app state", () => {

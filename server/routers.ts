@@ -46,6 +46,7 @@ const siteLoginInput = z.object({
   email: z.string().trim().email().max(320),
   displayName: z.string().trim().min(2).max(140).optional(),
   mode: z.enum(["register", "login"]).default("register"),
+  profilePhotoDataUrl: z.string().max(2_800_000).regex(/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/, "Profile photo must be a PNG, JPG, or WEBP image.").optional(),
   personalization: personalizationInput.optional(),
 });
 
@@ -68,7 +69,7 @@ export const appRouter = router({
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logoUrl: publicProcedure.query(async () => {
-      return { url: "/manus-storage/six-plus-one-clean-stacked-logo_a45938fa.png" };
+      return { url: "/manus-storage/six-plus-one-original-uploaded-logo_aefa948f.webp" };
     }),
     siteLogin: publicProcedure.input(siteLoginInput).mutation(async ({ ctx, input }) => {
       const email = normalizeSignupEmail(input.email);
@@ -79,6 +80,7 @@ export const appRouter = router({
         email,
         displayName: input.displayName || email,
         mode: input.mode,
+        profilePhotoDataUrl: input.mode === "register" ? input.profilePhotoDataUrl : undefined,
         personalization: input.mode === "register" ? input.personalization : undefined,
       });
       const token = await sdk.createSessionToken(user.openId, { name: user.name || user.email || "6+1 participant" });

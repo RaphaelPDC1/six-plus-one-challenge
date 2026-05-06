@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
@@ -42,5 +43,15 @@ describe("access control", () => {
     const caller = appRouter.createCaller(createContext("user"));
 
     await expect(caller.admin.confirmPayment({ paymentId: 1 })).rejects.toMatchObject({ code: "FORBIDDEN" });
+  });
+
+  it("filters admin-tagged users out of competitor snapshot collections", () => {
+    const dbSource = readFileSync(new URL("./db.ts", import.meta.url), "utf8");
+
+    expect(dbSource).toContain('role === "admin" ? null : await getOrCreateParticipant');
+    expect(dbSource).toContain('const adminUserIds = new Set(allUsers.filter(user => user.role === "admin").map(user => user.id));');
+    expect(dbSource).toContain('const allParticipants = rawParticipants.filter(participantRow => !adminUserIds.has(participantRow.userId));');
+    expect(dbSource).toContain('const payments = rawPayments.filter(payment => participantIds.has(payment.participantId));');
+    expect(dbSource).toContain('const redemptions = rawRedemptions.filter(redemption => participantIds.has(redemption.participantId));');
   });
 });

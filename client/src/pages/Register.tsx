@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { ArrowLeft, Mail, Shield, UserRound } from "lucide-react";
+import { ArrowLeft, Camera, Mail, Shield, UserRound } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { haptics } from "@/lib/haptics";
 
-const BRAND_LOGO_URL = "/manus-storage/six-plus-one-clean-stacked-logo_a45938fa.png";
+const BRAND_LOGO_URL = "/manus-storage/six-plus-one-original-uploaded-logo_aefa948f.webp";
 
 type TrainingLevel = "starting" | "building" | "consistent" | "advanced";
 
@@ -70,6 +70,22 @@ export default function Register() {
   const [biggestObstacle, setBiggestObstacle] = useState("");
   const [supportNeeded, setSupportNeeded] = useState("");
   const [groupContext, setGroupContext] = useState("");
+  const [profilePhotoDataUrl, setProfilePhotoDataUrl] = useState<string | undefined>();
+
+  function handlePhoto(file?: File) {
+    if (!file) return;
+    if (!file.type.match(/^image\/(png|jpeg|webp)$/)) {
+      toast.error("Use a PNG, JPG, or WEBP profile photo.");
+      return;
+    }
+    if (file.size > 2_000_000) {
+      toast.error("Profile photo must be under 2MB.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => setProfilePhotoDataUrl(String(reader.result));
+    reader.readAsDataURL(file);
+  }
 
   const register = trpc.auth.siteLogin.useMutation({
     onSuccess: async () => {
@@ -131,6 +147,7 @@ export default function Register() {
                 email,
                 displayName,
                 mode: "register",
+                profilePhotoDataUrl,
                 personalization: {
                   primaryGoal,
                   biggestObstacle,
@@ -152,6 +169,17 @@ export default function Register() {
               <Field label="Email"><input required type="email" value={email} onChange={event => setEmail(event.target.value)} placeholder="you@email.com" className={inputClass} /></Field>
               <Field label="Display name"><input required type="text" value={displayName} onChange={event => setDisplayName(event.target.value)} placeholder="How the board should show you" className={inputClass} /></Field>
             </div>
+
+            <label className="mt-5 grid cursor-pointer gap-3 border border-dashed border-[#C8A96E]/70 bg-black/40 p-4 text-[#C8A96E] transition hover:bg-[#17120A] sm:grid-cols-[96px_1fr] sm:items-center">
+              <span className="grid h-24 w-24 place-items-center overflow-hidden border border-[#C8A96E]/60 bg-black text-center">
+                {profilePhotoDataUrl ? <img src={profilePhotoDataUrl} alt="Profile preview" className="h-full w-full object-cover" /> : <span className="flex flex-col items-center gap-2 text-[10px] font-black uppercase tracking-[0.16em]"><Camera className="h-6 w-6" />Photo</span>}
+              </span>
+              <span>
+                <MicroLabel tone="gold">Display picture</MicroLabel>
+                <span className="mt-2 block text-sm font-bold leading-6 text-[#AFAFAF]">Add the photo competitors will see beside your name in the game, leaderboard, proof feed, and admin payment list.</span>
+              </span>
+              <input type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={event => handlePhoto(event.target.files?.[0])} />
+            </label>
 
             <div className="mt-5 grid gap-4">
               <Field label="1. Main goal"><input required value={primaryGoal} onChange={event => setPrimaryGoal(event.target.value)} placeholder="What are you here to change?" className={inputClass} /></Field>

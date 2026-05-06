@@ -320,3 +320,24 @@
 - [x] Add regression coverage for one-log-per-day saves, partial draft saves, next-day finalization, read/teach completion, proof image rendering, and Ghost Life once-only behavior
 - [x] Run full validation, production build, and preview health check after these fixes
 - [x] Save checkpoint after the fair daily logging and Ghost Life fixes
+
+## UI Refinement — Quieter Save Progress Feedback
+
+- [x] Replace the distracting save-progress pop-up with a calmer in-flow confirmation
+- [x] Keep a clear saved/progress confirmation without interrupting users while logging rules
+- [x] Update regression coverage for the quieter save feedback behavior
+- [x] Run validation, production build, and preview health check after the feedback refinement
+- [x] Save checkpoint after the quieter save-progress feedback refinement
+
+## Bug Fix — Participant Photos, Paid Images, and Real Logo Usage
+
+- [x] Show each participant’s display picture consistently wherever participant identity is shown
+- [x] Fix the paid section so reward or payment-related images load reliably instead of appearing broken
+- [x] Use the actual uploaded logo image in the loading-page animation, not a text or fallback mark
+- [x] Use the actual uploaded logo image for the left-side/top-left app logo, not a text or fallback mark
+- [x] Add or update regression coverage for participant display pictures, paid-section image paths, and real logo image rendering
+- [x] Run full validation, production build, and preview health check after the image/logo fixes
+- [x] Save checkpoint after the participant photo, paid-image, and real-logo fixes
+
+- [x] Exclude users tagged as admin/founder from competitor-facing game views and rankings so admin accounts do not appear as challenge participants
+- [x] Add or update regression coverage proving admin-tagged accounts are filtered out of participant game lists while remaining able to manage the app

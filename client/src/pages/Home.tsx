@@ -64,7 +64,7 @@ const GREEN = "#2ECC71";
 const PURPLE = "#9B59B6";
 const chartColors = [GOLD, RED, GREEN, PURPLE, "#4CA3C9", "#E67E22", "#F1C40F", "#ECF0F1"];
 // Use relative path - server handles the signed CloudFront redirect
-const BRAND_LOGO_URL = "/manus-storage/six-plus-one-clean-stacked-logo_a45938fa.png";
+const BRAND_LOGO_URL = "/manus-storage/six-plus-one-original-uploaded-logo_aefa948f.webp";
 
 function BrandLogoImageWithRetry({ alt, className = "h-full w-full object-contain", decorative = false }: { alt: string; className?: string; decorative?: boolean }) {
   return (
@@ -129,7 +129,8 @@ function hapticFallback(pattern: number | number[] = 18) {
 
 function playDoneCue() {
   if (typeof window === "undefined") return;
-  const AudioContextClass = window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+  const audioHost = window as typeof window & { webkitAudioContext?: typeof AudioContext };
+  const AudioContextClass = audioHost.AudioContext ?? audioHost.webkitAudioContext;
   if (!AudioContextClass) return;
 
   try {
@@ -274,11 +275,38 @@ export function LogoMark({ compact = false }: { compact?: boolean }) {
   );
 }
 
+function normaliseProfilePhotoUrl(value?: string | null) {
+  const trimmed = value?.trim() ?? "";
+  if (!trimmed) return "";
+  if (trimmed.startsWith("/manus-storage/")) return encodeURI(trimmed);
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  if (/^data:image\/(png|jpeg|webp);base64,/i.test(trimmed)) return trimmed;
+  return "";
+}
+
 function ProfilePhoto({ participant, className = "h-11 w-11" }: { participant: any; className?: string }) {
-  if (participant?.profilePhotoUrl) {
-    return <img src={participant.profilePhotoUrl} alt={`${participant.displayName ?? "Participant"} profile`} className={classNames(className, "border border-[#C8A96E] object-cover")} />;
+  const photoUrl = normaliseProfilePhotoUrl(participant?.profilePhotoUrl);
+  if (photoUrl) {
+    return <img src={photoUrl} alt={`${participant?.displayName ?? "Participant"} profile`} className={classNames(className, "border border-[#C8A96E] bg-black object-cover")} loading="lazy" decoding="async" onError={event => { event.currentTarget.style.display = "none"; }} />;
   }
-  return <span className={classNames("grid place-items-center border border-[#C8A96E] text-xs font-black text-[#C8A96E]", className)}>{participant?.avatarInitials ?? "?"}</span>;
+  return <span className={classNames("grid place-items-center border border-[#C8A96E] bg-black text-xs font-black text-[#C8A96E]", className)} aria-label={`${participant?.displayName ?? "Participant"} initials`}>{participant?.avatarInitials ?? "?"}</span>;
+}
+
+function RewardVisual({ reward, compact = false }: { reward: any; compact?: boolean }) {
+  return (
+    <div className={classNames("relative overflow-hidden border border-[#C8A96E]/40 bg-[#070707]", compact ? "h-16 w-16 shrink-0" : "mb-4 aspect-[4/3] w-full")}>
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_24%_18%,rgba(200,169,110,0.28),transparent_34%),linear-gradient(135deg,rgba(46,204,113,0.18),transparent_44%),linear-gradient(315deg,rgba(192,57,43,0.24),transparent_48%)]" />
+      <div className="absolute inset-3 border border-white/10" />
+      <div className="absolute left-3 top-3 flex items-center gap-2">
+        <span className="grid h-8 w-8 place-items-center border border-[#C8A96E] bg-black text-[#C8A96E]"><Gift className="h-4 w-4" /></span>
+        {!compact && <span className="poster-label text-[#C8A96E]">Pure Sport</span>}
+      </div>
+      <div className="absolute bottom-3 left-3 right-3">
+        <p className={classNames("font-black uppercase tracking-[-0.04em] text-white", compact ? "text-xs" : "text-lg")}>{reward?.name ?? "Reward"}</p>
+        {!compact && <p className="mt-1 text-[10px] font-black uppercase tracking-[0.14em] text-[#C8A96E]">{reward?.pointsCost ?? 0} points</p>}
+      </div>
+    </div>
+  );
 }
 
 function scrollToEntryPanel() {
@@ -704,6 +732,7 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
   const [form, setForm] = useState<MyDayForm>(emptyDay);
   const [openRule, setOpenRule] = useState<RuleKey>("exercise");
   const [lastMissed, setLastMissed] = useState<string[]>([]);
+  const [saveNotice, setSaveNotice] = useState<{ title: string; detail: string; complete: boolean } | null>(null);
   const cameraProofInputRef = useRef<HTMLInputElement | null>(null);
   const libraryProofInputRef = useRef<HTMLInputElement | null>(null);
   const participant = snapshot?.participant;
@@ -714,12 +743,11 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
     onSuccess: data => {
       setLastMissed(data.deadlinePassed ? data.missedRules : []);
       pulse(data.complete ? [20, 40, 20] : [18, 28, 45]);
-      toast.custom(() => (
-        <div className="border border-[#C8A96E] bg-[#0D0D0D] p-4 text-white shadow-2xl">
-          <p className="poster-label text-[#C8A96E]">{data.complete ? "Day submitted" : "Progress saved"}</p>
-          <p className="mt-2 text-sm font-black uppercase tracking-[-0.02em]">{data.complete ? "Complete. Points added once." : "Draft saved. No life lost before rollover."}</p>
-        </div>
-      ));
+      setSaveNotice({
+        title: data.complete ? "Day submitted" : "Progress saved quietly",
+        detail: data.complete ? "Complete. Points added once." : "Draft saved. No life lost before rollover.",
+        complete: data.complete,
+      });
       refetch();
     },
     onError: error => toast.error(error.message),
@@ -846,6 +874,7 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
             {submit.isPending ? (allAddressed ? "Submitting the log" : "Saving progress") : allAddressed ? `Submit day ${snapshot?.challenge.currentDay ?? 1}` : `Save progress — ${6 - completedRules} still open`}
           </SharpButton>
           {!allAddressed && <p className="mt-3 border-l-4 border-[#C8A96E] bg-[#16130B] p-4 text-xs font-black uppercase leading-5 tracking-[0.14em] text-[#C8A96E]">This is a draft save. Lives are only judged automatically after the day rolls over.</p>}
+          {saveNotice && <div className={classNames("mt-3 border-l-4 bg-black/30 px-4 py-3 text-xs font-black uppercase leading-5 tracking-[0.14em]", saveNotice.complete ? "border-[#2ECC71] text-[#2ECC71]" : "border-[#C8A96E]/70 text-[#C8A96E]")}><span>{saveNotice.title}.</span> <span className="text-[#9A9A9A]">{saveNotice.detail}</span></div>}
           {lastMissed.length > 0 && <div className="mt-3 border-l-4 border-[#C0392B] bg-[#180F0F] p-4 text-sm font-bold text-[#F0B7AE]">Missed after rollover: {lastMissed.join(", ")}. Penalty logged.</div>}
         </div>
       </section>
@@ -1065,6 +1094,7 @@ function Rewards({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => voi
       <div className="grid gap-3 md:grid-cols-2">
         {snapshot?.rewards.map((reward: any) => (
           <button key={reward.id} className={classNames("border bg-[#101010] p-5 text-left transition hover:border-[#C8A96E]", selected === reward.id ? "border-[#C8A96E]" : "border-[#2A2A2A]")} onClick={() => { pulse(12); setSelected(reward.id); }}>
+            <RewardVisual reward={reward} />
             <MicroLabel tone="gold">Pure Sport</MicroLabel>
             <h3 className="mt-3 text-2xl font-black uppercase tracking-[-0.05em] text-white">{reward.name}</h3>
             <p className="mt-3 text-sm font-bold leading-6 text-[#999]">{reward.description}</p>
@@ -1170,10 +1200,13 @@ function AdminPanel({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => 
             return (
               <div key={payment.id} className="border border-[#2A2A2A] bg-[#0D0D0D] p-4">
                 <div className="flex items-start justify-between gap-3">
-                  <div>
+                  <div className="flex min-w-0 items-start gap-3">
+                    <ProfilePhoto participant={owner} className="h-12 w-12 shrink-0" />
+                    <div className="min-w-0">
                     <p className="font-black uppercase text-white">{owner?.displayName ?? "Participant"}</p>
                     <p className="mt-2 text-sm font-bold text-[#C0392B]">£{(payment.amountPence / 100).toFixed(2)} · {payment.reason}</p>
                     <p className="mt-2 break-all text-xs font-bold text-[#777]">{payment.paymentLink}</p>
+                    </div>
                   </div>
                   <span className="border border-[#2A2A2A] px-3 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-[#C8A96E]">{payment.status}</span>
                 </div>
@@ -1192,8 +1225,13 @@ function AdminPanel({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => 
             const reward = snapshot?.rewards.find((r: any) => r.id === request.rewardId);
             return (
               <div key={request.id} className="border border-[#2A2A2A] bg-[#0D0D0D] p-4">
-                <p className="font-black uppercase text-white">{owner?.displayName ?? "Participant"} · {reward?.name ?? "Reward"}</p>
-                <p className="mt-2 text-sm font-bold text-[#999]">{request.checkpointEarned}</p>
+                <div className="flex items-start gap-3">
+                  <RewardVisual reward={reward} compact />
+                  <div className="min-w-0">
+                    <p className="font-black uppercase text-white">{owner?.displayName ?? "Participant"} · {reward?.name ?? "Reward"}</p>
+                    <p className="mt-2 text-sm font-bold text-[#999]">{request.checkpointEarned}</p>
+                  </div>
+                </div>
                 <p className="mt-2 whitespace-pre-wrap text-xs font-bold text-[#777]">{request.deliveryAddress}</p>
                 {request.status === "pending" && <SharpButton className="mt-4 min-h-10 px-4 py-2" onClick={() => fulfill.mutate({ redemptionId: request.id })}>Mark fulfilled</SharpButton>}
               </div>

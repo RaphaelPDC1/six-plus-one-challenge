@@ -83,7 +83,7 @@ export type RegistrationPersonalizationInput = {
   supportNeeded: string;
 };
 
-export async function createSiteNativeUser(input: { email: string; displayName: string; mode?: "register" | "login"; personalization?: RegistrationPersonalizationInput }) {
+export async function createSiteNativeUser(input: { email: string; displayName: string; mode?: "register" | "login"; profilePhotoDataUrl?: string; personalization?: RegistrationPersonalizationInput }) {
   const db = await getDb();
   if (!db) throw new Error("Database unavailable");
   const email = normalizeSignupEmail(input.email);
@@ -125,6 +125,14 @@ export async function createSiteNativeUser(input: { email: string; displayName: 
   const user = await getUserByOpenId(openId);
   if (!user) throw new Error("Could not create participant session");
   if (input.personalization) {
+    const photo = parseProfilePhotoDataUrl(input.profilePhotoDataUrl);
+    const uploaded = photo
+      ? await storagePut(
+          `profile-photos/user-${user.id}-${Date.now()}.${photo.extension}`,
+          photo.buffer,
+          photo.mimeType,
+        )
+      : null;
     const personalization = {
       primaryGoal: input.personalization.primaryGoal.trim(),
       biggestObstacle: input.personalization.biggestObstacle.trim(),
@@ -138,6 +146,8 @@ export async function createSiteNativeUser(input: { email: string; displayName: 
       avatarInitials: initials(displayName),
       monzoPaymentLink: DEFAULT_MONZO_PAYMENT_LINK,
       onboardingCompleted: true,
+      profilePhotoUrl: uploaded?.url ?? null,
+      profilePhotoKey: uploaded?.key ?? null,
       ...personalization,
     });
     const existingRequest = await db.select().from(signupRequests).where(eq(signupRequests.email, email)).limit(1);
@@ -145,6 +155,8 @@ export async function createSiteNativeUser(input: { email: string; displayName: 
       status: "approved" as const,
       source: "site-registration",
       displayName,
+      profilePhotoUrl: uploaded?.url ?? null,
+      profilePhotoKey: uploaded?.key ?? null,
       ...personalization,
     };
     if (existingRequest[0]) {
@@ -194,9 +206,9 @@ export function parseProfilePhotoDataUrl(dataUrl?: string) {
 export async function getOnboardingState(user: { id: number; email: string | null; role: "admin" | "user" }) {
   const db = await getDb();
   if (!db) throw new Error("Database unavailable");
+  if (user.role === "admin") return { status: "ready" as const, reason: "admin" as const, participant: null };
   const participant = await getParticipantByUserId(user.id);
   if (participant) return { status: "ready" as const, reason: "participant_exists" as const, participant };
-  if (user.role === "admin") return { status: "ready" as const, reason: "admin" as const, participant: null };
   const normalizedEmail = user.email ? normalizeSignupEmail(user.email) : "";
   if (!normalizedEmail) return { status: "questionnaire_required" as const, reason: "missing_email" as const, participant: null };
   const request = (await db.select().from(signupRequests).where(eq(signupRequests.email, normalizedEmail)).limit(1))[0];
@@ -578,10 +590,11 @@ export async function getAppSnapshot(userId: number, role: "admin" | "user" = "u
       signupRequests: [],
     };
   }
-  const participant = await getOrCreateParticipant({ id: userId, name: null, email });
-  await finalizePreviousDayIfNeeded(participant.id);
+  const participant = role === "admin" ? null : await getOrCreateParticipant({ id: userId, name: null, email });
+  if (participant) await finalizePreviousDayIfNeeded(participant.id);
   await seedRewardsIfEmpty();
-  const [allParticipants, allLogs, rewards, payments, redemptions, warden, chat, accessRequests] = await Promise.all([
+  const [allUsers, rawParticipants, rawLogs, rewards, rawPayments, rawRedemptions, warden, chat, accessRequests] = await Promise.all([
+    db.select().from(users),
     db.select().from(participants),
     db.select().from(dailyLogs).orderBy(desc(dailyLogs.createdAt)).limit(250),
     db.select().from(rewardCatalogue).where(eq(rewardCatalogue.active, true)),
@@ -591,7 +604,13 @@ export async function getAppSnapshot(userId: number, role: "admin" | "user" = "u
     db.select().from(whatsappChatHistory).orderBy(desc(whatsappChatHistory.createdAt)).limit(50),
     role === "admin" ? listSignupRequests() : Promise.resolve([]),
   ]);
-  const myLog = await getTodayLog(participant.id);
+  const adminUserIds = new Set(allUsers.filter(user => user.role === "admin").map(user => user.id));
+  const allParticipants = rawParticipants.filter(participantRow => !adminUserIds.has(participantRow.userId));
+  const participantIds = new Set(allParticipants.map(participantRow => participantRow.id));
+  const allLogs = rawLogs.filter(log => participantIds.has(log.participantId));
+  const payments = rawPayments.filter(payment => participantIds.has(payment.participantId));
+  const redemptions = rawRedemptions.filter(redemption => participantIds.has(redemption.participantId));
+  const myLog = participant ? await getTodayLog(participant.id) : null;
   return {
     accessState: { status: "ready" as const, reason: onboarding.reason },
     challenge: { currentDay: getCurrentChallengeDay(), totalDays: 50, startDate: CHALLENGE_START_DATE, calendar: getChallengeCalendar(), monzoPaymentLink: DEFAULT_MONZO_PAYMENT_LINK },
