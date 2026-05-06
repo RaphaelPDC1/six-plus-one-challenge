@@ -223,3 +223,5 @@
 
 - [x] Fix mobile public landing header text clipping next to the 6+1 logo so the tagline wraps within the viewport
 - [x] Fix mobile public landing hero/body text clipping so all challenge copy wraps within the viewport
+
+- [x] Fix public landing page logo rendering so the brand image loads instead of stacked text characters in the top-left corner

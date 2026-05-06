@@ -61,7 +61,27 @@ const RED = "#C0392B";
 const GREEN = "#2ECC71";
 const PURPLE = "#9B59B6";
 const chartColors = [GOLD, RED, GREEN, PURPLE, "#4CA3C9", "#E67E22", "#F1C40F", "#ECF0F1"];
+// Use relative path to ensure same-origin requests and avoid CORS issues
 const BRAND_LOGO_URL = "/manus-storage/six-plus-one-brand-logo-white-strong_2665284a.png";
+
+function BrandLogoImageWithRetry({ alt, className = "h-full w-full object-contain", decorative = false }: { alt: string; className?: string; decorative?: boolean }) {
+  const [failed, setFailed] = useState(false);
+  
+  if (failed) {
+    return (
+      <span
+        aria-hidden={decorative ? "true" : undefined}
+        aria-label={decorative ? undefined : alt}
+        className="grid h-full w-full place-items-center text-center text-[clamp(1.65rem,7vw,4rem)] font-black leading-none tracking-[-0.14em] text-white"
+      >
+        6<span className="text-[#C8A96E]">+</span>1
+      </span>
+    );
+  }
+  
+  // Use relative path to stay same-origin and avoid CORS issues with redirects
+  return <img src={BRAND_LOGO_URL} alt={decorative ? "" : alt} data-testid="brand-logo" className={className} decoding="async" loading="eager" onError={() => setFailed(true)} />;
+}
 
 const emptyDay: MyDayForm = {
   noAlcohol: false,
@@ -89,20 +109,9 @@ function hapticFallback(pattern: number | number[] = 18) {
   }
 }
 
+// Deprecated: Use BrandLogoImageWithRetry instead
 function BrandLogoImage({ alt, className = "h-full w-full object-contain", decorative = false }: { alt: string; className?: string; decorative?: boolean }) {
-  const [failed, setFailed] = useState(false);
-  if (failed) {
-    return (
-      <span
-        aria-hidden={decorative ? "true" : undefined}
-        aria-label={decorative ? undefined : alt}
-        className="grid h-full w-full place-items-center text-center text-[clamp(1.65rem,7vw,4rem)] font-black leading-none tracking-[-0.14em] text-white"
-      >
-        6<span className="text-[#C8A96E]">+</span>1
-      </span>
-    );
-  }
-  return <img src={BRAND_LOGO_URL} alt={decorative ? "" : alt} data-testid="brand-logo" className={className} decoding="async" loading="eager" onError={() => setFailed(true)} />;
+  return <BrandLogoImageWithRetry alt={alt} className={className} decorative={decorative} />;
 }
 
 function AnimatedLoadPage({ label = "Loading the challenge" }: { label?: string }) {
