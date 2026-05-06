@@ -633,3 +633,208 @@ html.haptic-visual-feedback body {
 .tab-stage-stable {
   animation: none;
 }
+
+/* Site-wide motion polish: fast, tactile and reduced-motion safe. */
+:root {
+  --motion-fast: 160ms;
+  --motion-med: 280ms;
+  --motion-slow: 520ms;
+  --motion-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --motion-ease-snap: cubic-bezier(0.2, 0.9, 0.18, 1.12);
+}
+
+@keyframes motion-page-in {
+  from { opacity: 0; transform: translateY(10px); filter: blur(2px); }
+  to { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+
+@keyframes motion-reveal-up {
+  from { opacity: 0; transform: translateY(14px) scale(0.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes motion-hero-scan {
+  0%, 100% { transform: translate3d(-2%, -1%, 0) scale(1); opacity: 0.26; }
+  50% { transform: translate3d(2%, 1%, 0) scale(1.04); opacity: 0.44; }
+}
+
+@keyframes motion-warden-pulse {
+  0%, 100% { box-shadow: inset 4px 0 0 rgba(192,57,43,0.35), 0 0 0 rgba(192,57,43,0); }
+  50% { box-shadow: inset 4px 0 0 rgba(192,57,43,0.88), 0 0 28px rgba(192,57,43,0.13); }
+}
+
+.motion-page {
+  animation: motion-page-in var(--motion-med) var(--motion-ease-out) both;
+}
+
+.motion-list > * {
+  animation: motion-reveal-up var(--motion-med) var(--motion-ease-out) both;
+}
+
+.motion-list > *:nth-child(2) { animation-delay: 35ms; }
+.motion-list > *:nth-child(3) { animation-delay: 70ms; }
+.motion-list > *:nth-child(4) { animation-delay: 105ms; }
+.motion-list > *:nth-child(5) { animation-delay: 140ms; }
+.motion-list > *:nth-child(6) { animation-delay: 175ms; }
+.motion-list > *:nth-child(n+7) { animation-delay: 210ms; }
+
+.motion-reveal {
+  animation: motion-reveal-up var(--motion-slow) var(--motion-ease-out) both;
+}
+
+.motion-card,
+.motion-row,
+.motion-tab,
+.motion-focus,
+.motion-image-zoom,
+.motion-reward-visual {
+  transform: translateZ(0);
+  will-change: transform, border-color, box-shadow, filter;
+}
+
+.motion-card,
+.motion-row {
+  transition: transform var(--motion-med) var(--motion-ease-out), border-color var(--motion-med) ease, box-shadow var(--motion-med) ease, background-color var(--motion-med) ease, opacity var(--motion-med) ease;
+}
+
+.motion-card:hover,
+.motion-row:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 48px rgba(0,0,0,0.24), 0 0 0 1px rgba(200,169,110,0.08);
+}
+
+.motion-press {
+  transition: transform var(--motion-fast) var(--motion-ease-snap), border-color var(--motion-med) ease, box-shadow var(--motion-med) ease, background-color var(--motion-med) ease, color var(--motion-med) ease;
+}
+
+.motion-press:active {
+  transform: translateY(1px) scale(0.985);
+}
+
+.motion-focus:focus,
+.motion-focus:focus-visible {
+  transform: translateY(-1px);
+  box-shadow: 0 0 0 3px rgba(200,169,110,0.13), 0 14px 36px rgba(0,0,0,0.18);
+}
+
+.motion-hero::before {
+  content: "";
+  position: absolute;
+  inset: -22%;
+  pointer-events: none;
+  background: radial-gradient(circle at 18% 22%, rgba(200,169,110,0.22), transparent 30%), linear-gradient(115deg, transparent 36%, rgba(255,255,255,0.045) 48%, transparent 60%);
+  animation: motion-hero-scan 7s ease-in-out infinite;
+}
+
+.motion-details summary,
+.rule-card-motion > button {
+  transition: transform var(--motion-fast) var(--motion-ease-out), color var(--motion-med) ease;
+}
+
+.motion-details summary:active,
+.rule-card-motion > button:active {
+  transform: scale(0.992);
+}
+
+.rule-card-active {
+  transform: translateY(-1px);
+}
+
+.rule-card-complete {
+  box-shadow: 0 18px 48px rgba(46,204,113,0.08), inset 0 0 0 1px rgba(46,204,113,0.12);
+}
+
+.motion-progress-fill {
+  transition: width 620ms var(--motion-ease-out), filter var(--motion-med) ease;
+}
+
+.motion-submit-dock.submit-dock-ready {
+  animation: submit-pulse 1.9s ease-in-out infinite;
+}
+
+.motion-submit-dock .poster-button:not(:disabled) {
+  transform-origin: center bottom;
+}
+
+.warden-pulse {
+  animation: motion-warden-pulse 3.6s ease-in-out infinite;
+}
+
+.motion-reward-visual::after {
+  content: "";
+  position: absolute;
+  inset: -35% -55%;
+  background: linear-gradient(100deg, transparent 38%, rgba(255,255,255,0.12) 50%, transparent 62%);
+  transform: translateX(-65%) rotate(8deg);
+  transition: transform 760ms var(--motion-ease-out);
+}
+
+.motion-card:hover .motion-reward-visual::after,
+.motion-reward-visual:hover::after {
+  transform: translateX(62%) rotate(8deg);
+}
+
+.motion-tab {
+  transform-origin: center;
+}
+
+.motion-tab-active {
+  filter: drop-shadow(0 0 14px rgba(200,169,110,0.22));
+}
+
+.motion-tab-indicator {
+  will-change: transform;
+  transition-duration: 360ms;
+  transition-timing-function: var(--motion-ease-out);
+}
+
+.motion-sheet-panel {
+  transform-origin: center bottom;
+}
+
+.motion-image-zoom {
+  transition: transform var(--motion-med) var(--motion-ease-out), border-color var(--motion-med) ease, box-shadow var(--motion-med) ease;
+}
+
+.motion-image-zoom:hover {
+  transform: scale(1.01);
+  border-color: rgba(200,169,110,0.85);
+  box-shadow: 0 18px 50px rgba(0,0,0,0.35);
+}
+
+html.haptic-visual-feedback .motion-press,
+html.haptic-visual-feedback .motion-card {
+  filter: brightness(1.04);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .motion-page,
+  .motion-list > *,
+  .motion-reveal,
+  .motion-hero::before,
+  .warden-pulse,
+  .motion-submit-dock.submit-dock-ready {
+    animation: none !important;
+  }
+
+  .motion-card,
+  .motion-row,
+  .motion-tab,
+  .motion-focus,
+  .motion-image-zoom,
+  .motion-reward-visual,
+  .motion-press,
+  .motion-progress-fill,
+  .motion-tab-indicator,
+  .motion-details summary,
+  .rule-card-motion > button {
+    transition-duration: 1ms !important;
+    transform: none !important;
+    filter: none !important;
+  }
+
+  .motion-reward-visual::after {
+    display: none;
+  }
+}
+

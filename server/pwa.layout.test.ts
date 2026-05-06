@@ -23,6 +23,8 @@ describe("PWA and mobile layout refinements", () => {
     expect(manifest.icons.map((icon: { src: string }) => icon.src)).toEqual(["/app-icon-192.png", "/app-icon-512.png"]);
     expect(iconScript).toContain("six-plus-one-original-uploaded-logo.webp");
     expect(iconScript).toContain("ORANGE = (255, 91, 0, 255)");
+    expect(iconScript).toContain("max_box = int(size * 0.90)");
+    expect(svgFallback).toContain('font-size="306"');
     expect(svgFallback).toContain('fill="#FF5B00"');
     expect(svgFallback).toContain('fill="#050505"');
     expect(existsSync(join(projectRoot, "client/public/app-icon-180.png"))).toBe(true);
@@ -35,7 +37,7 @@ describe("PWA and mobile layout refinements", () => {
     const css = readProjectFile("client/src/index.css");
     const rulesIndex = source.indexOf("must-do-rules");
     const statsIndex = source.indexOf('data-testid="myday-stats-after-must-do"');
-    const submitIndex = source.indexOf("submit-dock relative sticky bottom-[106px]");
+    const submitIndex = source.indexOf("submit-dock motion-submit-dock relative sticky bottom-[106px]");
 
     expect(rulesIndex).toBeGreaterThan(-1);
     expect(statsIndex).toBeGreaterThan(rulesIndex);
@@ -48,5 +50,25 @@ describe("PWA and mobile layout refinements", () => {
     expect(source).not.toContain("Browsers control installation, so the app cannot force auto-save");
     expect(css).toContain(".tab-stage-stable");
     expect(css).toContain("animation: none");
+  });
+
+  it("adds a reduced-motion-safe site-wide motion system for key interaction surfaces", () => {
+    const source = readProjectFile("client/src/pages/Home.tsx");
+    const register = readProjectFile("client/src/pages/Register.tsx");
+    const calendar = readProjectFile("client/src/pages/Calendar.tsx");
+    const css = readProjectFile("client/src/index.css");
+
+    expect(source).toContain('data-motion-system="site-wide-v1"');
+    expect(source).toContain("motion-card");
+    expect(source).toContain("motion-press");
+    expect(source).toContain("motion-progress-fill");
+    expect(source).toContain("motion-tab-active");
+    expect(register).toContain("motion-page");
+    expect(calendar).toContain("motion-calendar-cell");
+    expect(css).toContain("Site-wide motion polish");
+    expect(css).toContain("@media (prefers-reduced-motion: reduce)");
+    expect(css).toContain(".motion-card");
+    expect(css).toContain(".motion-press:active");
+    expect(css).toContain(".motion-progress-fill");
   });
 });

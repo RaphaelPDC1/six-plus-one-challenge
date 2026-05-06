@@ -102,10 +102,10 @@ export function CalendarView() {
 
   return (
     <div className="space-y-5">
-      <section className="relative overflow-hidden border border-[#C8A96E]/40 bg-[#070707] p-4 shadow-[0_24px_80px_rgba(0,0,0,0.45)] sm:p-6">
+      <section className="motion-card relative overflow-hidden border border-[#C8A96E]/40 bg-[#070707] p-4 shadow-[0_24px_80px_rgba(0,0,0,0.45)] sm:p-6">
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#C8A96E] to-transparent" aria-hidden="true" />
         <div className="grid gap-4 md:grid-cols-[1fr_240px] md:items-stretch">
-          <div className="border border-[#2A2A2A] bg-[#101010] p-4">
+          <div className="motion-card border border-[#2A2A2A] bg-[#101010] p-4">
             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#C8A96E]">Flick calendar</p>
             <div className="mt-4 border border-[#343434] bg-black p-4 text-center shadow-inner">
               <p className="text-[10px] font-black uppercase tracking-[0.28em] text-[#777]">{today.toLocaleDateString(undefined, { weekday: "long" })}</p>
@@ -116,7 +116,7 @@ export function CalendarView() {
             </div>
           </div>
 
-          <div className="flex flex-col justify-between border border-[#2A2A2A] bg-[#101010] p-4">
+          <div className="motion-card flex flex-col justify-between border border-[#2A2A2A] bg-[#101010] p-4">
             <div>
               <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#777]">Current status</p>
               <div className={classNames("mt-3 border px-3 py-2 text-xs font-black uppercase tracking-[0.16em]", getStatusClasses(currentStatus.status))}>{currentStatus.label}</div>
@@ -125,7 +125,7 @@ export function CalendarView() {
             <button
               type="button"
               onClick={() => setExpanded(value => !value)}
-              className="mt-5 border border-[#C8A96E] bg-[#171207] px-4 py-3 text-xs font-black uppercase tracking-[0.2em] text-[#C8A96E] transition hover:bg-[#C8A96E] hover:text-black"
+              className="motion-press mt-5 border border-[#C8A96E] bg-[#171207] px-4 py-3 text-xs font-black uppercase tracking-[0.2em] text-[#C8A96E] transition hover:bg-[#C8A96E] hover:text-black"
             >
               {expanded ? "Hide full calendar" : "Expand full calendar"}
             </button>
@@ -134,22 +134,22 @@ export function CalendarView() {
       </section>
 
       <div className="grid gap-3 md:grid-cols-3">
-        <div className="border border-[#2A2A2A] bg-[#101010] p-5">
+        <div className="motion-card border border-[#2A2A2A] bg-[#101010] p-5">
           <p className="text-[10px] font-black uppercase tracking-[0.14em] text-[#777]">Days Completed</p>
           <p className="mt-2 text-3xl font-black text-[#2ECC71]">{participant.daysComplete}</p>
         </div>
-        <div className="border border-[#2A2A2A] bg-[#101010] p-5">
+        <div className="motion-card border border-[#2A2A2A] bg-[#101010] p-5">
           <p className="text-[10px] font-black uppercase tracking-[0.14em] text-[#777]">Current Streak</p>
           <p className="mt-2 text-3xl font-black text-[#C8A96E]">{participant.currentStreak}</p>
         </div>
-        <div className="border border-[#2A2A2A] bg-[#101010] p-5">
+        <div className="motion-card border border-[#2A2A2A] bg-[#101010] p-5">
           <p className="text-[10px] font-black uppercase tracking-[0.14em] text-[#777]">Lives Remaining</p>
           <p className="mt-2 text-3xl font-black text-white">{participant.livesRemaining}</p>
         </div>
       </div>
 
       {expanded && (
-        <section className="border border-[#2A2A2A] bg-[#101010] p-4 sm:p-5">
+        <section className="motion-card border border-[#2A2A2A] bg-[#101010] p-4 sm:p-5">
           <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#C8A96E]">Full journey</p>
@@ -168,7 +168,7 @@ export function CalendarView() {
               <div
                 key={dayNumber}
                 className={classNames(
-                  "relative aspect-square border p-1 transition hover:-translate-y-0.5",
+                  "motion-calendar-cell motion-press relative aspect-square border p-1 transition hover:-translate-y-0.5",
                   getStatusClasses(status.status),
                   dayNumber === currentDay && "ring-2 ring-[#C8A96E]",
                   isMilestone && "shadow-[inset_0_0_0_1px_rgba(200,169,110,0.45)]",

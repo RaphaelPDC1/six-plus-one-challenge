@@ -491,3 +491,16 @@
 - [x] Keep the install banner removed and the bottom navigation flash fix intact while updating the icon artwork.
 - [x] Update regression coverage so the PWA icon generation expects the orange background treatment rather than the dark badge-style icon.
 - [x] Run validation, production build, preview health check, and save a checkpoint after the corrected home-screen icon fix.
+
+## Follow-up Fix — PWA Icon Fill
+- [x] Increase the orange PWA/home-screen icon artwork scale so the 6+1 logo fills the icon box more tightly.
+- [x] Update regression coverage for the tighter PWA icon fill/scaling contract.
+- [x] Run validation, production build, preview health check, and save a checkpoint after the icon fill adjustment.
+
+## Enhancement — Site-Wide Motion Polish
+- [x] Add a cohesive motion system for animations, transitions, transforms, and micro-interactions across the app.
+- [x] Apply intuitive motion to key user moments such as landing entry, tab changes, rule cards, submit states, proof/reward interactions, Board cards, and mobile navigation.
+- [x] Respect reduced-motion preferences so users who prefer less animation still get a stable accessible experience.
+- [x] Keep the motion aligned with the dark/gold 6+1 challenge style without adding distracting or slow effects.
+- [x] Update regression coverage for the motion-system hooks, reduced-motion safeguards, and key animated interaction markers.
+- [x] Run validation, production build, preview health check, and save a checkpoint after the motion polish pass.

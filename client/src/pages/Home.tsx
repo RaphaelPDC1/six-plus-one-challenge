@@ -260,7 +260,7 @@ function SharpButton({ children, className, ...props }: React.ButtonHTMLAttribut
     <button
       {...props}
       className={classNames(
-        "poster-button flex min-h-12 items-center justify-center gap-2 px-5 py-3 text-xs transition disabled:cursor-not-allowed",
+        "poster-button motion-press flex min-h-12 items-center justify-center gap-2 px-5 py-3 text-xs transition disabled:cursor-not-allowed",
         className,
       )}
     >
@@ -272,7 +272,7 @@ function SharpButton({ children, className, ...props }: React.ButtonHTMLAttribut
 function HealthBar({ lives = 4, label = "Lives", compact = false }: { lives?: number; label?: string; compact?: boolean }) {
   const safeLives = clampLives(lives);
   return (
-    <section className={classNames("border border-[#2A2A2A] bg-[#101010]", compact ? "p-2" : "p-4")}> 
+    <section className={classNames("motion-card border border-[#2A2A2A] bg-[#101010]", compact ? "p-2" : "p-4")}> 
       <div className="mb-3 flex items-end justify-between gap-3">
         <MicroLabel tone={safeLives <= 1 ? "red" : "gold"}>{label}</MicroLabel>
         <span className={classNames("text-xs font-black uppercase tracking-[0.28em]", safeLives <= 1 ? "text-[#C0392B]" : "text-[#C8A96E]")}>{safeLives}/4</span>
@@ -307,7 +307,7 @@ function PosterStat({ label, value, tone = "gold" }: { label: string; value: str
     white: "text-white",
   };
   return (
-    <div className="border border-[#2A2A2A] bg-[#111] p-4">
+    <div className="motion-card border border-[#2A2A2A] bg-[#111] p-4">
       <MicroLabel tone={tone === "white" ? "muted" : tone}>{label}</MicroLabel>
       <p className={classNames("mt-3 text-4xl font-black uppercase leading-none", tones[tone])}>{value}</p>
     </div>
@@ -317,7 +317,7 @@ function PosterStat({ label, value, tone = "gold" }: { label: string; value: str
 function WardenPresence({ snapshot }: { snapshot: Snapshot }) {
   const latest = [...(snapshot?.wardenMessages ?? [])].reverse()[0];
   return (
-    <aside className="border-l-4 border-[#C0392B] bg-[#130F0F] p-4">
+    <aside className="motion-card warden-pulse border-l-4 border-[#C0392B] bg-[#130F0F] p-4">
       <div className="flex items-center justify-between gap-4">
         <MicroLabel tone="red">The Warden is watching</MicroLabel>
         <span className="h-2 w-2 animate-pulse bg-[#C0392B]" />
@@ -370,7 +370,7 @@ function ProfilePhoto({ participant, className = "h-11 w-11", enlargeable = fals
 
 function RewardVisual({ reward, compact = false }: { reward: any; compact?: boolean }) {
   return (
-    <div className={classNames("relative overflow-hidden border border-[#C8A96E]/40 bg-[#070707]", compact ? "h-16 w-16 shrink-0" : "mb-4 aspect-[4/3] w-full")}>
+    <div className={classNames("motion-reward-visual relative overflow-hidden border border-[#C8A96E]/40 bg-[#070707]", compact ? "h-16 w-16 shrink-0" : "mb-4 aspect-[4/3] w-full")}>
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_24%_18%,rgba(200,169,110,0.28),transparent_34%),linear-gradient(135deg,rgba(46,204,113,0.18),transparent_44%),linear-gradient(315deg,rgba(192,57,43,0.24),transparent_48%)]" />
       <div className="absolute inset-3 border border-white/10" />
       <div className="absolute left-3 top-3 flex items-center gap-2">
@@ -411,7 +411,7 @@ function SiteEntryPanel() {
   return (
     <section
       id="site-entry-panel"
-      className="mt-8 scroll-mt-10 border border-[#2A2A2A] bg-[#090909]/94 p-4 shadow-[0_18px_70px_rgba(0,0,0,0.42)] transition duration-500 hover:border-[#C8A96E]/70 sm:p-5"
+      className="motion-card motion-reveal mt-8 scroll-mt-10 border border-[#2A2A2A] bg-[#090909]/94 p-4 shadow-[0_18px_70px_rgba(0,0,0,0.42)] transition duration-500 hover:border-[#C8A96E]/70 sm:p-5"
     >
       <div className="flex items-start gap-3">
         <div className="grid h-10 w-10 shrink-0 place-items-center border border-[#C8A96E]/70 text-[#C8A96E]">
@@ -426,14 +426,14 @@ function SiteEntryPanel() {
       </div>
 
       <div className="mt-5 grid gap-3 lg:grid-cols-[1fr_1fr]" data-testid="entry-choice-panel">
-        <Link href="/register" className="group min-h-32 border border-[#C8A96E]/70 bg-[#C8A96E] p-4 text-left text-black transition hover:-translate-y-0.5 hover:shadow-[0_14px_40px_rgba(200,169,110,0.20)] focus:outline-none focus:ring-2 focus:ring-[#C8A96E] focus:ring-offset-2 focus:ring-offset-black">
+        <Link href="/register" className="group motion-card motion-press min-h-32 border border-[#C8A96E]/70 bg-[#C8A96E] p-4 text-left text-black transition hover:-translate-y-0.5 hover:shadow-[0_14px_40px_rgba(200,169,110,0.20)] focus:outline-none focus:ring-2 focus:ring-[#C8A96E] focus:ring-offset-2 focus:ring-offset-black">
           <span className="block text-[10px] font-black uppercase tracking-[0.18em] text-black/60">New challenger</span>
           <span className="mt-2 block text-3xl font-black uppercase tracking-[-0.06em]">Register</span>
           <span className="mt-2 block text-xs font-black uppercase tracking-[0.12em] text-black/70">A focused page for the five setup questions.</span>
         </Link>
 
         <form
-          className="border border-[#2A2A2A] bg-black p-4"
+          className="motion-card border border-[#2A2A2A] bg-black p-4"
           data-testid="login-flow-panel"
           onSubmit={event => {
             event.preventDefault();
@@ -532,7 +532,7 @@ function Landing() {
   ] as const;
 
   return (
-    <main className="poster-grid min-h-screen bg-[#0D0D0D] text-white">
+    <main className="poster-grid motion-page min-h-screen bg-[#0D0D0D] text-white">
       <section className="container py-5 sm:py-6">
         <nav className="flex flex-col items-start gap-4 overflow-hidden border-b border-[#2A2A2A] pb-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex w-full min-w-0 items-center gap-3 sm:w-auto sm:gap-4">
@@ -548,7 +548,7 @@ function Landing() {
         </nav>
 
         <div className="grid gap-4 py-6 xl:grid-cols-[minmax(0,1.05fr)_minmax(340px,0.95fr)] xl:items-stretch">
-          <section className="relative overflow-hidden border border-[#2A2A2A] bg-[#080808]/92 p-5 sm:p-6 lg:p-7">
+          <section className="motion-hero relative overflow-hidden border border-[#2A2A2A] bg-[#080808]/92 p-5 sm:p-6 lg:p-7">
                 <div className="absolute -right-2 -top-10 text-[11rem] font-black leading-none tracking-[-0.14em] text-white/[0.025] sm:-right-8 sm:text-[14rem]" aria-hidden="true">4</div>
             <div className="relative z-10 flex h-full flex-col justify-between gap-6">
               <div>
@@ -560,9 +560,9 @@ function Landing() {
                 <p className="mt-5 max-w-full whitespace-normal break-words text-sm font-bold leading-6 text-[#BDBDBD] sm:max-w-3xl sm:text-base sm:leading-7">6+1. There are 7 days in a week and every single one is an opportunity to be better. Not just for you. For the people next to you. Better everyday. Better together. You have 50 days. Make it count.</p>
               </div>
 
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <div className="motion-list grid grid-cols-2 gap-2 sm:grid-cols-4">
                 {challengeStats.map(([label, value]) => (
-                  <div key={label} className="border border-[#2A2A2A] bg-[#111] p-3">
+                  <div key={label} className="motion-card border border-[#2A2A2A] bg-[#111] p-3">
                     <MicroLabel tone="gold">{label}</MicroLabel>
                     <p className="mt-2 text-2xl font-black uppercase text-white">{value}</p>
                   </div>
@@ -571,7 +571,7 @@ function Landing() {
             </div>
           </section>
 
-          <aside className="grid gap-4">
+          <aside className="motion-list grid gap-4">
             <SiteEntryPanel />
             <section className="border-l-4 border-[#C0392B] bg-[#130F0F] p-4">
               <MicroLabel tone="red">Your Lives</MicroLabel>
@@ -611,9 +611,9 @@ function Landing() {
               </div>
               <p className="max-w-xs text-[10px] font-black uppercase tracking-[0.18em] text-[#777]">Compact by default. Tap open for the exact brief.</p>
             </div>
-            <div className="mt-4 grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+            <div className="motion-list mt-4 grid gap-2 md:grid-cols-2 xl:grid-cols-3">
               {landingRules.map(([number, icon, title, body, footer]) => (
-                <details key={number} className="group border border-[#2A2A2A] bg-black p-4 open:border-[#C8A96E]/70">
+                <details key={number} className="group motion-card motion-details border border-[#2A2A2A] bg-black p-4 open:border-[#C8A96E]/70">
                   <summary className="flex cursor-pointer list-none items-center justify-between gap-3">
                     <span>
                       <span className="poster-label text-[#C8A96E]">{number} · {footer}</span>
@@ -636,9 +636,9 @@ function Landing() {
                 </div>
                 <span className="text-4xl font-black text-[#C8A96E]/35">02</span>
               </div>
-              <div className="mt-4 grid gap-2 sm:grid-cols-2">
+              <div className="motion-list mt-4 grid gap-2 sm:grid-cols-2">
                 {dailyChecklist.map(([title, detail]) => (
-                  <div key={title} className="border border-[#2A2A2A] bg-black p-3">
+                  <div key={title} className="motion-card border border-[#2A2A2A] bg-black p-3">
                     <p className="text-sm font-black uppercase tracking-[-0.03em] text-white">{title}</p>
                     <p className="mt-1 text-xs font-bold text-[#BDBDBD]">{detail}</p>
                   </div>
@@ -686,7 +686,7 @@ function Landing() {
             <div className="mt-4 grid gap-3 xl:grid-cols-[1.05fr_0.95fr]">
               <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-2">
                 {journeySteps.map(([day, title, detail]) => (
-                  <article key={day} className="border border-[#2A2A2A] bg-black p-3">
+                  <article key={day} className="motion-card border border-[#2A2A2A] bg-black p-3">
                     <MicroLabel tone="gold">{day}</MicroLabel>
                     <h3 className="mt-2 text-sm font-black uppercase tracking-[-0.03em] text-white">{title}</h3>
                     <p className="mt-2 text-xs font-bold leading-5 text-[#BDBDBD]">{detail}</p>
@@ -736,7 +736,7 @@ function RuleCard({
   children: React.ReactNode;
 }) {
   return (
-    <article className={classNames("border transition-all duration-300 hover:-translate-y-0.5", complete ? "border-[#2ECC71] bg-[#0F1E15] shadow-[0_0_0_1px_rgba(46,204,113,0.2)]" : active ? "border-[#C0392B] bg-[#1A0D0A] shadow-[0_18px_55px_rgba(192,57,43,0.14)]" : "border-[#7A241B] bg-[#101010]")}> 
+    <article className={classNames("motion-card rule-card-motion border transition-all duration-300 hover:-translate-y-0.5", complete ? "rule-card-complete border-[#2ECC71] bg-[#0F1E15] shadow-[0_0_0_1px_rgba(46,204,113,0.2)]" : active ? "rule-card-active border-[#C0392B] bg-[#1A0D0A] shadow-[0_18px_55px_rgba(192,57,43,0.14)]" : "border-[#7A241B] bg-[#101010]")}> 
       <button className="flex w-full items-center justify-between gap-4 p-4 text-left" onClick={() => { pulse(12); onToggle(); }}>
         <div className="flex min-w-0 items-center gap-4">
           <div className={classNames("grid h-11 w-11 place-items-center border", complete ? "border-[#2ECC71] text-[#2ECC71]" : "border-[#343434] text-[#C8A96E]")}>{complete ? <Check className="h-5 w-5 animate-gold-pop" /> : <Icon className="h-5 w-5" />}</div>
@@ -762,11 +762,11 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 }
 
 function TextInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
-  return <input {...props} className={classNames("w-full border border-[#2A2A2A] bg-[#0D0D0D] px-4 py-3 text-sm font-bold text-white outline-none transition placeholder:text-[#555] focus:border-[#C8A96E]", props.className)} />;
+  return <input {...props} className={classNames("motion-focus w-full border border-[#2A2A2A] bg-[#0D0D0D] px-4 py-3 text-sm font-bold text-white outline-none transition placeholder:text-[#555] focus:border-[#C8A96E]", props.className)} />;
 }
 
 function TextArea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>) {
-  return <textarea {...props} className={classNames("min-h-28 w-full border border-[#2A2A2A] bg-[#0D0D0D] px-4 py-3 text-sm font-bold leading-6 text-white outline-none transition placeholder:text-[#555] focus:border-[#C8A96E]", props.className)} />;
+  return <textarea {...props} className={classNames("motion-focus min-h-28 w-full border border-[#2A2A2A] bg-[#0D0D0D] px-4 py-3 text-sm font-bold leading-6 text-white outline-none transition placeholder:text-[#555] focus:border-[#C8A96E]", props.className)} />;
 }
 
 function JournalReflectionCard({
@@ -778,7 +778,7 @@ function JournalReflectionCard({
 }) {
   const characterCount = value.trim().length;
   return (
-    <div className="journal-letter-card group relative overflow-hidden border border-[#2A2A2A] bg-[#080808] p-4 transition duration-500 hover:border-[#C8A96E]/70">
+    <div className="journal-letter-card motion-card group relative overflow-hidden border border-[#2A2A2A] bg-[#080808] p-4 transition duration-500 hover:border-[#C8A96E]/70">
       <div className="journal-letter-mark" aria-hidden="true">“</div>
       <div className="relative z-10 grid gap-4 md:grid-cols-[1fr_170px]">
         <label className="block min-w-0">
@@ -909,7 +909,7 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
   }
 
   return (
-    <div className="grid gap-5 xl:grid-cols-[1fr_360px]">
+    <div className="motion-page grid gap-5 xl:grid-cols-[1fr_360px]">
       <section className="space-y-5">
         <div className="border border-[#2A2A2A] bg-[#101010] p-5">
           <div className="grid gap-5 md:grid-cols-[1fr_320px]">
@@ -922,7 +922,7 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
           </div>
         </div>
 
-        <div className={classNames("must-do-rules border-2 p-3 transition-all duration-300 sm:p-4", allAddressed ? "must-do-rules-complete border-[#2ECC71] bg-[#07150D]" : "border-[#C0392B] bg-[#190B0A]")}> 
+        <div className={classNames("must-do-rules motion-card border-2 p-3 transition-all duration-300 sm:p-4", allAddressed ? "must-do-rules-complete border-[#2ECC71] bg-[#07150D]" : "border-[#C0392B] bg-[#190B0A]")}> 
           <div className="mb-3 flex flex-col gap-2 border-b border-white/10 pb-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <MicroLabel tone={allAddressed ? "green" : "red"}>{allAddressed ? "Pass secured" : "Must-do today"}</MicroLabel>
@@ -931,7 +931,7 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
             <div className={classNames("border px-3 py-2 text-[10px] font-black uppercase tracking-[0.18em]", allAddressed ? "border-[#2ECC71] bg-[#0F2A18] text-[#2ECC71]" : "border-[#C0392B] bg-[#2A0F0C] text-[#FFB3A8]")}>{allAddressed ? `${completedRules}/${totalRules} passed` : `${Math.max(0, passThreshold - completedRules)} more for pass`}</div>
           </div>
           {allAddressed && <div className="mb-3 border border-[#2ECC71]/50 bg-[#0F2A18] p-3 text-xs font-black uppercase tracking-[0.16em] text-[#2ECC71]">5/6 is a pass. Submit the day.</div>}
-          <div className="space-y-2">
+          <div className="motion-list space-y-2">
           <RuleCard title="No alcohol" label="Rule 01" icon={Shield} complete={form.noAlcohol} active={openRule === "noAlcohol"} onToggle={() => setOpenRule(openRule === "noAlcohol" ? "exercise" : "noAlcohol")}>
             <label className="flex items-center justify-between gap-4 border border-[#2A2A2A] bg-[#0D0D0D] p-4">
               <span className="text-sm font-black uppercase tracking-[0.12em] text-white">Kept clean today</span>
@@ -986,13 +986,13 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
           </div>
         </div>
 
-        <div className="grid gap-2 bg-[#2A2A2A] p-[2px] sm:grid-cols-3" data-testid="myday-stats-after-must-do">
+        <div className="motion-list grid gap-2 bg-[#2A2A2A] p-[2px] sm:grid-cols-3" data-testid="myday-stats-after-must-do">
           <PosterStat label="Rules addressed" value={`${completedRules}/${totalRules}`} tone={allAddressed ? "green" : "gold"} />
           <PosterStat label="Current streak" value={participant?.currentStreak ?? 0} tone="green" />
           <PosterStat label="Points" value={participant?.totalPoints ?? 0} tone="gold" />
         </div>
 
-        <div className={classNames("submit-dock relative sticky bottom-[106px] z-20 border border-[#2A2A2A] bg-[#0D0D0D]/95 p-3 backdrop-blur transition-all duration-300 md:static md:bg-transparent md:p-0", submit.isPending && "submit-dock-pending", allAddressed && !submit.isPending && "submit-dock-ready")}>
+        <div className={classNames("submit-dock motion-submit-dock relative sticky bottom-[106px] z-20 border border-[#2A2A2A] bg-[#0D0D0D]/95 p-3 backdrop-blur transition-all duration-300 md:static md:bg-transparent md:p-0", submit.isPending && "submit-dock-pending", allAddressed && !submit.isPending && "submit-dock-ready")}>
           <SharpButton className={classNames("w-full py-5 text-sm transition-all duration-300", submit.isPending && "submit-button-pending")} disabled={submit.isPending} onClick={() => submit.mutate({ ...form, reflectionShared: false, dayNumber: snapshot?.challenge.currentDay ?? 1 })}>
             {submit.isPending ? (allAddressed ? "Submitting the log" : "Saving progress") : allAddressed ? `Submit day ${snapshot?.challenge.currentDay ?? 1}` : `Save progress — ${Math.max(0, passThreshold - completedRules)} more for pass`}
           </SharpButton>
@@ -1006,7 +1006,7 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
       <aside className="space-y-5">
         <WardenPresence snapshot={snapshot} />
         <HealthBar lives={participant?.livesRemaining ?? 4} label="Lives remain" />
-        <div className={classNames("border p-4 transition", ghostLifeLocked ? "border-[#4A315D] bg-[#120F18] opacity-80" : "border-[#2A2A2A] bg-[#101010]")} data-ghost-life-state={ghostLifeLocked ? "locked" : "available"}>
+        <div className={classNames("motion-card ghost-life-card border p-4 transition", ghostLifeLocked ? "border-[#4A315D] bg-[#120F18] opacity-80" : "border-[#2A2A2A] bg-[#101010]")} data-ghost-life-state={ghostLifeLocked ? "locked" : "available"}>
           <div className="flex items-start justify-between gap-3">
             <MicroLabel tone="purple">Ghost Life</MicroLabel>
             {ghostLifeLocked && <span className="border border-[#9B59B6]/60 bg-[#1B1024] px-2 py-1 text-[9px] font-black uppercase tracking-[0.16em] text-[#D8B4FE]">Locked</span>}
@@ -1040,7 +1040,7 @@ function OverviewMetricCard({ label, value, detail, tone = "gold" }: { label: st
     white: "text-white border-[#444] bg-[#111]",
   };
   return (
-    <article className={classNames("border p-4", tones[tone])}>
+    <article className={classNames("motion-card border p-4", tones[tone])}>
       <MicroLabel tone={tone === "white" ? "muted" : tone}>{label}</MicroLabel>
       <p className="mt-3 text-4xl font-black uppercase leading-none tracking-[-0.08em]">{value}</p>
       <p className="mt-3 text-[10px] font-black uppercase leading-5 tracking-[0.14em] text-[#BDBDBD]">{detail}</p>
@@ -1051,13 +1051,13 @@ function OverviewMetricCard({ label, value, detail, tone = "gold" }: { label: st
 function OverviewBar({ label, value, detail, tone = "gold" }: { label: string; value: number; detail: string; tone?: "gold" | "red" | "green" | "purple" }) {
   const fill = tone === "green" ? "bg-[#2ECC71]" : tone === "red" ? "bg-[#C0392B]" : tone === "purple" ? "bg-[#9B59B6]" : "bg-[#C8A96E]";
   return (
-    <div className="border border-[#2A2A2A] bg-black p-3">
+    <div className="motion-card border border-[#2A2A2A] bg-black p-3">
       <div className="flex items-center justify-between gap-3">
         <p className="text-[10px] font-black uppercase tracking-[0.16em] text-white">{label}</p>
         <span className="text-sm font-black text-[#C8A96E]">{value}%</span>
       </div>
       <div className="mt-3 h-2 overflow-hidden bg-[#242424]" aria-hidden="true">
-        <div className={classNames("h-full", fill)} style={{ width: `${Math.max(0, Math.min(100, value))}%` }} />
+        <div className={classNames("motion-progress-fill h-full", fill)} style={{ width: `${Math.max(0, Math.min(100, value))}%` }} />
       </div>
       <p className="mt-2 text-[10px] font-bold uppercase tracking-[0.12em] text-[#777]">{detail}</p>
     </div>
@@ -1131,7 +1131,7 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
   }).sort((a: any, b: any) => b.riskScore - a.riskScore || b.totalPoints - a.totalPoints);
 
   return (
-    <div className="space-y-5" data-testid="overview-metrics-dashboard">
+    <div className="motion-page space-y-5" data-testid="overview-metrics-dashboard">
       <section className="border border-[#2A2A2A] bg-[#101010] p-4 sm:p-5">
         <div className="flex flex-wrap items-end justify-between gap-4 border-b border-[#2A2A2A] pb-4">
           <div>
@@ -1198,7 +1198,7 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
         </div>
         <div className="mt-5 space-y-2">
           {participantMetrics.map((p: any, index: number) => (
-            <button key={p.id} type="button" onClick={() => { pulse(14); setSelected(p); }} className="grid w-full gap-3 border border-[#2A2A2A] bg-[#0D0D0D] p-3 text-left transition hover:border-[#C8A96E] focus-visible:border-[#C8A96E] focus-visible:outline-none sm:grid-cols-[2.5rem_3.5rem_minmax(0,1fr)_minmax(220px,0.9fr)] sm:items-center" aria-label={`Open ${p.displayName} participant stats`}>
+            <button key={p.id} type="button" onClick={() => { pulse(14); setSelected(p); }} className="motion-row motion-press grid w-full gap-3 border border-[#2A2A2A] bg-[#0D0D0D] p-3 text-left transition hover:border-[#C8A96E] focus-visible:border-[#C8A96E] focus-visible:outline-none sm:grid-cols-[2.5rem_3.5rem_minmax(0,1fr)_minmax(220px,0.9fr)] sm:items-center" aria-label={`Open ${p.displayName} participant stats`}>
               <span className={classNames("text-2xl font-black", index === 0 && p.riskScore > 30 ? "text-[#C0392B]" : "text-[#777]")}>#{index + 1}</span>
               <ProfilePhoto participant={p} className="h-12 w-12" />
               <span className="min-w-0">
@@ -1282,7 +1282,7 @@ function ParticipantSheet({ participant, onClose }: { participant: any; onClose:
   const recentPassed = recentLogs.filter((log: any) => log.completed || getLogCompletedRuleCount(log) >= DAILY_PASS_THRESHOLD).length;
   return (
     <div className={classNames("sheet-backdrop fixed inset-0 z-50 flex items-end overflow-y-auto bg-black/70 sm:items-center sm:p-4", closing && "sheet-backdrop-out")} onClick={onClose}>
-      <div className={classNames("sheet-panel max-h-[100svh] w-full overflow-y-auto border-t-2 border-[#C8A96E] bg-[#0D0D0D] p-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-2xl sm:max-h-[calc(100svh-2rem)] sm:p-5 md:mx-auto md:max-w-xl md:border", closing && "sheet-panel-out")} onClick={event => event.stopPropagation()} role="dialog" aria-modal="true" aria-label={`${visibleParticipant.displayName} Board participant details`}>
+      <div className={classNames("sheet-panel motion-sheet-panel max-h-[100svh] w-full overflow-y-auto border-t-2 border-[#C8A96E] bg-[#0D0D0D] p-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-2xl sm:max-h-[calc(100svh-2rem)] sm:p-5 md:mx-auto md:max-w-xl md:border", closing && "sheet-panel-out")} onClick={event => event.stopPropagation()} role="dialog" aria-modal="true" aria-label={`${visibleParticipant.displayName} Board participant details`}>
         <div className="sticky top-0 z-10 -mx-4 -mt-4 mb-4 flex items-center justify-between gap-3 border-b border-[#2A2A2A] bg-[#0D0D0D]/95 px-4 py-3 backdrop-blur sm:static sm:mx-0 sm:mt-0 sm:mb-0 sm:border-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none">
           <button type="button" onClick={onClose} className="min-h-11 border border-[#C8A96E]/60 px-4 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-[#C8A96E] hover:bg-[#C8A96E] hover:text-black" aria-label="Back to Board list">Back to Board</button>
           <button type="button" onClick={onClose} className="grid min-h-11 min-w-11 shrink-0 place-items-center border border-[#2A2A2A] text-[#777] hover:border-[#C8A96E] hover:text-[#C8A96E]" aria-label="Close participant details"><X className="h-5 w-5" /></button>
@@ -1328,7 +1328,7 @@ function ParticipantSheet({ participant, onClose }: { participant: any; onClose:
         {photoExpanded && normaliseProfilePhotoUrl(visibleParticipant.profilePhotoUrl) && (
           <div className="fixed inset-0 z-[60] grid place-items-center bg-black/88 p-5" onClick={() => setPhotoExpanded(false)} role="dialog" aria-modal="true" aria-label={`${visibleParticipant.displayName} display picture`}>
             <button type="button" className="absolute right-4 top-4 border border-[#2A2A2A] bg-black p-3 text-[#C8A96E]" onClick={() => setPhotoExpanded(false)} aria-label="Close enlarged display picture"><X className="h-5 w-5" /></button>
-            <img src={normaliseProfilePhotoUrl(visibleParticipant.profilePhotoUrl)} alt={`${visibleParticipant.displayName} enlarged display picture`} className="max-h-[82vh] max-w-full border border-[#C8A96E] bg-black object-contain" loading="eager" decoding="async" onClick={event => event.stopPropagation()} />
+            <img src={normaliseProfilePhotoUrl(visibleParticipant.profilePhotoUrl)} alt={`${visibleParticipant.displayName} enlarged display picture`} className="motion-image-zoom max-h-[82vh] max-w-full border border-[#C8A96E] bg-black object-contain" loading="eager" decoding="async" onClick={event => event.stopPropagation()} />
           </div>
         )}
       </div>
@@ -1348,7 +1348,7 @@ function ProofImage({ url, dayNumber }: { url: string; dayNumber: number }) {
     <div className="mt-3">
       {!failed && (
         <a href={src} target="_blank" rel="noreferrer" className="block" aria-label={`Open proof image for day ${dayNumber}`}>
-          <img src={src} alt={`Exercise proof for day ${dayNumber}`} className="max-h-80 w-full border border-[#2A2A2A] bg-black object-contain" loading="lazy" decoding="async" onError={() => setFailed(true)} />
+          <img src={src} alt={`Exercise proof for day ${dayNumber}`} className="motion-image-zoom max-h-80 w-full border border-[#2A2A2A] bg-black object-contain" loading="lazy" decoding="async" onError={() => setFailed(true)} />
         </a>
       )}
       {failed && (
@@ -1390,7 +1390,7 @@ function Leaderboard({ snapshot }: { snapshot: Snapshot }) {
       </div>
       <div className="space-y-2">
         {ranked.map((p: any, index) => (
-          <button key={p.id} onClick={() => { pulse(14); setSelected(p); }} className={classNames("grid w-full grid-cols-[48px_minmax(0,1fr)] items-center gap-3 border bg-[#0D0D0D] p-3 text-left transition hover:border-[#C8A96E] sm:grid-cols-[56px_56px_minmax(0,1fr)_auto] sm:gap-4 sm:p-4", index === 0 ? "border-l-4 border-l-[#C8A96E] border-[#3C3423]" : "border-[#2A2A2A]")}> 
+          <button key={p.id} onClick={() => { pulse(14); setSelected(p); }} className={classNames("motion-row motion-press grid w-full grid-cols-[48px_minmax(0,1fr)] items-center gap-3 border bg-[#0D0D0D] p-3 text-left transition hover:border-[#C8A96E] sm:grid-cols-[56px_56px_minmax(0,1fr)_auto] sm:gap-4 sm:p-4", index === 0 ? "border-l-4 border-l-[#C8A96E] border-[#3C3423]" : "border-[#2A2A2A]")}> 
             <span className={classNames("text-2xl font-black sm:text-3xl", index === 0 ? "text-[#C8A96E]" : "text-[#777]")}>#{index + 1}</span>
             <span className="hidden sm:block"><ProfilePhoto participant={p} className="h-12 w-12" /></span>
             <span className="min-w-0">
@@ -1420,7 +1420,7 @@ function ProofFeed({ snapshot }: { snapshot: Snapshot }) {
         {publicLogs.map((log: any) => {
           const owner = snapshot?.participants.find((p: any) => p.id === log.participantId);
           return (
-            <article key={log.id} className="border border-[#2A2A2A] bg-[#0D0D0D] p-5">
+            <article key={log.id} className="motion-card border border-[#2A2A2A] bg-[#0D0D0D] p-5">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                   <ProfilePhoto participant={owner} className="h-11 w-11" />
@@ -1458,7 +1458,7 @@ function Rewards({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => voi
         {snapshot?.rewards.map((reward: any) => {
           const canRedeem = participantPoints >= reward.pointsCost;
           return (
-            <button key={reward.id} className={classNames("border bg-[#101010] p-5 text-left transition hover:border-[#C8A96E] disabled:cursor-not-allowed disabled:opacity-60", canRedeem ? "border-[#2A2A2A]" : "border-[#2A2A2A]/70")} disabled={!canRedeem || redeem.isPending} onClick={() => { pulse(12); redeem.mutate({ rewardId: reward.id }); }}>
+            <button key={reward.id} className={classNames("motion-card motion-press border bg-[#101010] p-5 text-left transition hover:border-[#C8A96E] disabled:cursor-not-allowed disabled:opacity-60", canRedeem ? "border-[#2A2A2A]" : "border-[#2A2A2A]/70")} disabled={!canRedeem || redeem.isPending} onClick={() => { pulse(12); redeem.mutate({ rewardId: reward.id }); }}>
               <RewardVisual reward={reward} />
               <MicroLabel tone="gold">{reward.pointsCost} points</MicroLabel>
               <h3 className="mt-3 text-2xl font-black uppercase tracking-[-0.05em] text-white">{reward.name}</h3>
@@ -1678,7 +1678,7 @@ export default function Home() {
   const mobileTabs = visibleTabs.filter(tab => tab.key !== "admin");
   const activeMobileIndex = Math.max(0, mobileTabs.findIndex(tab => tab.key === activeTab));
   return (
-    <main className="poster-grid min-h-screen bg-[#0D0D0D] pb-32 text-white md:pb-0">
+    <main className="poster-grid motion-page min-h-screen bg-[#0D0D0D] pb-32 text-white md:pb-0" data-motion-system="site-wide-v1">
       <header className="sticky top-0 z-40 border-b border-[#2A2A2A] bg-[#0D0D0D]/95 backdrop-blur">
         <div className="container flex items-center justify-between gap-3 py-3 sm:gap-4 sm:py-4">
           <button onClick={() => setActiveTab("myday")} className="flex min-w-0 items-center gap-3 text-left">
@@ -1705,7 +1705,7 @@ export default function Home() {
                 const Icon = tab.icon;
                 const active = activeTab === tab.key;
                 return (
-                  <button key={tab.key} onClick={() => { pulse(10); setActiveTab(tab.key); }} className={classNames("flex items-center justify-center gap-2 bg-[#101010] px-4 py-4 text-[10px] font-black uppercase tracking-[0.2em] transition", active ? "text-[#C8A96E]" : "text-[#777] hover:text-white")}>
+                  <button key={tab.key} onClick={() => { pulse(10); setActiveTab(tab.key); }} className={classNames("motion-tab motion-press flex items-center justify-center gap-2 bg-[#101010] px-4 py-4 text-[10px] font-black uppercase tracking-[0.2em] transition", active ? "motion-tab-active text-[#C8A96E]" : "text-[#777] hover:text-white")}>
                     <Icon className="h-4 w-4" /> {tab.label}
                   </button>
                 );
@@ -1728,7 +1728,7 @@ export default function Home() {
       <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-3 pb-[calc(0.7rem+env(safe-area-inset-bottom))] md:hidden" aria-label="Mobile primary navigation" data-testid="mobile-floating-nav">
         <div className="pointer-events-auto relative mx-auto flex max-w-[26rem] items-center justify-between overflow-hidden rounded-[1.35rem] border border-[#C8A96E]/35 bg-[#070707]/94 px-1.5 py-2 shadow-[0_18px_44px_rgba(0,0,0,0.72)] backdrop-blur-xl">
           <div
-            className="absolute top-0 z-0 h-[3px] rounded-full bg-[#C8A96E] shadow-[0_24px_28px_rgba(200,169,110,0.48)] transition-transform duration-300 ease-out"
+            className="motion-tab-indicator absolute top-0 z-0 h-[3px] rounded-full bg-[#C8A96E] shadow-[0_24px_28px_rgba(200,169,110,0.48)] transition-transform duration-300 ease-out"
             style={{ width: `${100 / Math.max(1, mobileTabs.length)}%`, transform: `translateX(${activeMobileIndex * 100}%)` }}
             aria-hidden="true"
           />
@@ -1741,8 +1741,8 @@ export default function Home() {
                 type="button"
                 onClick={() => { pulse(10); setActiveTab(tab.key); }}
                 className={classNames(
-                  "relative z-10 flex min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-[1rem] px-1 py-2 text-[7px] font-black uppercase leading-none tracking-[0.08em] transition-colors duration-200 min-[380px]:text-[8px]",
-                  active ? "bg-[#151108] text-[#C8A96E]" : "text-[#777] hover:text-white"
+                  "motion-tab motion-press relative z-10 flex min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-[1rem] px-1 py-2 text-[7px] font-black uppercase leading-none tracking-[0.08em] transition-colors duration-200 min-[380px]:text-[8px]",
+                  active ? "motion-tab-active bg-[#151108] text-[#C8A96E]" : "text-[#777] hover:text-white"
                 )}
                 aria-current={active ? "page" : undefined}
               >

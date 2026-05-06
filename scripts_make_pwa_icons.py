@@ -17,8 +17,8 @@ if bbox:
 ORANGE = (255, 91, 0, 255)
 for size in (180, 192, 512):
     canvas = Image.new('RGBA', (size, size), ORANGE)
-    # Keep a strong, readable mark with enough padding for iOS rounded masks.
-    max_box = int(size * 0.56)
+    # Fill the home-screen tile assertively while preserving just enough padding for iOS rounded masks.
+    max_box = int(size * 0.90)
     fitted = ImageOps.contain(logo, (max_box, max_box), Image.Resampling.LANCZOS)
     x = (size - fitted.width) // 2
     y = (size - fitted.height) // 2
@@ -29,7 +29,7 @@ for size in (180, 192, 512):
 (out_dir / 'app-icon.svg').write_text('''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
   <title id="title">6+1</title>
   <rect width="512" height="512" fill="#FF5B00"/>
-  <text x="256" y="306" text-anchor="middle" fill="#050505" font-family="Arial Black, Impact, Inter, system-ui, sans-serif" font-size="174" font-weight="900" letter-spacing="-14">6<tspan font-size="122" dx="-3" dy="-18">+</tspan><tspan dx="-2" dy="18">1</tspan></text>
+  <text x="256" y="350" text-anchor="middle" fill="#050505" font-family="Arial Black, Impact, Inter, system-ui, sans-serif" font-size="306" font-weight="900" letter-spacing="-28">6<tspan font-size="212" dx="-8" dy="-36">+</tspan><tspan dx="-6" dy="36">1</tspan></text>
 </svg>
 ''')
 

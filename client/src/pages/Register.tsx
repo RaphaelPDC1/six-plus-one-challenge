@@ -114,7 +114,7 @@ export default function Register() {
   ].filter(Boolean).join("\n");
 
   return (
-    <main className="poster-grid min-h-screen bg-[#0D0D0D] text-white">
+    <main className="poster-grid motion-page min-h-screen bg-[#0D0D0D] text-white">
       <section className="container py-6 md:py-8">
         <nav className="flex flex-col items-start gap-4 border-b border-[#2A2A2A] pb-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex min-w-0 items-center gap-3">
