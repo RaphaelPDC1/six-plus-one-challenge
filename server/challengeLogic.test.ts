@@ -13,6 +13,7 @@ import {
   getChallengeDateIsoForDay,
   getChallengeDeadlineForDay,
   getCurrentChallengeDay,
+  resolveDailyCompletionAward,
 } from "./db";
 
 describe("challengeLogic", () => {
@@ -107,5 +108,61 @@ describe("challengeLogic", () => {
     expect(calendar[0]).toMatchObject({ dayNumber: 1, dateIso: "2026-05-06", isToday: false });
     expect(calendar[4]).toMatchObject({ dayNumber: 5, dateIso: "2026-05-10", isToday: true });
     expect(getChallengeDeadlineForDay(1).toISOString()).toBe("2026-05-06T23:59:59.999Z");
+  });
+
+  it("awards streak and points only the first time a participant completes a calendar day", () => {
+    const submittedAt = new Date("2026-05-06T12:00:00Z");
+
+    const firstCompletion = resolveDailyCompletionAward(undefined, {
+      complete: true,
+      dayNumber: 1,
+      submittedAt,
+      deadlinePassed: false,
+    });
+
+    const repeatedCompletion = resolveDailyCompletionAward({
+      dayComplete: true,
+      pointsAwarded: firstCompletion.pointsAwarded,
+      submittedAt,
+    }, {
+      complete: true,
+      dayNumber: 1,
+      submittedAt: new Date("2026-05-06T13:00:00Z"),
+      deadlinePassed: false,
+    });
+
+    expect(firstCompletion).toMatchObject({ dayComplete: true, newlyComplete: true, pointsAwarded: 10, draftSaved: false });
+    expect(repeatedCompletion).toMatchObject({ dayComplete: true, newlyComplete: false, pointsAwarded: 10, draftSaved: false });
+    expect(repeatedCompletion.submittedAt).toBe(submittedAt);
+  });
+
+  it("does not let a completed-to-draft-to-completed toggle re-open streak credit", () => {
+    const originalSubmittedAt = new Date("2026-05-06T12:00:00Z");
+    const draftToggle = resolveDailyCompletionAward({
+      dayComplete: true,
+      pointsAwarded: 10,
+      submittedAt: originalSubmittedAt,
+    }, {
+      complete: false,
+      dayNumber: 1,
+      submittedAt: new Date("2026-05-06T14:00:00Z"),
+      deadlinePassed: false,
+    });
+
+    const retickedCompletion = resolveDailyCompletionAward({
+      dayComplete: draftToggle.dayComplete,
+      pointsAwarded: draftToggle.pointsAwarded,
+      submittedAt: draftToggle.submittedAt,
+    }, {
+      complete: true,
+      dayNumber: 1,
+      submittedAt: new Date("2026-05-06T15:00:00Z"),
+      deadlinePassed: false,
+    });
+
+    expect(draftToggle).toMatchObject({ alreadyComplete: true, dayComplete: true, newlyComplete: false, pointsAwarded: 10, draftSaved: false });
+    expect(draftToggle.submittedAt).toBe(originalSubmittedAt);
+    expect(retickedCompletion).toMatchObject({ alreadyComplete: true, dayComplete: true, newlyComplete: false, pointsAwarded: 10, draftSaved: false });
+    expect(retickedCompletion.submittedAt).toBe(originalSubmittedAt);
   });
 });

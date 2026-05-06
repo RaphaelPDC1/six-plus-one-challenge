@@ -2,6 +2,7 @@ import { and, desc, eq, gte, inArray, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   dailyLogs,
+  type DailyLog,
   InsertUser,
   participants,
   paymentEvents,
@@ -388,6 +389,28 @@ export async function getTodayLog(participantId: number, dayNumber = getCurrentC
   return rows[0];
 }
 
+export function resolveDailyCompletionAward(existing: Pick<DailyLog, "dayComplete" | "pointsAwarded" | "submittedAt"> | undefined, input: {
+  complete: boolean;
+  dayNumber: number;
+  submittedAt: Date;
+  deadlinePassed: boolean;
+}) {
+  const alreadyComplete = Boolean(existing?.dayComplete);
+  const dayComplete = alreadyComplete || input.complete;
+  const newlyComplete = input.complete && !alreadyComplete;
+  const pointsAwarded = alreadyComplete ? (existing?.pointsAwarded ?? 0) : input.complete ? calculateDailyPoints(input.dayNumber, true) : 0;
+  const submittedAt = alreadyComplete ? (existing?.submittedAt ?? input.submittedAt) : input.deadlinePassed || input.complete ? input.submittedAt : null;
+
+  return {
+    alreadyComplete,
+    dayComplete,
+    newlyComplete,
+    pointsAwarded,
+    submittedAt,
+    draftSaved: !dayComplete && !input.deadlinePassed,
+  } as const;
+}
+
 export async function submitDailyLog(participantId: number, input: {
   dayNumber: number;
   noAlcohol: boolean;
@@ -425,8 +448,7 @@ export async function submitDailyLog(participantId: number, input: {
     deadline,
   });
   const existing = await getTodayLog(participantId, input.dayNumber);
-  const newlyComplete = complete && !existing?.dayComplete;
-  const pointsAwarded = complete ? (existing?.dayComplete ? existing.pointsAwarded : calculateDailyPoints(input.dayNumber, true)) : 0;
+  const awardState = resolveDailyCompletionAward(existing, { complete, dayNumber: input.dayNumber, submittedAt, deadlinePassed });
   const values = {
     participantId,
     dayNumber: input.dayNumber,
@@ -444,9 +466,9 @@ export async function submitDailyLog(participantId: number, input: {
     readTeachDone,
     readTeachText: input.readTeachText,
     trackedEverything: input.trackedEverything,
-    dayComplete: complete,
-    pointsAwarded,
-    submittedAt: deadlinePassed || complete ? submittedAt : null,
+    dayComplete: awardState.dayComplete,
+    pointsAwarded: awardState.pointsAwarded,
+    submittedAt: awardState.submittedAt,
   };
 
   if (existing) {
@@ -455,14 +477,14 @@ export async function submitDailyLog(participantId: number, input: {
     await db.insert(dailyLogs).values(values);
   }
 
-  if (newlyComplete) {
+  if (awardState.newlyComplete) {
     const participant = await db.select().from(participants).where(eq(participants.id, participantId)).limit(1);
     const current = participant[0];
     const newStreak = (current?.currentStreak ?? 0) + 1;
     await db.update(participants).set({
       currentStreak: newStreak,
       longestStreak: Math.max(current?.longestStreak ?? 0, newStreak),
-      totalPoints: (current?.totalPoints ?? 0) + pointsAwarded,
+      totalPoints: (current?.totalPoints ?? 0) + awardState.pointsAwarded,
       daysComplete: (current?.daysComplete ?? 0) + 1,
     }).where(eq(participants.id, participantId));
   }
@@ -476,7 +498,7 @@ export async function submitDailyLog(participantId: number, input: {
     trackedEverything: input.trackedEverything,
   });
 
-  return { complete, pointsAwarded, missedRules, deadlinePassed, draftSaved: !deadlinePassed && !complete, log: await getTodayLog(participantId, input.dayNumber) };
+  return { complete: awardState.dayComplete, pointsAwarded: awardState.pointsAwarded, missedRules, deadlinePassed, draftSaved: awardState.draftSaved, log: await getTodayLog(participantId, input.dayNumber) };
 }
 
 export async function triggerLifeLoss(participantId: number, reason: string, dailyLogId?: number | null) {

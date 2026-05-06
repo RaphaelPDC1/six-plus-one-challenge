@@ -414,12 +414,12 @@
 
 ## Bug Fix — Draft Toggle Duplicate Streak Exploit
 
-- [ ] Reproduce and diagnose the loophole where saving a draft after unticking a completed rule, then reticking and logging the day, can award extra completed-day streak credit
-- [ ] Enforce backend idempotency so each participant and calendar day can only increment days-complete, points, and streak once
-- [ ] Prevent draft saves from rolling back or resetting the completed-awarded state for an already completed day
-- [ ] Ensure repeated log-day submissions for the same completed day update the log safely without awarding another streak/day-complete bonus
-- [ ] Add regression tests covering draft-toggle resubmission, repeated completed submissions, and completed-to-draft-to-completed transitions
-- [ ] Run full tests, TypeScript, production build, preview validation, and save checkpoint
+- [x] Reproduce and diagnose the loophole where saving a draft after unticking a completed rule, then reticking and logging the day, can award extra completed-day streak credit
+- [x] Enforce backend idempotency so each participant and calendar day can only increment days-complete, points, and streak once
+- [x] Prevent draft saves from rolling back or resetting the completed-awarded state for an already completed day
+- [x] Ensure repeated log-day submissions for the same completed day update the log safely without awarding another streak/day-complete bonus
+- [x] Add regression tests covering draft-toggle resubmission, repeated completed submissions, and completed-to-draft-to-completed transitions
+- [x] Run full tests, TypeScript, production build, preview validation, and save checkpoint
 
 ## Bug Fix — Mobile Broken Logo Icon in Header and Loading Screen
 
@@ -431,4 +431,4 @@
 
 ## Current Continuation — Mobile Logo Reliability and Streak Integrity
 - [x] Replace all failing storage-backed brand logo references with the durable app-origin `/six-plus-one-logo.svg` path in UI, registration, server endpoint, and regression tests
-- [ ] Close the draft-toggle streak exploit with backend one-completion-per-day enforcement and regression tests
+- [x] Close the draft-toggle streak exploit with backend one-completion-per-day enforcement and regression tests
