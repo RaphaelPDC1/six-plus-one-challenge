@@ -119,10 +119,13 @@ function BrandWordmark({ alt, decorative = false, className = "" }: { alt: strin
 
 function CleanBrandMark({ compact = false, decorative = false }: { compact?: boolean; decorative?: boolean }) {
   return (
-    <BrandWordmark
+    <BrandLogoImageWithRetry
       alt="6+1 Four Lives Challenge logo"
       decorative={decorative}
-      className={compact ? "h-9 min-w-[5.5rem] text-[2rem] sm:h-10 sm:min-w-[6.25rem] sm:text-[2.25rem]" : "h-14 min-w-[7rem] text-[3.15rem] sm:h-16 sm:min-w-[8rem] sm:text-[3.75rem]"}
+      className={classNames(
+        "brand-logo-image block h-full w-full object-contain",
+        compact ? "max-h-10" : "max-h-24",
+      )}
     />
   );
 }
@@ -160,7 +163,7 @@ function BrandLogoImage({ alt, className = "h-full w-full object-contain", decor
 function AnimatedLoadPage({ label = "Loading the challenge" }: { label?: string }) {
   return (
     <div className="poster-grid animated-load-page grid min-h-screen place-items-center overflow-hidden bg-black text-white">
-      <div className="load-mark load-mark-wordmark" aria-hidden="true">
+      <div className="load-mark load-mark-image" aria-hidden="true">
         <CleanBrandMark decorative />
       </div>
       <div className="load-lines" aria-hidden="true" />

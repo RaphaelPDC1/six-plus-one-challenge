@@ -107,13 +107,13 @@ describe("Home onboarding shell", () => {
     }
   });
 
-  it("renders the clean horizontal wordmark in the reusable logo mark instead of the stacked uploaded image", () => {
+  it("renders the actual image logo in the reusable logo mark without a stacked text fallback", () => {
     const markup = renderToStaticMarkup(<LogoMark compact />);
 
-    expect(markup).toContain("brand-wordmark");
     expect(markup).toContain("brand-logo-shell");
-    expect(markup).toContain("whitespace-nowrap");
-    expect(markup).not.toContain('src="/manus-storage/six-plus-one-brand-logo-white-strong_2665284a.png"');
+    expect(markup).toContain("brand-logo-image");
+    expect(markup).toContain('src="/manus-storage/six-plus-one-brand-logo-white-strong_2665284a.png"');
+    expect(markup).not.toContain("brand-wordmark");
     expect(markup).not.toContain("bg-black");
   });
 
@@ -121,7 +121,8 @@ describe("Home onboarding shell", () => {
     const markup = renderToStaticMarkup(<Home />);
 
     expect(markup).toContain("sticky top-0");
-    expect(markup).toContain("brand-wordmark");
+    expect(markup).toContain("brand-logo-image");
+    expect(markup).toContain('src="/manus-storage/six-plus-one-brand-logo-white-strong_2665284a.png"');
     expect(markup).toContain("Four Lives Challenge");
   });
 
@@ -136,7 +137,7 @@ describe("Home onboarding shell", () => {
     expect(markup).toContain("Remember you&#x27;re");
     expect(markup).toContain("not a civilian.");
     expect(markup).toContain("block sm:inline");
-    expect(markup).toContain("brand-wordmark");
+    expect(markup).toContain("brand-logo-image");
     expect(markup).toContain("overflow-hidden border-b");
     expect(markup).toContain("whitespace-normal break-words");
     expect(markup).toContain("max-w-[12.5rem]");
@@ -238,14 +239,15 @@ describe("Home onboarding shell", () => {
     const markup = renderToStaticMarkup(<Home />);
 
     expect(markup).toContain("animated-load-page");
-    expect(markup).toContain("load-mark-wordmark");
+    expect(markup).toContain("load-mark-image");
     expect(markup).toContain("load-crosshair");
     expect(markup).toContain("load-status-panel");
     expect(markup).toContain("load-progress");
-    expect(markup).toContain("brand-wordmark");
+    expect(markup).toContain("brand-logo-image");
+    expect(markup).toContain('src="/manus-storage/six-plus-one-brand-logo-white-strong_2665284a.png"');
     expect(markup).not.toContain("sticky top-0");
     expect(markup).not.toContain("bg-black/62");
-    expect(markup).toContain("brand-wordmark");
+    expect(markup).not.toContain("brand-wordmark");
   });
 
   it("keeps the animated loading logo on a fixed overlay above the sticky app header on mobile", () => {
@@ -269,6 +271,6 @@ describe("Home onboarding shell", () => {
     expect(markup).toContain("New email found. Set your profile first.");
     expect(markup).toContain("Make it yours.");
     expect(markup).toContain("new@example.com");
-    expect(markup).toContain("brand-wordmark");
+    expect(markup).toContain("brand-logo-image");
   });
 });

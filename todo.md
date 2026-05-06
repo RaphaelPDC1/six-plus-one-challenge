@@ -259,3 +259,11 @@
 - [x] Run full validation, tests, build, and preview health check after the logo fix — 48 tests passing, TypeScript check successful, production build successful, dev server healthy
 - [x] Save checkpoint after the logo visual fix — included in the next checkpoint
 
+
+## Logo Image Correction — Loading Page and App Header
+- [x] Replace the current text-style wordmark on the loading page with the actual logo image
+- [x] Replace the current text-style wordmark in the app header with the actual logo image
+- [x] Keep the image-based logo polished with proper sizing, object-fit, and non-stacked/non-cramped layout on mobile and desktop
+- [x] Update automated tests to expect image-based logo rendering in the loading page and app header
+- [x] Run full validation, tests, production build, and preview health check after the logo image correction — 48 tests passing, TypeScript check successful, production build successful, preview healthy
+- [ ] Save checkpoint after the logo image correction
