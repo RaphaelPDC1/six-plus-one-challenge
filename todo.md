@@ -448,3 +448,9 @@
 - [x] Make reward redemption a simple tap action that creates the redemption request when the participant has enough points
 - [x] Notify the admin/owner through the built-in Manus notification flow whenever a participant redeems a reward
 - [x] Update reward UI copy and tests to verify the exact three rewards and admin notification behavior
+
+## Bug Fix — Mobile Board Participant Card Navigation
+- [x] Fix the Board participant drill-down/card layout so it is readable and usable on mobile after tapping a participant
+- [x] Add an obvious back or close control so mobile users can return from the participant card to the Board list
+- [x] Add or update regression coverage for the mobile participant-card layout and back/close navigation
+- [x] Run validation, production build, preview health check, and save a checkpoint after the mobile Board card fix

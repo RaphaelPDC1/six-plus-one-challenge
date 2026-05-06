@@ -417,12 +417,18 @@ describe("Home onboarding shell", () => {
     expect(calendarSource).toContain("full journey map");
   });
 
-  it("makes Board participant cards tappable and lets display pictures enlarge from the stats sheet", () => {
+  it("makes Board participant cards tappable with a mobile-readable sheet, back navigation, and enlarged display pictures", () => {
     const homeSource = readFileSync(new URL("./Home.tsx", import.meta.url), "utf8");
 
     expect(homeSource).toContain("const [selected, setSelected] = useState<any>(null);");
     expect(homeSource).toContain("aria-label={`Open ${p.displayName} participant stats`}");
     expect(homeSource).toContain("<ParticipantSheet participant={selected} onClose={() => setSelected(null)} />");
+    expect(homeSource).toContain("max-h-[100svh] w-full overflow-y-auto");
+    expect(homeSource).toContain("Back to Board");
+    expect(homeSource).toContain('aria-label="Back to Board list"');
+    expect(homeSource).toContain('aria-label="Close participant details"');
+    expect(homeSource).toContain("role=\"dialog\" aria-modal=\"true\"");
+    expect(homeSource).toContain("min-[380px]:grid-cols-3");
     expect(homeSource).toContain("const [photoExpanded, setPhotoExpanded] = useState(false);");
     expect(homeSource).toContain("enlargeable onOpen={() => setPhotoExpanded(true)}");
     expect(homeSource).toContain("Close enlarged display picture");

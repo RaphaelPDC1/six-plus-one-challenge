@@ -1260,26 +1260,27 @@ function ParticipantSheet({ participant, onClose }: { participant: any; onClose:
   const recentLogs = sheetLogs.slice(0, 7);
   const recentPassed = recentLogs.filter((log: any) => log.completed || getLogCompletedRuleCount(log) >= DAILY_PASS_THRESHOLD).length;
   return (
-    <div className={classNames("sheet-backdrop fixed inset-0 z-50 flex items-end bg-black/70", closing && "sheet-backdrop-out")} onClick={onClose}>
-      <div className={classNames("sheet-panel w-full border-t-2 border-[#C8A96E] bg-[#0D0D0D] p-5 shadow-2xl md:mx-auto md:mb-8 md:max-w-xl md:border", closing && "sheet-panel-out")} onClick={event => event.stopPropagation()}>
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex min-w-0 items-start gap-4">
-            <ProfilePhoto participant={visibleParticipant} className="h-16 w-16 sm:h-20 sm:w-20" enlargeable onOpen={() => setPhotoExpanded(true)} />
-            <div className="min-w-0">
-              <MicroLabel tone="gold">Participant stats</MicroLabel>
-              <h3 className="mt-2 break-words text-3xl font-black uppercase tracking-[-0.07em] text-white sm:text-4xl">{visibleParticipant.displayName}</h3>
-              <p className="mt-2 text-[10px] font-black uppercase tracking-[0.16em] text-[#777]">Tap the display picture to enlarge it.</p>
-            </div>
-          </div>
-          <button onClick={onClose} className="shrink-0 border border-[#2A2A2A] p-3 text-[#777] hover:border-[#C8A96E] hover:text-[#C8A96E]"><X className="h-5 w-5" /></button>
+    <div className={classNames("sheet-backdrop fixed inset-0 z-50 flex items-end overflow-y-auto bg-black/70 sm:items-center sm:p-4", closing && "sheet-backdrop-out")} onClick={onClose}>
+      <div className={classNames("sheet-panel max-h-[100svh] w-full overflow-y-auto border-t-2 border-[#C8A96E] bg-[#0D0D0D] p-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-2xl sm:max-h-[calc(100svh-2rem)] sm:p-5 md:mx-auto md:max-w-xl md:border", closing && "sheet-panel-out")} onClick={event => event.stopPropagation()} role="dialog" aria-modal="true" aria-label={`${visibleParticipant.displayName} Board participant details`}>
+        <div className="sticky top-0 z-10 -mx-4 -mt-4 mb-4 flex items-center justify-between gap-3 border-b border-[#2A2A2A] bg-[#0D0D0D]/95 px-4 py-3 backdrop-blur sm:static sm:mx-0 sm:mt-0 sm:mb-0 sm:border-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none">
+          <button type="button" onClick={onClose} className="min-h-11 border border-[#C8A96E]/60 px-4 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-[#C8A96E] hover:bg-[#C8A96E] hover:text-black" aria-label="Back to Board list">Back to Board</button>
+          <button type="button" onClick={onClose} className="grid min-h-11 min-w-11 shrink-0 place-items-center border border-[#2A2A2A] text-[#777] hover:border-[#C8A96E] hover:text-[#C8A96E]" aria-label="Close participant details"><X className="h-5 w-5" /></button>
         </div>
-        <div className="mt-5 grid grid-cols-3 gap-2 bg-[#2A2A2A] p-[2px]">
+        <div className="flex min-w-0 items-start gap-3 sm:gap-4">
+          <ProfilePhoto participant={visibleParticipant} className="h-14 w-14 shrink-0 sm:h-20 sm:w-20" enlargeable onOpen={() => setPhotoExpanded(true)} />
+          <div className="min-w-0 flex-1">
+            <MicroLabel tone="gold">Participant stats</MicroLabel>
+            <h3 className="mt-2 break-words text-2xl font-black uppercase leading-none tracking-[-0.07em] text-white sm:text-4xl">{visibleParticipant.displayName}</h3>
+            <p className="mt-2 text-[10px] font-black uppercase leading-4 tracking-[0.16em] text-[#777]">Tap the display picture to enlarge it.</p>
+          </div>
+        </div>
+        <div className="mt-5 grid grid-cols-1 gap-2 bg-[#2A2A2A] p-[2px] min-[380px]:grid-cols-3">
           <PosterStat label="Points" value={visibleParticipant.totalPoints} tone="gold" />
           <PosterStat label="Streak" value={visibleParticipant.currentStreak} tone="green" />
           <PosterStat label="Days" value={visibleParticipant.daysComplete} tone="white" />
         </div>
         <div className="mt-5"><HealthBar lives={visibleParticipant.livesRemaining} label="Lives status" /></div>
-        <section className="mt-5 border border-[#2A2A2A] bg-black/35 p-4">
+        <section className="mt-5 border border-[#2A2A2A] bg-black/35 p-3 sm:p-4">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
               <MicroLabel tone="green">Board compliance</MicroLabel>
@@ -1296,7 +1297,7 @@ function ParticipantSheet({ participant, onClose }: { participant: any; onClose:
             <div className="mt-4 grid gap-2 sm:grid-cols-2">
               {COMPLIANCE_RULE_LABELS.map(label => {
                 const state = latestRules.find(rule => rule.key === label.key);
-                return <div key={label.key} className={classNames("flex items-center justify-between gap-3 border px-3 py-2 text-[10px] font-black uppercase tracking-[0.14em]", state?.done ? "border-[#2ECC71]/50 bg-[#07150D] text-[#2ECC71]" : "border-[#C0392B]/55 bg-[#190B0A] text-[#FFB3A8]")}><span>{label.label}</span><span>{state?.done ? "Done" : "Open"}</span></div>;
+                return <div key={label.key} className={classNames("flex items-center justify-between gap-3 border px-3 py-3 text-[10px] font-black uppercase leading-4 tracking-[0.12em]", state?.done ? "border-[#2ECC71]/50 bg-[#07150D] text-[#2ECC71]" : "border-[#C0392B]/55 bg-[#190B0A] text-[#FFB3A8]")}><span className="min-w-0 break-words">{label.label}</span><span className="shrink-0">{state?.done ? "Done" : "Open"}</span></div>;
               })}
             </div>
           ) : (
