@@ -554,3 +554,13 @@ User priority: the Warden should feel alive and unpredictable, choosing moments 
 - [x] Run tests, production build, health check, save a checkpoint, and report what changed.
 
 User priority: the Warden should read the room, find tensions between words and actions, and speak like a presence rather than a number-watching bot.
+
+
+## Current Requested Changes — Live Warden Cycle Audit
+
+- [x] Run `warden.runCycle` server-side against current real participant data.
+- [x] Capture the full assembled `CHALLENGE_STATE`, including participant data, insights, reflections, and exercise logs.
+- [x] Capture the exact generated Warden message or `NO_MESSAGE` result.
+- [x] Verify whether WhatsApp posting succeeded and record the API outcome.
+- [x] If `NO_MESSAGE`, explain why with drama score, scheduling gate, daily limit, and missing data signals.
+- [x] Deliver a concise report with raw supporting evidence attached.

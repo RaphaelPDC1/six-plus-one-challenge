@@ -1,0 +1,122 @@
+{
+  "started_at": "2026-05-06T23:31:19.842Z",
+  "completed_at": "2026-05-06T23:31:21.943Z",
+  "run_result": {
+    "messageGenerated": false,
+    "messageSent": false,
+    "reason": "outside_organic_window_slot"
+  },
+  "run_error": null,
+  "organic_decision": {
+    "shouldRun": false,
+    "reason": "outside_organic_window_slot",
+    "currentMinuteUtc": 1411
+  },
+  "whatsapp_post_diagnostic": {
+    "message_sent_flag": false,
+    "posted_count_increased": false,
+    "success_inferred": false,
+    "note": "sendWardenMessage returns void; success is inferred from runWardenCycle.messageSent=true with no thrown Whapi error, plus postedToWhatsapp log count changes when available."
+  },
+  "counts": {
+    "pre": {
+      "posted_messages_today": 1,
+      "no_message_decisions_today": 13
+    },
+    "post": {
+      "posted_messages_today": 1,
+      "no_message_decisions_today": 13
+    }
+  },
+  "drama": {
+    "score": 52,
+    "max": 4,
+    "breakdown": {
+      "life_losses": 0,
+      "milestones": 2,
+      "streak_milestones": 0,
+      "shared_themes": 0,
+      "personal_bests": 40,
+      "deep_insights": 5,
+      "late_night_loggers": 5,
+      "silent_returns": 0,
+      "ghost_life_uses": 0,
+      "before_midday_completions": 0
+    }
+  },
+  "participants": [
+    {
+      "lives_remaining": 4,
+      "current_streak": 1,
+      "rules_completed_today": 6
+    },
+    {
+      "lives_remaining": 4,
+      "current_streak": 1,
+      "rules_completed_today": 6
+    },
+    {
+      "lives_remaining": 4,
+      "current_streak": 1,
+      "rules_completed_today": 6
+    },
+    {
+      "lives_remaining": 4,
+      "current_streak": 1,
+      "rules_completed_today": 6
+    },
+    {
+      "lives_remaining": 4,
+      "current_streak": 1,
+      "rules_completed_today": 6
+    },
+    {
+      "lives_remaining": 4,
+      "current_streak": 1,
+      "rules_completed_today": 6
+    },
+    {
+      "lives_remaining": 4,
+      "current_streak": 1,
+      "rules_completed_today": 6
+    },
+    {
+      "lives_remaining": 4,
+      "current_streak": 1,
+      "rules_completed_today": 6
+    },
+    {
+      "lives_remaining": 4,
+      "current_streak": 1,
+      "rules_completed_today": 6
+    },
+    {
+      "lives_remaining": 4,
+      "current_streak": 1,
+      "rules_completed_today": 6
+    }
+  ],
+  "signal_counts": {
+    "recent_insights": 10,
+    "recent_reflections": 0,
+    "exercise_logs": 10,
+    "recent_chat_messages": 0,
+    "lives_lost_today": 0,
+    "milestones_hit_today": 1,
+    "sharp_insights_shared_today": 7,
+    "shared_themes": 0,
+    "personal_bests_today": 20,
+    "silent_returns_today": 0,
+    "ghost_life_signals_today": 0,
+    "before_midday_full_rule_completions": 0
+  },
+  "missing": [
+    "No shared reflection text was submitted today.",
+    "No WhatsApp chat messages were captured in the last 12 hours.",
+    "No life-loss payment events were recorded today.",
+    "No cross-participant shared writing themes were detected today.",
+    "No silent participant returns were detected today.",
+    "No Ghost Life / Double-Down signals were detected today.",
+    "No before-midday full six-rule completions were detected today."
+  ]
+}

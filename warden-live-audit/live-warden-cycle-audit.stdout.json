@@ -1,0 +1,576 @@
+[Warden] Starting cycle...
+[Warden] Challenge state assembled for day 50; drama score 52; max 4
+[Warden] Organic schedule skipped: outside_organic_window_slot
+{
+  "started_at": "2026-05-06T23:31:19.842Z",
+  "completed_at": "2026-05-06T23:31:21.943Z",
+  "env_status": {
+    "whapi_token_configured": true,
+    "whapi_group_id_configured": true,
+    "make_webhook_url_configured": true
+  },
+  "pre_run_counts": {
+    "posted_messages_today": 1,
+    "no_message_decisions_today": 13
+  },
+  "organic_decision_before_run": {
+    "shouldRun": false,
+    "reason": "outside_organic_window_slot",
+    "currentMinuteUtc": 1411
+  },
+  "challenge_state": {
+    "challenge_day": 50,
+    "participants": [
+      {
+        "id": 60011,
+        "display_name": "Nay",
+        "lives_remaining": 4,
+        "current_streak": 1,
+        "longest_streak": 1,
+        "total_points": 10,
+        "rules_completed_today": 6,
+        "rules_completed_this_week": 6,
+        "last_logged_at": "2026-05-06T22:31:18.000Z",
+        "days_without_logging": 0,
+        "ghost_life_used": false
+      },
+      {
+        "id": 60012,
+        "display_name": "Kwabs",
+        "lives_remaining": 4,
+        "current_streak": 1,
+        "longest_streak": 1,
+        "total_points": 10,
+        "rules_completed_today": 6,
+        "rules_completed_this_week": 6,
+        "last_logged_at": "2026-05-06T22:08:16.000Z",
+        "days_without_logging": 0,
+        "ghost_life_used": false
+      },
+      {
+        "id": 90001,
+        "display_name": "Senyo",
+        "lives_remaining": 4,
+        "current_streak": 1,
+        "longest_streak": 1,
+        "total_points": 10,
+        "rules_completed_today": 6,
+        "rules_completed_this_week": 6,
+        "last_logged_at": "2026-05-06T18:31:03.000Z",
+        "days_without_logging": 0,
+        "ghost_life_used": false
+      },
+      {
+        "id": 90002,
+        "display_name": "G LODGE",
+        "lives_remaining": 4,
+        "current_streak": 1,
+        "longest_streak": 1,
+        "total_points": 10,
+        "rules_completed_today": 6,
+        "rules_completed_this_week": 6,
+        "last_logged_at": "2026-05-06T18:15:50.000Z",
+        "days_without_logging": 0,
+        "ghost_life_used": false
+      },
+      {
+        "id": 90003,
+        "display_name": "Chernice",
+        "lives_remaining": 4,
+        "current_streak": 1,
+        "longest_streak": 1,
+        "total_points": 10,
+        "rules_completed_today": 6,
+        "rules_completed_this_week": 6,
+        "last_logged_at": "2026-05-06T21:55:49.000Z",
+        "days_without_logging": 0,
+        "ghost_life_used": false
+      },
+      {
+        "id": 90004,
+        "display_name": "wiwi",
+        "lives_remaining": 4,
+        "current_streak": 1,
+        "longest_streak": 1,
+        "total_points": 10,
+        "rules_completed_today": 6,
+        "rules_completed_this_week": 6,
+        "last_logged_at": "2026-05-06T22:27:17.000Z",
+        "days_without_logging": 0,
+        "ghost_life_used": false
+      },
+      {
+        "id": 90005,
+        "display_name": "CTM",
+        "lives_remaining": 4,
+        "current_streak": 1,
+        "longest_streak": 1,
+        "total_points": 10,
+        "rules_completed_today": 6,
+        "rules_completed_this_week": 6,
+        "last_logged_at": "2026-05-06T19:20:25.000Z",
+        "days_without_logging": 0,
+        "ghost_life_used": false
+      },
+      {
+        "id": 90006,
+        "display_name": "Billie bob",
+        "lives_remaining": 4,
+        "current_streak": 1,
+        "longest_streak": 1,
+        "total_points": 10,
+        "rules_completed_today": 6,
+        "rules_completed_this_week": 6,
+        "last_logged_at": "2026-05-06T19:24:23.000Z",
+        "days_without_logging": 0,
+        "ghost_life_used": false
+      },
+      {
+        "id": 90007,
+        "display_name": "Nat",
+        "lives_remaining": 4,
+        "current_streak": 1,
+        "longest_streak": 1,
+        "total_points": 10,
+        "rules_completed_today": 6,
+        "rules_completed_this_week": 6,
+        "last_logged_at": "2026-05-06T19:36:34.000Z",
+        "days_without_logging": 0,
+        "ghost_life_used": false
+      },
+      {
+        "id": 90008,
+        "display_name": "Chess",
+        "lives_remaining": 4,
+        "current_streak": 1,
+        "longest_streak": 1,
+        "total_points": 10,
+        "rules_completed_today": 6,
+        "rules_completed_this_week": 6,
+        "last_logged_at": "2026-05-06T21:39:01.000Z",
+        "days_without_logging": 0,
+        "ghost_life_used": false
+      }
+    ],
+    "group_average_completion": 0.14,
+    "recent_chat_messages": [],
+    "lives_lost_today": [],
+    "milestones_hit_today": [
+      {
+        "type": "challenge_day_50",
+        "participant_name": "Group",
+        "value": 50,
+        "timestamp": "2026-05-06T23:31:21.183Z"
+      }
+    ],
+    "sharp_insights_shared_today": [
+      {
+        "participant_name": "Kwabs",
+        "type": "reading",
+        "excerpt": "We think we are humans that are seeking pleasure but we are living in the avoidance of discomfort.",
+        "timestamp": "2026-05-06T22:08:16.000Z"
+      },
+      {
+        "participant_name": "G LODGE",
+        "type": "reading",
+        "excerpt": "Constisancy beats motivation, small actions done daily matter more than big bursts",
+        "timestamp": "2026-05-06T18:15:50.000Z"
+      },
+      {
+        "participant_name": "Senyo",
+        "type": "reading",
+        "excerpt": "I’m realising that the real moat is the systems, people, and behaviour behind the content not just the content itsel",
+        "timestamp": "2026-05-06T18:31:03.000Z"
+      },
+      {
+        "participant_name": "wiwi",
+        "type": "reading",
+        "excerpt": "embrace beginnerhood (you can’t fail at being a beginner, you can only imrove) & do gratitude (I think I’m adding 1 line a day for this c...",
+        "timestamp": "2026-05-06T22:27:17.000Z"
+      },
+      {
+        "participant_name": "CTM",
+        "type": "reading",
+        "excerpt": "Bread spread quickly from Jordan across the world once wheat was cultivated in the Fertile Crescent and it played a significant role in t...",
+        "timestamp": "2026-05-06T19:20:25.000Z"
+      },
+      {
+        "participant_name": "Chernice",
+        "type": "reading",
+        "excerpt": "MAPPA - Multi agency public protection arrangements and how they are use to manage high risk offenders in the criminal justice system.",
+        "timestamp": "2026-05-06T21:55:49.000Z"
+      },
+      {
+        "participant_name": "Chess",
+        "type": "reading",
+        "excerpt": "Ypu guys probably already know this but... Sleep debt is a genuine thing, if you don't get enough REM sleep your body keeps an internal c...",
+        "timestamp": "2026-05-06T21:39:01.000Z"
+      }
+    ],
+    "late_logs_today": [
+      {
+        "participant_name": "Nay",
+        "timestamp": "2026-05-06T22:31:18.000Z"
+      },
+      {
+        "participant_name": "Kwabs",
+        "timestamp": "2026-05-06T22:08:16.000Z"
+      },
+      {
+        "participant_name": "wiwi",
+        "timestamp": "2026-05-06T22:27:17.000Z"
+      },
+      {
+        "participant_name": "Chernice",
+        "timestamp": "2026-05-06T21:55:49.000Z"
+      },
+      {
+        "participant_name": "Chess",
+        "timestamp": "2026-05-06T21:39:01.000Z"
+      }
+    ],
+    "recent_insights": [
+      {
+        "participant": "Nay",
+        "insight_text": "Way of thinking can effect someone’s daily routine",
+        "shared_at": "2026-05-06T22:31:18.000Z",
+        "rule": "read_teach"
+      },
+      {
+        "participant": "Kwabs",
+        "insight_text": "We think we are humans that are seeking pleasure but we are living in the avoidance of discomfort.",
+        "shared_at": "2026-05-06T22:08:16.000Z",
+        "rule": "read_teach"
+      },
+      {
+        "participant": "G LODGE",
+        "insight_text": "Constisancy beats motivation, small actions done daily matter more than big bursts",
+        "shared_at": "2026-05-06T18:15:50.000Z",
+        "rule": "read_teach"
+      },
+      {
+        "participant": "Senyo",
+        "insight_text": "I’m realising that the real moat is the systems, people, and behaviour behind the content  not just the content itsel",
+        "shared_at": "2026-05-06T18:31:03.000Z",
+        "rule": "read_teach"
+      },
+      {
+        "participant": "wiwi",
+        "insight_text": "embrace beginnerhood (you can’t fail at being a beginner, you can only imrove) & do gratitude (I think I’m adding 1 line a day for this challenge) :)))  \nhttps://open.substack.com/pub/brainhealthdecoded/p/how-to-trick-your-brain-into-doing?r=6u7dd9&utm_medium=ios",
+        "shared_at": "2026-05-06T22:27:17.000Z",
+        "rule": "read_teach"
+      },
+      {
+        "participant": "CTM",
+        "insight_text": "Bread spread quickly from Jordan across the world once wheat was cultivated in the Fertile Crescent and it played a significant role in the establishment of settled towns in preference to nomadic lifestyles.",
+        "shared_at": "2026-05-06T19:20:25.000Z",
+        "rule": "read_teach"
+      },
+      {
+        "participant": "Billie bob",
+        "insight_text": "It took Jafar Jackson 2 years to learn all of michael’s dances",
+        "shared_at": "2026-05-06T19:24:23.000Z",
+        "rule": "read_teach"
+      },
+      {
+        "participant": "Nat",
+        "insight_text": "Healed people help people",
+        "shared_at": "2026-05-06T19:36:34.000Z",
+        "rule": "read_teach"
+      },
+      {
+        "participant": "Chernice",
+        "insight_text": "MAPPA - Multi agency public protection arrangements and how they are use to manage high risk offenders in the criminal justice system.",
+        "shared_at": "2026-05-06T21:55:49.000Z",
+        "rule": "read_teach"
+      },
+      {
+        "participant": "Chess",
+        "insight_text": "Ypu guys probably already know this but... Sleep debt is a genuine thing, if you don't get enough REM sleep your body keeps an internal count of it, and catches up wherever possible. An excess build of said debt, is what is said to be a big contributer towrds alzeimers and or long term and permanent damage.",
+        "shared_at": "2026-05-06T21:39:01.000Z",
+        "rule": "read_teach"
+      }
+    ],
+    "recent_reflections": [],
+    "exercise_logs": [
+      {
+        "participant": "Nay",
+        "activity_type": "Walking and stretching",
+        "duration_minutes": 60,
+        "proof_uploaded": false,
+        "logged_at": "2026-05-06T22:31:18.000Z"
+      },
+      {
+        "participant": "Kwabs",
+        "activity_type": "Weight lifting",
+        "duration_minutes": 40,
+        "proof_uploaded": true,
+        "logged_at": "2026-05-06T22:08:16.000Z"
+      },
+      {
+        "participant": "G LODGE",
+        "activity_type": "Gym",
+        "duration_minutes": 60,
+        "proof_uploaded": true,
+        "logged_at": "2026-05-06T18:15:50.000Z"
+      },
+      {
+        "participant": "Senyo",
+        "activity_type": "Full body",
+        "duration_minutes": 60,
+        "proof_uploaded": true,
+        "logged_at": "2026-05-06T18:31:03.000Z"
+      },
+      {
+        "participant": "wiwi",
+        "activity_type": "gym upper body",
+        "duration_minutes": 60,
+        "proof_uploaded": true,
+        "logged_at": "2026-05-06T22:27:17.000Z"
+      },
+      {
+        "participant": "CTM",
+        "activity_type": "Gym - legs",
+        "duration_minutes": 60,
+        "proof_uploaded": true,
+        "logged_at": "2026-05-06T19:20:25.000Z"
+      },
+      {
+        "participant": "Billie bob",
+        "activity_type": "Run",
+        "duration_minutes": 35,
+        "proof_uploaded": true,
+        "logged_at": "2026-05-06T19:24:23.000Z"
+      },
+      {
+        "participant": "Nat",
+        "activity_type": "Run and stepper",
+        "duration_minutes": 30,
+        "proof_uploaded": true,
+        "logged_at": "2026-05-06T19:36:34.000Z"
+      },
+      {
+        "participant": "Chernice",
+        "activity_type": "Run and Walk",
+        "duration_minutes": 49,
+        "proof_uploaded": true,
+        "logged_at": "2026-05-06T21:55:49.000Z"
+      },
+      {
+        "participant": "Chess",
+        "activity_type": "Strength and conditioning",
+        "duration_minutes": 60,
+        "proof_uploaded": true,
+        "logged_at": "2026-05-06T21:39:01.000Z"
+      }
+    ],
+    "improving_participants": [],
+    "declining_participants": [],
+    "silent_participants": [],
+    "consistent_participants": [],
+    "shared_themes": [],
+    "personal_bests_today": [
+      {
+        "participant_name": "Nay",
+        "type": "exercise_duration",
+        "value": 60,
+        "previous_best": 0,
+        "timestamp": "2026-05-06T22:31:18.000Z"
+      },
+      {
+        "participant_name": "Nay",
+        "type": "rules_completed",
+        "value": 6,
+        "previous_best": 0,
+        "timestamp": "2026-05-06T22:31:18.000Z"
+      },
+      {
+        "participant_name": "Kwabs",
+        "type": "exercise_duration",
+        "value": 40,
+        "previous_best": 0,
+        "timestamp": "2026-05-06T22:08:16.000Z"
+      },
+      {
+        "participant_name": "Kwabs",
+        "type": "rules_completed",
+        "value": 6,
+        "previous_best": 0,
+        "timestamp": "2026-05-06T22:08:16.000Z"
+      },
+      {
+        "participant_name": "G LODGE",
+        "type": "exercise_duration",
+        "value": 60,
+        "previous_best": 0,
+        "timestamp": "2026-05-06T18:15:50.000Z"
+      },
+      {
+        "participant_name": "G LODGE",
+        "type": "rules_completed",
+        "value": 6,
+        "previous_best": 0,
+        "timestamp": "2026-05-06T18:15:50.000Z"
+      },
+      {
+        "participant_name": "Senyo",
+        "type": "exercise_duration",
+        "value": 60,
+        "previous_best": 0,
+        "timestamp": "2026-05-06T18:31:03.000Z"
+      },
+      {
+        "participant_name": "Senyo",
+        "type": "rules_completed",
+        "value": 6,
+        "previous_best": 0,
+        "timestamp": "2026-05-06T18:31:03.000Z"
+      },
+      {
+        "participant_name": "wiwi",
+        "type": "exercise_duration",
+        "value": 60,
+        "previous_best": 0,
+        "timestamp": "2026-05-06T22:27:17.000Z"
+      },
+      {
+        "participant_name": "wiwi",
+        "type": "rules_completed",
+        "value": 6,
+        "previous_best": 0,
+        "timestamp": "2026-05-06T22:27:17.000Z"
+      },
+      {
+        "participant_name": "CTM",
+        "type": "exercise_duration",
+        "value": 60,
+        "previous_best": 0,
+        "timestamp": "2026-05-06T19:20:25.000Z"
+      },
+      {
+        "participant_name": "CTM",
+        "type": "rules_completed",
+        "value": 6,
+        "previous_best": 0,
+        "timestamp": "2026-05-06T19:20:25.000Z"
+      },
+      {
+        "participant_name": "Billie bob",
+        "type": "exercise_duration",
+        "value": 35,
+        "previous_best": 0,
+        "timestamp": "2026-05-06T19:24:23.000Z"
+      },
+      {
+        "participant_name": "Billie bob",
+        "type": "rules_completed",
+        "value": 6,
+        "previous_best": 0,
+        "timestamp": "2026-05-06T19:24:23.000Z"
+      },
+      {
+        "participant_name": "Nat",
+        "type": "exercise_duration",
+        "value": 30,
+        "previous_best": 0,
+        "timestamp": "2026-05-06T19:36:34.000Z"
+      },
+      {
+        "participant_name": "Nat",
+        "type": "rules_completed",
+        "value": 6,
+        "previous_best": 0,
+        "timestamp": "2026-05-06T19:36:34.000Z"
+      },
+      {
+        "participant_name": "Chernice",
+        "type": "exercise_duration",
+        "value": 49,
+        "previous_best": 0,
+        "timestamp": "2026-05-06T21:55:49.000Z"
+      },
+      {
+        "participant_name": "Chernice",
+        "type": "rules_completed",
+        "value": 6,
+        "previous_best": 0,
+        "timestamp": "2026-05-06T21:55:49.000Z"
+      },
+      {
+        "participant_name": "Chess",
+        "type": "exercise_duration",
+        "value": 60,
+        "previous_best": 0,
+        "timestamp": "2026-05-06T21:39:01.000Z"
+      },
+      {
+        "participant_name": "Chess",
+        "type": "rules_completed",
+        "value": 6,
+        "previous_best": 0,
+        "timestamp": "2026-05-06T21:39:01.000Z"
+      }
+    ],
+    "silent_returns_today": [],
+    "ghost_life_signals_today": [],
+    "before_midday_full_rule_completions": [],
+    "daily_drama_score": 52,
+    "max_warden_messages_today": 4,
+    "drama_score_breakdown": {
+      "life_losses": 0,
+      "milestones": 2,
+      "streak_milestones": 0,
+      "shared_themes": 0,
+      "personal_bests": 40,
+      "deep_insights": 5,
+      "late_night_loggers": 5,
+      "silent_returns": 0,
+      "ghost_life_uses": 0,
+      "before_midday_completions": 0
+    }
+  },
+  "run_result": {
+    "messageGenerated": false,
+    "messageSent": false,
+    "reason": "outside_organic_window_slot"
+  },
+  "run_error": null,
+  "post_run_counts": {
+    "posted_messages_today": 1,
+    "no_message_decisions_today": 13
+  },
+  "whatsapp_post_diagnostic": {
+    "message_sent_flag": false,
+    "posted_count_increased": false,
+    "success_inferred": false,
+    "note": "sendWardenMessage returns void; success is inferred from runWardenCycle.messageSent=true with no thrown Whapi error, plus postedToWhatsapp log count changes when available."
+  },
+  "no_message_or_skip_diagnostic": {
+    "message_generated": false,
+    "message": null,
+    "reason": "outside_organic_window_slot",
+    "daily_drama_score": 52,
+    "max_warden_messages_today": 4,
+    "drama_score_breakdown": {
+      "life_losses": 0,
+      "milestones": 2,
+      "streak_milestones": 0,
+      "shared_themes": 0,
+      "personal_bests": 40,
+      "deep_insights": 5,
+      "late_night_loggers": 5,
+      "silent_returns": 0,
+      "ghost_life_uses": 0,
+      "before_midday_completions": 0
+    },
+    "missing_data_signals": [
+      "No shared reflection text was submitted today.",
+      "No WhatsApp chat messages were captured in the last 12 hours.",
+      "No life-loss payment events were recorded today.",
+      "No cross-participant shared writing themes were detected today.",
+      "No silent participant returns were detected today.",
+      "No Ghost Life / Double-Down signals were detected today.",
+      "No before-midday full six-rule completions were detected today."
+    ]
+  }
+}
