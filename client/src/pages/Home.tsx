@@ -63,21 +63,40 @@ const RED = "#C0392B";
 const GREEN = "#2ECC71";
 const PURPLE = "#9B59B6";
 const chartColors = [GOLD, RED, GREEN, PURPLE, "#4CA3C9", "#E67E22", "#F1C40F", "#ECF0F1"];
-// Use the previously generated transparent logo image so mobile browsers load the same durable asset everywhere.
-const BRAND_LOGO_URL = "/manus-storage/six-plus-one-reference-palette-logo-transparent_9ff37cae.png";
+// Use the optimized WebP logo through the same-origin image proxy so mobile browsers avoid the heavy PNG redirect path.
+const BRAND_LOGO_STORAGE_KEY = "six-plus-one-reference-palette-logo-transparent-optimized_2e84b980.webp";
+const BRAND_LOGO_STORAGE_URL = `/manus-storage/${BRAND_LOGO_STORAGE_KEY}`;
+const BRAND_LOGO_URL = `/api/storage-image/${encodeURIComponent(BRAND_LOGO_STORAGE_KEY)}`;
 
 function BrandLogoImageWithRetry({ alt, className = "h-full w-full object-contain", decorative = false, placement }: { alt: string; className?: string; decorative?: boolean; placement?: "top-left-corner" | "loading-page" }) {
+  const [failed, setFailed] = useState(false);
+  if (failed) {
+    return (
+      <div
+        role={decorative ? undefined : "img"}
+        aria-label={decorative ? undefined : alt}
+        data-testid="brand-logo-fallback"
+        data-logo-source="optimized-webp-fallback"
+        data-logo-placement={placement}
+        className={classNames("grid h-full w-full place-items-center bg-black text-center font-black uppercase tracking-[-0.16em] text-white", className)}
+      >
+        6+1
+      </div>
+    );
+  }
   return (
     <img
       src={BRAND_LOGO_URL}
       alt={decorative ? "" : alt}
       data-testid="brand-logo"
-      data-logo-source="reference-palette-logo"
+      data-logo-source="optimized-webp-proxy"
+      data-logo-storage-url={BRAND_LOGO_STORAGE_URL}
       data-logo-placement={placement}
       className={className}
       decoding="async"
       loading="eager"
       fetchPriority="high"
+      onError={() => setFailed(true)}
     />
   );
 }
@@ -172,7 +191,7 @@ function hapticFallback(pattern: number | number[] = 18) {
 
 function playAllGreenSubmitHaptic() {
   if (!haptics.submit()) {
-    hapticFallback([35, 50, 35, 80, 65]);
+    hapticFallback([28, 42, 28, 64, 72]);
   }
 }
 

@@ -454,3 +454,17 @@
 - [x] Add an obvious back or close control so mobile users can return from the participant card to the Board list
 - [x] Add or update regression coverage for the mobile participant-card layout and back/close navigation
 - [x] Run validation, production build, preview health check, and save a checkpoint after the mobile Board card fix
+
+## Investigation — Mobile Logo and Haptics
+- [x] Investigate why the app logo still appears broken on mobile/deployed view without running a build yet
+- [x] Inspect current haptics/vibration implementation and identify browser/device limitations
+- [x] Propose the safest logo and haptics fix path before substantial implementation changes
+
+## Fix Batch — Mobile Logo and Haptics
+
+- [x] Replace the current heavy PNG logo reference with a lightweight mobile-safe optimized asset.
+- [x] Route logo rendering through a reliable same-origin path and add a readable fallback when image loading fails.
+- [x] Strengthen haptic patterns for Android browsers that support vibration.
+- [x] Add iPhone/Safari-safe visual haptic fallback for unsupported vibration environments.
+- [x] Add or update regression coverage for logo fallback and haptic trigger behavior.
+- [x] Run validation, production build, preview health check, and save a checkpoint after the logo and haptics fixes.

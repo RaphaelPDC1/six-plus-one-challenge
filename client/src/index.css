@@ -613,3 +613,19 @@
     animation: none !important;
   }
 }
+
+@keyframes haptic-visual-kick {
+  0% { transform: translate3d(0, 0, 0) scale(1); filter: brightness(1); }
+  42% { transform: translate3d(0, -1px, 0) scale(0.997); filter: brightness(1.08); }
+  100% { transform: translate3d(0, 0, 0) scale(1); filter: brightness(1); }
+}
+
+html.haptic-visual-feedback body {
+  animation: haptic-visual-kick 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.haptic-visual-feedback body {
+    animation: none;
+  }
+}

@@ -14,18 +14,18 @@ describe("haptics helper", () => {
   });
 
   it("vibrates the named success and submit patterns when supported", () => {
-    const vibrate = vi.fn();
+    const vibrate = vi.fn(() => true);
     vi.stubGlobal("window", {});
     vi.stubGlobal("navigator", { vibrate });
 
     expect(haptics.success()).toBe(true);
     expect(haptics.submit()).toBe(true);
-    expect(vibrate).toHaveBeenNthCalledWith(1, [18, 36, 18]);
-    expect(vibrate).toHaveBeenNthCalledWith(2, [35, 50, 35, 80, 65]);
+    expect(vibrate).toHaveBeenNthCalledWith(1, [20, 34, 26]);
+    expect(vibrate).toHaveBeenNthCalledWith(2, [28, 42, 28, 64, 72]);
   });
 
   it("passes custom numeric patterns through safely", () => {
-    const vibrate = vi.fn();
+    const vibrate = vi.fn(() => true);
     vi.stubGlobal("window", {});
     vi.stubGlobal("navigator", { vibrate });
 
