@@ -63,24 +63,23 @@ const RED = "#C0392B";
 const GREEN = "#2ECC71";
 const PURPLE = "#9B59B6";
 const chartColors = [GOLD, RED, GREEN, PURPLE, "#4CA3C9", "#E67E22", "#F1C40F", "#ECF0F1"];
-// Use relative path to ensure same-origin requests and avoid CORS issues
-// Use relative path to ensure same-origin requests and avoid CORS issues
+// Use relative path - server handles the signed CloudFront redirect
 const BRAND_LOGO_URL = "/manus-storage/six-plus-one-brand-logo-white-strong_2665284a.png";
 
 function BrandLogoImageWithRetry({ alt, className = "h-full w-full object-contain", decorative = false }: { alt: string; className?: string; decorative?: boolean }) {
   const [failed, setFailed] = useState(false);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   
-  // Compute the logo URL on first render, ensuring window is available
+  // Only fetch signed URL in browser context (not in tests)
+  const { data: logoUrlData } = typeof window !== 'undefined' && trpc?.auth?.logoUrl 
+    ? trpc.auth.logoUrl.useQuery() 
+    : { data: undefined };
+  
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      // Use absolute URL with current origin to ensure it works in all contexts
-      setLogoUrl(`${window.location.origin}/manus-storage/six-plus-one-brand-logo-white-strong_2665284a.png`);
-    } else {
-      // Fallback for SSR
-      setLogoUrl(BRAND_LOGO_URL);
+    if (logoUrlData?.url) {
+      setLogoUrl(logoUrlData.url);
     }
-  }, []);
+  }, [logoUrlData]);
   
   if (failed) {
     return (
@@ -94,21 +93,22 @@ function BrandLogoImageWithRetry({ alt, className = "h-full w-full object-contai
     );
   }
   
-  // Show fallback while URL is being computed
-  if (!logoUrl) {
-    return (
-      <span
-        aria-hidden={decorative ? "true" : undefined}
-        aria-label={decorative ? undefined : alt}
-        className="grid h-full w-full place-items-center text-center text-[clamp(1.65rem,7vw,4rem)] font-black leading-none tracking-[-0.14em] text-white"
-      >
-        6<span className="text-[#C8A96E]">+</span>1
-      </span>
-    );
-  }
+  // Use signed URL from server if available, fallback to relative path
+  const finalUrl = logoUrl || BRAND_LOGO_URL;
   
-  // Use the computed URL
-  return <img src={logoUrl} alt={decorative ? "" : alt} data-testid="brand-logo" className={className} decoding="async" loading="eager" onError={() => setFailed(true)} />}
+  return (
+    <img 
+      src={finalUrl} 
+      alt={decorative ? "" : alt} 
+      data-testid="brand-logo" 
+      className={className} 
+      decoding="async" 
+      loading="eager" 
+      crossOrigin="anonymous"
+      onError={() => setFailed(true)}
+    />
+  );
+}
 
 const emptyDay: MyDayForm = {
   noAlcohol: false,

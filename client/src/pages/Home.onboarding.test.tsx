@@ -46,6 +46,9 @@ vi.mock("@/lib/trpc", () => ({
       siteLogin: {
         useMutation: () => mockState.mutation,
       },
+      logoUrl: {
+        useQuery: () => ({ data: { url: "/manus-storage/six-plus-one-brand-logo-white-strong_2665284a.png" } }),
+      },
     },
     signup: {
       requestAccess: {
@@ -107,8 +110,8 @@ describe("Home onboarding shell", () => {
   it("renders the uploaded brand image in the reusable logo mark instead of text-only 6+1 lettering", () => {
     const markup = renderToStaticMarkup(<LogoMark compact />);
 
-    // Logo URL is computed in useEffect which doesn't run during SSR, so the fallback text is shown
-    expect(markup).toContain("6<span");;
+    // Logo is now fetched via trpc.auth.logoUrl and rendered as an image
+    expect(markup).toContain('src="/manus-storage/six-plus-one-brand-logo-white-strong_2665284a.png"');
     expect(markup).toContain("brand-logo-shell");
     expect(markup).not.toContain("bg-black");
     expect(markup).not.toContain(">6+1</");
@@ -118,8 +121,8 @@ describe("Home onboarding shell", () => {
     const markup = renderToStaticMarkup(<Home />);
 
     expect(markup).toContain("sticky top-0");
-    // Logo URL is computed in useEffect which doesn't run during SSR, so the fallback text is shown
-    expect(markup).toContain("6<span");
+    // Logo is now fetched via trpc.auth.logoUrl and rendered as an image
+    expect(markup).toContain('src="/manus-storage/six-plus-one-brand-logo-white-strong_2665284a.png"');
     expect(markup).toContain("Four Lives Challenge");
   });
 
@@ -134,8 +137,8 @@ describe("Home onboarding shell", () => {
     expect(markup).toContain("Remember you&#x27;re");
     expect(markup).toContain("not a civilian.");
     expect(markup).toContain("block sm:inline");
-    // Logo URL is computed in useEffect which doesn't run during SSR, so the fallback text is shown
-    expect(markup).toContain("6<span");
+    // Logo is now fetched via trpc.auth.logoUrl and rendered as an image
+    expect(markup).toContain('src="/manus-storage/six-plus-one-brand-logo-white-strong_2665284a.png"');
     expect(markup).toContain("overflow-hidden border-b");
     expect(markup).toContain("whitespace-normal break-words");
     expect(markup).toContain("max-w-[12.5rem]");
@@ -233,8 +236,8 @@ describe("Home onboarding shell", () => {
     expect(markup).toContain("load-crosshair");
     expect(markup).toContain("load-status-panel");
     expect(markup).toContain("load-progress");
-    // Logo URL is computed in useEffect which doesn't run during SSR, so the fallback text is shown
-    expect(markup).toContain("6<span");
+    // Logo is now fetched via trpc.auth.logoUrl and rendered as an image
+    expect(markup).toContain('src="/manus-storage/six-plus-one-brand-logo-white-strong_2665284a.png"');
     expect(markup).not.toContain("sticky top-0");
     expect(markup).not.toContain("bg-black/62");
     expect(markup).not.toContain(">6+1</");
@@ -261,7 +264,7 @@ describe("Home onboarding shell", () => {
     expect(markup).toContain("New email found. Set your profile first.");
     expect(markup).toContain("Make it yours.");
     expect(markup).toContain("new@example.com");
-    // Logo URL is computed in useEffect which doesn't run during SSR, so the fallback text is shown
-    expect(markup).toContain("6<span");
+    // Logo is now fetched via trpc.auth.logoUrl and rendered as an image
+    expect(markup).toContain('src="/manus-storage/six-plus-one-brand-logo-white-strong_2665284a.png"');
   });
 });

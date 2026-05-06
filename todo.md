@@ -235,3 +235,11 @@
 - [x] Integrate calendar view into the app navigation as "Journey" tab
 - [x] Run full validation, tests, build, and preview health check (47 tests passing, build successful)
 - [x] Save checkpoint after v5.1 logo fix, profile pictures, and calendar implementation
+
+## Refinement Pass (v5.2) — Logo Fix, Calendar Redesign, Mobile Nav Fix
+- [x] Fix logo rendering to display brand image instead of stacked text "6+1" — implemented via trpc.auth.logoUrl server procedure
+- [ ] Redesign Calendar as proper grid (like month view) with color-coded dots for each day
+- [ ] Add legend/key to calendar explaining what each color means (completed, missed, life lost, future, etc.)
+- [ ] Fix mobile navigation bar stacking — keep tabs horizontal on small screens
+- [x] Run full validation, tests, build, and preview health check — 47 tests passing, build successful, dev server running
+- [ ] Save checkpoint after v5.2 logo fix, calendar redesign, and mobile nav fix

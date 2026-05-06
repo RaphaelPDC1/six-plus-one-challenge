@@ -67,6 +67,24 @@ export const appRouter = router({
   system: systemRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
+    logoUrl: publicProcedure.query(async ({ ctx }) => {
+      // Return the signed CloudFront URL for the brand logo
+      try {
+        const response = await fetch(`${ctx.req.protocol}://${ctx.req.get('host')}/manus-storage/six-plus-one-brand-logo-white-strong_2665284a.png`, {
+          method: 'HEAD',
+          redirect: 'manual',
+        });
+        if (response.status === 307 || response.status === 302) {
+          const location = response.headers.get('location');
+          if (location) {
+            return { url: location };
+          }
+        }
+      } catch (error) {
+        console.error('[Logo URL] Failed to get signed URL:', error);
+      }
+      return { url: '/manus-storage/six-plus-one-brand-logo-white-strong_2665284a.png' };
+    }),
     siteLogin: publicProcedure.input(siteLoginInput).mutation(async ({ ctx, input }) => {
       const email = normalizeSignupEmail(input.email);
       if (input.mode === "register" && !input.personalization) {
