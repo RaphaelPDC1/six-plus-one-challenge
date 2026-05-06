@@ -269,13 +269,13 @@
 - [x] Save checkpoint after the logo image correction — saved as 83d67ec9
 
 ## Bug Fix — Loading and Header Logo Flicker / Missing Image
-- [ ] Diagnose why the loading-page logo and top-header logo flicker away, disappear, or reveal the old eroded logo
-- [ ] Remove unstable logo fallback or delayed source swapping that causes the old eroded logo to appear
-- [ ] Enforce one stable intended logo image source for the loading page and top-header/logo area
-- [ ] Ensure the logo remains visible during loading without layout jump, flicker, or fallback text/image swap
-- [ ] Update automated tests for the stable logo source and no old eroded-logo fallback behavior
-- [ ] Run full validation, production build, and preview health check after the logo flicker fix
-- [ ] Save checkpoint after the loading/header logo flicker fix
+- [x] Diagnose why the loading-page logo and top-header logo flicker away, disappear, or reveal the old eroded logo
+- [x] Remove unstable logo fallback or delayed source swapping that causes the old eroded logo to appear
+- [x] Enforce one stable intended logo image source for the loading page and top-header/logo area
+- [x] Ensure the logo remains visible during loading without layout jump, flicker, or fallback text/image swap
+- [x] Update automated tests for the stable logo source and no old eroded-logo fallback behavior
+- [x] Run full validation, production build, and preview health check after the logo flicker fix
+- [x] Save checkpoint after the loading/header logo flicker fix
 
 ## UX Refinement — Must-Do Rule Checklist and Compact Calendar
 - [x] Redesign the 6 daily rules section as an unmistakable must-do area with a red warning-style border/frame

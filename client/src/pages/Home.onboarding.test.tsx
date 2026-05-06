@@ -261,6 +261,26 @@ describe("Home onboarding shell", () => {
     expect(cssSource).toContain("z-index: 0;");
   });
 
+  it("uses one stable logo image source without old-asset swaps or text fallback paths", () => {
+    const homeSource = readFileSync(new URL("./Home.tsx", import.meta.url), "utf8");
+    const registerSource = readFileSync(new URL("./Register.tsx", import.meta.url), "utf8");
+    const routerSource = readFileSync(new URL("../../../server/routers.ts", import.meta.url), "utf8");
+
+    expect(homeSource).toContain('const BRAND_LOGO_URL = "/manus-storage/six-plus-one-clean-stacked-logo_5d45a828.png";');
+    expect(homeSource).toContain('data-logo-source="stable-brand-image"');
+    expect(homeSource).not.toContain("BrandWordmark");
+    expect(homeSource).not.toContain("six-plus-one-brand-logo-white-strong_2665284a.png");
+
+    expect(registerSource).toContain('const BRAND_LOGO_URL = "/manus-storage/six-plus-one-clean-stacked-logo_5d45a828.png";');
+    expect(registerSource).toContain('data-logo-source="stable-brand-image"');
+    expect(registerSource).not.toContain("setLogoFailed");
+    expect(registerSource).not.toContain("onError={() => setLogoFailed(true)}");
+    expect(registerSource).not.toContain("six-plus-one-brand-logo-white-strong_2665284a.png");
+
+    expect(routerSource).toContain("six-plus-one-clean-stacked-logo_5d45a828.png");
+    expect(routerSource).not.toContain("six-plus-one-brand-logo-white-strong_2665284a.png");
+  });
+
   it("renders the real unknown-email questionnaire gate from mocked app state", () => {
     mockState.snapshotQuery.data = { accessState: { status: "questionnaire_required" } };
     mockState.snapshotQuery.isLoading = false;

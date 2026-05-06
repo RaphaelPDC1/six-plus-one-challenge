@@ -68,9 +68,9 @@ export const appRouter = router({
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logoUrl: publicProcedure.query(async ({ ctx }) => {
-      // Return the signed CloudFront URL for the brand logo
+      // Return the signed CloudFront URL for the stable brand logo image.
       try {
-        const response = await fetch(`${ctx.req.protocol}://${ctx.req.get('host')}/manus-storage/six-plus-one-brand-logo-white-strong_2665284a.png`, {
+        const response = await fetch(`${ctx.req.protocol}://${ctx.req.get('host')}/manus-storage/six-plus-one-clean-stacked-logo_5d45a828.png`, {
           method: 'HEAD',
           redirect: 'manual',
         });
@@ -83,7 +83,7 @@ export const appRouter = router({
       } catch (error) {
         console.error('[Logo URL] Failed to get signed URL:', error);
       }
-      return { url: '/manus-storage/six-plus-one-brand-logo-white-strong_2665284a.png' };
+      return { url: '/manus-storage/six-plus-one-clean-stacked-logo_5d45a828.png' };
     }),
     siteLogin: publicProcedure.input(siteLoginInput).mutation(async ({ ctx, input }) => {
       const email = normalizeSignupEmail(input.email);

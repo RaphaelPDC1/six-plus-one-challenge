@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { haptics } from "@/lib/haptics";
 
-const BRAND_LOGO_URL = "/manus-storage/six-plus-one-brand-logo-white-strong_2665284a.png";
+const BRAND_LOGO_URL = "/manus-storage/six-plus-one-clean-stacked-logo_5d45a828.png";
 
 type TrainingLevel = "starting" | "building" | "consistent" | "advanced";
 
@@ -27,14 +27,18 @@ function MicroLabel({ children, tone = "muted" }: { children: React.ReactNode; t
 }
 
 function LogoMark() {
-  const [logoFailed, setLogoFailed] = useState(false);
   return (
     <div className="grid h-12 w-12 shrink-0 place-items-center border border-[#C8A96E]/70 bg-[#080808] p-2 shadow-[0_0_28px_rgba(200,169,110,0.10)]" aria-label="6+1 logo">
-      {logoFailed ? (
-        <span className="text-center text-lg font-black leading-none tracking-[-0.14em] text-white">6<span className="text-[#C8A96E]">+</span>1</span>
-      ) : (
-        <img src={BRAND_LOGO_URL} alt="6+1" className="h-full w-full object-contain" decoding="async" loading="eager" onError={() => setLogoFailed(true)} />
-      )}
+      <img
+        src={BRAND_LOGO_URL}
+        alt="6+1"
+        data-testid="brand-logo"
+        data-logo-source="stable-brand-image"
+        className="h-full w-full object-contain"
+        decoding="async"
+        loading="eager"
+        fetchPriority="high"
+      />
     </div>
   );
 }

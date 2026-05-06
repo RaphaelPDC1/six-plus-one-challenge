@@ -81,21 +81,6 @@ function BrandLogoImageWithRetry({ alt, className = "h-full w-full object-contai
   );
 }
 
-function BrandWordmark({ alt, decorative = false, className = "" }: { alt: string; decorative?: boolean; className?: string }) {
-  return (
-    <span
-      data-testid="brand-wordmark"
-      aria-hidden={decorative ? "true" : undefined}
-      aria-label={decorative ? undefined : alt}
-      className={classNames("brand-wordmark inline-flex items-center justify-center whitespace-nowrap", className)}
-    >
-      <span className="brand-wordmark-number">6</span>
-      <span className="brand-wordmark-plus">+</span>
-      <span className="brand-wordmark-number">1</span>
-    </span>
-  );
-}
-
 function CleanBrandMark({ compact = false, decorative = false }: { compact?: boolean; decorative?: boolean }) {
   return (
     <BrandLogoImageWithRetry
@@ -156,11 +141,6 @@ function playDoneCue() {
   } catch {
     // Audio feedback is progressive enhancement only.
   }
-}
-
-// Deprecated: Use BrandLogoImageWithRetry instead
-function BrandLogoImage({ alt, className = "h-full w-full object-contain", decorative = false }: { alt: string; className?: string; decorative?: boolean }) {
-  return <BrandLogoImageWithRetry alt={alt} className={className} decorative={decorative} />;
 }
 
 function AnimatedLoadPage({ label = "Loading the challenge" }: { label?: string }) {
