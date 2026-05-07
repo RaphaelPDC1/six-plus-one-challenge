@@ -780,3 +780,11 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Keep the redesign mobile-first, dark, high-contrast, gold/red/green accented, and free of horizontal overflow.
 - [x] Add or update regression coverage for the new Board and Overview mobile presentation markers.
 - [x] Validate the redesign with focused tests, full tests, production build, project health check, and checkpoint before delivery.
+
+## Bug Fix — Mobile Save Progress Mini Expansion Behavior
+- [x] Restore the mobile Save Progress behavior so it begins as a compact mini progress indicator near the bottom navigation instead of a large floating panel.
+- [x] Make the mini progress indicator shoot/expand into the proper Save Progress section when the section is reached or becomes active.
+- [x] Ensure the expanded Save Progress section does not cover Ghost Life, Warden, or other My Day content on mobile.
+- [x] Preserve bottom navigation visibility, safe-area spacing, and no horizontal overflow.
+- [x] Add or update regression coverage for the mini-to-expanded Save Progress behavior.
+- [x] Validate the fix with tests, typecheck, production build, project health check, and checkpoint before delivery.

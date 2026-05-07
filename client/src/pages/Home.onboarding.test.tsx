@@ -388,9 +388,10 @@ describe("Home onboarding shell", () => {
     expect(storageProxySource).not.toContain('res.set("Cache-Control", "no-store")');
   });
 
-  it("documents the Claude-inspired Overview, Board, and all-green haptic submit flow", () => {
+  it("documents the Claude-inspired Overview, Board, Save Progress dock, and all-green haptic submit flow", () => {
     const homeSource = readFileSync(new URL("./Home.tsx", import.meta.url), "utf8");
     const hapticsSource = readFileSync(new URL("../lib/haptics.ts", import.meta.url), "utf8");
+    const cssSource = readFileSync(new URL("../index.css", import.meta.url), "utf8");
 
     expect(homeSource).toContain('data-testid="overview-metrics-dashboard"');
     expect(homeSource).toContain('data-testid="overview-red-alert-pace-card"');
@@ -407,6 +408,14 @@ describe("Home onboarding shell", () => {
     expect(homeSource).toContain("Three slots. Earned, not gamed.");
     expect(homeSource).toContain("Proof beats claims");
     expect(homeSource).toContain("No gaming the board");
+    expect(homeSource).toContain("const saveProgressDocked = saveProgressScale >= 0.78;");
+    expect(homeSource).toContain('data-mobile-save-progress-mini-to-section="true"');
+    expect(homeSource).toContain('data-save-progress-docked={saveProgressDocked ? "true" : "false"}');
+    expect(homeSource).toContain('saveProgressDocked ? "static translate-y-0" : "fixed inset-x-4 bottom-[calc(5.85rem+env(safe-area-inset-bottom))]"');
+    expect(homeSource).toContain("max-w-[9.5rem]");
+    expect(homeSource).toContain("before:content-['SAVE']");
+    expect(cssSource).toContain('save-progress-shoot-home 260ms cubic-bezier(0.2, 0.9, 0.25, 1)');
+    expect(cssSource).toContain('@keyframes save-progress-shoot-home');
     expect(homeSource).toContain("playAllGreenSubmitHaptic();");
     expect(homeSource).toContain("if (data.complete)");
     expect(hapticsSource).toContain("submit: [28, 42, 28, 64, 72]");
@@ -473,7 +482,9 @@ describe("Home onboarding shell", () => {
     expect(homeSource).toContain("min-w-0 overflow-hidden border px-1.5 py-1.5");
     expect(homeSource).toContain("max-w-[2.75rem] shrink-0 truncate text-right");
     expect(homeSource).toContain("w-[min(100%,calc(100vw-2rem))] max-w-full");
-    expect(homeSource).toContain("max-w-[15rem] rounded-full border border-transparent bg-transparent p-0 shadow-none backdrop-blur-none");
+    expect(homeSource).toContain("max-w-[9.5rem] rounded-full border border-[#C8A96E]/45 bg-[#070707]/94 p-1");
+    expect(homeSource).toContain("max-w-[15rem] rounded-full border border-[#C8A96E]/55 bg-[#0D0D0D]/95 p-1.5");
+    expect(homeSource).toContain("rounded-full px-3 py-2 text-[0px]");
     expect(homeSource).toContain("rounded-full px-4 py-3 text-[10px]");
     expect(homeSource).toContain("+{liveTaskPoints.visibleTotal} live pts");
     expect(homeSource).toContain("+{liveTaskPoints.visibleTotal} now");
