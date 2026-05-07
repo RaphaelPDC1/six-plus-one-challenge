@@ -857,3 +857,7 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Implement the Boost System only as additive new data through `boost_wins`, with deterministic rotation, anti-gaming rules, UI display, and Warden context.
 - [x] Add regression tests for Warden Mood, boost rotation, boost eligibility, additive scoring, Board/Overview display contracts, and historical-data safety.
 - [x] Run full tests, typecheck, production build, project health check, and save a checkpoint before delivery.
+
+- [x] Produce Claude/Make scraping data audit covering challenge pages, URLs, visible fields, access, layout, and dynamic loading behavior without building new features.
+
+- [x] Convert the Claude/Make scraping audit into a downloadable Markdown document without changing website functionality.
