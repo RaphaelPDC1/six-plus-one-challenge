@@ -300,7 +300,11 @@ describe("Home onboarding shell", () => {
     expect(homeSource).toContain("data-testid=\"proof-feed-video-autoplay\"");
     expect(homeSource).toContain("muted autoPlay loop playsInline");
     expect(homeSource).toContain("encodeProofMediaAfterRemoval(current.exerciseProofUrl, index)");
-    expect(homeSource).toContain("isMedia ? \"aspect-[4/3] max-h-[20rem]\" : \"min-h-0\"");
+    expect(homeSource).toContain("data-testid=\"proof-content-visible\"");
+    expect(homeSource).toContain("bg-black object-contain");
+    expect(homeSource).toContain("data-testid=\"proof-readable-card\"");
+    expect(homeSource).toContain("data-testid=\"proof-readable-teaching\"");
+    expect(homeSource).toContain("text-base font-black leading-7 text-white");
     expect(homeSource).toContain("data-testid=\"mobile-floating-nav\"");
     expect(homeSource).toContain("min-w-0 overflow-hidden");
     expect(homeSource).toContain("break-words");
@@ -308,16 +312,20 @@ describe("Home onboarding shell", () => {
     expect(homeSource).not.toContain("No public proof yet");
   });
 
-  it("generates Warden proof insight from account-linked participant data rather than static quotes", () => {
+  it("generates Deep Thought Renee proof insight from person-specific account data instead of weak generic Warden quotes", () => {
     const homeSource = readFileSync(new URL("./Home.tsx", import.meta.url), "utf8");
 
     expect(homeSource).toContain("function buildProofWardenInsight(owner: any, log: any, ownerLogs: any[])");
     expect(homeSource).toContain("owner?.primaryGoal");
     expect(homeSource).toContain("owner?.biggestObstacle");
+    expect(homeSource).toContain("owner?.currentStreak");
+    expect(homeSource).toContain("owner?.livesRemaining");
     expect(homeSource).toContain("reflectionText");
     expect(homeSource).toContain("readTeachText");
-    expect(homeSource).toContain("The account read uses this participant’s log, proof, streak, lives, and recent movement to generate the insight.");
-    expect(homeSource).toContain("data-testid=\"proof-warden-insight\"");
+    expect(homeSource).toContain("Deep Thought Renee is not giving");
+    expect(homeSource).toContain("Renee reads this against");
+    expect(homeSource).toContain("data-testid=\"proof-deep-thought-renee\"");
+    expect(homeSource).toContain("Deep Thought Renee</MicroLabel>");
     expect(homeSource).toContain("const wardenInsight = buildProofWardenInsight(owner, log, snapshot?.logs ?? []);");
   });
 

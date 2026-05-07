@@ -1610,21 +1610,23 @@ function ProofMediaStrip({ items, onRemove }: { items: ProofMediaItem[]; onRemov
 function ProofCarousel({ items, dayNumber }: { items: ProofMediaItem[]; dayNumber: number }) {
   if (items.length === 0) return null;
   return (
-    <div className="mt-4 border border-[#2A2A2A] bg-black p-2" data-testid="proof-carousel">
-      <p className="pb-2 text-[10px] font-black uppercase tracking-[0.16em] text-[#C8A96E]">{items.length} proof item{items.length === 1 ? "" : "s"} · Day {dayNumber}</p>
-      <div className="grid gap-2 sm:grid-cols-2">
+    <div className="mt-4 rounded-[1.25rem] border border-[#3A3324] bg-[#050505] p-3 shadow-[0_0_28px_rgba(200,169,110,0.08)]" data-testid="proof-carousel">
+      <p className="pb-3 text-[10px] font-black uppercase tracking-[0.16em] text-[#F0D58A]">{items.length} visible proof item{items.length === 1 ? "" : "s"} · Day {dayNumber}</p>
+      <div className="grid gap-3 sm:grid-cols-2">
         {items.map((item, index) => {
           const imageSrc = proofImageSrc(item.url);
           const src = proofMediaSrc(item);
           const isMedia = item.type === "video" || Boolean(imageSrc);
           return (
-            <div key={`${item.url}-${index}`} className={classNames("overflow-hidden border border-[#2A2A2A] bg-[#050505]", isMedia ? "aspect-[4/3] max-h-[20rem]" : "min-h-0")}> 
+            <div key={`${item.url}-${index}`} className={classNames("overflow-hidden rounded-[1rem] border border-[#3A3324] bg-[#090909]", isMedia ? "aspect-[4/3] max-h-[22rem] min-h-[13rem]" : "min-h-[6rem]")} data-testid="proof-content-visible">
               {item.type === "video" ? (
-                <video src={src} className="h-full w-full object-cover" muted autoPlay loop playsInline controls preload="metadata" data-testid="proof-feed-video-autoplay" />
+                <video src={src} className="h-full w-full bg-black object-contain" muted autoPlay loop playsInline controls preload="metadata" data-testid="proof-feed-video-autoplay" />
               ) : imageSrc ? (
-                <img src={src} alt={`Day ${dayNumber} proof ${index + 1}`} className="h-full w-full object-cover" loading="lazy" decoding="async" />
+                <img src={src} alt={`Day ${dayNumber} proof ${index + 1}`} className="h-full w-full bg-black object-contain" loading="lazy" decoding="async" />
               ) : (
-                <p className="break-words p-3 text-xs font-bold leading-5 text-[#C8A96E]">Proof note: {item.url}</p>
+                <div className="flex min-h-[6rem] items-center border-l-4 border-[#C8A96E] bg-[#130F08] p-4">
+                  <p className="break-words text-base font-black leading-7 text-white">{item.url}</p>
+                </div>
               )}
             </div>
           );
@@ -1829,37 +1831,44 @@ function buildProofWardenInsight(owner: any, log: any, ownerLogs: any[]) {
     .slice(0, 5);
   const recentProofCount = recentLogs.filter((entry: any) => parseProofMedia(entry.exerciseProofUrl).length > 0).length;
   const completedRules = getLogCompletedRuleCount(log);
+  const name = String(owner?.displayName ?? "this person").trim();
+  const firstName = name.split(/\s+/)[0] || "you";
   const goal = String(owner?.primaryGoal ?? "").trim();
   const obstacle = String(owner?.biggestObstacle ?? "").trim();
   const teaching = String(log?.readTeachText ?? "").trim();
   const reflectionSignal = String(log?.reflectionText ?? "").trim();
   const proofItems = parseProofMedia(log?.exerciseProofUrl);
-  const proofPhrase = proofItems.some(item => item.type === "video") ? "video proof" : proofItems.length > 0 ? "proof" : "the written log";
+  const hasVideo = proofItems.some(item => item.type === "video");
+  const proofPhrase = hasVideo ? "video evidence" : proofItems.length > 0 ? "visible evidence" : "written evidence";
+  const streak = Number(owner?.currentStreak ?? owner?.streak ?? 0);
+  const lives = Number(owner?.livesRemaining ?? 4);
+  const teachingLine = teaching ? ` The lesson they wrote down is the clue: “${teaching.slice(0, 120)}${teaching.length > 120 ? "…" : ""}”` : "";
+  const reflectionLine = reflectionSignal ? ` The private reflection adds the truth underneath it: “${reflectionSignal.slice(0, 120)}${reflectionSignal.length > 120 ? "…" : ""}”` : "";
+  const goalLine = goal ? ` Renee reads this against ${firstName}’s stated goal: ${goal}.` : "";
+  const obstacleLine = obstacle ? ` The pressure point is still ${obstacle}, so the proof matters because it shows action while that pressure is present.` : "";
 
-  if (reflectionSignal.length > 0 && teaching.length > 0) {
-    return `The account read links today’s private reflection with the shared lesson: ${completedRules}/${DAILY_RULE_COUNT} standards logged, ${proofPhrase} attached, and the next move is to turn that insight into tomorrow’s repeatable action.`;
-  }
-  if (goal || obstacle) {
-    return `The account read is using their profile context${goal ? ` around ${goal}` : ""}${obstacle ? ` and the obstacle of ${obstacle}` : ""}. Today’s ${proofPhrase} is treated as behaviour data, not a quote: ${completedRules}/${DAILY_RULE_COUNT} standards are on the board.`;
+  if (reflectionSignal.length > 0 || teaching.length > 0 || goal || obstacle) {
+    return `Deep Thought Renee is not giving ${firstName} a quote; she is reading the pattern. ${completedRules}/${DAILY_RULE_COUNT} standards are logged with ${proofPhrase}, ${recentProofCount} proof-backed day${recentProofCount === 1 ? "" : "s"} showing in the recent trail, ${lives}/4 lives still in play, and a streak of ${streak}. ${goalLine}${obstacleLine}${teachingLine}${reflectionLine} Renee’s insight: this is the moment to turn what ${firstName} already knows into the next repeated behaviour, not another thought they leave unused.`;
   }
   if (recentProofCount >= 2) {
-    return `The account read sees a pattern, not a one-off: ${recentProofCount} recent proof-backed days in the latest check. The Warden marks this as momentum that has to be repeated before the day closes.`;
+    return `Deep Thought Renee sees the repeat pattern for ${firstName}: ${recentProofCount} recent proof-backed days means this is becoming evidence, not intention. Today adds ${completedRules}/${DAILY_RULE_COUNT} standards and ${proofPhrase}; the next insight is simple but personal — protect the run before emotion, tiredness, or delay gets a vote.`;
   }
-  return `The account read uses this participant’s log, proof, streak, lives, and recent movement to generate the insight. Today shows ${completedRules}/${DAILY_RULE_COUNT} standards with ${proofPhrase}; the instruction is to keep providing evidence and build from it.`;
+  return `Deep Thought Renee is building the read on ${firstName} from the data available: ${completedRules}/${DAILY_RULE_COUNT} standards, ${proofPhrase}, ${lives}/4 lives, and a streak of ${streak}. The insight is specific to this account: keep providing evidence until the app has enough pattern to challenge the exact excuse, not just celebrate the proof.`;
 }
 
 function ProofFeed({ snapshot }: { snapshot: Snapshot }) {
   const publicLogs = (snapshot?.logs ?? []).filter((log: any) => parseProofMedia(log.exerciseProofUrl).length > 0 || String(log.readTeachText ?? "").trim().length > 0);
   return (
-    <section className="border border-[#2A2A2A] bg-[#101010] p-5">
+    <section className="border border-[#2A2A2A] bg-[#101010] p-4 sm:p-5">
       <MicroLabel tone="green">Proof feed</MicroLabel>
-      <h2 className="mt-2 break-words text-3xl font-black uppercase tracking-[-0.07em] text-white sm:text-4xl">Receipts. Insights. Momentum.</h2>
-      <div className="mt-5 grid gap-3 lg:grid-cols-2">
+      <h2 className="mt-2 break-words text-3xl font-black uppercase tracking-[-0.07em] text-white sm:text-4xl">Receipts. Deep thought. Momentum.</h2>
+      <p className="mt-3 max-w-2xl text-xs font-bold uppercase leading-5 tracking-[0.12em] text-[#BDBDBD]">Proof content is shown first, then Renee reads the person behind the evidence.</p>
+      <div className="mt-5 grid gap-4 lg:grid-cols-2">
         {publicLogs.map((log: any) => {
           const owner = snapshot?.participants.find((p: any) => p.id === log.participantId);
           const wardenInsight = buildProofWardenInsight(owner, log, snapshot?.logs ?? []);
           return (
-            <article key={log.id} className="motion-card border border-[#2A2A2A] bg-[#0D0D0D] p-4 sm:p-5">
+            <article key={log.id} className="motion-card min-w-0 overflow-hidden border border-[#2A2A2A] bg-[#0D0D0D] p-4 sm:p-5" data-testid="proof-readable-card">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                   <ProfilePhoto participant={owner} className="h-11 w-11" />
@@ -1870,11 +1879,11 @@ function ProofFeed({ snapshot }: { snapshot: Snapshot }) {
                 </div>
                 <span className="border border-[#2ECC71]/50 bg-[#102018] px-3 py-1 text-[9px] font-black uppercase tracking-[0.2em] text-[#2ECC71]">Proof</span>
               </div>
-              {String(log.readTeachText ?? "").trim().length > 0 && <p className="mt-4 border-l-2 border-[#C8A96E] pl-4 text-sm font-bold leading-6 text-[#D8D8D8]">{log.readTeachText}</p>}
+              {String(log.readTeachText ?? "").trim().length > 0 && <p className="mt-4 break-words border-l-4 border-[#C8A96E] bg-[#14100A] py-3 pl-4 pr-3 text-base font-black leading-7 text-white" data-testid="proof-readable-teaching">{log.readTeachText}</p>}
               <ProofCarousel items={parseProofMedia(log.exerciseProofUrl)} dayNumber={log.dayNumber} />
-              <div className="mt-4 border border-[#C8A96E]/50 bg-[#17130C] p-4" data-testid="proof-warden-insight">
-                <MicroLabel tone="gold">The Warden responds</MicroLabel>
-                <p className="mt-3 text-sm font-bold italic leading-6 text-[#F0D58A]">{wardenInsight}</p>
+              <div className="mt-4 rounded-[1.25rem] border border-[#8E44AD]/60 bg-[#130A1B] p-4 shadow-[0_0_34px_rgba(142,68,173,0.14)]" data-testid="proof-deep-thought-renee">
+                <MicroLabel tone="purple">Deep Thought Renee</MicroLabel>
+                <p className="mt-3 break-words text-[15px] font-bold leading-7 text-[#F6E8FF]">{wardenInsight}</p>
               </div>
             </article>
           );
