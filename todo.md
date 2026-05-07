@@ -961,3 +961,11 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Use visible evidence only: proof presence/type, exercise duration/type, written reflection, Read entry, streak, onboarding goal, obstacles, and friction signals.
 - [x] Keep the insight short, useful, and action-oriented, explaining what the pattern suggests and what to do next.
 - [x] Add or update regression coverage so Warden insight copy avoids fake visual claims and uses more natural interpreted language.
+
+## Bug Fix — Deep Thought Human Output
+- [x] Rename the proof insight label from Warden’s read to Deep thought.
+- [x] Remove visible explanatory/meta helper copy about proof presence, exercise logs, challenge context, fake image reading, or data sources.
+- [x] Rewrite Deep Thought copy so users only see the final individualized insight, not how the insight was generated.
+- [x] Make Deep Thought sharper, more human, and less generic by interpreting the person’s proof, effort, friction, goal, and recent pattern.
+- [x] Update regression coverage for the Deep thought label, hidden meta copy, and stronger human insight language.
+- [x] Validate with tests, typecheck/build, project health check, and checkpoint before delivery.

@@ -321,7 +321,7 @@ describe("Home onboarding shell", () => {
     expect(homeSource).not.toContain("No public proof yet");
   });
 
-  it("generates Warden proof insight by interpreting upload evidence, onboarding context, and written evidence", () => {
+  it("generates Deep Thought insight as human individualized output without visible meta-source copy", () => {
     const homeSource = readFileSync(new URL("./Home.tsx", import.meta.url), "utf8");
 
     expect(homeSource).toContain("function buildProofWardenInsight(owner: any, log: any, ownerLogs: any[])");
@@ -332,20 +332,26 @@ describe("Home onboarding shell", () => {
     expect(homeSource).toContain("cleanEatingNote");
     expect(homeSource).toContain("reflectionText");
     expect(homeSource).toContain("readTeachText");
-    expect(homeSource).toContain("proofHas(\"video\")");
-    expect(homeSource).toContain("There is video evidence attached, so the claim has something behind it");
-    expect(homeSource).toContain("I am reading the workout and the words around it, not pretending the file tells the whole story");
+    expect(homeSource).toContain("this reads like a hinge day");
+    expect(homeSource).toContain("the old pattern loses power");
+    expect(homeSource).toContain("what nearly pulled you off, and what kept you on");
     expect(homeSource).not.toContain("The image receipt gives the session a visible anchor");
+    expect(homeSource).not.toContain("proofHas(\"video\")");
+    expect(homeSource).not.toContain("There is video evidence attached, so the claim has something behind it");
+    expect(homeSource).not.toContain("not pretending the file tells the whole story");
     expect(homeSource).not.toContain("proofNames");
     expect(homeSource).not.toContain("the upload named");
     expect(homeSource).toContain("body standard");
     expect(homeSource).toContain("discipline rebuild");
-    expect(homeSource).toContain("protecting the ${aim} when ${friction} shows up");
+    expect(homeSource).toContain("the real test is not intensity");
+    expect(homeSource).toContain("protect the smallest repeatable move from today");
     expect(homeSource).not.toContain("Takeaway:");
     expect(homeSource).not.toContain("lives/4");
     expect(homeSource).toContain("data-testid=\"proof-deep-thought\"");
-    expect(homeSource).toContain("Warden’s read</MicroLabel>");
-    expect(homeSource).toContain("Generated from proof presence + exercise log + challenge context. No fake image reading.");
+    expect(homeSource).toContain("Deep thought</MicroLabel>");
+    expect(homeSource).toContain("What the day says once the noise is stripped away.");
+    expect(homeSource).not.toContain("Generated from proof presence + exercise log + challenge context. No fake image reading.");
+    expect(homeSource).not.toContain("No fake image reading");
     expect(homeSource).not.toMatch(/Ren[eé]e/);
     expect(homeSource).toContain("const wardenInsight = buildProofWardenInsight(owner, log, snapshot?.logs ?? []);");
   });

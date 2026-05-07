@@ -1872,10 +1872,8 @@ function buildProofWardenInsight(owner: any, log: any, ownerLogs: any[]) {
   const exerciseType = String(log?.exerciseType ?? "").trim();
   const exerciseDuration = Number(log?.exerciseDuration ?? 0);
   const proofItems = parseProofMedia(log?.exerciseProofUrl);
-  const proofTypes = proofItems.map((item: any) => proofMediaType(item));
   const bundle = [goal, obstacle, supportNeeded, teaching, reflectionSignal, cleanEatingNote, exerciseType].join(" ").toLowerCase();
   const hasAny = (words: string[]) => words.some(word => bundle.includes(word));
-  const proofHas = (type: string) => proofTypes.includes(type as ProofMediaItem["type"]);
   const hasProof = proofItems.length > 0;
 
   const aim = hasAny(["weight", "fat", "lean", "cut", "shape"])
@@ -1898,53 +1896,39 @@ function buildProofWardenInsight(owner: any, log: any, ownerLogs: any[]) {
           ? "usual friction"
           : "easy-exit moment";
 
-  const evidenceRead = proofHas("video")
-    ? "There is video evidence attached, so the claim has something behind it"
-    : proofHas("image")
-      ? "There is proof attached; I am reading the workout and the words around it, not pretending the file tells the whole story"
-      : proofHas("link")
-        ? "There is an external receipt attached, which makes the log harder to hide from"
-        : "The written entry has to carry the proof today";
-
-  const evidenceDetail = proofItems.length > 1
-    ? `${proofItems.length} proof items make this harder to dismiss`
-    : hasProof
-      ? "the upload matters because it turns intention into evidence"
-      : "the useful signal is the honesty in the log";
-
-  const actionRead = exerciseDuration >= 45
-    ? `${exerciseDuration} minutes is not symbolic; that is a real training block`
+  const effortLine = exerciseDuration >= 45
+    ? `${exerciseDuration} minutes says this was not a symbolic tick-box. That is a real training block.`
     : exerciseDuration > 0 && exerciseType
-      ? `${exerciseDuration} minutes of ${exerciseType.toLowerCase()} is modest, but it still beats the version of the day where nothing gets logged`
+      ? `${exerciseDuration} minutes of ${exerciseType.toLowerCase()} is not flashy, but it is exactly how the old pattern loses power.`
       : exerciseType
-        ? `${exerciseType.toLowerCase()} is the action signal, but the next log needs more detail`
+        ? `${exerciseType.toLowerCase()} gives the day a shape. The next level is making the effort harder to misread.`
         : hasProof
-          ? "the proof shows effort was recorded, but the next win is adding clearer training detail"
-          : "the honest entry is the starting point, not the finish line";
+          ? "The useful part is not that it looks impressive. It is that the standard left your head and became something you had to stand behind."
+          : "The honest sentence is the start. Now the action needs to become just as clear.";
 
-  const mindRead = hasAny(["plan", "prepare", "structure", "routine"])
-    ? "The useful signal is preparation: this person is trying to remove the argument before it starts"
+  const mindLine = hasAny(["plan", "prepare", "structure", "routine"])
+    ? "The deeper win is preparation: you are trying to beat the argument before it starts."
     : hasAny(["learn", "read", "teach", "idea", "lesson"])
-      ? "The Read entry is doing more than ticking a box; it gives the day a reason to repeat"
+      ? "The lesson matters because it gives the work a reason to repeat, not just a box to tick."
       : hasAny(["hard", "struggle", "tempt", "craving", "stress", "tired"])
-        ? "The honest part is the strongest part here: they named the friction instead of hiding behind it"
+        ? "The strongest part is that you named the friction instead of letting it stay vague. Vague pressure usually wins. Named pressure can be handled."
         : teaching || reflectionSignal
-          ? "The words add context, so this is not just proof for other people; it is feedback for tomorrow"
-          : "The proof is useful, but the next level is explaining what it changed";
+          ? "The words make this personal. You are not just reporting a day; you are catching the pattern while it is still fresh."
+          : "The next jump is honesty with detail: what nearly pulled you off, and what kept you on.";
 
-  const experience = trainingLevel.includes("beginner") || trainingLevel.includes("starting")
-    ? "For someone building the base"
+  const identityLine = trainingLevel.includes("beginner") || trainingLevel.includes("starting")
+    ? `For where you are starting from, this is how the ${aim} gets built: small proof, repeated before you feel ready.`
     : trainingLevel.includes("advanced") || trainingLevel.includes("experienced")
-      ? "For someone who already knows the standard"
-      : "For this challenge";
+      ? `For someone who already knows the standard, the real test is not intensity. It is whether the ${aim} survives an ordinary day.`
+      : `This is the quiet part of the ${aim}: not a huge moment, just a cleaner decision when the ${friction} could have taken over.`;
 
   if (hasProof || teaching || reflectionSignal || goal || obstacle || supportNeeded) {
-    return `${firstName}: ${evidenceRead}; ${evidenceDetail}. ${experience}, ${actionRead}. My read: this is less about the file and more about protecting the ${aim} when ${friction} shows up. Tomorrow, repeat the smallest part that made this possible.`;
+    return `${firstName}, this reads like a hinge day. ${effortLine} ${mindLine} ${identityLine} Tomorrow, protect the smallest repeatable move from today and do it before the day gets loud.`;
   }
   if (recentProofCount >= 2) {
-    return `${firstName}: the pattern is starting to show. Recent receipts say this is becoming behaviour, not a one-off. Protect the boring repeat tomorrow.`;
+    return `${firstName}, a pattern is starting to form. The win is not one strong day; it is that the standard is becoming harder for you to negotiate with. Keep tomorrow boring, early, and undeniable.`;
   }
-  return `${firstName}: ${mindRead}. Keep it simple tomorrow: one clear action, one honest receipt, and one sentence about what nearly got in the way.`;
+  return `${firstName}, do not aim for a dramatic reset tomorrow. Aim for one clean action, one honest line, and one moment where you choose the standard before your mood gets a vote.`;
 }
 
 function ProofFeed({ snapshot }: { snapshot: Snapshot }) {
@@ -1955,7 +1939,7 @@ function ProofFeed({ snapshot }: { snapshot: Snapshot }) {
     <section className="mx-auto max-w-[34rem] border border-[#202020] bg-[#070707] p-3 shadow-[0_0_40px_rgba(0,0,0,0.45)] sm:p-5" data-testid="proof-feed-redesign">
       <MicroLabel tone="green">Proof feed</MicroLabel>
       <h2 className="mt-2 break-words text-[2rem] font-black uppercase leading-[0.82] tracking-[-0.08em] text-white sm:text-5xl">Receipts.<br />Insights.<br />Momentum.</h2>
-      <p className="mt-3 max-w-sm text-[10px] font-black uppercase leading-4 tracking-[0.12em] text-[#858585]">Proof first. Then the Warden reads what it means.</p>
+      <p className="mt-3 max-w-sm text-[10px] font-black uppercase leading-4 tracking-[0.12em] text-[#858585]">What the day says once the noise is stripped away.</p>
       {waiting.length > 0 && (
         <div className="mt-5 border border-[#C0392B]/35 bg-[#19090A]/70 p-3" data-testid="proof-waiting-bar">
           <p className="text-[9px] font-black uppercase tracking-[0.18em] text-[#C0392B]">Waiting on {waiting.length} player{waiting.length === 1 ? "" : "s"} · Day {latestDay}</p>
@@ -1986,11 +1970,11 @@ function ProofFeed({ snapshot }: { snapshot: Snapshot }) {
               <ProofCarousel items={parseProofMedia(log.exerciseProofUrl)} dayNumber={log.dayNumber} ownerName={owner?.displayName} />
               <div className="mt-3 border border-[#C8A96E]/45 bg-[#140E05] p-3 shadow-[inset_3px_0_0_#C8A96E]" data-testid="proof-deep-thought">
                 <div className="flex items-center justify-between gap-3">
-                  <MicroLabel tone="gold">Warden’s read</MicroLabel>
+                  <MicroLabel tone="gold">Deep thought</MicroLabel>
                   <span className="text-[8px] font-black uppercase tracking-[0.16em] text-[#6F5A2E]">Day {log.dayNumber}</span>
                 </div>
                 <p className="mt-2 break-words text-[12px] font-bold italic leading-5 text-[#F0D58A] sm:text-[13px]">{wardenInsight}</p>
-                <p className="mt-3 text-[8px] font-black uppercase tracking-[0.16em] text-[#7A612C]">Generated from proof presence + exercise log + challenge context. No fake image reading.</p>
+
               </div>
             </article>
           );
