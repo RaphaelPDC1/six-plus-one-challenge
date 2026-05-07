@@ -1,0 +1,40 @@
+{
+  "query": "SHOW TABLES;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2P9ir9M7b3E7Qkh.8b2c854ea8b3 --database HPubf4auNvt8KXvgrLad5c --execute SHOW TABLES;",
+  "rows": [
+    {
+      "Tables_in_HPubf4auNvt8KXvgrLad5c": "__drizzle_migrations"
+    },
+    {
+      "Tables_in_HPubf4auNvt8KXvgrLad5c": "daily_logs"
+    },
+    {
+      "Tables_in_HPubf4auNvt8KXvgrLad5c": "participants"
+    },
+    {
+      "Tables_in_HPubf4auNvt8KXvgrLad5c": "payment_events"
+    },
+    {
+      "Tables_in_HPubf4auNvt8KXvgrLad5c": "redemption_requests"
+    },
+    {
+      "Tables_in_HPubf4auNvt8KXvgrLad5c": "reward_catalogue"
+    },
+    {
+      "Tables_in_HPubf4auNvt8KXvgrLad5c": "signup_requests"
+    },
+    {
+      "Tables_in_HPubf4auNvt8KXvgrLad5c": "users"
+    },
+    {
+      "Tables_in_HPubf4auNvt8KXvgrLad5c": "warden_messages"
+    },
+    {
+      "Tables_in_HPubf4auNvt8KXvgrLad5c": "whatsapp_chat_history"
+    }
+  ],
+  "messages": [],
+  "stdout": "Tables_in_HPubf4auNvt8KXvgrLad5c\n__drizzle_migrations\ndaily_logs\nparticipants\npayment_events\nredemption_requests\nreward_catalogue\nsignup_requests\nusers\nwarden_messages\nwhatsapp_chat_history\n",
+  "stderr": "",
+  "execution_time_ms": 557
+}

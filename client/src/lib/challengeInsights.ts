@@ -30,6 +30,9 @@ export type ParticipantInsight = ChallengeParticipant & {
   boostLabel: string;
   boostReasons: string[];
   comparisonLine: string;
+  statusLine: string;
+  statusTag: string;
+  statusTone: "gold" | "green" | "red" | "purple" | "white";
   comparisonStats: Array<{ label: string; value: string; tone: "gold" | "green" | "red" | "purple" | "white" }>;
   podiumRank?: number;
 };
@@ -88,6 +91,34 @@ export function calculateLiveTaskPoints(completedRules: number, options: { hasPr
     trackingBonus,
     visibleTotal: rulePoints + passBonus + fullGreenBonus + proofBonus + insightBonus + trackingBonus,
   };
+}
+
+function buildBoardStatus(params: {
+  livesRemaining: number;
+  completedRulesToday: number;
+  passTasksLeft: number;
+  todayPassed: boolean;
+  noTodayLog: boolean;
+  proofRate: number;
+  recentLogs: ChallengeLog[];
+  recentPasses: number;
+  recentPointGain: number;
+  currentStreak: number;
+  riskScore: number;
+  riskReasons: string[];
+}) {
+  const recentProofs = params.recentLogs.filter(logHasProof).length;
+  const streakDays = Math.max(0, Number(params.currentStreak ?? 0));
+  if (params.livesRemaining <= 1) return { statusLine: "One life left. Needs a big day.", statusTag: "Critical", statusTone: "red" as const };
+  if (params.passTasksLeft > 0 && recentProofs === 0) return { statusLine: "Falling behind — no proof this week.", statusTag: "Slipping", statusTone: "red" as const };
+  if (params.riskScore >= 70) return { statusLine: params.noTodayLog ? "Danger zone — no log opened today." : `Danger zone — ${params.passTasksLeft || params.riskReasons[0]} still blocking today.`, statusTag: "Danger", statusTone: "red" as const };
+  if (params.riskScore >= 42) return { statusLine: `${params.riskReasons[0] ?? "Pressure building"}. Needs attention.`, statusTag: "Slipping", statusTone: "gold" as const };
+  if (params.todayPassed && streakDays >= 3) return { statusLine: `Strong run — ${streakDays} days in a row.`, statusTag: "On track", statusTone: "green" as const };
+  if (params.todayPassed) return { statusLine: "Green today — pressure banked.", statusTag: "On track", statusTone: "green" as const };
+  if (params.completedRulesToday >= 3) return { statusLine: `${params.completedRulesToday}/6 ticked. Finish the pass.` , statusTag: "Building", statusTone: "gold" as const };
+  if (params.recentPointGain > 0 && params.recentPasses >= 2) return { statusLine: "Moving well — keep the streak alive.", statusTag: "On track", statusTone: "green" as const };
+  if (params.proofRate >= 60) return { statusLine: "Proof habit is solid. Needs today’s ticks.", statusTag: "Watch", statusTone: "gold" as const };
+  return { statusLine: "Quiet board — needs a green day.", statusTag: "Watch", statusTone: "white" as const };
 }
 
 export function buildParticipantInsights(params: {
@@ -171,6 +202,7 @@ export function buildParticipantInsights(params: {
 
     const riskLabel = riskScore >= 70 ? "Red zone" : riskScore >= 42 ? "Watch today" : riskScore >= 18 ? "Manageable" : "Safe";
     const boostLabel = boostScore >= 65 ? "Major boost" : boostScore >= 32 ? "Active boost" : boostScore > 0 ? "Small lift" : "No boost yet";
+    const boardStatus = buildBoardStatus({ livesRemaining, completedRulesToday, passTasksLeft, todayPassed, noTodayLog, proofRate, recentLogs, recentPasses, recentPointGain, currentStreak: Number(participant.currentStreak ?? 0), riskScore, riskReasons });
 
     return {
       ...participant,
@@ -199,6 +231,9 @@ export function buildParticipantInsights(params: {
       boostLabel,
       boostReasons: boostReasons.length ? boostReasons : ["tick rules, upload proof, or submit a green day to activate a boost"],
       comparisonLine: `${completionRate}% pass · ${pointVelocity} pts/day · ${proofRate}% proof · ${riskLabel}`,
+      statusLine: boardStatus.statusLine,
+      statusTag: boardStatus.statusTag,
+      statusTone: boardStatus.statusTone,
       comparisonStats: [
         { label: "Pass pace", value: `${completionRate}%`, tone: completionRate >= 80 ? "green" : completionRate >= 55 ? "gold" : "red" },
         { label: "Velocity", value: `${pointVelocity}/day`, tone: pointVelocity >= 10 ? "green" : pointVelocity > 0 ? "gold" : "white" },

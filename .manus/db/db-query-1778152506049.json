@@ -1,0 +1,14 @@
+{
+  "query": "SELECT p.displayName, u.email FROM participants p JOIN users u ON p.userId = u.id WHERE u.email IS NOT NULL ORDER BY p.displayName LIMIT 1;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2P9ir9M7b3E7Qkh.8b2c854ea8b3 --database HPubf4auNvt8KXvgrLad5c --execute SELECT p.displayName, u.email FROM participants p JOIN users u ON p.userId = u.id WHERE u.email IS NOT NULL ORDER BY p.displayName LIMIT 1;",
+  "rows": [
+    {
+      "displayName": "Billie bob",
+      "email": "billiejostandish08@icloud.com"
+    }
+  ],
+  "messages": [],
+  "stdout": "displayName\temail\nBillie bob\tbilliejostandish08@icloud.com\n",
+  "stderr": "",
+  "execution_time_ms": 558
+}

@@ -3,6 +3,7 @@ import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import Home, { LogoMark, dailyLogToForm, mergeTodayFormWithoutWipingSavedWork } from "./Home";
+import { buildParticipantInsights } from "@/lib/challengeInsights";
 
 const mockState = vi.hoisted(() => ({
   auth: {
@@ -402,6 +403,7 @@ describe("Home onboarding shell", () => {
     expect(homeSource).toContain("Participant comparison");
     expect(homeSource).toContain("Rows now compare pass pace, point velocity, proof reliability, and risk instead of flat totals.");
     expect(homeSource).toContain("Board / Bosses");
+    expect(homeSource).toContain("status, lives, points, then tap-to-expand metrics");
     expect(homeSource).toContain("playAllGreenSubmitHaptic();");
     expect(homeSource).toContain("if (data.complete)");
     expect(hapticsSource).toContain("submit: [28, 42, 28, 64, 72]");
@@ -511,7 +513,13 @@ describe("Home onboarding shell", () => {
     const homeSource = readFileSync(new URL("./Home.tsx", import.meta.url), "utf8");
 
     expect(homeSource).toContain("const [selected, setSelected] = useState<any>(null);");
+    expect(homeSource).toContain("const [expandedParticipantId, setExpandedParticipantId] = useState<string | number | null>(null);");
+    expect(homeSource).toContain("data-testid=\"board-player-status-line\"");
+    expect(homeSource).toContain("data-testid=\"board-player-expanded-metrics\"");
+    expect(homeSource).toContain("aria-label={`Toggle ${p.displayName} Board metrics`}");
     expect(homeSource).toContain("aria-label={`Open ${p.displayName} participant stats`}");
+    expect(homeSource).toContain("Detail view · {p.comparisonLine}");
+    expect(homeSource).toContain("{p.comparisonStats.map((stat: any) => <InsightPill key={stat.label} label={stat.label} value={stat.value} tone={stat.tone} />)}");
     expect(homeSource).toContain("<ParticipantSheet participant={selected} onClose={() => setSelected(null)} />");
     expect(homeSource).toContain('aria-label="Top three ordered first, second, third on mobile"');
     expect(homeSource.indexOf("{podium[0] && <PodiumCard")).toBeLessThan(homeSource.indexOf("{podium[1] && <PodiumCard"));
@@ -530,6 +538,28 @@ describe("Home onboarding shell", () => {
     expect(homeSource).toContain("const [photoExpanded, setPhotoExpanded] = useState(false);");
     expect(homeSource).toContain("enlargeable onOpen={() => setPhotoExpanded(true)}");
     expect(homeSource).toContain("Close enlarged display picture");
+  });
+
+  it("generates Warden-style Board status lines while keeping analytical metrics for expanded rows", () => {
+    const insights = buildParticipantInsights({
+      currentDay: 7,
+      now: new Date("2026-05-07T21:00:00"),
+      participants: [
+        { id: "critical", displayName: "Critical Casey", livesRemaining: 1, currentStreak: 0, totalPoints: 10 },
+        { id: "runner", displayName: "Runner Riley", livesRemaining: 4, currentStreak: 3, totalPoints: 90 },
+        { id: "proofless", displayName: "Proofless Pat", livesRemaining: 3, currentStreak: 0, totalPoints: 20 },
+      ],
+      logs: [
+        { participantId: "runner", dayNumber: 7, completed: true, noAlcohol: true, cleanEating: true, exerciseDuration: 35, exerciseType: "run", reflectionText: "good effort today", readTeachText: "lesson learned today", trackedEverything: true, exerciseProofUrl: "/manus-storage/proof.webp", pointsAwarded: 15 },
+        { participantId: "runner", dayNumber: 6, completed: true, noAlcohol: true, cleanEating: true, exerciseDuration: 35, exerciseType: "run", reflectionText: "good effort yesterday", readTeachText: "lesson learned yesterday", trackedEverything: true, exerciseProofUrl: "/manus-storage/proof-2.webp", pointsAwarded: 12 },
+        { participantId: "proofless", dayNumber: 7, completed: false, noAlcohol: true, cleanEating: false, exerciseDuration: 0, exerciseType: "", reflectionText: "", readTeachText: "", trackedEverything: false, exerciseProofUrl: "", pointsAwarded: 0 },
+      ],
+    });
+
+    expect(insights.find(item => item.id === "critical")?.statusLine).toBe("One life left. Needs a big day.");
+    expect(insights.find(item => item.id === "runner")?.statusLine).toBe("Strong run — 3 days in a row.");
+    expect(insights.find(item => item.id === "proofless")?.statusLine).toBe("Falling behind — no proof this week.");
+    expect(insights[0].comparisonStats.map(stat => stat.label)).toEqual(["Pass pace", "Velocity", "Proof", "Risk"]);
   });
 
 });

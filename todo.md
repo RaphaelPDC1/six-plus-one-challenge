@@ -710,3 +710,30 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Add regression coverage that prevents visual ordering from putting 2nd before 1st again.
 - [x] Validate the Board ordering fix together with the horizontal points strip update before checkpointing.
 
+
+## Context Package — Claude Review
+- [x] Gather current app context for Overview, Board, rules, lives, participant scale, and mobile-first assumptions.
+- [x] Capture or prepare screenshots of the Overview and Board pages for external review.
+- [x] Write a concise shareable summary that can be pasted into Claude for specific UX improvement suggestions.
+- [x] Deliver the summary and relevant screenshot attachments to the user.
+
+## Context Package — Remaining Page Screenshots
+- [x] Capture fresh mobile screenshots for the remaining app tabs beyond Overview and Board.
+- [x] Include My Day, Proof, Rewards, and Journey screenshots where accessible in the authenticated preview.
+- [x] Verify the screenshots visually enough to confirm each page is the intended tab.
+- [x] Package the screenshots outside the web project for delivery to the user.
+
+## Review — Attached Six Plus One Redesign PDF
+- [x] Inspect the attached `sixplusone-redesign.pdf` to confirm whether its screens and visual direction are readable.
+- [x] Summarize the main visible redesign elements and note any parts that are unclear or need follow-up.
+- [x] Tell the user whether the PDF can be used as a reference for future app refinements.
+
+
+## Board Refinement — Story-First Player Status Rows
+- [x] Replace default analytical row labels such as pace, velocity, proof percentage, and risk with a single plain-English player status line.
+- [x] Implement option 3: keep leaderboard rows clean by default while allowing each player row to expand and reveal the detailed pace, velocity, proof, and risk breakdown.
+- [x] Generate status lines from participant data in the app’s Warden-style tone, such as falling behind, strong run, no proof this week, or one life left.
+- [x] Preserve visible rank, points, and lives in the default row so competitive scan value remains clear.
+- [x] Add or update regression coverage for collapsed status lines and expanded metric detail visibility.
+- [x] Validate the Board refinement with tests, production build, and project health check before checkpointing.
+

@@ -1586,17 +1586,18 @@ function PodiumCard({ participant, index, onSelect, className }: { participant: 
       <h3 className="mt-5 break-words text-2xl font-black uppercase leading-none tracking-[-0.07em] text-white">{participant?.displayName ?? "—"}</h3>
       <div className="mt-4 grid grid-cols-2 gap-2">
         <InsightPill label="Points" value={participant?.totalPoints ?? 0} tone={rank === 1 ? "gold" : "white"} />
+        <InsightPill label="Lives" value={`${participant?.livesRemaining ?? 4}/4`} tone={(participant?.livesRemaining ?? 4) <= 1 ? "red" : "green"} />
+        <InsightPill label="Status" value={participant?.statusTag ?? "Watch"} tone={participant?.statusTone ?? "white"} />
         <InsightPill label="Boost" value={participant?.boostScore ?? 0} tone="purple" />
-        <InsightPill label="Pace" value={`${participant?.completionRate ?? 0}%`} tone="green" />
-        <InsightPill label="Risk" value={participant?.riskScore ?? 0} tone={participant?.riskScore >= 60 ? "red" : "gold"} />
       </div>
-      <p className="mt-4 text-[10px] font-black uppercase leading-5 tracking-[0.14em] text-[#BDBDBD]">{participant?.boostReasons?.[0] ?? participant?.moverReasons?.[0] ?? "Keep banking green days to hold the podium"}</p>
+      <p className="mt-4 text-[10px] font-black uppercase leading-5 tracking-[0.14em] text-[#BDBDBD]">{participant?.statusLine ?? participant?.boostReasons?.[0] ?? "Keep banking green days to hold the podium"}</p>
     </button>
   );
 }
 
 function Leaderboard({ snapshot }: { snapshot: Snapshot }) {
   const [selected, setSelected] = useState<any>(null);
+  const [expandedParticipantId, setExpandedParticipantId] = useState<string | number | null>(null);
   const logs = snapshot?.logs ?? [];
   const participants = snapshot?.participants ?? [];
   const currentDay = snapshot?.challenge?.currentDay ?? 1;
@@ -1610,7 +1611,7 @@ function Leaderboard({ snapshot }: { snapshot: Snapshot }) {
           <MicroLabel tone="gold">Board / Bosses</MicroLabel>
           <h2 className="mt-2 break-words text-3xl font-black uppercase leading-none tracking-[-0.07em] text-white sm:text-4xl">Podium, boosts, pressure.</h2>
         </div>
-        <p className="max-w-sm text-xs font-bold uppercase tracking-[0.14em] text-[#777]">Rank still respects points, but the board now explains why people are moving: boost score, proof, recent point lift, pass pace, streaks and risk.</p>
+        <p className="max-w-sm text-xs font-bold uppercase tracking-[0.14em] text-[#777]">Rank still respects points, but each row now tells the story first: status, lives, points, then tap-to-expand metrics for the competitors who want the numbers.</p>
       </div>
 
       <div className="grid gap-3 lg:grid-cols-[0.95fr_1.1fr_0.95fr] lg:items-end" data-testid="top-three-podium" aria-label="Top three ordered first, second, third on mobile">
@@ -1644,24 +1645,41 @@ function Leaderboard({ snapshot }: { snapshot: Snapshot }) {
       </div>
 
       <div className="mt-5 space-y-2">
-        {ranked.map((p: any, index: number) => (
-          <button key={p.id} onClick={() => { pulse(14); setSelected(p); }} className={classNames("motion-row motion-press grid w-full grid-cols-[48px_minmax(0,1fr)] items-center gap-3 border bg-[#0D0D0D] p-3 text-left transition hover:border-[#C8A96E] sm:grid-cols-[56px_56px_minmax(0,1fr)_minmax(260px,1fr)_auto] sm:gap-4 sm:p-4", index === 0 ? "border-l-4 border-l-[#C8A96E] border-[#3C3423]" : index === 1 ? "border-l-4 border-l-[#BFC7D5] border-[#2A2A2A]" : index === 2 ? "border-l-4 border-l-[#B87333] border-[#2A2A2A]" : "border-[#2A2A2A]")}>
-            <span className={classNames("text-2xl font-black sm:text-3xl", index === 0 ? "text-[#C8A96E]" : index === 1 ? "text-[#BFC7D5]" : index === 2 ? "text-[#D58A45]" : "text-[#777]")}>#{index + 1}</span>
-            <span className="hidden sm:block"><ProfilePhoto participant={p} className="h-12 w-12" /></span>
-            <span className="min-w-0">
-              <span className="block break-words text-lg font-black uppercase tracking-[-0.04em] text-white sm:text-xl">{p.displayName}</span>
-              <span className="mt-1 block break-words text-[11px] font-bold uppercase tracking-[0.1em] text-[#777] sm:text-xs sm:tracking-[0.14em]">{p.comparisonLine}</span>
-              <span className="mt-3 block max-w-[260px]"><HealthBar lives={p.livesRemaining} label="" compact /></span>
-            </span>
-            <span className="col-span-2 flex flex-wrap gap-2 sm:col-span-1">
-              {p.comparisonStats.map((stat: any) => <InsightPill key={stat.label} label={stat.label} value={stat.value} tone={stat.tone} />)}
-            </span>
-            <span className="col-span-2 mt-2 min-w-0 text-left sm:col-span-1 sm:mt-0 sm:text-right">
-              <span className="block text-2xl font-black text-[#C8A96E] sm:text-3xl">{p.totalPoints}</span>
-              <span className="poster-label text-[#777]">points</span>
-            </span>
-          </button>
-        ))}
+        {ranked.map((p: any, index: number) => {
+          const isExpanded = String(expandedParticipantId) === String(p.id);
+          const detailId = `board-player-${p.id}-metrics`;
+          return (
+            <article key={p.id} className={classNames("motion-row border bg-[#0D0D0D] transition hover:border-[#C8A96E]", index === 0 ? "border-l-4 border-l-[#C8A96E] border-[#3C3423]" : index === 1 ? "border-l-4 border-l-[#BFC7D5] border-[#2A2A2A]" : index === 2 ? "border-l-4 border-l-[#B87333] border-[#2A2A2A]" : "border-[#2A2A2A]")} data-testid="board-player-row">
+              <button type="button" onClick={() => { pulse(14); setExpandedParticipantId(isExpanded ? null : p.id); }} className="motion-press grid w-full grid-cols-[48px_minmax(0,1fr)] items-center gap-3 p-3 text-left sm:grid-cols-[56px_56px_minmax(0,1fr)_minmax(170px,0.75fr)_auto_36px] sm:gap-4 sm:p-4" aria-expanded={isExpanded} aria-controls={detailId} aria-label={`Toggle ${p.displayName} Board metrics`}>
+                <span className={classNames("text-2xl font-black sm:text-3xl", index === 0 ? "text-[#C8A96E]" : index === 1 ? "text-[#BFC7D5]" : index === 2 ? "text-[#D58A45]" : "text-[#777]")}>#{index + 1}</span>
+                <span className="hidden sm:block"><ProfilePhoto participant={p} className="h-12 w-12" /></span>
+                <span className="min-w-0">
+                  <span className="block break-words text-lg font-black uppercase tracking-[-0.04em] text-white sm:text-xl">{p.displayName}</span>
+                  <span className="mt-1 block break-words text-[11px] font-bold uppercase tracking-[0.1em] text-[#C8A96E] sm:text-xs sm:tracking-[0.14em]" data-testid="board-player-status-line">{p.statusLine}</span>
+                  <span className="mt-3 block max-w-[260px]"><HealthBar lives={p.livesRemaining} label="" compact /></span>
+                </span>
+                <span className="col-span-2 flex flex-wrap gap-2 sm:col-span-1">
+                  <InsightPill label="Status" value={p.statusTag} tone={p.statusTone} />
+                  <InsightPill label="Lives" value={`${p.livesRemaining}/4`} tone={p.livesRemaining <= 1 ? "red" : p.livesRemaining <= 2 ? "gold" : "green"} />
+                </span>
+                <span className="col-span-2 mt-2 min-w-0 text-left sm:col-span-1 sm:mt-0 sm:text-right">
+                  <span className="block text-2xl font-black text-[#C8A96E] sm:text-3xl">{p.totalPoints}</span>
+                  <span className="poster-label text-[#777]">points</span>
+                </span>
+                <span className="hidden text-[#777] sm:grid sm:place-items-center">{isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}</span>
+              </button>
+              {isExpanded && (
+                <div id={detailId} className="border-t border-[#2A2A2A] bg-black/30 p-3 sm:p-4" data-testid="board-player-expanded-metrics">
+                  <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#777]">Detail view · {p.comparisonLine}</p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {p.comparisonStats.map((stat: any) => <InsightPill key={stat.label} label={stat.label} value={stat.value} tone={stat.tone} />)}
+                  </div>
+                  <button type="button" onClick={() => { pulse([12, 24, 12]); setSelected(p); }} className="mt-3 min-h-10 border border-[#C8A96E]/60 px-4 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-[#C8A96E] hover:bg-[#C8A96E] hover:text-black" aria-label={`Open ${p.displayName} participant stats`}>Open full profile</button>
+                </div>
+              )}
+            </article>
+          );
+        })}
       </div>
       <ParticipantSheet participant={selected} onClose={() => setSelected(null)} />
     </section>

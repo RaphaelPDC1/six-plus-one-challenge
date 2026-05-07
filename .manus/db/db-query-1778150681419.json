@@ -1,0 +1,80 @@
+{
+  "query": "SELECT p.id, p.displayName, p.onboardingCompleted, u.email, u.role FROM participants p LEFT JOIN users u ON p.userId = u.id ORDER BY p.id LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2P9ir9M7b3E7Qkh.8b2c854ea8b3 --database HPubf4auNvt8KXvgrLad5c --execute SELECT p.id, p.displayName, p.onboardingCompleted, u.email, u.role FROM participants p LEFT JOIN users u ON p.userId = u.id ORDER BY p.id LIMIT 20;",
+  "rows": [
+    {
+      "id": "60011",
+      "displayName": "Nay",
+      "onboardingCompleted": "1",
+      "email": "janay30.10@gmail.com",
+      "role": "user"
+    },
+    {
+      "id": "60012",
+      "displayName": "Kwabs",
+      "onboardingCompleted": "1",
+      "email": "kwabenamensah177@gmail.com",
+      "role": "user"
+    },
+    {
+      "id": "90001",
+      "displayName": "Senyo",
+      "onboardingCompleted": "1",
+      "email": "raphael.togbe@yahoo.com",
+      "role": "user"
+    },
+    {
+      "id": "90002",
+      "displayName": "G LODGE",
+      "onboardingCompleted": "1",
+      "email": "gracielodge15@gmail.com",
+      "role": "user"
+    },
+    {
+      "id": "90003",
+      "displayName": "Chernice",
+      "onboardingCompleted": "1",
+      "email": "chernice681@gmail.com",
+      "role": "user"
+    },
+    {
+      "id": "90004",
+      "displayName": "wiwi",
+      "onboardingCompleted": "1",
+      "email": "wiam.tyass@hotmail.com",
+      "role": "user"
+    },
+    {
+      "id": "90005",
+      "displayName": "CTM",
+      "onboardingCompleted": "1",
+      "email": "charlottetruemanmarsden@gmail.com",
+      "role": "user"
+    },
+    {
+      "id": "90006",
+      "displayName": "Billie bob",
+      "onboardingCompleted": "1",
+      "email": "billiejostandish08@icloud.com",
+      "role": "user"
+    },
+    {
+      "id": "90007",
+      "displayName": "Nat",
+      "onboardingCompleted": "1",
+      "email": "nataliearihanna@hotmail.com",
+      "role": "user"
+    },
+    {
+      "id": "90008",
+      "displayName": "Chess",
+      "onboardingCompleted": "1",
+      "email": "henry.chester@rocketmail.com",
+      "role": "user"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tdisplayName\tonboardingCompleted\temail\trole\n60011\tNay\t1\tjanay30.10@gmail.com\tuser\n60012\tKwabs\t1\tkwabenamensah177@gmail.com\tuser\n90001\tSenyo\t1\traphael.togbe@yahoo.com\tuser\n90002\tG LODGE\t1\tgracielodge15@gmail.com\tuser\n90003\tChernice\t1\tchernice681@gmail.com\tuser\n90004\twiwi\t1\twiam.tyass@hotmail.com\tuser\n90005\tCTM\t1\tcharlottetruemanmarsden@gmail.com\tuser\n90006\tBillie bob\t1\tbilliejostandish08@icloud.com\tuser\n90007\tNat\t1\tnataliearihanna@hotmail.com\tuser\n90008\tChess\t1\thenry.chester@rocketmail.com\tuser\n",
+  "stderr": "",
+  "execution_time_ms": 558
+}
