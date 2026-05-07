@@ -737,3 +737,11 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Add or update regression coverage for collapsed status lines and expanded metric detail visibility.
 - [x] Validate the Board refinement with tests, production build, and project health check before checkpointing.
 
+
+
+## Bug Fix — Counter Overflow and Save Progress Pill Background
+- [x] Fix counter/value elements that overflow off cards or off the page on mobile and narrow layouts.
+- [x] Audit repeated counter treatments across Overview, Board, My Day, Rewards, Journey, and related compact stat cards so values stay contained.
+- [x] Remove the unwanted black rectangular backing behind the Save Progress pill while preserving its scroll-responsive behavior.
+- [x] Add or update regression coverage for contained counters and clean Save Progress pill styling.
+- [x] Validate the visual fixes with tests, production build, and project health check before checkpointing.

@@ -463,7 +463,10 @@ describe("Home onboarding shell", () => {
     expect(homeSource).toContain('aria-label="Live points horizontal strip"');
     expect(homeSource).toContain("Live points strip");
     expect(homeSource).toContain("flex snap-x gap-1 overflow-x-auto");
-    expect(homeSource).toContain("min-w-[7.3rem] flex-1 snap-start");
+    expect(homeSource).toContain("min-w-[6.75rem] flex-1 snap-start overflow-hidden");
+    expect(homeSource).toContain("max-w-[4.5rem] shrink-0 truncate text-right");
+    expect(homeSource).toContain("max-w-[15rem] rounded-full border border-transparent bg-transparent p-0 shadow-none backdrop-blur-none");
+    expect(homeSource).toContain("rounded-full px-4 py-3 text-[10px]");
     expect(homeSource).toContain("+{liveTaskPoints.visibleTotal} live pts");
     expect(homeSource).toContain("+{liveTaskPoints.visibleTotal} now");
     expect(homeSource).not.toContain('data-testid="live-task-points-panel"');
@@ -516,6 +519,9 @@ describe("Home onboarding shell", () => {
     expect(homeSource).toContain("const [expandedParticipantId, setExpandedParticipantId] = useState<string | number | null>(null);");
     expect(homeSource).toContain("data-testid=\"board-player-status-line\"");
     expect(homeSource).toContain("data-testid=\"board-player-expanded-metrics\"");
+    expect(homeSource).toContain("inline-flex max-w-full min-w-0 items-center gap-1 overflow-hidden");
+    expect(homeSource).toContain("<span className=\"min-w-0 truncate tabular-nums\">{value}</span>");
+    expect(homeSource).toContain("block max-w-full break-words text-2xl font-black leading-none text-[#C8A96E]");
     expect(homeSource).toContain("aria-label={`Toggle ${p.displayName} Board metrics`}");
     expect(homeSource).toContain("aria-label={`Open ${p.displayName} participant stats`}");
     expect(homeSource).toContain("Detail view · {p.comparisonLine}");

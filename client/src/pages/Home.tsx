@@ -372,7 +372,7 @@ function PosterStat({ label, value, tone = "gold" }: { label: string; value: str
   return (
     <div className="motion-card border border-[#2A2A2A] bg-[#111] p-4">
       <MicroLabel tone={tone === "white" ? "muted" : tone}>{label}</MicroLabel>
-      <p className={classNames("mt-3 text-4xl font-black uppercase leading-none", tones[tone])}>{value}</p>
+      <p className={classNames("mt-3 max-w-full break-words text-4xl font-black uppercase leading-none tracking-[-0.08em] tabular-nums", tones[tone])}>{value}</p>
     </div>
   );
 }
@@ -1050,10 +1050,10 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
                   white: "border-[#444] bg-[#111] text-white",
                 }[item.tone];
                 return (
-                  <div key={item.label} role="listitem" className={classNames("min-w-[7.3rem] flex-1 snap-start border px-2.5 py-2 sm:min-w-0", toneClasses)}>
-                    <div className="flex items-baseline justify-between gap-2">
-                      <span className="text-[9px] font-black uppercase tracking-[0.18em] text-[#BDBDBD]">{item.label}</span>
-                      <span className="text-xl font-black uppercase leading-none tracking-[-0.06em]">{item.value}</span>
+                  <div key={item.label} role="listitem" className={classNames("min-w-[6.75rem] flex-1 snap-start overflow-hidden border px-2.5 py-2 sm:min-w-0", toneClasses)}>
+                    <div className="flex min-w-0 items-baseline justify-between gap-2">
+                      <span className="min-w-0 truncate text-[9px] font-black uppercase tracking-[0.14em] text-[#BDBDBD]">{item.label}</span>
+                      <span className="max-w-[4.5rem] shrink-0 truncate text-right text-xl font-black uppercase leading-none tracking-[-0.06em] tabular-nums">{item.value}</span>
                     </div>
                     <p className="mt-1 truncate text-[9px] font-black uppercase tracking-[0.14em] text-[#8F8F8F]">{item.detail}</p>
                   </div>
@@ -1123,8 +1123,8 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
           <PosterStat label="Projected pts" value={projectedPoints} tone="gold" />
         </div>
 
-        <div className={classNames("submit-dock motion-submit-dock relative sticky bottom-[104px] z-20 mx-auto border border-[#2A2A2A] bg-[#0D0D0D]/95 backdrop-blur transition-all duration-300 md:static md:bg-transparent", saveProgressScale < 0.35 ? "max-w-[15rem] rounded-full p-1.5" : saveProgressScale < 0.75 ? "max-w-[22rem] rounded-2xl p-2" : "max-w-none rounded-none p-3 md:p-0", submit.isPending && "submit-dock-pending", allAddressed && !submit.isPending && "submit-dock-ready")} data-save-progress-scale={saveProgressScale}>
-          <SharpButton className={classNames("w-full transition-all duration-300", saveProgressScale < 0.35 ? "py-3 text-[10px]" : saveProgressScale < 0.75 ? "py-4 text-xs" : "py-5 text-sm", submit.isPending && "submit-button-pending")} disabled={submit.isPending} onClick={() => submit.mutate({ ...form, reflectionShared: false, dayNumber: snapshot?.challenge.currentDay ?? 1 })}>
+        <div className={classNames("submit-dock motion-submit-dock relative sticky bottom-[104px] z-20 mx-auto transition-all duration-300 md:static", saveProgressScale < 0.35 ? "max-w-[15rem] rounded-full border border-transparent bg-transparent p-0 shadow-none backdrop-blur-none" : saveProgressScale < 0.75 ? "max-w-[22rem] rounded-2xl border border-[#2A2A2A] bg-[#0D0D0D]/95 p-2 backdrop-blur" : "max-w-none rounded-none border border-[#2A2A2A] bg-[#0D0D0D]/95 p-3 backdrop-blur md:border-transparent md:bg-transparent md:p-0 md:backdrop-blur-none", submit.isPending && "submit-dock-pending", allAddressed && !submit.isPending && "submit-dock-ready")} data-save-progress-scale={saveProgressScale}>
+          <SharpButton className={classNames("w-full max-w-full overflow-hidden text-center transition-all duration-300", saveProgressScale < 0.35 ? "rounded-full px-4 py-3 text-[10px] shadow-[0_0_24px_rgba(200,169,110,0.18)]" : saveProgressScale < 0.75 ? "rounded-full py-4 text-xs" : "py-5 text-sm", submit.isPending && "submit-button-pending")} disabled={submit.isPending} onClick={() => submit.mutate({ ...form, reflectionShared: false, dayNumber: snapshot?.challenge.currentDay ?? 1 })}>
             {submit.isPending ? (allAddressed ? "Submitting the log" : "Saving progress") : allAddressed ? `Submit day ${snapshot?.challenge.currentDay ?? 1}` : `Save progress — ${Math.max(0, passThreshold - completedRules)} more for pass`}
           </SharpButton>
           {saveProgressScale >= 0.55 && !allAddressed && <p className="mt-2 text-center text-[10px] font-black uppercase tracking-[0.16em] text-[#C8A96E]/80">Draft only until 5/6 is reached. Lives judged after rollover.</p>}
@@ -1173,7 +1173,7 @@ function OverviewMetricCard({ label, value, detail, tone = "gold" }: { label: st
   return (
     <article className={classNames("motion-card border p-4", tones[tone])}>
       <MicroLabel tone={tone === "white" ? "muted" : tone}>{label}</MicroLabel>
-      <p className="mt-3 text-4xl font-black uppercase leading-none tracking-[-0.08em]">{value}</p>
+      <p className="mt-3 max-w-full break-words text-4xl font-black uppercase leading-none tracking-[-0.08em] tabular-nums">{value}</p>
       <p className="mt-3 text-[10px] font-black uppercase leading-5 tracking-[0.14em] text-[#BDBDBD]">{detail}</p>
     </article>
   );
@@ -1203,7 +1203,7 @@ function InsightPill({ label, value, tone = "gold" }: { label: string; value: st
     purple: "border-[#9B59B6]/55 text-[#D9B3F0]",
     white: "border-[#444] text-white",
   };
-  return <span className={classNames("border bg-black px-3 py-2 text-[10px] font-black uppercase tracking-[0.14em]", tones[tone])}>{label}: {value}</span>;
+  return <span className={classNames("inline-flex max-w-full min-w-0 items-center gap-1 overflow-hidden border bg-black px-3 py-2 text-[10px] font-black uppercase leading-tight tracking-[0.11em]", tones[tone])}><span className="shrink-0">{label}:</span><span className="min-w-0 truncate tabular-nums">{value}</span></span>;
 }
 
 function Overview({ snapshot }: { snapshot: Snapshot }) {
@@ -1663,7 +1663,7 @@ function Leaderboard({ snapshot }: { snapshot: Snapshot }) {
                   <InsightPill label="Lives" value={`${p.livesRemaining}/4`} tone={p.livesRemaining <= 1 ? "red" : p.livesRemaining <= 2 ? "gold" : "green"} />
                 </span>
                 <span className="col-span-2 mt-2 min-w-0 text-left sm:col-span-1 sm:mt-0 sm:text-right">
-                  <span className="block text-2xl font-black text-[#C8A96E] sm:text-3xl">{p.totalPoints}</span>
+                  <span className="block max-w-full break-words text-2xl font-black leading-none text-[#C8A96E] sm:text-3xl">{p.totalPoints}</span>
                   <span className="poster-label text-[#777]">points</span>
                 </span>
                 <span className="hidden text-[#777] sm:grid sm:place-items-center">{isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}</span>
