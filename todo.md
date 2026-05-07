@@ -969,3 +969,11 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Make Deep Thought sharper, more human, and less generic by interpreting the person’s proof, effort, friction, goal, and recent pattern.
 - [x] Update regression coverage for the Deep thought label, hidden meta copy, and stronger human insight language.
 - [x] Validate with tests, typecheck/build, project health check, and checkpoint before delivery.
+
+## Refinement — Shorter Varied Deep Thought Output
+- [x] Make Deep Thought shorter than the current version while preserving a strong, personal impact.
+- [x] Remove repeated openings such as “This reads like” so multiple proofs do not feel template-generated.
+- [x] Add varied human-sounding opening patterns and sentence structures for Deep Thought outputs.
+- [x] Evaluate whether the current deterministic insight builder should be improved or supplemented with AI-backed generation for less repetitive outputs.
+- [x] Update regression coverage for concise length, varied openings, and non-generic individualized wording.
+- [x] Validate with tests, typecheck/build, project health check, and checkpoint before delivery.

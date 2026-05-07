@@ -1896,39 +1896,46 @@ function buildProofWardenInsight(owner: any, log: any, ownerLogs: any[]) {
           ? "usual friction"
           : "easy-exit moment";
 
-  const effortLine = exerciseDuration >= 45
-    ? `${exerciseDuration} minutes says this was not a symbolic tick-box. That is a real training block.`
+  const proofWeight = hasProof ? 3 : 0;
+  const exerciseWeight = exerciseDuration >= 45 ? 3 : exerciseDuration > 0 ? 2 : exerciseType ? 1 : 0;
+  const mindWeight = teaching || reflectionSignal ? 2 : 0;
+  const pressureWeight = obstacle || supportNeeded || friction !== "easy-exit moment" ? 1 : 0;
+  const seed = Math.abs(Number(log?.dayNumber ?? 0) + Number(log?.participantId ?? 0) + firstName.length + recentProofCount);
+
+  const effortSignal = exerciseDuration >= 45
+    ? `${exerciseDuration} minutes was not a tick-box; it was a real block.`
     : exerciseDuration > 0 && exerciseType
-      ? `${exerciseDuration} minutes of ${exerciseType.toLowerCase()} is not flashy, but it is exactly how the old pattern loses power.`
+      ? `${exerciseDuration} minutes of ${exerciseType.toLowerCase()} is how the old pattern loses power.`
       : exerciseType
-        ? `${exerciseType.toLowerCase()} gives the day a shape. The next level is making the effort harder to misread.`
+        ? `${exerciseType.toLowerCase()} gave the day a shape.`
         : hasProof
-          ? "The useful part is not that it looks impressive. It is that the standard left your head and became something you had to stand behind."
-          : "The honest sentence is the start. Now the action needs to become just as clear.";
+          ? "You made the standard visible instead of leaving it as an intention."
+          : "The honest line is a start; now the action has to match it.";
 
-  const mindLine = hasAny(["plan", "prepare", "structure", "routine"])
-    ? "The deeper win is preparation: you are trying to beat the argument before it starts."
-    : hasAny(["learn", "read", "teach", "idea", "lesson"])
-      ? "The lesson matters because it gives the work a reason to repeat, not just a box to tick."
-      : hasAny(["hard", "struggle", "tempt", "craving", "stress", "tired"])
-        ? "The strongest part is that you named the friction instead of letting it stay vague. Vague pressure usually wins. Named pressure can be handled."
-        : teaching || reflectionSignal
-          ? "The words make this personal. You are not just reporting a day; you are catching the pattern while it is still fresh."
-          : "The next jump is honesty with detail: what nearly pulled you off, and what kept you on.";
+  const sharpSignals = [
+    `${firstName}, the win is not drama; it is evidence. ${effortSignal} Repeat the first move early tomorrow.`,
+    `${firstName}, that is the kind of small proof that changes identity. Do not make it bigger; make it harder to skip.`,
+    `${firstName}, this matters because the ${friction} did not get the final vote. Protect that same decision tomorrow.`,
+    `${firstName}, the standard got a little less negotiable today. Keep it boring, early, and undeniable.`,
+    `${firstName}, there is something useful here: the ${aim} is being built in ordinary moments, not speeches. Run it back tomorrow.`,
+  ];
 
-  const identityLine = trainingLevel.includes("beginner") || trainingLevel.includes("starting")
-    ? `For where you are starting from, this is how the ${aim} gets built: small proof, repeated before you feel ready.`
-    : trainingLevel.includes("advanced") || trainingLevel.includes("experienced")
-      ? `For someone who already knows the standard, the real test is not intensity. It is whether the ${aim} survives an ordinary day.`
-      : `This is the quiet part of the ${aim}: not a huge moment, just a cleaner decision when the ${friction} could have taken over.`;
+  const reflectiveSignals = [
+    `${firstName}, the thought is sharper than the proof: you caught the pattern while it was still fresh. Use that tomorrow before the day gets noisy.`,
+    `${firstName}, the lesson only counts if it changes the next decision. Make tomorrow’s first choice easy to win.`,
+    `${firstName}, this is not about looking locked in; it is about noticing where you usually fold and choosing earlier.`,
+  ];
 
-  if (hasProof || teaching || reflectionSignal || goal || obstacle || supportNeeded) {
-    return `${firstName}, this reads like a hinge day. ${effortLine} ${mindLine} ${identityLine} Tomorrow, protect the smallest repeatable move from today and do it before the day gets loud.`;
+  if (proofWeight + exerciseWeight + mindWeight + pressureWeight >= 5) {
+    return sharpSignals[seed % sharpSignals.length];
+  }
+  if (teaching || reflectionSignal || goal || obstacle || supportNeeded) {
+    return reflectiveSignals[seed % reflectiveSignals.length];
   }
   if (recentProofCount >= 2) {
-    return `${firstName}, a pattern is starting to form. The win is not one strong day; it is that the standard is becoming harder for you to negotiate with. Keep tomorrow boring, early, and undeniable.`;
+    return `${firstName}, the pattern is starting to show. One good day is nice; repeated proof is harder to argue with.`;
   }
-  return `${firstName}, do not aim for a dramatic reset tomorrow. Aim for one clean action, one honest line, and one moment where you choose the standard before your mood gets a vote.`;
+  return `${firstName}, keep it simple tomorrow: one clean action, one honest line, and no negotiation with the standard.`;
 }
 
 function ProofFeed({ snapshot }: { snapshot: Snapshot }) {

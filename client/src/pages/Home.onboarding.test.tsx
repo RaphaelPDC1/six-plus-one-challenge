@@ -332,9 +332,13 @@ describe("Home onboarding shell", () => {
     expect(homeSource).toContain("cleanEatingNote");
     expect(homeSource).toContain("reflectionText");
     expect(homeSource).toContain("readTeachText");
-    expect(homeSource).toContain("this reads like a hinge day");
+    expect(homeSource).toContain("const sharpSignals = [");
+    expect(homeSource).toContain("const reflectiveSignals = [");
+    expect(homeSource).toContain("seed % sharpSignals.length");
     expect(homeSource).toContain("the old pattern loses power");
-    expect(homeSource).toContain("what nearly pulled you off, and what kept you on");
+    expect(homeSource).toContain("the win is not drama; it is evidence");
+    expect(homeSource).not.toContain("this reads like a hinge day");
+    expect(homeSource).not.toContain("what nearly pulled you off, and what kept you on");
     expect(homeSource).not.toContain("The image receipt gives the session a visible anchor");
     expect(homeSource).not.toContain("proofHas(\"video\")");
     expect(homeSource).not.toContain("There is video evidence attached, so the claim has something behind it");
@@ -343,8 +347,10 @@ describe("Home onboarding shell", () => {
     expect(homeSource).not.toContain("the upload named");
     expect(homeSource).toContain("body standard");
     expect(homeSource).toContain("discipline rebuild");
-    expect(homeSource).toContain("the real test is not intensity");
-    expect(homeSource).toContain("protect the smallest repeatable move from today");
+    expect(homeSource).toContain("ordinary moments, not speeches");
+    expect(homeSource).toContain("Do not make it bigger; make it harder to skip");
+    expect(homeSource).not.toContain("the real test is not intensity");
+    expect(homeSource).not.toContain("protect the smallest repeatable move from today");
     expect(homeSource).not.toContain("Takeaway:");
     expect(homeSource).not.toContain("lives/4");
     expect(homeSource).toContain("data-testid=\"proof-deep-thought\"");
