@@ -652,3 +652,40 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Add or update regression coverage for fixed bottom nav, graph participant selection, and modal overlay behavior
 - [x] Run validation, production build, preview health check, and save a checkpoint after the fixes
 
+
+
+## Issue — Warden Morning Messages Not Sending
+
+- [x] Clarify how Warden messages are supposed to run without creating many extra Manus task chats
+- [ ] Investigate why no Warden messages were sent this morning, if the user approves inspection
+- [x] Confirm whether Warden delivery is currently driven by Manus scheduled tasks, Make.com, Whapi, or a deployed site endpoint
+- [x] Propose a cleaner Warden delivery setup that avoids clogging the user's Manus chat list where possible
+
+
+
+## Change — Move Warden Automation to Make.com
+
+- [x] Stop using or creating Manus scheduled/background tasks for routine Warden automation
+- [x] Inspect the current Warden endpoint and determine whether Make.com can call it directly
+- [x] Design a Make.com scenario that runs the morning Warden schedule without creating Manus task chats
+- [x] Confirm the Make.com scenario can trigger the deployed website and use the existing Whapi/WhatsApp delivery path
+- [x] Add or adjust a secure HTTP endpoint for Make.com only if the current endpoint is not suitable
+- [x] Provide clear Make.com module-by-module setup instructions and required request payloads
+
+
+## Change — Overview and Board/Bosses Revamp
+
+- [x] Revamp the Overview section so it feels like a key challenge command centre rather than a flat summary
+- [x] Add points immediately as tasks are ticked off so the user sees scoring progress from daily actions
+- [x] Redesign the graph experience so it is easier to understand, better placed, and not hidden below summary cards after tapping
+- [x] Improve Simple Group Signals so Most at Risk, Top Movers, and Most Consistent are calculated from useful challenge signals rather than vague labels
+- [x] Define Most at Risk from a combination of tasks left today, time remaining, recent lives lost, streak pressure, and incomplete proof where relevant
+- [x] Define Top Movers from recent point gains, completed tasks, streak improvement, and recovery from previous risk
+- [x] Define Most Consistent from repeated daily completions, stable proof submission, low life-loss rate, and streak reliability
+- [x] Add additional point opportunities for meaningful app usage beyond ticking rules, without making the system easy to game
+- [x] Make participant comparison show useful head-to-head metrics such as completion pace, lives trend, proof consistency, streak movement, and point velocity
+- [x] Replace the flat boosted section with a meaningful boost explanation that shows why someone is boosted and what action created it
+- [x] Add a first, second, and third place podium with distinct colours, stronger visual hierarchy, and subtle animation
+- [x] Revamp the Board/Bosses section so leaderboard, podium, boost, and comparison content feel polished and useful
+- [x] Add regression coverage for new scoring, group signal calculations, graph placement behavior, participant comparison metrics, and podium ranking display
+

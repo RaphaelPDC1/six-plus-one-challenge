@@ -838,3 +838,25 @@ html.haptic-visual-feedback .motion-card {
   }
 }
 
+
+@keyframes podium-breathe {
+  0%, 100% { transform: translateY(0) scale(1); filter: saturate(1); }
+  50% { transform: translateY(-3px) scale(1.008); filter: saturate(1.08); }
+}
+
+[data-podium-rank="1"] {
+  animation: podium-breathe 4.8s ease-in-out infinite;
+}
+
+[data-podium-rank="2"],
+[data-podium-rank="3"] {
+  animation: podium-breathe 6.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-podium-rank="1"],
+  [data-podium-rank="2"],
+  [data-podium-rank="3"] {
+    animation: none;
+  }
+}

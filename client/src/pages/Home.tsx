@@ -5,6 +5,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { CalendarView } from "./Calendar";
 import { trpc } from "@/lib/trpc";
 import { DAILY_PASS_THRESHOLD, DAILY_RULE_COUNT, clampLives, getDailyLogProgress } from "@/lib/challengeUi";
+import { buildFocusedChartData, buildParticipantInsights, calculateLiveTaskPoints, logHasInsight, logHasProof, rankForPodium } from "@/lib/challengeInsights";
 import { haptics } from "@/lib/haptics";
 import { toast } from "sonner";
 import {
@@ -881,6 +882,12 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
   const draftStorageKey = getDraftStorageKey(participant?.userId ?? participant?.id, currentDayNumber);
   const latestWarden = [...(snapshot?.wardenMessages ?? [])].reverse()[0];
   const { rules, completedRules, allAddressed, passThreshold, totalRules } = getDailyLogProgress(form);
+  const liveTaskPoints = calculateLiveTaskPoints(completedRules, {
+    hasProof: parseProofMedia(form.exerciseProofUrl).length > 0 || String(form.exerciseProofUrl ?? "").trim().length > 0,
+    hasInsight: String(form.reflectionText ?? "").trim().length > 0 || String(form.readTeachText ?? "").trim().length > 0,
+    trackedEverything: Boolean(form.trackedEverything),
+  });
+  const projectedPoints = Number(participant?.totalPoints ?? 0) + liveTaskPoints.visibleTotal;
   const ghostLifeLocked = Boolean(participant?.ghostLifeUsed);
 
   useEffect(() => {
@@ -1018,9 +1025,18 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
               <MicroLabel tone={allAddressed ? "green" : "red"}>{allAddressed ? "Pass secured" : "Must-do today"}</MicroLabel>
               <h2 className="mt-2 text-2xl font-black uppercase leading-none tracking-[-0.06em] text-white">Six rules. Five gets the day.</h2>
             </div>
-            <div className={classNames("border px-3 py-2 text-[10px] font-black uppercase tracking-[0.18em]", allAddressed ? "border-[#2ECC71] bg-[#0F2A18] text-[#2ECC71]" : "border-[#C0392B] bg-[#2A0F0C] text-[#FFB3A8]")}>{allAddressed ? `${completedRules}/${totalRules} passed` : `${Math.max(0, passThreshold - completedRules)} more for pass`}</div>
+            <div className="flex flex-wrap gap-2">
+              <div className={classNames("border px-3 py-2 text-[10px] font-black uppercase tracking-[0.18em]", allAddressed ? "border-[#2ECC71] bg-[#0F2A18] text-[#2ECC71]" : "border-[#C0392B] bg-[#2A0F0C] text-[#FFB3A8]")}>{allAddressed ? `${completedRules}/${totalRules} passed` : `${Math.max(0, passThreshold - completedRules)} more for pass`}</div>
+              <div className="border border-[#C8A96E]/60 bg-[#16130B] px-3 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-[#C8A96E]">+{liveTaskPoints.visibleTotal} live pts</div>
+            </div>
           </div>
-          {allAddressed && <div className="mb-3 border border-[#2ECC71]/50 bg-[#0F2A18] p-3 text-xs font-black uppercase tracking-[0.16em] text-[#2ECC71]">5/6 is a pass. Submit the day.</div>}
+          <div className="mb-3 grid gap-2 sm:grid-cols-4" data-testid="live-task-points-panel">
+            <OverviewMetricCard label="Rule ticks" value={`+${liveTaskPoints.rulePoints}`} detail={`${completedRules}/${totalRules} checked`} tone="gold" />
+            <OverviewMetricCard label="Pass bonus" value={`+${liveTaskPoints.passBonus}`} detail={allAddressed ? "5/6 secured" : `${Math.max(0, passThreshold - completedRules)} more needed`} tone={allAddressed ? "green" : "white"} />
+            <OverviewMetricCard label="Proof/insight" value={`+${liveTaskPoints.proofBonus + liveTaskPoints.insightBonus}`} detail="Proof, reflection, teaching value" tone="purple" />
+            <OverviewMetricCard label="Projected" value={projectedPoints} detail="If saved with current ticks" tone="green" />
+          </div>
+          {allAddressed && <div className="mb-3 border border-[#2ECC71]/50 bg-[#0F2A18] p-3 text-xs font-black uppercase tracking-[0.16em] text-[#2ECC71]">5/6 is a pass. Submit the day to bank the points shown above.</div>}
           <div className="motion-list space-y-2">
           <RuleCard title="No alcohol" label="Rule 01" icon={Shield} complete={form.noAlcohol} active={openRule === "noAlcohol"} onToggle={() => setOpenRule(openRule === "noAlcohol" ? "exercise" : "noAlcohol")}>
             <label className="flex items-center justify-between gap-4 border border-[#2A2A2A] bg-[#0D0D0D] p-4">
@@ -1079,7 +1095,7 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
         <div className="motion-list grid gap-2 bg-[#2A2A2A] p-[2px] sm:grid-cols-3" data-testid="myday-stats-after-must-do">
           <PosterStat label="Rules addressed" value={`${completedRules}/${totalRules}`} tone={allAddressed ? "green" : "gold"} />
           <PosterStat label="Current streak" value={participant?.currentStreak ?? 0} tone="green" />
-          <PosterStat label="Points" value={participant?.totalPoints ?? 0} tone="gold" />
+          <PosterStat label="Projected pts" value={projectedPoints} tone="gold" />
         </div>
 
         <div className={classNames("submit-dock motion-submit-dock relative sticky bottom-[104px] z-20 mx-auto border border-[#2A2A2A] bg-[#0D0D0D]/95 backdrop-blur transition-all duration-300 md:static md:bg-transparent", saveProgressScale < 0.35 ? "max-w-[15rem] rounded-full p-1.5" : saveProgressScale < 0.75 ? "max-w-[22rem] rounded-2xl p-2" : "max-w-none rounded-none p-3 md:p-0", submit.isPending && "submit-dock-pending", allAddressed && !submit.isPending && "submit-dock-ready")} data-save-progress-scale={saveProgressScale}>
@@ -1154,6 +1170,17 @@ function OverviewBar({ label, value, detail, tone = "gold" }: { label: string; v
   );
 }
 
+function InsightPill({ label, value, tone = "gold" }: { label: string; value: string | number; tone?: "gold" | "red" | "green" | "purple" | "white" }) {
+  const tones = {
+    gold: "border-[#C8A96E]/50 text-[#C8A96E]",
+    red: "border-[#C0392B]/55 text-[#FFB3A8]",
+    green: "border-[#2ECC71]/55 text-[#2ECC71]",
+    purple: "border-[#9B59B6]/55 text-[#D9B3F0]",
+    white: "border-[#444] text-white",
+  };
+  return <span className={classNames("border bg-black px-3 py-2 text-[10px] font-black uppercase tracking-[0.14em]", tones[tone])}>{label}: {value}</span>;
+}
+
 function Overview({ snapshot }: { snapshot: Snapshot }) {
   const [selected, setSelected] = useState<any>(null);
   const [focusedParticipantId, setFocusedParticipantId] = useState<number | string | null>(null);
@@ -1165,152 +1192,140 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
   const currentDay = Math.max(Number(snapshot?.challenge?.currentDay ?? 1), 1);
   const participantCount = participants.length;
   const expectedSlots = participantCount * currentDay;
-  const completedLogs = logs.filter((log: any) => log.dayComplete);
-  const todayLogs = logs.filter((log: any) => log.dayNumber === currentDay);
-  const todayComplete = todayLogs.filter((log: any) => log.dayComplete).length;
-  const yesterdayLogs = logs.filter((log: any) => log.dayNumber === currentDay - 1);
-  const yesterdayComplete = yesterdayLogs.filter((log: any) => log.dayComplete).length;
-  const totalLivesLost = participants.reduce((sum: number, p: any) => sum + Math.max(0, 4 - Number(p.livesRemaining ?? 4)), 0);
-  const averageStreak = participantCount ? Math.round(participants.reduce((sum: number, p: any) => sum + Number(p.currentStreak ?? 0), 0) / participantCount) : 0;
-  const strongestStreak = participants.reduce((max: number, p: any) => Math.max(max, Number(p.currentStreak ?? 0), Number(p.longestStreak ?? 0)), 0);
+  const insights = useMemo(() => buildParticipantInsights({ participants, logs, currentDay }), [participants, logs, currentDay]);
+  const rankedInsights = useMemo(() => rankForPodium(insights), [insights]);
+  const focusedParticipant = insights.find((participant: any) => String(participant.id) === String(focusedParticipantId ?? insights[0]?.id)) ?? insights[0];
+  const focusedChartData = useMemo(() => buildFocusedChartData({ logs, participants, focusedParticipantId: focusedParticipant?.id, currentDay }), [currentDay, focusedParticipant?.id, logs, participants]);
+  const completedLogs = insights.reduce((sum: number, p: any) => sum + p.completeCount, 0);
+  const todayOpened = insights.filter((p: any) => p.todayLog).length;
+  const todayComplete = insights.filter((p: any) => p.completedRulesToday >= DAILY_PASS_THRESHOLD).length;
+  const totalLivesLost = insights.reduce((sum: number, p: any) => sum + p.livesLost, 0);
+  const averageStreak = participantCount ? Math.round(insights.reduce((sum: number, p: any) => sum + Number(p.currentStreak ?? 0), 0) / participantCount) : 0;
+  const strongestStreak = insights.reduce((max: number, p: any) => Math.max(max, Number(p.currentStreak ?? 0), Number(p.longestStreak ?? 0)), 0);
   const pendingPayments = payments.filter((p: any) => p.status === "pending").length;
   const pendingRewards = redemptions.filter((r: any) => r.status === "pending").length;
-  const todayLoggedIds = new Set(todayLogs.map((log: any) => log.participantId));
-  const atRisk = participants.filter((p: any) => Number(p.livesRemaining ?? 4) <= 1 || !todayLoggedIds.has(p.id));
-
-  const focusedParticipant = participants.find((participant: any) => String(participant.id) === String(focusedParticipantId ?? participants[0]?.id)) ?? participants[0];
-  const focusedChartData = useMemo(() => {
-    const dayCount = Math.max(currentDay, 10);
-    return Array.from({ length: dayCount }, (_, index) => {
-      const day = index + 1;
-      const focusedComplete = focusedParticipant ? logs.filter((log: any) => log.participantId === focusedParticipant.id && log.dayNumber <= day && log.dayComplete).length : 0;
-      const groupAverage = participantCount ? Math.round((logs.filter((log: any) => log.dayNumber <= day && log.dayComplete).length / participantCount) * 10) / 10 : 0;
-      return { day, focused: focusedComplete, groupAverage };
+  const topMover = [...insights].sort((a: any, b: any) => b.moverScore - a.moverScore || b.recentPointGain - a.recentPointGain)[0];
+  const mostConsistent = [...insights].sort((a: any, b: any) => b.consistencyScore - a.consistencyScore || b.currentStreak - a.currentStreak)[0];
+  const riskLeader = [...insights].sort((a: any, b: any) => b.riskScore - a.riskScore || a.livesRemaining - b.livesRemaining)[0];
+  const boostedLeader = [...insights].sort((a: any, b: any) => b.boostScore - a.boostScore || b.totalPoints - a.totalPoints)[0];
+  const riskSorted = [...insights].sort((a: any, b: any) => b.riskScore - a.riskScore || b.passTasksLeft - a.passTasksLeft);
+  const comparisonRows = [...insights].sort((a: any, b: any) => b.riskScore - a.riskScore || b.moverScore - a.moverScore);
+  const liveAppPoints = insights.reduce((sum: number, participant: any) => {
+    const taskPoints = calculateLiveTaskPoints(participant.completedRulesToday, {
+      hasProof: logHasProof(participant.todayLog),
+      hasInsight: logHasInsight(participant.todayLog),
+      trackedEverything: Boolean(participant.todayLog?.trackedEverything),
     });
-  }, [currentDay, focusedParticipant?.id, logs, participantCount]);
-
-  const recentDays = Array.from({ length: Math.min(7, currentDay) }, (_, index) => currentDay - Math.min(6, currentDay - 1) + index);
-  const trendRows = recentDays.map(day => {
-    const dayLogs = logs.filter((log: any) => log.dayNumber === day);
-    const dayComplete = dayLogs.filter((log: any) => log.dayComplete).length;
-    return {
-      day,
-      submittedRate: pct(dayLogs.length, participantCount),
-      completeRate: pct(dayComplete, participantCount),
-      missing: Math.max(participantCount - dayLogs.length, 0),
-    };
-  });
-
-  const ruleMetrics = [
-    { label: "No alcohol", done: logs.filter((log: any) => log.noAlcohol).length },
-    { label: "Clean eating", done: logs.filter((log: any) => log.cleanEating).length },
-    { label: "Exercise proof", done: logs.filter((log: any) => Number(log.exerciseDuration ?? 0) >= 30 && String(log.exerciseType ?? "").trim()).length },
-    { label: "Reflect", done: logs.filter((log: any) => String(log.reflectionText ?? "").trim()).length },
-    { label: "Read & Teach", done: logs.filter((log: any) => String(log.readTeachText ?? "").trim()).length },
-    { label: "Track everything", done: logs.filter((log: any) => log.trackedEverything).length },
-  ];
-
-  const participantMetrics = participants.map((p: any) => {
-    const ownedLogs = logs.filter((log: any) => log.participantId === p.id);
-    const completeCount = ownedLogs.filter((log: any) => log.dayComplete).length;
-    const lastThreeComplete = ownedLogs.filter((log: any) => log.dayComplete && Number(log.dayNumber ?? 0) >= Math.max(1, currentDay - 2)).length;
-    const submitRate = pct(ownedLogs.length, currentDay);
-    const completionRate = pct(completeCount, currentDay);
-    const latestLog = ownedLogs.reduce((latest: any, log: any) => Number(log.dayNumber ?? 0) > Number(latest?.dayNumber ?? 0) ? log : latest, null);
-    const riskScore = Math.max(0, 100 - completionRate) + Math.max(0, 4 - Number(p.livesRemaining ?? 4)) * 12 + (todayLoggedIds.has(p.id) ? 0 : 18);
-    return { ...p, ownedLogs, completeCount, lastThreeComplete, submitRate, completionRate, latestLog, riskScore };
-  }).sort((a: any, b: any) => b.riskScore - a.riskScore || b.totalPoints - a.totalPoints);
-  const mostConsistent = [...participantMetrics].sort((a: any, b: any) => b.currentStreak - a.currentStreak || b.completionRate - a.completionRate)[0];
-  const topMover = [...participantMetrics].sort((a: any, b: any) => b.lastThreeComplete - a.lastThreeComplete || b.totalPoints - a.totalPoints)[0];
-  const riskLeader = participantMetrics[0];
+    return sum + taskPoints.visibleTotal;
+  }, 0);
 
   return (
     <div className="motion-page space-y-5" data-testid="overview-metrics-dashboard">
       <section className="border border-[#2A2A2A] bg-[#101010] p-4 sm:p-5">
         <div className="flex flex-wrap items-end justify-between gap-4 border-b border-[#2A2A2A] pb-4">
           <div>
-            <MicroLabel tone="gold">Overview · all participants</MicroLabel>
-            <h2 className="mt-2 text-3xl font-black uppercase leading-none tracking-[-0.07em] text-white sm:text-5xl">Group command centre.</h2>
+            <MicroLabel tone="gold">Overview · command centre</MicroLabel>
+            <h2 className="mt-2 text-3xl font-black uppercase leading-none tracking-[-0.07em] text-white sm:text-5xl">Score. Risk. Momentum.</h2>
           </div>
-          <p className="max-w-md text-[10px] font-black uppercase leading-5 tracking-[0.16em] text-[#777]">A lighter command view for progress, lives, streaks, payments, and rewards. Detailed compliance now lives inside tapped Board profiles.</p>
+          <p className="max-w-md text-[10px] font-black uppercase leading-5 tracking-[0.16em] text-[#777]">The overview now treats every tick, proof, life, streak, and time-pressure signal as part of one command view. Board remains the deeper competitive layer.</p>
         </div>
         <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-6">
           <OverviewMetricCard label="Participants" value={participantCount} detail="Active competitors tracked" tone="white" />
-          <OverviewMetricCard label="Today green" value={`${todayComplete}/${participantCount}`} detail={`Yesterday closed ${yesterdayComplete}/${participantCount}`} tone={todayComplete === participantCount && participantCount > 0 ? "green" : "gold"} />
-          <OverviewMetricCard label="Group pass rate" value={`${pct(completedLogs.length, expectedSlots)}%`} detail={`${completedLogs.length}/${expectedSlots || 0} 5/6 pass slots`} tone="green" />
+          <OverviewMetricCard label="Today green" value={`${todayComplete}/${participantCount}`} detail={`${todayOpened}/${participantCount} opened their daily log`} tone={todayComplete === participantCount && participantCount > 0 ? "green" : "gold"} />
+          <OverviewMetricCard label="Live app points" value={liveAppPoints} detail="Visible task, proof, insight and tracking value from today's ticks" tone="green" />
+          <OverviewMetricCard label="Group pass rate" value={`${pct(completedLogs, expectedSlots)}%`} detail={`${completedLogs}/${expectedSlots || 0} challenge pass slots`} tone="green" />
           <OverviewMetricCard label="Average streak" value={averageStreak} detail={`Best active/longest: ${strongestStreak}`} tone="gold" />
-          <OverviewMetricCard label="Lives lost" value={totalLivesLost} detail={`${atRisk.length} participant risk flags`} tone={totalLivesLost > 0 ? "red" : "green"} />
-          <OverviewMetricCard label="Ops queue" value={pendingPayments + pendingRewards} detail={`${pendingPayments} payments · ${pendingRewards} rewards`} tone={pendingPayments + pendingRewards ? "purple" : "white"} />
+          <OverviewMetricCard label="Lives lost" value={totalLivesLost} detail={`${riskSorted.filter((p: any) => p.riskScore >= 42).length} meaningful risk flags`} tone={totalLivesLost > 0 ? "red" : "green"} />
         </div>
       </section>
 
       <section className="min-w-0 overflow-hidden border border-[#2A2A2A] bg-[#101010] p-4 sm:p-5" data-testid="group-pulse-and-focused-chart">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div className="min-w-0">
-            <MicroLabel tone="gold">Group Pulse</MicroLabel>
-            <h2 className="mt-2 break-words text-2xl font-black uppercase tracking-[-0.06em] text-white sm:text-4xl">Simple group signal.</h2>
-            <p className="mt-2 max-w-xl text-xs font-bold leading-5 text-[#8D8D8D]">No crowded top-10 chart. Tap View Graph, then choose one person by name for a clean person-vs-group line.</p>
+            <MicroLabel tone="gold">Simple group signals</MicroLabel>
+            <h2 className="mt-2 break-words text-2xl font-black uppercase tracking-[-0.06em] text-white sm:text-4xl">Tap graph first. Then read the signals.</h2>
+            <p className="mt-2 max-w-xl text-xs font-bold leading-5 text-[#8D8D8D]">The graph now opens directly under this control, not hidden below the signal cards. Signals are calculated from tasks left, time pressure, lives lost, streaks, proof, and recent points.</p>
           </div>
           <button type="button" onClick={() => { pulse(10); setComparisonOpen(open => !open); }} className="min-h-11 border border-[#C8A96E]/60 bg-[#16130B] px-4 text-[10px] font-black uppercase tracking-[0.16em] text-[#C8A96E]" aria-expanded={comparisonOpen} data-testid="view-focused-graph-button">
             {comparisonOpen ? "Hide graph" : "View graph"}
           </button>
         </div>
-        <div className="mt-4 grid gap-2 sm:grid-cols-3">
-          <OverviewMetricCard label="Top mover" value={topMover?.displayName ?? "—"} detail={`${topMover?.lastThreeComplete ?? 0}/3 recent passes · ${topMover?.totalPoints ?? 0} pts`} tone="green" />
-          <OverviewMetricCard label="Most consistent" value={mostConsistent?.displayName ?? "—"} detail={`${mostConsistent?.currentStreak ?? 0} current streak · ${mostConsistent?.completionRate ?? 0}% pass rate`} tone="gold" />
-          <OverviewMetricCard label="At risk" value={riskLeader?.displayName ?? "—"} detail={`${riskLeader?.riskScore ?? 0} risk score · ${riskLeader?.livesRemaining ?? 4} lives`} tone={riskLeader?.riskScore > 35 ? "red" : "white"} />
-        </div>
         {comparisonOpen && (
-          <div className="mt-4 border border-[#2A2A2A] bg-black p-3" data-testid="focused-participant-graph-panel">
-            <div className="flex flex-col gap-3">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                <div>
-                  <MicroLabel tone="green">Graph</MicroLabel>
-                  <h3 className="mt-2 text-xl font-black uppercase tracking-[-0.05em] text-white">{focusedParticipant?.displayName ?? "Participant"} vs group average.</h3>
-                  <p className="mt-2 text-[10px] font-black uppercase leading-5 tracking-[0.14em] text-[#777]">Pick one name. The graph stays readable on phones.</p>
-                </div>
-                <label className="grid gap-2 text-[10px] font-black uppercase tracking-[0.16em] text-[#C8A96E]">
-                  Select participant
-                  <select value={String(focusedParticipant?.id ?? "")} onChange={event => setFocusedParticipantId(event.target.value)} className="min-h-11 min-w-[14rem] border border-[#C8A96E]/45 bg-[#0D0D0D] px-3 text-xs font-black uppercase tracking-[0.12em] text-white" data-testid="graph-participant-select">
-                    {participants.map((participant: any) => <option key={participant.id} value={String(participant.id)}>{participant.displayName}</option>)}
-                  </select>
-                </label>
+          <div className="mt-4 border border-[#C8A96E]/35 bg-black p-3" data-testid="focused-participant-graph-panel">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <MicroLabel tone="green">Focused graph</MicroLabel>
+                <h3 className="mt-2 text-xl font-black uppercase tracking-[-0.05em] text-white">{focusedParticipant?.displayName ?? "Participant"} vs group pace.</h3>
+                <p className="mt-2 text-[10px] font-black uppercase leading-5 tracking-[0.14em] text-[#777]">Gold shows selected days passed. Green shows group average. The pale line shows selected points banked.</p>
               </div>
-              <div className="flex gap-2 overflow-x-auto pb-1" aria-label="Quick participant graph selector">
-                {participantMetrics.slice(0, 18).map((participant: any) => {
-                  const active = String(participant.id) === String(focusedParticipant?.id);
-                  return <button key={participant.id} type="button" onClick={() => { pulse(8); setFocusedParticipantId(String(participant.id)); }} className={classNames("shrink-0 border px-3 py-2 text-[10px] font-black uppercase tracking-[0.12em]", active ? "border-[#C8A96E] bg-[#C8A96E] text-black" : "border-[#2A2A2A] bg-[#0D0D0D] text-[#BDBDBD]")} aria-pressed={active}>{participant.displayName}</button>;
-                })}
-              </div>
+              <label className="grid gap-2 text-[10px] font-black uppercase tracking-[0.16em] text-[#C8A96E]">
+                Select participant
+                <select value={String(focusedParticipant?.id ?? "")} onChange={event => setFocusedParticipantId(event.target.value)} className="min-h-11 min-w-[14rem] border border-[#C8A96E]/45 bg-[#0D0D0D] px-3 text-xs font-black uppercase tracking-[0.12em] text-white" data-testid="graph-participant-select">
+                  {insights.map((participant: any) => <option key={participant.id} value={String(participant.id)}>{participant.displayName}</option>)}
+                </select>
+              </label>
             </div>
-            <div className="mt-3 h-56 min-w-0 overflow-hidden sm:h-72">
+            <div className="mt-3 flex gap-2 overflow-x-auto pb-1" aria-label="Quick participant graph selector">
+              {rankedInsights.slice(0, 18).map((participant: any) => {
+                const active = String(participant.id) === String(focusedParticipant?.id);
+                return <button key={participant.id} type="button" onClick={() => { pulse(8); setFocusedParticipantId(String(participant.id)); }} className={classNames("shrink-0 border px-3 py-2 text-[10px] font-black uppercase tracking-[0.12em]", active ? "border-[#C8A96E] bg-[#C8A96E] text-black" : "border-[#2A2A2A] bg-[#0D0D0D] text-[#BDBDBD]")} aria-pressed={active}>{participant.displayName}</button>;
+              })}
+            </div>
+            <div className="mt-3 h-64 min-w-0 overflow-hidden sm:h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={focusedChartData} margin={{ left: -18, right: 4, top: 10, bottom: 0 }}>
                   <CartesianGrid stroke="#242424" strokeDasharray="3 3" />
                   <XAxis dataKey="day" stroke="#777" tick={{ fill: "#777", fontSize: 11, fontWeight: 900 }} />
                   <YAxis allowDecimals={false} stroke="#777" tick={{ fill: "#777", fontSize: 11, fontWeight: 900 }} />
                   <Tooltip contentStyle={{ background: "#0D0D0D", border: "1px solid #C8A96E", borderRadius: 0, color: "#fff" }} />
-                  <Line type="monotone" dataKey="focused" name={focusedParticipant?.displayName ?? "Selected"} stroke={GOLD} strokeWidth={4} dot={false} activeDot={{ r: 6 }} />
-                  <Line type="monotone" dataKey="groupAverage" name="Group average" stroke={GREEN} strokeWidth={3} strokeDasharray="7 5" dot={false} activeDot={{ r: 5 }} />
+                  <Line type="monotone" dataKey="focused" name={`${focusedParticipant?.displayName ?? "Selected"} days passed`} stroke={GOLD} strokeWidth={4} dot={false} activeDot={{ r: 6 }} />
+                  <Line type="monotone" dataKey="groupAverage" name="Group average days passed" stroke={GREEN} strokeWidth={3} strokeDasharray="7 5" dot={false} activeDot={{ r: 5 }} />
+                  <Line type="monotone" dataKey="focusedPoints" name="Selected points" stroke="#ECF0F1" strokeWidth={2} strokeDasharray="2 4" dot={false} yAxisId={0} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
           </div>
         )}
+        <div className="mt-4 grid gap-3 lg:grid-cols-4">
+          <button type="button" onClick={() => topMover && setSelected(topMover)} className="motion-card motion-press border border-[#2ECC71]/45 bg-[#07150D] p-4 text-left">
+            <MicroLabel tone="green">Top mover</MicroLabel>
+            <h3 className="mt-3 text-2xl font-black uppercase tracking-[-0.06em] text-white">{topMover?.displayName ?? "—"}</h3>
+            <p className="mt-2 text-[10px] font-black uppercase leading-5 tracking-[0.14em] text-[#A8EFC5]">{topMover?.moverReasons?.[0] ?? "Movement needs a green day"}</p>
+            <InsightPill label="Mover score" value={topMover?.moverScore ?? 0} tone="green" />
+          </button>
+          <button type="button" onClick={() => mostConsistent && setSelected(mostConsistent)} className="motion-card motion-press border border-[#C8A96E]/45 bg-[#16130B] p-4 text-left">
+            <MicroLabel tone="gold">Most consistent</MicroLabel>
+            <h3 className="mt-3 text-2xl font-black uppercase tracking-[-0.06em] text-white">{mostConsistent?.displayName ?? "—"}</h3>
+            <p className="mt-2 text-[10px] font-black uppercase leading-5 tracking-[0.14em] text-[#D9C89A]">{mostConsistent?.consistencyReasons?.[0] ?? "Consistency building"}</p>
+            <InsightPill label="Consistency" value={mostConsistent?.consistencyScore ?? 0} tone="gold" />
+          </button>
+          <button type="button" onClick={() => riskLeader && setSelected(riskLeader)} className="motion-card motion-press border border-[#C0392B]/55 bg-[#190B0A] p-4 text-left">
+            <MicroLabel tone="red">Most at risk</MicroLabel>
+            <h3 className="mt-3 text-2xl font-black uppercase tracking-[-0.06em] text-white">{riskLeader?.displayName ?? "—"}</h3>
+            <p className="mt-2 text-[10px] font-black uppercase leading-5 tracking-[0.14em] text-[#FFB3A8]">{riskLeader?.riskReasons?.[0] ?? "No immediate pressure"}</p>
+            <InsightPill label="Risk" value={riskLeader?.riskScore ?? 0} tone="red" />
+          </button>
+          <button type="button" onClick={() => boostedLeader && setSelected(boostedLeader)} className="motion-card motion-press border border-[#9B59B6]/50 bg-[#150E1A] p-4 text-left">
+            <MicroLabel tone="purple">Boosted</MicroLabel>
+            <h3 className="mt-3 text-2xl font-black uppercase tracking-[-0.06em] text-white">{boostedLeader?.displayName ?? "—"}</h3>
+            <p className="mt-2 text-[10px] font-black uppercase leading-5 tracking-[0.14em] text-[#D9B3F0]">{boostedLeader?.boostReasons?.[0] ?? "No boost yet"}</p>
+            <InsightPill label="Boost" value={boostedLeader?.boostScore ?? 0} tone="purple" />
+          </button>
+        </div>
       </section>
 
       <section className="border border-[#2A2A2A] bg-[#101010] p-4 sm:p-5">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <MicroLabel tone="gold">Overview simplified</MicroLabel>
-            <h3 className="mt-2 text-2xl font-black uppercase tracking-[-0.06em] text-white sm:text-4xl">High-level signal only.</h3>
+            <MicroLabel tone="green">Points engine</MicroLabel>
+            <h3 className="mt-2 text-2xl font-black uppercase tracking-[-0.06em] text-white sm:text-4xl">Ticks now show value.</h3>
           </div>
-          <p className="max-w-sm text-[10px] font-black uppercase tracking-[0.16em] text-[#777]">Compliance drill-downs moved to the Board: tap any participant to see their latest rule breakdown and recent pass history.</p>
+          <p className="max-w-sm text-[10px] font-black uppercase tracking-[0.16em] text-[#777]">Backend awards still happen on submit, but the app now shows visible earning routes as tasks are ticked: rule points, pass bonus, full-green bonus, proof, insight and tracking value.</p>
         </div>
         <div className="mt-4 grid gap-2 sm:grid-cols-3">
-          <OverviewMetricCard label="Today submitted" value={`${todayLogs.length}/${participantCount}`} detail="Tap Board rows for individual rule detail" tone="gold" />
-          <OverviewMetricCard label="Today passed" value={`${todayComplete}/${participantCount}`} detail={`Pass now means ${DAILY_PASS_THRESHOLD}/${DAILY_RULE_COUNT} rules`} tone={todayComplete === participantCount && participantCount > 0 ? "green" : "gold"} />
-          <OverviewMetricCard label="Need attention" value={atRisk.length} detail="Missed today or low lives" tone={atRisk.length ? "red" : "green"} />
+          <OverviewMetricCard label="Today submitted" value={`${todayOpened}/${participantCount}`} detail="Opened logs now contribute to live point pressure" tone="gold" />
+          <OverviewMetricCard label="Today passed" value={`${todayComplete}/${participantCount}`} detail={`Pass still means ${DAILY_PASS_THRESHOLD}/${DAILY_RULE_COUNT} rules`} tone={todayComplete === participantCount && participantCount > 0 ? "green" : "gold"} />
+          <OverviewMetricCard label="Ops queue" value={pendingPayments + pendingRewards} detail={`${pendingPayments} payments · ${pendingRewards} rewards`} tone={pendingPayments + pendingRewards ? "purple" : "white"} />
         </div>
       </section>
 
@@ -1318,24 +1333,22 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <MicroLabel tone="red">Participant comparison</MicroLabel>
-            <h3 className="mt-2 text-2xl font-black uppercase tracking-[-0.06em] text-white sm:text-4xl">Who is safe. Who needs heat.</h3>
+            <h3 className="mt-2 text-2xl font-black uppercase tracking-[-0.06em] text-white sm:text-4xl">Compare what matters.</h3>
           </div>
-          <p className="max-w-sm text-[10px] font-black uppercase tracking-[0.16em] text-[#777]">Sorted by risk score. Tap a participant to open the Board-style compliance drill-down.</p>
+          <p className="max-w-sm text-[10px] font-black uppercase tracking-[0.16em] text-[#777]">Rows now compare pass pace, point velocity, proof reliability, and risk instead of flat totals. Tap anyone for their Board-style drill-down.</p>
         </div>
         <div className="mt-5 space-y-2">
-          {participantMetrics.map((p: any, index: number) => (
-            <button key={p.id} type="button" onClick={() => { pulse(14); setSelected(p); }} className="motion-row motion-press grid w-full gap-3 border border-[#2A2A2A] bg-[#0D0D0D] p-3 text-left transition hover:border-[#C8A96E] focus-visible:border-[#C8A96E] focus-visible:outline-none sm:grid-cols-[2.5rem_3.5rem_minmax(0,1fr)_minmax(220px,0.9fr)] sm:items-center" aria-label={`Open ${p.displayName} participant stats`}>
-              <span className={classNames("text-2xl font-black", index === 0 && p.riskScore > 30 ? "text-[#C0392B]" : "text-[#777]")}>#{index + 1}</span>
+          {comparisonRows.map((p: any, index: number) => (
+            <button key={p.id} type="button" onClick={() => { pulse(14); setSelected(p); }} className="motion-row motion-press grid w-full gap-3 border border-[#2A2A2A] bg-[#0D0D0D] p-3 text-left transition hover:border-[#C8A96E] focus-visible:border-[#C8A96E] focus-visible:outline-none sm:grid-cols-[2.5rem_3.5rem_minmax(0,1fr)_minmax(260px,1fr)] sm:items-center" aria-label={`Open ${p.displayName} participant stats`}>
+              <span className={classNames("text-2xl font-black", p.riskScore >= 60 ? "text-[#C0392B]" : index < 3 ? "text-[#C8A96E]" : "text-[#777]")}>#{index + 1}</span>
               <ProfilePhoto participant={p} className="h-12 w-12" />
               <span className="min-w-0">
                 <span className="block break-words text-lg font-black uppercase tracking-[-0.04em] text-white">{p.displayName}</span>
-                <span className="mt-1 block text-[10px] font-black uppercase tracking-[0.14em] text-[#777]">{p.completeCount}/{currentDay} complete · {p.currentStreak ?? 0} streak · {p.totalPoints ?? 0} pts</span>
+                <span className="mt-1 block text-[10px] font-black uppercase tracking-[0.14em] text-[#777]">{p.comparisonLine}</span>
                 <span className="mt-2 block max-w-[260px]"><HealthBar lives={p.livesRemaining} label="" compact /></span>
               </span>
-              <span className="grid gap-2 sm:grid-cols-3">
-                <span className="border border-[#2A2A2A] bg-black px-3 py-2 text-[10px] font-black uppercase tracking-[0.14em] text-[#2ECC71]">{p.completionRate}% passed</span>
-                <span className={classNames("border bg-black px-3 py-2 text-[10px] font-black uppercase tracking-[0.14em]", todayLoggedIds.has(p.id) ? "border-[#C8A96E] text-[#C8A96E]" : "border-[#C0392B] text-[#FFB3A8]")}>{todayLoggedIds.has(p.id) ? "Today logged" : "Not today"}</span>
-                <span className="border border-[#2A2A2A] bg-black px-3 py-2 text-[10px] font-black uppercase tracking-[0.14em] text-[#777]">Tap for rules</span>
+              <span className="flex flex-wrap gap-2">
+                {p.comparisonStats.map((stat: any) => <InsightPill key={stat.label} label={stat.label} value={stat.value} tone={stat.tone} />)}
               </span>
             </button>
           ))}
@@ -1531,43 +1544,94 @@ function ProofImage({ url, dayNumber }: { url: string; dayNumber: number }) {
   );
 }
 
+function PodiumCard({ participant, index, onSelect }: { participant: any; index: number; onSelect: () => void }) {
+  const rank = index + 1;
+  const styles = rank === 1
+    ? { label: "1st", border: "border-[#C8A96E]", bg: "bg-[#181207]", text: "text-[#C8A96E]", ring: "shadow-[0_0_40px_rgba(200,169,110,0.22)]", height: "sm:min-h-[17rem]" }
+    : rank === 2
+      ? { label: "2nd", border: "border-[#BFC7D5]", bg: "bg-[#10131A]", text: "text-[#BFC7D5]", ring: "shadow-[0_0_32px_rgba(191,199,213,0.14)]", height: "sm:min-h-[15rem]" }
+      : { label: "3rd", border: "border-[#B87333]", bg: "bg-[#1A1009]", text: "text-[#D58A45]", ring: "shadow-[0_0_32px_rgba(184,115,51,0.16)]", height: "sm:min-h-[14rem]" };
+  return (
+    <button type="button" onClick={onSelect} className={classNames("motion-card motion-press relative overflow-hidden border-2 p-4 text-left transition hover:-translate-y-1", styles.border, styles.bg, styles.ring, styles.height)} data-podium-rank={rank}>
+      <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-white/5 blur-xl" />
+      <div className="flex items-start justify-between gap-3">
+        <span className={classNames("text-5xl font-black uppercase leading-none tracking-[-0.1em]", styles.text)}>{styles.label}</span>
+        <ProfilePhoto participant={participant} className="h-14 w-14" />
+      </div>
+      <h3 className="mt-5 break-words text-2xl font-black uppercase leading-none tracking-[-0.07em] text-white">{participant?.displayName ?? "—"}</h3>
+      <div className="mt-4 grid grid-cols-2 gap-2">
+        <InsightPill label="Points" value={participant?.totalPoints ?? 0} tone={rank === 1 ? "gold" : "white"} />
+        <InsightPill label="Boost" value={participant?.boostScore ?? 0} tone="purple" />
+        <InsightPill label="Pace" value={`${participant?.completionRate ?? 0}%`} tone="green" />
+        <InsightPill label="Risk" value={participant?.riskScore ?? 0} tone={participant?.riskScore >= 60 ? "red" : "gold"} />
+      </div>
+      <p className="mt-4 text-[10px] font-black uppercase leading-5 tracking-[0.14em] text-[#BDBDBD]">{participant?.boostReasons?.[0] ?? participant?.moverReasons?.[0] ?? "Keep banking green days to hold the podium"}</p>
+    </button>
+  );
+}
+
 function Leaderboard({ snapshot }: { snapshot: Snapshot }) {
   const [selected, setSelected] = useState<any>(null);
   const logs = snapshot?.logs ?? [];
+  const participants = snapshot?.participants ?? [];
   const currentDay = snapshot?.challenge?.currentDay ?? 1;
-  const ranked = [...(snapshot?.participants ?? [])]
-    .map((participant: any) => {
-      const ownedLogs = logs.filter((log: any) => log.participantId === participant.id);
-      const expectedDays = Math.max(1, currentDay);
-      const passedLogs = ownedLogs.filter((log: any) => log.completed || getLogCompletedRuleCount(log) >= DAILY_PASS_THRESHOLD);
-      return {
-        ...participant,
-        ownedLogs,
-        completionRate: pct(passedLogs.length, expectedDays),
-        submitRate: pct(ownedLogs.length, expectedDays),
-      };
-    })
-    .sort((a: any, b: any) => b.totalPoints - a.totalPoints || b.currentStreak - a.currentStreak);
+  const ranked = useMemo(() => rankForPodium(buildParticipantInsights({ participants, logs, currentDay })), [participants, logs, currentDay]);
+  const podium = ranked.slice(0, 3);
+  const boosted = [...ranked].sort((a: any, b: any) => b.boostScore - a.boostScore || b.recentPointGain - a.recentPointGain).slice(0, 4);
   return (
-    <section className="border border-[#2A2A2A] bg-[#101010] p-5">
+    <section className="border border-[#2A2A2A] bg-[#101010] p-5" data-testid="bosses-board-section">
       <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <MicroLabel tone="gold">Leaderboard</MicroLabel>
-          <h2 className="mt-2 break-words text-3xl font-black uppercase leading-none tracking-[-0.07em] text-white sm:text-4xl">Tap a line. Feel the chase.</h2>
+          <MicroLabel tone="gold">Board / Bosses</MicroLabel>
+          <h2 className="mt-2 break-words text-3xl font-black uppercase leading-none tracking-[-0.07em] text-white sm:text-4xl">Podium, boosts, pressure.</h2>
         </div>
-        <p className="max-w-sm text-xs font-bold uppercase tracking-[0.14em] text-[#777]">Ranked by points first, then streak. Tap any row for the individual compliance board.</p>
+        <p className="max-w-sm text-xs font-bold uppercase tracking-[0.14em] text-[#777]">Rank still respects points, but the board now explains why people are moving: boost score, proof, recent point lift, pass pace, streaks and risk.</p>
       </div>
-      <div className="space-y-2">
-        {ranked.map((p: any, index) => (
-          <button key={p.id} onClick={() => { pulse(14); setSelected(p); }} className={classNames("motion-row motion-press grid w-full grid-cols-[48px_minmax(0,1fr)] items-center gap-3 border bg-[#0D0D0D] p-3 text-left transition hover:border-[#C8A96E] sm:grid-cols-[56px_56px_minmax(0,1fr)_auto] sm:gap-4 sm:p-4", index === 0 ? "border-l-4 border-l-[#C8A96E] border-[#3C3423]" : "border-[#2A2A2A]")}> 
-            <span className={classNames("text-2xl font-black sm:text-3xl", index === 0 ? "text-[#C8A96E]" : "text-[#777]")}>#{index + 1}</span>
+
+      <div className="grid gap-3 lg:grid-cols-[0.95fr_1.1fr_0.95fr] lg:items-end" data-testid="top-three-podium">
+        {podium[1] && <PodiumCard participant={podium[1]} index={1} onSelect={() => { pulse(14); setSelected(podium[1]); }} />}
+        {podium[0] && <PodiumCard participant={podium[0]} index={0} onSelect={() => { pulse([12, 24, 12]); setSelected(podium[0]); }} />}
+        {podium[2] && <PodiumCard participant={podium[2]} index={2} onSelect={() => { pulse(14); setSelected(podium[2]); }} />}
+      </div>
+
+      <div className="mt-5 border border-[#9B59B6]/35 bg-[#150E1A] p-4" data-testid="boosted-insights-strip">
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <MicroLabel tone="purple">Boosted right now</MicroLabel>
+            <h3 className="mt-2 text-2xl font-black uppercase tracking-[-0.06em] text-white">Not just a badge. A reason.</h3>
+          </div>
+          <p className="max-w-sm text-[10px] font-black uppercase leading-5 tracking-[0.14em] text-[#D9B3F0]">Boosts come from today’s awarded points, full 6/6 days, proof uploaded in the app, teaching/reflection depth and recent point movement.</p>
+        </div>
+        <div className="mt-4 grid gap-2 md:grid-cols-2 xl:grid-cols-4">
+          {boosted.map((participant: any) => (
+            <button key={participant.id} type="button" onClick={() => { pulse(12); setSelected(participant); }} className="motion-row motion-press border border-[#9B59B6]/35 bg-black/35 p-3 text-left">
+              <div className="flex items-center gap-3">
+                <ProfilePhoto participant={participant} className="h-10 w-10" />
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-black uppercase tracking-[-0.03em] text-white">{participant.displayName}</p>
+                  <p className="mt-1 text-[9px] font-black uppercase tracking-[0.14em] text-[#D9B3F0]">{participant.boostLabel} · {participant.boostScore}</p>
+                </div>
+              </div>
+              <p className="mt-3 text-[10px] font-black uppercase leading-5 tracking-[0.12em] text-[#BDBDBD]">{participant.boostReasons[0]}</p>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-5 space-y-2">
+        {ranked.map((p: any, index: number) => (
+          <button key={p.id} onClick={() => { pulse(14); setSelected(p); }} className={classNames("motion-row motion-press grid w-full grid-cols-[48px_minmax(0,1fr)] items-center gap-3 border bg-[#0D0D0D] p-3 text-left transition hover:border-[#C8A96E] sm:grid-cols-[56px_56px_minmax(0,1fr)_minmax(260px,1fr)_auto] sm:gap-4 sm:p-4", index === 0 ? "border-l-4 border-l-[#C8A96E] border-[#3C3423]" : index === 1 ? "border-l-4 border-l-[#BFC7D5] border-[#2A2A2A]" : index === 2 ? "border-l-4 border-l-[#B87333] border-[#2A2A2A]" : "border-[#2A2A2A]")}>
+            <span className={classNames("text-2xl font-black sm:text-3xl", index === 0 ? "text-[#C8A96E]" : index === 1 ? "text-[#BFC7D5]" : index === 2 ? "text-[#D58A45]" : "text-[#777]")}>#{index + 1}</span>
             <span className="hidden sm:block"><ProfilePhoto participant={p} className="h-12 w-12" /></span>
             <span className="min-w-0">
               <span className="block break-words text-lg font-black uppercase tracking-[-0.04em] text-white sm:text-xl">{p.displayName}</span>
-              <span className="mt-1 block break-words text-[11px] font-bold uppercase tracking-[0.1em] text-[#777] sm:text-xs sm:tracking-[0.14em]">{p.currentStreak} day streak · {p.daysComplete} days complete</span>
+              <span className="mt-1 block break-words text-[11px] font-bold uppercase tracking-[0.1em] text-[#777] sm:text-xs sm:tracking-[0.14em]">{p.comparisonLine}</span>
               <span className="mt-3 block max-w-[260px]"><HealthBar lives={p.livesRemaining} label="" compact /></span>
             </span>
-              <span className="col-span-2 mt-2 min-w-0 text-left sm:col-span-1 sm:mt-0 sm:text-right">
+            <span className="col-span-2 flex flex-wrap gap-2 sm:col-span-1">
+              {p.comparisonStats.map((stat: any) => <InsightPill key={stat.label} label={stat.label} value={stat.value} tone={stat.tone} />)}
+            </span>
+            <span className="col-span-2 mt-2 min-w-0 text-left sm:col-span-1 sm:mt-0 sm:text-right">
               <span className="block text-2xl font-black text-[#C8A96E] sm:text-3xl">{p.totalPoints}</span>
               <span className="poster-label text-[#777]">points</span>
             </span>

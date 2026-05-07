@@ -392,15 +392,16 @@ describe("Home onboarding shell", () => {
     const hapticsSource = readFileSync(new URL("../lib/haptics.ts", import.meta.url), "utf8");
 
     expect(homeSource).toContain('data-testid="overview-metrics-dashboard"');
-    expect(homeSource).toContain("Overview · all participants");
-    expect(homeSource).toContain("Group command centre.");
-    expect(homeSource).toContain("Group Pulse");
-    expect(homeSource).toContain("Pick one name. The graph stays readable on phones.");
+    expect(homeSource).toContain("Overview · command centre");
+    expect(homeSource).toContain("Tap graph first. Then read the signals.");
+    expect(homeSource).toContain("Simple group signals");
+    expect(homeSource).toContain("The graph now opens directly under this control, not hidden below the signal cards.");
     expect(homeSource).toContain('data-testid="graph-participant-select"');
-    expect(homeSource).toContain("High-level signal only.");
-    expect(homeSource).toContain("Compliance drill-downs moved to the Board");
+    expect(homeSource).toContain("Most at risk");
+    expect(homeSource).toContain("tasks left, time pressure, lives lost, streaks, proof, and recent points");
     expect(homeSource).toContain("Participant comparison");
-    expect(homeSource).toContain("Board compliance");
+    expect(homeSource).toContain("Rows now compare pass pace, point velocity, proof reliability, and risk instead of flat totals.");
+    expect(homeSource).toContain("Board / Bosses");
     expect(homeSource).toContain("playAllGreenSubmitHaptic();");
     expect(homeSource).toContain("if (data.complete)");
     expect(hapticsSource).toContain("submit: [28, 42, 28, 64, 72]");
@@ -455,7 +456,9 @@ describe("Home onboarding shell", () => {
 
     expect(homeSource).toContain("Must-do today");
     expect(homeSource).toContain("Six rules. Five gets the day.");
-    expect(homeSource).toContain("5/6 is a pass. Submit the day.");
+    expect(homeSource).toContain("5/6 is a pass. Submit the day to bank the points shown above.");
+    expect(homeSource).toContain('data-testid="live-task-points-panel"');
+    expect(homeSource).toContain("+{liveTaskPoints.visibleTotal} live pts");
     expect(homeSource).toContain("Draft only until 5/6 is reached. Lives judged after rollover.");
     expect(homeSource).toContain("function pulse(pattern: number | number[] = 18)");
     expect(homeSource).toContain("navigator.vibrate(pattern)");
