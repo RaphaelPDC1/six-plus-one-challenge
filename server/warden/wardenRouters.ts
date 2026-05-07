@@ -55,21 +55,26 @@ export const wardenRouter = router({
       const logs = (snapshot.logs ?? []).filter((log: any) => String(log.participantId) === String(targetParticipantId));
       if (!participant) return { label: "No read yet", tone: "white" as WardenMoodTone, detail: "The Warden could not find this participant profile.", confidence: 0, source: "fallback" as const };
       const fallback = fallbackMood(participant, logs, currentDay);
-      const compactLogs = logs.slice(-8).map((log: any) => ({
-        day: log.dayNumber,
-        rulesComplete: completedRuleCount(log),
-        dayComplete: Boolean(log.dayComplete),
-        pointsAwarded: log.pointsAwarded,
-        exerciseDuration: log.exerciseDuration,
-        hasProof: String(log.exerciseProofUrl ?? "").trim().length > 4,
-        reflectionText: String(log.reflectionText ?? "").slice(0, 700),
-        readTeachText: String(log.readTeachText ?? "").slice(0, 700),
-        submittedAt: log.submittedAt,
-      }));
+      const compactLogs = logs.slice(-8).map((log: any) => {
+        const privateReflectionText = String(log.reflectionText ?? "").trim();
+        return {
+          day: log.dayNumber,
+          rulesComplete: completedRuleCount(log),
+          dayComplete: Boolean(log.dayComplete),
+          pointsAwarded: log.pointsAwarded,
+          exerciseDuration: log.exerciseDuration,
+          hasProof: String(log.exerciseProofUrl ?? "").trim().length > 4,
+          privateReflectionText: privateReflectionText.slice(0, 700),
+          privateReflectionChars: privateReflectionText.length,
+          reflectionShared: Boolean(log.reflectionShared),
+          readTeachText: String(log.readTeachText ?? "").slice(0, 700),
+          submittedAt: log.submittedAt,
+        };
+      });
       try {
         const response = await invokeLLM({
           messages: [
-            { role: "system", content: "You are The Warden for the 6+1 4 Lives Challenge. Produce a private, concise vibe read for one participant based only on their own logs, reflection, Read & Teach, proof, streak, lives, and recent movement. Be direct, motivating, and never mention technical field names." },
+            { role: "system", content: "You are The Warden for the 6+1 4 Lives Challenge. Produce a private, concise vibe read for one participant based only on their own logs, private reflection log, Read & Teach, proof, streak, lives, and recent movement. Private reflections are personal context for that participant only: use the pattern, honesty, depth, or concern they reveal, but do not quote sensitive raw reflection lines or write as if the text is public. Be direct, motivating, and never mention technical field names." },
             { role: "user", content: JSON.stringify({ metric: input?.metric ?? "effort_vibe", participant: { displayName: participant.displayName, livesRemaining: participant.livesRemaining, currentStreak: participant.currentStreak, totalPoints: participant.totalPoints, daysComplete: participant.daysComplete, primaryGoal: participant.primaryGoal, biggestObstacle: participant.biggestObstacle, trainingLevel: participant.trainingLevel, supportNeeded: participant.supportNeeded }, currentDay, logs: compactLogs, fallback }) },
           ],
           response_format: {

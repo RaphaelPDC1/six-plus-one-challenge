@@ -861,3 +861,12 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Produce Claude/Make scraping data audit covering challenge pages, URLs, visible fields, access, layout, and dynamic loading behavior without building new features.
 
 - [x] Convert the Claude/Make scraping audit into a downloadable Markdown document without changing website functionality.
+
+
+## Refinement — Warden Mood Private Reflection Context
+
+- [x] Audit current Warden Mood generation to confirm whether private reflection log content is included as personal context.
+- [x] If missing, incorporate private reflections into Warden Mood inputs while keeping them private and not exposing raw sensitive text in group-facing UI.
+- [x] Update Warden Mood prompt/logic so private reflections influence tone, accountability, and personal nuance without directly quoting sensitive content unless already appropriate.
+- [x] Add or update regression coverage confirming Warden Mood uses private reflection context for the relevant participant only.
+- [x] Validate with focused tests, full tests, typecheck/build where appropriate, project health check, and checkpoint before delivery.
