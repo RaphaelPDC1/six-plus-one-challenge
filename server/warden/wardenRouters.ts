@@ -9,6 +9,39 @@ import { invokeLLM } from "../_core/llm";
  * These endpoints are public and called by Make automation
  */
 type WardenMoodTone = "green" | "gold" | "red" | "purple" | "white";
+type WardenMoodResult = {
+  label: string;
+  tone: WardenMoodTone;
+  detail: string;
+  confidence: number;
+  source: "ai" | "fallback";
+};
+
+type WardenMoodCacheEntry = {
+  fingerprint: string;
+  mood: WardenMoodResult;
+  createdAt: number;
+};
+
+const wardenMoodCache = new Map<string, WardenMoodCacheEntry>();
+const WARDEN_MOOD_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
+
+function stableMoodFingerprint(input: unknown) {
+  return JSON.stringify(input);
+}
+
+function getStableMood(cacheKey: string, fingerprint: string) {
+  const cached = wardenMoodCache.get(cacheKey);
+  if (!cached) return null;
+  const isFresh = Date.now() - cached.createdAt < WARDEN_MOOD_CACHE_TTL_MS;
+  if (cached.fingerprint !== fingerprint || !isFresh) return null;
+  return { ...cached.mood, source: cached.mood.source };
+}
+
+function rememberStableMood(cacheKey: string, fingerprint: string, mood: WardenMoodResult) {
+  wardenMoodCache.set(cacheKey, { fingerprint, mood, createdAt: Date.now() });
+  return mood;
+}
 
 function completedRuleCount(log: Record<string, any> | null | undefined) {
   if (!log) return 0;
@@ -22,7 +55,7 @@ function completedRuleCount(log: Record<string, any> | null | undefined) {
   ].filter(Boolean).length;
 }
 
-function fallbackMood(participant: Record<string, any>, logs: Record<string, any>[], currentDay: number) {
+function fallbackMood(participant: Record<string, any>, logs: Record<string, any>[], currentDay: number): WardenMoodResult {
   const todayLog = logs.find(log => Number(log.dayNumber ?? 0) === currentDay);
   const recentLogs = logs.filter(log => Number(log.dayNumber ?? 0) >= Math.max(1, currentDay - 6));
   const todayCount = completedRuleCount(todayLog);
@@ -71,11 +104,16 @@ export const wardenRouter = router({
           submittedAt: log.submittedAt,
         };
       });
+      const moodContext = { metric: input?.metric ?? "effort_vibe", participant: { displayName: participant.displayName, livesRemaining: participant.livesRemaining, currentStreak: participant.currentStreak, totalPoints: participant.totalPoints, daysComplete: participant.daysComplete, primaryGoal: participant.primaryGoal, biggestObstacle: participant.biggestObstacle, trainingLevel: participant.trainingLevel, supportNeeded: participant.supportNeeded }, currentDay, logs: compactLogs, fallback };
+      const cacheKey = `${targetParticipantId}:${input?.metric ?? "effort_vibe"}:${currentDay}`;
+      const fingerprint = stableMoodFingerprint(moodContext);
+      const stableMood = getStableMood(cacheKey, fingerprint);
+      if (stableMood) return stableMood;
       try {
         const response = await invokeLLM({
           messages: [
             { role: "system", content: "You are The Warden for the 6+1 4 Lives Challenge. Produce a private, concise vibe read for one participant based only on their own logs, private reflection log, Read & Teach, proof, streak, lives, and recent movement. Private reflections are personal context for that participant only: use the pattern, honesty, depth, or concern they reveal, but do not quote sensitive raw reflection lines or write as if the text is public. Be direct, motivating, and never mention technical field names." },
-            { role: "user", content: JSON.stringify({ metric: input?.metric ?? "effort_vibe", participant: { displayName: participant.displayName, livesRemaining: participant.livesRemaining, currentStreak: participant.currentStreak, totalPoints: participant.totalPoints, daysComplete: participant.daysComplete, primaryGoal: participant.primaryGoal, biggestObstacle: participant.biggestObstacle, trainingLevel: participant.trainingLevel, supportNeeded: participant.supportNeeded }, currentDay, logs: compactLogs, fallback }) },
+            { role: "user", content: JSON.stringify(moodContext) },
           ],
           response_format: {
             type: "json_schema",
@@ -98,17 +136,17 @@ export const wardenRouter = router({
         });
         const content = response.choices[0]?.message?.content;
         const parsed = typeof content === "string" ? JSON.parse(content) : null;
-        if (!parsed || typeof parsed.label !== "string" || typeof parsed.detail !== "string") return fallback;
-        return {
+        if (!parsed || typeof parsed.label !== "string" || typeof parsed.detail !== "string") return rememberStableMood(cacheKey, fingerprint, fallback);
+        return rememberStableMood(cacheKey, fingerprint, {
           label: String(parsed.label).slice(0, 42),
           tone: (["green", "gold", "red", "purple", "white"].includes(parsed.tone) ? parsed.tone : fallback.tone) as WardenMoodTone,
           detail: String(parsed.detail).slice(0, 240),
           confidence: Math.max(0, Math.min(1, Number(parsed.confidence ?? 0))),
           source: "ai" as const,
-        };
+        });
       } catch (error) {
         console.warn("[WardenMood] Falling back after LLM error", error);
-        return fallback;
+        return rememberStableMood(cacheKey, fingerprint, fallback);
       }
     }),
   /**

@@ -870,3 +870,11 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Update Warden Mood prompt/logic so private reflections influence tone, accountability, and personal nuance without directly quoting sensitive content unless already appropriate.
 - [x] Add or update regression coverage confirming Warden Mood uses private reflection context for the relevant participant only.
 - [x] Validate with focused tests, full tests, typecheck/build where appropriate, project health check, and checkpoint before delivery.
+
+
+## Bug Fix — Warden Mood Flicker
+- [x] Audit why Warden Mood can change or flicker between different labels/details during refreshes or repeated reads.
+- [x] Stabilize Warden Mood so it reuses a recent valid mood unless the participant’s underlying log/context meaningfully changes.
+- [x] Ensure loading or refetch states do not visually flash a different fallback mood over a valid existing mood.
+- [x] Add regression coverage for stable mood reuse and non-flickering UI/query behaviour where practical.
+- [x] Validate with focused tests, full tests/typecheck/build as appropriate, project health check, and checkpoint before delivery.

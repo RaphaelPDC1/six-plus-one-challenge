@@ -1243,7 +1243,16 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
   const rankedInsights = useMemo(() => rankForPodium(insights), [insights]);
   const currentParticipant = insights.find((participant: any) => String(participant.id) === String(snapshot?.participant?.id)) ?? rankedInsights[0];
   const currentParticipantId = currentParticipant?.id ?? snapshot?.participant?.id;
-  const wardenMoodQuery = trpc.warden.getMood.useQuery({ participantId: Number(currentParticipantId), metric: "effort_vibe" }, { enabled: Boolean(currentParticipantId) });
+  const wardenMoodQuery = trpc.warden.getMood.useQuery(
+    { participantId: Number(currentParticipantId), metric: "effort_vibe" },
+    {
+      enabled: Boolean(currentParticipantId),
+      staleTime: 6 * 60 * 60 * 1000,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+      placeholderData: previousMood => previousMood,
+    },
+  );
   const activeBoosts = snapshot?.activeBoosts ?? [];
   const boostWins = snapshot?.boostWins ?? [];
   const todayBoostWins = boostWins.filter((win: any) => Number(win.day ?? 0) === currentDay);
