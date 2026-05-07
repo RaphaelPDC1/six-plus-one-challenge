@@ -312,18 +312,24 @@ describe("Home onboarding shell", () => {
     expect(homeSource).not.toContain("No public proof yet");
   });
 
-  it("generates Deep Thought proof insight from person-specific account data instead of weak generic Warden quotes", () => {
+  it("generates Deep Thought proof insight by interpreting onboarding context, proof uploads, and written evidence", () => {
     const homeSource = readFileSync(new URL("./Home.tsx", import.meta.url), "utf8");
 
     expect(homeSource).toContain("function buildProofWardenInsight(owner: any, log: any, ownerLogs: any[])");
     expect(homeSource).toContain("owner?.primaryGoal");
     expect(homeSource).toContain("owner?.biggestObstacle");
-    expect(homeSource).toContain("owner?.currentStreak");
-    expect(homeSource).toContain("owner?.livesRemaining");
+    expect(homeSource).toContain("owner?.supportNeeded");
+    expect(homeSource).toContain("owner?.trainingLevel");
+    expect(homeSource).toContain("cleanEatingNote");
     expect(homeSource).toContain("reflectionText");
     expect(homeSource).toContain("readTeachText");
-    expect(homeSource).toContain("Repeat it tomorrow.");
-    expect(homeSource).toContain("Takeaway:");
+    expect(homeSource).toContain("proofHas(\"video\")");
+    expect(homeSource).toContain("The upload gives the day weight beyond the words");
+    expect(homeSource).toContain("body-standard goal");
+    expect(homeSource).toContain("discipline rebuild");
+    expect(homeSource).toContain("beat ${friction}");
+    expect(homeSource).not.toContain("Takeaway:");
+    expect(homeSource).not.toContain("lives/4");
     expect(homeSource).toContain("data-testid=\"proof-deep-thought\"");
     expect(homeSource).toContain("Deep Thought</MicroLabel>");
     expect(homeSource).not.toMatch(/Ren[eé]e/);

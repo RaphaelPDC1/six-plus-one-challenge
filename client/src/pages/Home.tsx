@@ -1830,31 +1830,82 @@ function buildProofWardenInsight(owner: any, log: any, ownerLogs: any[]) {
     .sort((a: any, b: any) => Number(b.dayNumber ?? 0) - Number(a.dayNumber ?? 0))
     .slice(0, 5);
   const recentProofCount = recentLogs.filter((entry: any) => parseProofMedia(entry.exerciseProofUrl).length > 0).length;
-  const completedRules = getLogCompletedRuleCount(log);
   const name = String(owner?.displayName ?? "this person").trim();
   const firstName = name.split(/\s+/)[0] || "you";
   const goal = String(owner?.primaryGoal ?? "").trim();
   const obstacle = String(owner?.biggestObstacle ?? "").trim();
+  const supportNeeded = String(owner?.supportNeeded ?? "").trim();
+  const trainingLevel = String(owner?.trainingLevel ?? "").trim().toLowerCase();
   const teaching = String(log?.readTeachText ?? "").trim();
   const reflectionSignal = String(log?.reflectionText ?? "").trim();
+  const cleanEatingNote = String(log?.cleanEatingNote ?? "").trim();
+  const exerciseType = String(log?.exerciseType ?? "").trim();
+  const exerciseDuration = Number(log?.exerciseDuration ?? 0);
   const proofItems = parseProofMedia(log?.exerciseProofUrl);
-  const hasVideo = proofItems.some(item => item.type === "video");
-  const proofPhrase = hasVideo ? "video evidence" : proofItems.length > 0 ? "visible evidence" : "written evidence";
-  const streak = Number(owner?.currentStreak ?? owner?.streak ?? 0);
-  const lives = Number(owner?.livesRemaining ?? 4);
-  const short = (value: string, max = 38) => (value.length > max ? `${value.slice(0, max).trim()}…` : value);
-  const proofDaysLabel = `${recentProofCount} proof day${recentProofCount === 1 ? "" : "s"}`;
-  const personalFocus = goal ? `That backs the goal: ${short(goal)}.` : obstacle ? `That pushes through: ${short(obstacle)}.` : "That is the standard.";
-  const noteSignal = teaching || reflectionSignal;
-  const noteLine = noteSignal ? ` Takeaway: ${short(noteSignal, 42)}.` : "";
+  const bundle = [goal, obstacle, supportNeeded, teaching, reflectionSignal, cleanEatingNote, exerciseType].join(" ").toLowerCase();
+  const hasAny = (words: string[]) => words.some(word => bundle.includes(word));
+  const proofHas = (type: string) => proofItems.some((item: any) => item.type === type);
+  const hasProof = proofItems.length > 0;
 
-  if (reflectionSignal.length > 0 || teaching.length > 0 || goal || obstacle) {
-    return `${firstName}: ${completedRules}/${DAILY_RULE_COUNT} done, ${proofPhrase}, streak ${streak}, ${lives}/4 lives. ${personalFocus}${noteLine} Repeat it tomorrow.`;
+  const aim = hasAny(["weight", "fat", "lean", "cut", "shape"])
+    ? "body-standard goal"
+    : hasAny(["discipline", "routine", "habit", "consistency", "standard"])
+      ? "discipline rebuild"
+      : hasAny(["fitness", "strength", "run", "gym", "train", "performance"])
+        ? "training identity"
+        : goal
+          ? "bigger goal"
+          : "standard";
+
+  const friction = hasAny(["weekend", "social", "drink", "alcohol", "night out"])
+    ? "social pressure"
+    : hasAny(["time", "busy", "work", "travel", "shift"])
+      ? "time pressure"
+      : hasAny(["stress", "tired", "energy", "motivation", "mental"])
+        ? "low-energy friction"
+        : obstacle || supportNeeded
+          ? "usual friction"
+          : "easy-exit moment";
+
+  const proofSignal = proofHas("video")
+    ? "The video proof makes this look lived, not claimed"
+    : proofHas("image")
+      ? "The upload gives the day weight beyond the words"
+      : proofHas("link")
+        ? "The linked receipt turns the claim into evidence"
+        : "The written entry is the evidence today";
+
+  const actionSignal = exerciseDuration >= 45
+    ? "a proper training block"
+    : exerciseType
+      ? `${exerciseType.toLowerCase()} done on purpose`
+      : hasProof
+        ? "a visible action"
+        : "a logged choice";
+
+  const mindSignal = hasAny(["plan", "prepare", "structure", "routine"])
+    ? "planning before pressure hits"
+    : hasAny(["learn", "read", "teach", "idea", "lesson"])
+      ? "turning the day into a lesson"
+      : hasAny(["hard", "struggle", "tempt", "craving", "stress", "tired"])
+        ? "staying honest when it was not clean"
+        : teaching || reflectionSignal
+          ? "noticing the pattern, not just ticking the box"
+          : "letting the proof speak";
+
+  const experience = trainingLevel.includes("beginner")
+    ? "For a newer base"
+    : trainingLevel.includes("advanced") || trainingLevel.includes("experienced")
+      ? "For someone who knows the standard"
+      : "For this challenge";
+
+  if (hasProof || teaching || reflectionSignal || goal || obstacle || supportNeeded) {
+    return `${firstName}: ${proofSignal}. ${experience}, ${actionSignal} points at the ${aim}: beat ${friction}, then repeat it tomorrow.`;
   }
   if (recentProofCount >= 2) {
-    return `${firstName}: ${proofDaysLabel} recently and ${completedRules}/${DAILY_RULE_COUNT} done today. The habit is forming — protect it tomorrow.`;
+    return `${firstName}: the pattern is starting to show. Recent proof says this is becoming behaviour, not a one-off. Protect it tomorrow.`;
   }
-  return `${firstName}: ${completedRules}/${DAILY_RULE_COUNT} done, ${proofPhrase}, ${lives}/4 lives. Simple target: show up again tomorrow.`;
+  return `${firstName}: ${mindSignal}. Keep it simple tomorrow: one clear action, one honest receipt, no hiding.`;
 }
 
 function ProofFeed({ snapshot }: { snapshot: Snapshot }) {

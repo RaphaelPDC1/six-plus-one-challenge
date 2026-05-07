@@ -925,3 +925,10 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Remove all remaining Renee references from Deep Thought source code and regression tests
 - [x] Compact the Proof page Deep Thought card typography and spacing for mobile readability
 - [x] Rewrite Proof page Deep Thought wording so it sounds natural, direct, and coaching-led rather than robotic or theatrical
+
+## Improvement — Evidence-Based Deep Thought Insight
+- [x] Audit the current Proof page Deep Thought inputs to identify available onboarding/profile context, proof upload metadata, and written log text.
+- [x] Rewrite Deep Thought logic so it synthesizes profile context, proof evidence, and written entries into a concise interpreted insight rather than listing raw variables.
+- [x] Keep the Deep Thought output short, natural, mobile-readable, and free of Renee references.
+- [x] Add or update regression coverage proving Deep Thought uses evidence-synthesis hooks and avoids variable-regurgitation copy.
+- [x] Validate with tests, typecheck/build as appropriate, project health check, and checkpoint before delivery.
