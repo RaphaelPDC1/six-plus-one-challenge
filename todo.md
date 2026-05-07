@@ -762,9 +762,3 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Reduce unnecessary vertical length on the first My Day page so the rule checklist appears sooner on mobile.
 - [x] Add or update regression coverage for the compact non-swipeable mobile points strip.
 - [x] Validate the refinement with focused tests, full tests, production build, project health check, and checkpoint before delivery.
-
-
-## Documentation — Gamification System Exposition
-- [x] Produce a detailed exposition of the current gamification system, including rules, points, lives, Ghost Life, proof, rewards, leaderboard, journey, and Warden mechanics.
-- [x] Ground the exposition in the current app implementation and terminology.
-- [x] Deliver the exposition in a clear product/design format for review.
