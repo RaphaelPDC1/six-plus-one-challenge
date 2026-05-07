@@ -696,3 +696,17 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Disable or neutralize the task-creating background Warden trigger path without removing Make.com/manual HTTP Warden endpoints.
 - [x] Add safeguards or documentation so future Warden delivery uses Make.com/manual calls rather than Manus background task creation.
 - [x] Validate that Warden HTTP/manual endpoints still work and no app code schedules new Manus task chats.
+
+## Refinement Pass — Horizontal Points Strip
+- [x] Convert the vertical points breakdown below the lives tracker into a compact horizontal points strip.
+- [x] Ensure the horizontal points strip remains readable and space-efficient on mobile screens.
+- [x] Add or update regression coverage for the horizontal points strip copy/layout semantics.
+- [x] Validate the UI change with tests, production build, and project health check before checkpointing.
+
+
+## Bug Fix — Board Mobile Ranking Order
+- [x] Fix the Board mobile ranking order so the 1st-place card appears before 2nd and 3rd.
+- [x] Preserve the existing podium/ranking visual styling while correcting the list order.
+- [x] Add regression coverage that prevents visual ordering from putting 2nd before 1st again.
+- [x] Validate the Board ordering fix together with the horizontal points strip update before checkpointing.
+

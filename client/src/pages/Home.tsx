@@ -888,6 +888,12 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
     trackedEverything: Boolean(form.trackedEverything),
   });
   const projectedPoints = Number(participant?.totalPoints ?? 0) + liveTaskPoints.visibleTotal;
+  const pointStripItems = [
+    { label: "Ticks", value: `+${liveTaskPoints.rulePoints}`, detail: `${completedRules}/${totalRules}`, tone: "gold" as const },
+    { label: "Pass", value: `+${liveTaskPoints.passBonus}`, detail: allAddressed ? "secured" : `${Math.max(0, passThreshold - completedRules)} left`, tone: allAddressed ? "green" as const : "white" as const },
+    { label: "Proof", value: `+${liveTaskPoints.proofBonus + liveTaskPoints.insightBonus}`, detail: "proof/insight", tone: "purple" as const },
+    { label: "Bank", value: projectedPoints, detail: "projected", tone: "green" as const },
+  ];
   const ghostLifeLocked = Boolean(participant?.ghostLifeUsed);
 
   useEffect(() => {
@@ -1030,11 +1036,30 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
               <div className="border border-[#C8A96E]/60 bg-[#16130B] px-3 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-[#C8A96E]">+{liveTaskPoints.visibleTotal} live pts</div>
             </div>
           </div>
-          <div className="mb-3 grid gap-2 sm:grid-cols-4" data-testid="live-task-points-panel">
-            <OverviewMetricCard label="Rule ticks" value={`+${liveTaskPoints.rulePoints}`} detail={`${completedRules}/${totalRules} checked`} tone="gold" />
-            <OverviewMetricCard label="Pass bonus" value={`+${liveTaskPoints.passBonus}`} detail={allAddressed ? "5/6 secured" : `${Math.max(0, passThreshold - completedRules)} more needed`} tone={allAddressed ? "green" : "white"} />
-            <OverviewMetricCard label="Proof/insight" value={`+${liveTaskPoints.proofBonus + liveTaskPoints.insightBonus}`} detail="Proof, reflection, teaching value" tone="purple" />
-            <OverviewMetricCard label="Projected" value={projectedPoints} detail="If saved with current ticks" tone="green" />
+          <div className="mb-3 border border-[#2A2A2A] bg-black/35 p-2" data-testid="live-task-points-strip" aria-label="Live points horizontal strip">
+            <div className="flex items-center justify-between gap-3 px-1 pb-2">
+              <MicroLabel tone="gold">Live points strip</MicroLabel>
+              <span className="text-[10px] font-black uppercase tracking-[0.18em] text-[#C8A96E]">+{liveTaskPoints.visibleTotal} now</span>
+            </div>
+            <div className="flex snap-x gap-1 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="list">
+              {pointStripItems.map(item => {
+                const toneClasses = {
+                  gold: "border-[#C8A96E]/55 bg-[#16130B] text-[#C8A96E]",
+                  green: "border-[#2ECC71]/55 bg-[#07150D] text-[#2ECC71]",
+                  purple: "border-[#9B59B6]/55 bg-[#150E1A] text-[#B97DDA]",
+                  white: "border-[#444] bg-[#111] text-white",
+                }[item.tone];
+                return (
+                  <div key={item.label} role="listitem" className={classNames("min-w-[7.3rem] flex-1 snap-start border px-2.5 py-2 sm:min-w-0", toneClasses)}>
+                    <div className="flex items-baseline justify-between gap-2">
+                      <span className="text-[9px] font-black uppercase tracking-[0.18em] text-[#BDBDBD]">{item.label}</span>
+                      <span className="text-xl font-black uppercase leading-none tracking-[-0.06em]">{item.value}</span>
+                    </div>
+                    <p className="mt-1 truncate text-[9px] font-black uppercase tracking-[0.14em] text-[#8F8F8F]">{item.detail}</p>
+                  </div>
+                );
+              })}
+            </div>
           </div>
           {allAddressed && <div className="mb-3 border border-[#2ECC71]/50 bg-[#0F2A18] p-3 text-xs font-black uppercase tracking-[0.16em] text-[#2ECC71]">5/6 is a pass. Submit the day to bank the points shown above.</div>}
           <div className="motion-list space-y-2">
@@ -1544,7 +1569,7 @@ function ProofImage({ url, dayNumber }: { url: string; dayNumber: number }) {
   );
 }
 
-function PodiumCard({ participant, index, onSelect }: { participant: any; index: number; onSelect: () => void }) {
+function PodiumCard({ participant, index, onSelect, className }: { participant: any; index: number; onSelect: () => void; className?: string }) {
   const rank = index + 1;
   const styles = rank === 1
     ? { label: "1st", border: "border-[#C8A96E]", bg: "bg-[#181207]", text: "text-[#C8A96E]", ring: "shadow-[0_0_40px_rgba(200,169,110,0.22)]", height: "sm:min-h-[17rem]" }
@@ -1552,7 +1577,7 @@ function PodiumCard({ participant, index, onSelect }: { participant: any; index:
       ? { label: "2nd", border: "border-[#BFC7D5]", bg: "bg-[#10131A]", text: "text-[#BFC7D5]", ring: "shadow-[0_0_32px_rgba(191,199,213,0.14)]", height: "sm:min-h-[15rem]" }
       : { label: "3rd", border: "border-[#B87333]", bg: "bg-[#1A1009]", text: "text-[#D58A45]", ring: "shadow-[0_0_32px_rgba(184,115,51,0.16)]", height: "sm:min-h-[14rem]" };
   return (
-    <button type="button" onClick={onSelect} className={classNames("motion-card motion-press relative overflow-hidden border-2 p-4 text-left transition hover:-translate-y-1", styles.border, styles.bg, styles.ring, styles.height)} data-podium-rank={rank}>
+    <button type="button" onClick={onSelect} className={classNames("motion-card motion-press relative overflow-hidden border-2 p-4 text-left transition hover:-translate-y-1", styles.border, styles.bg, styles.ring, styles.height, className)} data-podium-rank={rank}>
       <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-white/5 blur-xl" />
       <div className="flex items-start justify-between gap-3">
         <span className={classNames("text-5xl font-black uppercase leading-none tracking-[-0.1em]", styles.text)}>{styles.label}</span>
@@ -1588,10 +1613,10 @@ function Leaderboard({ snapshot }: { snapshot: Snapshot }) {
         <p className="max-w-sm text-xs font-bold uppercase tracking-[0.14em] text-[#777]">Rank still respects points, but the board now explains why people are moving: boost score, proof, recent point lift, pass pace, streaks and risk.</p>
       </div>
 
-      <div className="grid gap-3 lg:grid-cols-[0.95fr_1.1fr_0.95fr] lg:items-end" data-testid="top-three-podium">
-        {podium[1] && <PodiumCard participant={podium[1]} index={1} onSelect={() => { pulse(14); setSelected(podium[1]); }} />}
-        {podium[0] && <PodiumCard participant={podium[0]} index={0} onSelect={() => { pulse([12, 24, 12]); setSelected(podium[0]); }} />}
-        {podium[2] && <PodiumCard participant={podium[2]} index={2} onSelect={() => { pulse(14); setSelected(podium[2]); }} />}
+      <div className="grid gap-3 lg:grid-cols-[0.95fr_1.1fr_0.95fr] lg:items-end" data-testid="top-three-podium" aria-label="Top three ordered first, second, third on mobile">
+        {podium[0] && <PodiumCard participant={podium[0]} index={0} className="lg:order-2" onSelect={() => { pulse([12, 24, 12]); setSelected(podium[0]); }} />}
+        {podium[1] && <PodiumCard participant={podium[1]} index={1} className="lg:order-1" onSelect={() => { pulse(14); setSelected(podium[1]); }} />}
+        {podium[2] && <PodiumCard participant={podium[2]} index={2} className="lg:order-3" onSelect={() => { pulse(14); setSelected(podium[2]); }} />}
       </div>
 
       <div className="mt-5 border border-[#9B59B6]/35 bg-[#150E1A] p-4" data-testid="boosted-insights-strip">
