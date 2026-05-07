@@ -1020,8 +1020,8 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
           <div className="grid min-w-0 gap-5 md:grid-cols-[minmax(0,1fr)_minmax(0,320px)]">
             <div>
               <MicroLabel tone="gold">Day {snapshot?.challenge.currentDay ?? "—"} / 50</MicroLabel>
-              <h1 className="mt-3 text-5xl font-black uppercase leading-[0.86] tracking-[-0.08em] text-white md:text-7xl">Log today.</h1>
-              <p className="mt-4 max-w-xl text-sm font-bold leading-6 text-[#A7A7A7]">Six checks. One submission. No hiding.</p>
+              <h1 className="mt-3 text-5xl font-black uppercase leading-[0.86] tracking-[-0.08em] text-white md:text-7xl">Log the day.</h1>
+              <p className="mt-4 max-w-xl text-sm font-bold leading-6 text-[#A7A7A7]">Six standards. One honest submission. No cover.</p>
             </div>
             <HealthBar lives={participant?.livesRemaining ?? 4} label="Your lives" />
           </div>
@@ -1030,17 +1030,17 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
         <div data-save-progress-anchor className={classNames("must-do-rules motion-card min-w-0 max-w-full overflow-hidden border-2 p-3 transition-all duration-300 sm:p-4", allAddressed ? "must-do-rules-complete border-[#2ECC71] bg-[#07150D]" : "border-[#C0392B] bg-[#190B0A]")}> 
           <div className="mb-3 flex flex-col gap-2 border-b border-white/10 pb-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <MicroLabel tone={allAddressed ? "green" : "red"}>{allAddressed ? "Pass secured" : "Must-do today"}</MicroLabel>
-              <h2 className="mt-2 text-2xl font-black uppercase leading-none tracking-[-0.06em] text-white">Six rules. Five gets the day.</h2>
+              <MicroLabel tone={allAddressed ? "green" : "red"}>{allAddressed ? "Standard met" : "Today’s non-negotiables"}</MicroLabel>
+              <h2 className="mt-2 text-2xl font-black uppercase leading-none tracking-[-0.06em] text-white">Six rules. Five banks the day.</h2>
             </div>
             <div className="flex min-w-0 flex-wrap gap-2">
-              <div className={classNames("border px-3 py-2 text-[10px] font-black uppercase tracking-[0.18em]", allAddressed ? "border-[#2ECC71] bg-[#0F2A18] text-[#2ECC71]" : "border-[#C0392B] bg-[#2A0F0C] text-[#FFB3A8]")}>{allAddressed ? `${completedRules}/${totalRules} passed` : `${Math.max(0, passThreshold - completedRules)} more for pass`}</div>
+              <div className={classNames("border px-3 py-2 text-[10px] font-black uppercase tracking-[0.18em]", allAddressed ? "border-[#2ECC71] bg-[#0F2A18] text-[#2ECC71]" : "border-[#C0392B] bg-[#2A0F0C] text-[#FFB3A8]")}>{allAddressed ? `${completedRules}/${totalRules} passed` : `${Math.max(0, passThreshold - completedRules)} more to bank it`}</div>
               <div className="border border-[#C8A96E]/60 bg-[#16130B] px-3 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-[#C8A96E]">+{liveTaskPoints.visibleTotal} live pts</div>
             </div>
           </div>
           <div className="mb-2 min-w-0 max-w-full overflow-hidden border border-[#2A2A2A] bg-black/35 p-1.5 sm:p-2" data-testid="live-task-points-strip" aria-label="Live points compact strip">
             <div className="flex min-w-0 items-center justify-between gap-2 px-1 pb-1.5">
-              <MicroLabel tone="gold">Live points strip</MicroLabel>
+              <MicroLabel tone="gold">Live points</MicroLabel>
               <span className="shrink-0 text-[9px] font-black uppercase tracking-[0.16em] text-[#C8A96E] sm:text-[10px]">+{liveTaskPoints.visibleTotal} now</span>
             </div>
             <div className="grid min-w-0 max-w-full grid-cols-4 gap-1" role="list">
@@ -1063,11 +1063,11 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
               })}
             </div>
           </div>
-          {allAddressed && <div className="mb-3 border border-[#2ECC71]/50 bg-[#0F2A18] p-3 text-xs font-black uppercase tracking-[0.16em] text-[#2ECC71]">5/6 is a pass. Submit the day to bank the points shown above.</div>}
+          {allAddressed && <div className="mb-3 border border-[#2ECC71]/50 bg-[#0F2A18] p-3 text-xs font-black uppercase tracking-[0.16em] text-[#2ECC71]">5/6 banks the day. Submit once the work is real.</div>}
           <div className="motion-list space-y-2">
           <RuleCard title="No alcohol" label="Rule 01" icon={Shield} complete={form.noAlcohol} active={openRule === "noAlcohol"} onToggle={() => setOpenRule(openRule === "noAlcohol" ? "exercise" : "noAlcohol")}>
             <label className="flex items-center justify-between gap-4 border border-[#2A2A2A] bg-[#0D0D0D] p-4">
-              <span className="text-sm font-black uppercase tracking-[0.12em] text-white">Kept clean today</span>
+              <span className="text-sm font-black uppercase tracking-[0.12em] text-white">No alcohol. No negotiation.</span>
               <input type="checkbox" checked={form.noAlcohol} onChange={event => markChecklistItem("noAlcohol", event.target.checked)} className="h-6 w-6 accent-[#2ECC71]" />
             </label>
           </RuleCard>
@@ -1075,24 +1075,24 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
           <RuleCard title="Clean eating" label="Rule 02" icon={Utensils} complete={form.cleanEating} active={openRule === "cleanEating"} onToggle={() => setOpenRule(openRule === "cleanEating" ? "exercise" : "cleanEating")}>
             <div className="space-y-3">
               <label className="flex items-center justify-between gap-4 border border-[#2A2A2A] bg-[#0D0D0D] p-4">
-                <span className="text-sm font-black uppercase tracking-[0.12em] text-white">Food stayed inside the rules</span>
+                <span className="text-sm font-black uppercase tracking-[0.12em] text-white">Food stayed on standard</span>
                 <input type="checkbox" checked={form.cleanEating} onChange={event => markChecklistItem("cleanEating", event.target.checked)} className="h-6 w-6 accent-[#2ECC71]" />
               </label>
-              <Field label="Optional food note"><TextInput value={form.cleanEatingNote} onChange={event => setForm({ ...form, cleanEatingNote: event.target.value })} placeholder="Anything the group should know?" /></Field>
+              <Field label="Optional food note"><TextInput value={form.cleanEatingNote} onChange={event => setForm({ ...form, cleanEatingNote: event.target.value })} placeholder="Any context worth recording?" /></Field>
             </div>
           </RuleCard>
 
           <RuleCard title="Exercise" label="Rule 03" icon={Dumbbell} complete={rules[2].done} active={openRule === "exercise"} onToggle={() => setOpenRule(openRule === "exercise" ? "reflection" : "exercise")}>
             <div className="grid gap-3 sm:grid-cols-2">
               <Field label="Minutes"><TextInput type="number" value={form.exerciseDuration || ""} onChange={event => setForm({ ...form, exerciseDuration: event.target.value === "" ? 0 : Number(event.target.value) })} placeholder="30+" /></Field>
-              <Field label="Workout type"><TextInput value={form.exerciseType} onChange={event => setForm({ ...form, exerciseType: event.target.value })} placeholder="Run, gym, mobility..." /></Field>
+              <Field label="Workout type"><TextInput value={form.exerciseType} onChange={event => setForm({ ...form, exerciseType: event.target.value })} placeholder="Run, gym, mobility…" /></Field>
               <div className="sm:col-span-2">
-                <Field label="Proof media / link"><TextInput value={parseProofMedia(form.exerciseProofUrl).filter(item => item.type === "link").map(item => item.url).join(" ")} onChange={event => setForm({ ...form, exerciseProofUrl: appendProofMedia(encodeProofMedia(parseProofMedia(form.exerciseProofUrl).filter(item => item.type !== "link")), { url: event.target.value, type: "link" }) })} placeholder="Upload images/videos, paste Strava, or add a proof note" /></Field>
+                <Field label="Proof media / link"><TextInput value={parseProofMedia(form.exerciseProofUrl).filter(item => item.type === "link").map(item => item.url).join(" ")} onChange={event => setForm({ ...form, exerciseProofUrl: appendProofMedia(encodeProofMedia(parseProofMedia(form.exerciseProofUrl).filter(item => item.type !== "link")), { url: event.target.value, type: "link" }) })} placeholder="Upload proof, paste Strava, or add a clear note" /></Field>
                 <input ref={cameraProofInputRef} type="file" accept="image/png,image/jpeg,image/webp,video/mp4,video/webm,video/quicktime" capture="environment" multiple className="sr-only" onChange={event => { handleProofFiles(event.target.files); event.currentTarget.value = ""; }} />
                 <input ref={libraryProofInputRef} type="file" accept="image/png,image/jpeg,image/webp,video/mp4,video/webm,video/quicktime" multiple className="sr-only" onChange={event => { handleProofFiles(event.target.files); event.currentTarget.value = ""; }} />
                 <div className="mt-2 grid grid-cols-2 gap-2">
-                  <button type="button" disabled={uploadProof.isPending} className="border border-[#C8A96E]/50 bg-[#16130B] px-4 py-3 text-[10px] font-black uppercase tracking-[0.22em] text-[#C8A96E] disabled:opacity-50" onClick={() => { pulse(12); cameraProofInputRef.current?.click(); }}>{uploadProof.isPending ? "Uploading" : "Camera"}</button>
-                  <button type="button" disabled={uploadProof.isPending} className="border border-[#2A2A2A] bg-[#111] px-4 py-3 text-[10px] font-black uppercase tracking-[0.22em] text-white disabled:opacity-50" onClick={() => { pulse(12); libraryProofInputRef.current?.click(); }}>{uploadProof.isPending ? "Uploading" : "Library"}</button>
+                  <button type="button" disabled={uploadProof.isPending} className="border border-[#C8A96E]/50 bg-[#16130B] px-4 py-3 text-[10px] font-black uppercase tracking-[0.22em] text-[#C8A96E] disabled:opacity-50" onClick={() => { pulse(12); cameraProofInputRef.current?.click(); }}>{uploadProof.isPending ? "Uploading" : "Take proof"}</button>
+                  <button type="button" disabled={uploadProof.isPending} className="border border-[#2A2A2A] bg-[#111] px-4 py-3 text-[10px] font-black uppercase tracking-[0.22em] text-white disabled:opacity-50" onClick={() => { pulse(12); libraryProofInputRef.current?.click(); }}>{uploadProof.isPending ? "Uploading" : "Choose proof"}</button>
                 </div>
                 <ProofMediaStrip items={parseProofMedia(form.exerciseProofUrl)} onRemove={index => setForm(current => ({ ...current, exerciseProofUrl: encodeProofMedia(parseProofMedia(current.exerciseProofUrl).filter((_, itemIndex) => itemIndex !== index)) }))} />
               </div>
@@ -1107,12 +1107,12 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
           </RuleCard>
 
           <RuleCard title="Read & Teach" label="Rule 05" icon={BookOpen} complete={rules[4].done} active={openRule === "readTeach"} onToggle={() => setOpenRule(openRule === "readTeach" ? "trackedEverything" : "readTeach")}>
-            <Field label="One useful idea"><TextArea value={form.readTeachText} onChange={event => setForm({ ...form, readTeachText: event.target.value })} placeholder="Teach the group one thing." /></Field>
+            <Field label="One useful idea"><TextArea value={form.readTeachText} onChange={event => setForm({ ...form, readTeachText: event.target.value })} placeholder="Teach one useful thing from today." /></Field>
           </RuleCard>
 
           <RuleCard title="Track everything" label="Rule 06" icon={Activity} complete={form.trackedEverything} active={openRule === "trackedEverything"} onToggle={() => setOpenRule(openRule === "trackedEverything" ? "exercise" : "trackedEverything")}>
             <label className="flex items-center justify-between gap-4 border border-[#2A2A2A] bg-[#0D0D0D] p-4">
-              <span className="text-sm font-black uppercase tracking-[0.12em] text-white">Logged honestly</span>
+              <span className="text-sm font-black uppercase tracking-[0.12em] text-white">Everything tracked honestly</span>
               <input type="checkbox" checked={form.trackedEverything} onChange={event => markChecklistItem("trackedEverything", event.target.checked)} className="h-6 w-6 accent-[#2ECC71]" />
             </label>
           </RuleCard>
@@ -1120,39 +1120,39 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
         </div>
 
         <div className="motion-list grid min-w-0 max-w-full gap-2 overflow-hidden bg-[#2A2A2A] p-[2px] sm:grid-cols-3" data-testid="myday-stats-after-must-do">
-          <PosterStat label="Rules addressed" value={`${completedRules}/${totalRules}`} tone={allAddressed ? "green" : "gold"} />
-          <PosterStat label="Current streak" value={participant?.currentStreak ?? 0} tone="green" />
-          <PosterStat label="Projected pts" value={projectedPoints} tone="gold" />
+          <PosterStat label="Standards logged" value={`${completedRules}/${totalRules}`} tone={allAddressed ? "green" : "gold"} />
+          <PosterStat label="Streak held" value={participant?.currentStreak ?? 0} tone="green" />
+          <PosterStat label="Points in play" value={projectedPoints} tone="gold" />
         </div>
 
         <div className={classNames("submit-dock motion-submit-dock z-[70] mx-auto w-[min(100%,calc(100vw-2rem))] max-w-full transition-all duration-300 md:static md:w-full", saveProgressDocked ? "static translate-y-0" : "fixed inset-x-4 bottom-[calc(5.85rem+env(safe-area-inset-bottom))]", saveProgressScale < 0.35 ? "max-w-[9.5rem] rounded-full border border-[#C8A96E]/45 bg-[#070707]/94 p-1 shadow-[0_0_24px_rgba(200,169,110,0.18)] backdrop-blur" : saveProgressScale < 0.78 ? "max-w-[15rem] rounded-full border border-[#C8A96E]/55 bg-[#0D0D0D]/95 p-1.5 shadow-[0_0_32px_rgba(200,169,110,0.22)] backdrop-blur" : "max-w-none rounded-none border border-[#2A2A2A] bg-[#0D0D0D]/95 p-3 backdrop-blur md:border-transparent md:bg-transparent md:p-0 md:backdrop-blur-none", submit.isPending && "submit-dock-pending", allAddressed && !submit.isPending && "submit-dock-ready")} data-save-progress-scale={saveProgressScale} data-save-progress-docked={saveProgressDocked ? "true" : "false"} data-mobile-save-progress-mini-to-section="true" data-mobile-save-progress-above-nav="true">
           <SharpButton className={classNames("w-full max-w-full overflow-hidden whitespace-normal break-words text-center transition-all duration-300", saveProgressScale < 0.35 ? "rounded-full px-3 py-2 text-[0px] shadow-none before:content-['SAVE'] before:text-[9px] before:font-black before:tracking-[0.18em]" : saveProgressScale < 0.78 ? "rounded-full px-4 py-3 text-[10px]" : "py-5 text-sm", submit.isPending && "submit-button-pending")} disabled={submit.isPending} onClick={() => submit.mutate({ ...form, reflectionShared: false, dayNumber: snapshot?.challenge.currentDay ?? 1 })}>
-            {submit.isPending ? (allAddressed ? "Submitting the log" : "Saving progress") : allAddressed ? `Submit day ${snapshot?.challenge.currentDay ?? 1}` : `Save progress — ${Math.max(0, passThreshold - completedRules)} more for pass`}
+            {submit.isPending ? (allAddressed ? "Banking the day" : "Saving the work") : allAddressed ? `Submit day ${snapshot?.challenge.currentDay ?? 1}` : `Save draft — ${Math.max(0, passThreshold - completedRules)} more to bank it`}
           </SharpButton>
-          {saveProgressDocked && !allAddressed && <p className="mt-2 text-center text-[10px] font-black uppercase tracking-[0.16em] text-[#C8A96E]/80">Draft only until 5/6 is reached. Lives judged after rollover.</p>}
+          {saveProgressDocked && !allAddressed && <p className="mt-2 text-center text-[10px] font-black uppercase tracking-[0.16em] text-[#C8A96E]/80">Draft only until 5/6 is real. Lives are judged at rollover.</p>}
           {saveNotice && <div role="status" className={classNames("pointer-events-none absolute -top-3 right-3 rounded-full border bg-black/90 px-2 py-1 text-[9px] font-black uppercase leading-none tracking-[0.16em] shadow-[0_0_18px_rgba(0,0,0,0.45)]", saveNotice.complete ? "border-[#2ECC71]/70 text-[#2ECC71]" : "border-[#C8A96E]/70 text-[#C8A96E]")}>{saveNotice.title}</div>}
-          {draftRestored && <div role="status" className="pointer-events-none absolute -top-3 left-3 rounded-full border border-[#C8A96E]/70 bg-black/90 px-2 py-1 text-[9px] font-black uppercase leading-none tracking-[0.16em] text-[#C8A96E] shadow-[0_0_18px_rgba(0,0,0,0.45)]">Draft restored</div>}
-          {lastMissed.length > 0 && <div className="mt-3 border-l-4 border-[#C0392B] bg-[#180F0F] p-4 text-sm font-bold text-[#F0B7AE]">Missed after rollover: {lastMissed.join(", ")}. Penalty logged.</div>}
+          {draftRestored && <div role="status" className="pointer-events-none absolute -top-3 left-3 rounded-full border border-[#C8A96E]/70 bg-black/90 px-2 py-1 text-[9px] font-black uppercase leading-none tracking-[0.16em] text-[#C8A96E] shadow-[0_0_18px_rgba(0,0,0,0.45)]">Draft recovered</div>}
+          {lastMissed.length > 0 && <div className="mt-3 border-l-4 border-[#C0392B] bg-[#180F0F] p-4 text-sm font-bold text-[#F0B7AE]">Rollover miss: {lastMissed.join(", ")}. Penalty recorded.</div>}
         </div>
       </section>
 
       <aside className="min-w-0 max-w-full space-y-5 overflow-x-hidden">
         <WardenPresence snapshot={snapshot} />
-        <HealthBar lives={participant?.livesRemaining ?? 4} label="Lives remain" />
+        <HealthBar lives={participant?.livesRemaining ?? 4} label="Lives remaining" />
         <div className={classNames("motion-card ghost-life-card border p-4 transition", ghostLifeLocked ? "border-[#4A315D] bg-[#120F18] opacity-80" : "border-[#2A2A2A] bg-[#101010]")} data-ghost-life-state={ghostLifeLocked ? "locked" : "available"}>
           <div className="flex items-start justify-between gap-3">
             <MicroLabel tone="purple">Ghost Life</MicroLabel>
             {ghostLifeLocked && <span className="border border-[#9B59B6]/60 bg-[#1B1024] px-2 py-1 text-[9px] font-black uppercase tracking-[0.16em] text-[#D8B4FE]">Locked</span>}
           </div>
-          <p className="mt-3 text-2xl font-black uppercase leading-none text-white">{ghostLifeLocked ? "Used. Locked." : "One shot. No repeats."}</p>
-          <p className="mt-3 text-sm font-bold leading-6 text-[#999]">{ghostLifeLocked ? "Your Purple Ghost Life has already restored a life. It is now locked for the rest of the challenge." : "Tap once after a lost life to restore one purple Ghost Life. It cannot be used twice."}</p>
+          <p className="mt-3 text-2xl font-black uppercase leading-none text-white">{ghostLifeLocked ? "Used. Locked." : "One rescue. No repeats."}</p>
+          <p className="mt-3 text-sm font-bold leading-6 text-[#999]">{ghostLifeLocked ? "Your Purple Ghost Life has already restored a life. It is now locked for the rest of the challenge." : "Use it once after a lost life to restore one purple Ghost Life. After that, it is gone."}</p>
           <SharpButton className={classNames("mt-4 w-full", ghostLifeLocked ? "border-[#4A315D] bg-[#1B1420] text-[#8D7898] shadow-none" : "border-[#9B59B6] bg-[#9B59B6] text-white shadow-[0_0_28px_rgba(155,89,182,0.24)]")} disabled={ghost.isPending || ghostLifeLocked} aria-disabled={ghostLifeLocked} onClick={() => ghost.mutate({ exerciseDuration: form.exerciseDuration, insightCount: form.readTeachText.split(".").filter(Boolean).length })}>
-            {ghostLifeLocked ? "Ghost Life locked" : ghost.isPending ? "Summoning ghost life" : "Use purple Ghost Life"}
+            {ghostLifeLocked ? "Ghost Life locked" : ghost.isPending ? "Restoring Ghost Life" : "Use Purple Ghost Life"}
           </SharpButton>
         </div>
         <div className="border border-[#2A2A2A] bg-[#101010] p-4">
-          <MicroLabel tone="red">Last Warden note</MicroLabel>
-          <p className="mt-3 text-sm font-bold leading-6 text-[#BDBDBD]">{latestWarden?.content ?? "Nothing to hide behind. Log the day."}</p>
+          <MicroLabel tone="red">Latest Warden note</MicroLabel>
+          <p className="mt-3 text-sm font-bold leading-6 text-[#BDBDBD]">{latestWarden?.content ?? "No hiding place. Log the day."}</p>
         </div>
       </aside>
     </div>
@@ -1217,12 +1217,12 @@ function getBoostToneClass(tone?: string) {
 }
 
 function WardenMoodCard({ mood, isLoading }: { mood: any; isLoading?: boolean }) {
-  const safeMood = mood ?? { label: "Reading the room", tone: "white", detail: "The Warden is checking today's log, proof, lives, and reflection depth.", confidence: 0, source: "fallback" };
+  const safeMood = mood ?? { label: "Reading the evidence", tone: "white", detail: "The Warden is reading today’s log, proof, lives, and private reflection signal.", confidence: 0, source: "fallback" };
   return (
     <article className={classNames("motion-card min-w-0 rounded-[1.4rem] border p-4", getBoostToneClass(safeMood.tone))} data-testid="warden-mood-card">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <MicroLabel tone={safeMood.tone === "red" ? "red" : safeMood.tone === "green" ? "green" : safeMood.tone === "purple" ? "purple" : "gold"}>Warden Mood</MicroLabel>
-        <span className="rounded-full border border-current/40 bg-black/40 px-2 py-1 text-[8px] font-black uppercase tracking-[0.14em]">{isLoading ? "Reading" : safeMood.source === "ai" ? "AI read" : "Data read"}</span>
+        <span className="rounded-full border border-current/40 bg-black/40 px-2 py-1 text-[8px] font-black uppercase tracking-[0.14em]">{isLoading ? "Reading" : safeMood.source === "ai" ? "Warden read" : "Rules read"}</span>
       </div>
       <h3 className="mt-3 break-words text-2xl font-black uppercase leading-none tracking-[-0.07em] text-white">{safeMood.label}</h3>
       <p className="mt-3 text-xs font-black uppercase leading-5 tracking-[0.12em] text-[#D8D8D8]">{safeMood.detail}</p>
@@ -1280,8 +1280,8 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
   const totalLivesLost = insights.reduce((sum: number, p: any) => sum + p.livesLost, 0);
   const pendingPayments = payments.filter((p: any) => p.status === "pending").length;
   const pendingRewards = redemptions.filter((r: any) => r.status === "pending").length;
-  const riskCount = insights.filter((p: any) => Number(p.riskScore ?? 0) >= 42 || Number(p.livesRemaining ?? 4) <= 2).length;
-  const riskLeader = [...insights].sort((a: any, b: any) => b.riskScore - a.riskScore || a.livesRemaining - b.livesRemaining)[0];
+  const riskCount = insights.filter((p: any) => Number(p.riskPoints ?? 0) >= 42 || Number(p.livesRemaining ?? 4) <= 2).length;
+  const riskLeader = [...insights].sort((a: any, b: any) => b.riskPoints - a.riskPoints || a.livesRemaining - b.livesRemaining)[0];
   const liveAppPoints = insights.reduce((sum: number, participant: any) => {
     const taskPoints = calculateLiveTaskPoints(participant.completedRulesToday, {
       hasProof: logHasProof(participant.todayLog),
@@ -1290,22 +1290,22 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
     });
     return sum + taskPoints.visibleTotal;
   }, 0);
-  const compareRows = [...rankedInsights].sort((a: any, b: any) => b.riskScore - a.riskScore || b.totalPoints - a.totalPoints);
+  const compareRows = [...rankedInsights].sort((a: any, b: any) => b.riskPoints - a.riskPoints || b.totalPoints - a.totalPoints);
   const rivalryCards = [
     {
-      label: "You are chasing",
+      label: "Target above",
       tone: "gold" as const,
       participant: chasing,
-      emptyTitle: "Top of your lane",
-      emptyDetail: "No one sits directly above you right now.",
+      emptyTitle: "No one above you",
+      emptyDetail: "You are setting the pace in your lane.",
       gap: chasing ? Math.max(0, Number(chasing.totalPoints ?? 0) - Number(currentParticipant?.totalPoints ?? 0)) : 0,
     },
     {
-      label: "Behind you",
+      label: "Threat below",
       tone: "red" as const,
       participant: beingChasedBy,
-      emptyTitle: "No immediate tail",
-      emptyDetail: "Hold the standard before someone closes the gap.",
+      emptyTitle: "No close threat",
+      emptyDetail: "Hold the standard before the room closes in.",
       gap: beingChasedBy ? Math.max(0, Number(currentParticipant?.totalPoints ?? 0) - Number(beingChasedBy.totalPoints ?? 0)) : 0,
     },
   ];
@@ -1314,14 +1314,14 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
     <div className="motion-page space-y-4 overflow-hidden" data-testid="overview-metrics-dashboard">
       <section className="relative overflow-hidden rounded-[1.6rem] border border-[#C0392B]/55 bg-[#160908] p-4 shadow-[0_0_40px_rgba(192,57,43,0.12)] sm:p-6" data-testid="overview-red-alert-pace-card">
         <div className="pointer-events-none absolute -right-12 -top-16 h-40 w-40 rounded-full bg-[#C0392B]/20 blur-3xl" />
-        <MicroLabel tone="red">Overview · pressure map</MicroLabel>
+        <MicroLabel tone="red">Overview · pressure board</MicroLabel>
         <div className="relative mt-3 grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
           <div className="min-w-0">
             <h2 className="break-words text-4xl font-black uppercase leading-none tracking-[-0.09em] text-white sm:text-6xl">{onPaceCount}/{participantCount || 0} on pace.</h2>
-            <p className="mt-3 max-w-xl text-xs font-black uppercase leading-5 tracking-[0.13em] text-[#FFB3A8]">Alarming pace check: participants only count as on pace when their completed challenge days have kept up with day {currentDay}.</p>
+            <p className="mt-3 max-w-xl text-xs font-black uppercase leading-5 tracking-[0.13em] text-[#FFB3A8]">Pace is strict: you only count as on track when completed challenge days have kept up with day {currentDay}.</p>
           </div>
           <div className="rounded-[1.1rem] border border-[#C0392B]/60 bg-black/35 p-3 text-right">
-            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#777]">Today green</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#777]">Banked today</p>
             <p className="mt-1 text-3xl font-black leading-none text-[#C8A96E]">{todayComplete}/{participantCount || 0}</p>
             <p className="mt-2 text-[9px] font-black uppercase tracking-[0.14em] text-[#777]">{todayOpened}/{participantCount || 0} opened</p>
           </div>
@@ -1329,9 +1329,9 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
       </section>
 
       <section className="grid gap-2 sm:grid-cols-3" data-testid="overview-intelligence-grid">
-        <OverviewMetricCard label="Risk flags" value={riskCount} detail={`${riskLeader?.displayName ?? "No one"} is the current pressure signal`} tone={riskCount ? "red" : "green"} />
-        <OverviewMetricCard label="Live app points" value={liveAppPoints} detail="Visible task, proof, insight and tracking value from today" tone="green" />
-        <OverviewMetricCard label="Top boost earner" value={topBoostEarner ? `+${topBoostEarner.totalBoostPoints}` : 0} detail={topBoostEarner ? `${topBoostEarner.participant.displayName} · ${topBoostEarner.wins.length} wins` : "No boost wins banked yet"} tone={topBoostEarner ? "gold" : "white"} />
+        <OverviewMetricCard label="Pressure flags" value={riskCount} detail={`${riskLeader?.displayName ?? "No one"} is carrying the current pressure signal`} tone={riskCount ? "red" : "green"} />
+        <OverviewMetricCard label="Live points bank" value={liveAppPoints} detail="Today’s visible value from tasks, proof, insight, and tracking" tone="green" />
+        <OverviewMetricCard label="Boost leader" value={topBoostEarner ? `+${topBoostEarner.totalBoostPoints}` : 0} detail={topBoostEarner ? `${topBoostEarner.participant.displayName} · ${topBoostEarner.wins.length} wins` : "No boosts banked yet"} tone={topBoostEarner ? "gold" : "white"} />
       </section>
 
       <section className="grid gap-3 lg:grid-cols-[0.9fr_1.1fr]" data-testid="overview-boost-warden-grid">
@@ -1340,7 +1340,7 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
               <MicroLabel tone="green">Active boosts</MicroLabel>
-              <h3 className="mt-2 text-2xl font-black uppercase leading-none tracking-[-0.07em] text-white">Today's three +5 windows.</h3>
+              <h3 className="mt-2 text-2xl font-black uppercase leading-none tracking-[-0.07em] text-white">Three +5 windows. Earned, not given.</h3>
             </div>
             <span className="rounded-full border border-[#2ECC71]/55 bg-black/45 px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.16em] text-[#2ECC71]">Day {currentDay}</span>
           </div>
@@ -1355,22 +1355,22 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
                     <span className="rounded-full border border-current/40 bg-black/40 px-2 py-1 text-[8px] font-black uppercase tracking-[0.14em]">{win ? "Claimed" : "Open"}</span>
                   </div>
                   <p className="mt-3 text-sm font-black uppercase tracking-[-0.03em] text-white">{boost.name}</p>
-                  <p className="mt-1 text-[10px] font-black uppercase tracking-[0.13em]">{win ? `+${win.pointsAwarded} · ${owner?.displayName ?? "Winner"}` : "+5 additive"}</p>
+                  <p className="mt-1 text-[10px] font-black uppercase tracking-[0.13em]">{win ? `+${win.pointsAwarded} · ${owner?.displayName ?? "Winner"}` : "+5 bonus available"}</p>
                   <p className="mt-3 text-[10px] font-black uppercase leading-5 tracking-[0.12em] text-[#BDBDBD]">{win?.wardenNote ?? boost.shortRule}</p>
                 </div>
               );
             })}
           </div>
-          <p className="mt-3 text-[9px] font-black uppercase tracking-[0.15em] text-[#777]">Your banked boosts: {ownBoostWins.length} wins · +{ownTotalBoostPoints} additive. Base scores stay untouched.</p>
-          {unclaimedTodayBoosts.length > 0 && <p className="mt-2 rounded-full border border-[#C8A96E]/45 bg-[#16130B] px-3 py-2 text-[9px] font-black uppercase tracking-[0.14em] text-[#C8A96E]" data-testid="unclaimed-boost-alert">Unclaimed windows still open: {unclaimedTodayBoosts.map((boost: any) => boost.name).join(" · ")}</p>}
+          <p className="mt-3 text-[9px] font-black uppercase tracking-[0.15em] text-[#777]">Your boost bank: {ownBoostWins.length} wins · +{ownTotalBoostPoints} additive. Base scoring stays clean.</p>
+          {unclaimedTodayBoosts.length > 0 && <p className="mt-2 rounded-full border border-[#C8A96E]/45 bg-[#16130B] px-3 py-2 text-[9px] font-black uppercase tracking-[0.14em] text-[#C8A96E]" data-testid="unclaimed-boost-alert">Still open: {unclaimedTodayBoosts.map((boost: any) => boost.name).join(" · ")}</p>}
         </article>
       </section>
 
       <section className="rounded-[1.4rem] border border-[#2A2A2A] bg-[#101010] p-4 sm:p-5" data-testid="personal-rivalry-cards">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <MicroLabel tone="gold">Personal rivalry</MicroLabel>
-            <h3 className="mt-2 text-2xl font-black uppercase leading-none tracking-[-0.07em] text-white">Who you chase. Who is hunting you.</h3>
+            <MicroLabel tone="gold">Rival pressure</MicroLabel>
+            <h3 className="mt-2 text-2xl font-black uppercase leading-none tracking-[-0.07em] text-white">The gap above. The threat below.</h3>
           </div>
           <span className="rounded-full border border-[#C8A96E]/45 bg-[#16130B] px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.16em] text-[#C8A96E]">Your rank #{currentRank + 1 || "—"}</span>
         </div>
@@ -1398,23 +1398,23 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
       <section className="rounded-[1.4rem] border border-[#2A2A2A] bg-[#101010] p-4 sm:p-5" data-testid="overview-compare-list">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <MicroLabel tone="red">Compare list</MicroLabel>
-            <h3 className="mt-2 text-2xl font-black uppercase leading-none tracking-[-0.07em] text-white">Lives. Pace bars. Risk badges.</h3>
+            <MicroLabel tone="red">Pressure list</MicroLabel>
+            <h3 className="mt-2 text-2xl font-black uppercase leading-none tracking-[-0.07em] text-white">Lives, pace, risk — all visible.</h3>
           </div>
-          <p className="max-w-sm text-[10px] font-black uppercase leading-5 tracking-[0.14em] text-[#777]">Presentation only: the same participant points, lives, logs, pass pace, proof and risk calculations are still used underneath.</p>
+          <p className="max-w-sm text-[10px] font-black uppercase leading-5 tracking-[0.14em] text-[#777]">Same points, lives, logs, proof, pace, and risk logic — just shown sharper.</p>
         </div>
         <div className="mt-4 space-y-2">
           {compareRows.map((p: any, index: number) => {
             const pace = Math.max(0, Math.min(100, pct(Number(p.completeCount ?? 0), currentDay)));
-            const riskTone = Number(p.riskScore ?? 0) >= 60 || Number(p.livesRemaining ?? 4) <= 1 ? "red" : Number(p.riskScore ?? 0) >= 42 || Number(p.livesRemaining ?? 4) <= 2 ? "gold" : "green";
-            const riskLabel = riskTone === "red" ? "High risk" : riskTone === "gold" ? "Watch" : "Stable";
+            const riskTone = Number(p.riskPoints ?? 0) >= 60 || Number(p.livesRemaining ?? 4) <= 1 ? "red" : Number(p.riskPoints ?? 0) >= 42 || Number(p.livesRemaining ?? 4) <= 2 ? "gold" : "green";
+            const riskLabel = riskTone === "red" ? "Red zone" : riskTone === "gold" ? "Watch closely" : "Holding";
             return (
               <button key={p.id} type="button" onClick={() => { pulse(14); setSelected(p); }} className={classNames("motion-row motion-press w-full rounded-[1.1rem] border bg-[#0D0D0D] p-3 text-left transition hover:border-[#C8A96E] focus-visible:border-[#C8A96E] focus-visible:outline-none", riskTone === "red" ? "border-[#C0392B]/70" : "border-[#2A2A2A]")} aria-label={`Open ${p.displayName} participant stats`} data-testid="overview-compare-row">
                 <div className="grid grid-cols-[34px_minmax(0,1fr)_auto] items-start gap-3">
                   <span className={classNames("text-2xl font-black", riskTone === "red" ? "text-[#FFB3A8]" : index < 3 ? "text-[#C8A96E]" : "text-[#777]")}>#{index + 1}</span>
                   <span className="min-w-0">
                     <span className="block truncate text-lg font-black uppercase tracking-[-0.04em] text-white">{p.displayName}</span>
-                    <span className="mt-1 block text-[10px] font-black uppercase tracking-[0.13em] text-[#777]">{p.completeCount}/{currentDay} pass pace · {p.totalPoints} pts</span>
+                    <span className="mt-1 block text-[10px] font-black uppercase tracking-[0.13em] text-[#777]">{p.completeCount}/{currentDay} pace · {p.totalPoints} pts</span>
                   </span>
                   <span className={classNames("rounded-full border px-2.5 py-1 text-[8px] font-black uppercase tracking-[0.13em]", riskTone === "red" ? "border-[#C0392B] bg-[#C0392B]/15 text-[#FFB3A8]" : riskTone === "gold" ? "border-[#C8A96E] bg-[#16130B] text-[#C8A96E]" : "border-[#2ECC71] bg-[#07150D] text-[#2ECC71]")}>{riskLabel}</span>
                 </div>
@@ -1507,9 +1507,9 @@ function ParticipantSheet({ participant, onClose }: { participant: any; onClose:
         <div className="flex min-w-0 items-start gap-3 sm:gap-4">
           <ProfilePhoto participant={visibleParticipant} className="h-14 w-14 shrink-0 sm:h-20 sm:w-20" enlargeable onOpen={() => setPhotoExpanded(true)} />
           <div className="min-w-0 flex-1">
-            <MicroLabel tone="gold">Participant stats</MicroLabel>
+            <MicroLabel tone="gold">Participant dossier</MicroLabel>
             <h3 className="mt-2 break-words text-2xl font-black uppercase leading-none tracking-[-0.07em] text-white sm:text-4xl">{visibleParticipant.displayName}</h3>
-            <p className="mt-2 text-[10px] font-black uppercase leading-4 tracking-[0.16em] text-[#777]">Tap the display picture to enlarge it.</p>
+            <p className="mt-2 text-[10px] font-black uppercase leading-4 tracking-[0.16em] text-[#777]">Tap the display picture for a closer look.</p>
           </div>
         </div>
         <div className="mt-5 grid grid-cols-1 gap-2 bg-[#2A2A2A] p-[2px] min-[380px]:grid-cols-3">
@@ -1517,12 +1517,12 @@ function ParticipantSheet({ participant, onClose }: { participant: any; onClose:
           <PosterStat label="Streak" value={visibleParticipant.currentStreak} tone="green" />
           <PosterStat label="Days" value={visibleParticipant.daysComplete} tone="white" />
         </div>
-        <div className="mt-5"><HealthBar lives={visibleParticipant.livesRemaining} label="Lives status" /></div>
+        <div className="mt-5"><HealthBar lives={visibleParticipant.livesRemaining} label="Life status" /></div>
         <section className="mt-5 border border-[#2A2A2A] bg-black/35 p-3 sm:p-4">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
-              <MicroLabel tone="green">Board compliance</MicroLabel>
-              <h4 className="mt-2 text-2xl font-black uppercase tracking-[-0.06em] text-white">Tapped profile detail.</h4>
+              <MicroLabel tone="green">Compliance read</MicroLabel>
+              <h4 className="mt-2 text-2xl font-black uppercase tracking-[-0.06em] text-white">Latest proof of standard.</h4>
             </div>
             <span className={classNames("border px-3 py-2 text-[10px] font-black uppercase tracking-[0.16em]", latestLog && latestCompletedRules >= DAILY_PASS_THRESHOLD ? "border-[#2ECC71] text-[#2ECC71]" : "border-[#C8A96E] text-[#C8A96E]")}>{latestLog ? `${latestCompletedRules}/${DAILY_RULE_COUNT} latest` : "No log yet"}</span>
           </div>
@@ -1539,7 +1539,7 @@ function ParticipantSheet({ participant, onClose }: { participant: any; onClose:
               })}
             </div>
           ) : (
-            <p className="mt-4 border border-[#2A2A2A] bg-[#0D0D0D] p-4 text-xs font-black uppercase tracking-[0.14em] text-[#777]">No submitted rules yet for this participant.</p>
+            <p className="mt-4 border border-[#2A2A2A] bg-[#0D0D0D] p-4 text-xs font-black uppercase tracking-[0.14em] text-[#777]">No submitted standards yet for this participant.</p>
           )}
         </section>
         {photoExpanded && normaliseProfilePhotoUrl(visibleParticipant.profilePhotoUrl) && (
@@ -1557,14 +1557,14 @@ function ParticipantSheet({ participant, onClose }: { participant: any; onClose:
 }
 
 function ProofMediaStrip({ items, onRemove }: { items: ProofMediaItem[]; onRemove?: (index: number) => void }) {
-  if (items.length === 0) return <p className="mt-2 text-[10px] font-black uppercase tracking-[0.16em] text-[#777]">No proof media attached yet.</p>;
+  if (items.length === 0) return <p className="mt-2 text-[10px] font-black uppercase tracking-[0.16em] text-[#777]">No proof attached yet.</p>;
   return (
     <div className="mt-3 overflow-x-auto">
       <div className="flex gap-2 pb-1">
         {items.map((item, index) => (
           <div key={`${item.url}-${index}`} className="relative min-w-[8.5rem] max-w-[8.5rem] border border-[#2A2A2A] bg-[#080808] p-2">
             <div className="aspect-video overflow-hidden bg-black">
-              {item.type === "video" ? <video src={proofImageSrc(item.url) || item.url} className="h-full w-full object-cover" muted playsInline preload="metadata" /> : proofImageSrc(item.url) ? <img src={proofImageSrc(item.url)} alt={`Proof media ${index + 1}`} className="h-full w-full object-cover" loading="lazy" decoding="async" /> : <div className="grid h-full place-items-center px-2 text-center text-[9px] font-black uppercase tracking-[0.12em] text-[#C8A96E]">Link / note</div>}
+              {item.type === "video" ? <video src={proofImageSrc(item.url) || item.url} className="h-full w-full object-cover" muted playsInline preload="metadata" /> : proofImageSrc(item.url) ? <img src={proofImageSrc(item.url)} alt={`Proof media ${index + 1}`} className="h-full w-full object-cover" loading="lazy" decoding="async" /> : <div className="grid h-full place-items-center px-2 text-center text-[9px] font-black uppercase tracking-[0.12em] text-[#C8A96E]">Proof note</div>}
             </div>
             <p className="mt-2 truncate text-[9px] font-black uppercase tracking-[0.12em] text-[#777]">{item.type} {index + 1}</p>
             {onRemove && <button type="button" onClick={() => onRemove(index)} className="absolute right-1 top-1 grid h-6 w-6 place-items-center border border-[#2A2A2A] bg-black/80 text-[#C0392B]" aria-label={`Remove proof item ${index + 1}`}><X className="h-3 w-3" /></button>}
@@ -1606,17 +1606,17 @@ function ProofImage({ url, dayNumber }: { url: string; dayNumber: number }) {
   return (
     <div className="mt-3">
       {!failed && (
-        <a href={src} target="_blank" rel="noreferrer" className="block" aria-label={`Open proof image for day ${dayNumber}`}>
+        <a href={src} target="_blank" rel="noreferrer" className="block" aria-label={`Open proof for day ${dayNumber}`}>
           <img src={src} alt={`Exercise proof for day ${dayNumber}`} className="motion-image-zoom max-h-80 w-full border border-[#2A2A2A] bg-black object-contain" loading="lazy" decoding="async" onError={() => setFailed(true)} />
         </a>
       )}
       {failed && (
         <div className="border border-[#2A2A2A] bg-[#111] p-4 text-xs font-bold leading-5 text-[#D8D8D8]">
-          <p className="font-black uppercase tracking-[0.14em] text-[#C8A96E]">Proof image could not preview inline.</p>
-          <p className="mt-2 text-[#777]">Tap the link below to open the stored image directly.</p>
+          <p className="font-black uppercase tracking-[0.14em] text-[#C8A96E]">Proof could not preview here.</p>
+          <p className="mt-2 text-[#777]">Open the stored proof directly below.</p>
         </div>
       )}
-      <a href={src} target="_blank" rel="noreferrer" className="mt-2 block break-all text-[10px] font-black uppercase tracking-[0.14em] text-[#C8A96E]">Open proof image</a>
+      <a href={src} target="_blank" rel="noreferrer" className="mt-2 block break-all text-[10px] font-black uppercase tracking-[0.14em] text-[#C8A96E]">Open proof</a>
     </div>
   );
 }
@@ -1636,10 +1636,10 @@ function LifeDots({ lives, compact = false }: { lives: number; compact?: boolean
 function PodiumCard({ participant, index, onSelect, className }: { participant: any; index: number; onSelect: () => void; className?: string }) {
   const rank = index + 1;
   const styles = rank === 1
-    ? { label: "1st", border: "border-[#C8A96E]", bg: "bg-[#181207]", text: "text-[#C8A96E]", ring: "shadow-[0_0_56px_rgba(200,169,110,0.32)]", height: "min-h-[15rem] sm:min-h-[18rem]", crown: "CHALLENGE LEADER" }
+    ? { label: "1st", border: "border-[#C8A96E]", bg: "bg-[#181207]", text: "text-[#C8A96E]", ring: "shadow-[0_0_56px_rgba(200,169,110,0.32)]", height: "min-h-[15rem] sm:min-h-[18rem]", crown: "STANDARD SETTER" }
     : rank === 2
-      ? { label: "2nd", border: "border-[#BFC7D5]", bg: "bg-[#10131A]", text: "text-[#BFC7D5]", ring: "shadow-[0_0_32px_rgba(191,199,213,0.14)]", height: "min-h-[13rem] sm:min-h-[15.5rem]", crown: "CLOSEST THREAT" }
-      : { label: "3rd", border: "border-[#B87333]", bg: "bg-[#1A1009]", text: "text-[#D58A45]", ring: "shadow-[0_0_32px_rgba(184,115,51,0.16)]", height: "min-h-[12rem] sm:min-h-[14rem]", crown: "PODIUM HOLD" };
+      ? { label: "2nd", border: "border-[#BFC7D5]", bg: "bg-[#10131A]", text: "text-[#BFC7D5]", ring: "shadow-[0_0_32px_rgba(191,199,213,0.14)]", height: "min-h-[13rem] sm:min-h-[15.5rem]", crown: "NEAREST THREAT" }
+      : { label: "3rd", border: "border-[#B87333]", bg: "bg-[#1A1009]", text: "text-[#D58A45]", ring: "shadow-[0_0_32px_rgba(184,115,51,0.16)]", height: "min-h-[12rem] sm:min-h-[14rem]", crown: "PODIUM POSITION" };
   return (
     <button type="button" onClick={onSelect} className={classNames("motion-card motion-press relative isolate overflow-hidden border-2 p-4 text-left transition hover:-translate-y-1", styles.border, styles.bg, styles.ring, styles.height, className)} data-podium-rank={rank} data-testid="stepped-podium-card">
       <div className={classNames("pointer-events-none absolute inset-x-6 -top-10 h-28 rounded-full blur-3xl", rank === 1 ? "bg-[#C8A96E]/25" : "bg-white/5")} />
@@ -1653,7 +1653,7 @@ function PodiumCard({ participant, index, onSelect, className }: { participant: 
       <h3 className="relative mt-5 break-words text-2xl font-black uppercase leading-none tracking-[-0.07em] text-white">{participant?.displayName ?? "—"}</h3>
       <div className="relative mt-4 flex items-end justify-between gap-3">
         <div>
-          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#777]">Score</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#777]">Points</p>
           <p className={classNames("mt-1 text-4xl font-black leading-none tabular-nums", styles.text)}>{participant?.totalPoints ?? 0}</p>
         </div>
         <div className="text-right">
@@ -1681,7 +1681,7 @@ function Leaderboard({ snapshot }: { snapshot: Snapshot }) {
   const boostSlots = activeBoosts.map((boost: any, index: number) => {
     const win = todayBoostWins.find((item: any) => item.boostId === boost.id);
     const owner = win ? participants.find((participant: any) => String(participant.id) === String(win.userId)) : null;
-    return { ...boost, state: win ? "Claimed" : "Open", title: owner?.displayName ?? boost.name, value: win ? `+${win.pointsAwarded} additive` : "+5 additive", detail: win?.wardenNote ?? boost.antiGaming ?? boost.shortRule, slot: boost.slot ?? index + 1 };
+    return { ...boost, state: win ? "Claimed" : "Open", title: owner?.displayName ?? boost.name, value: win ? `+${win.pointsAwarded} additive` : "+5 bonus available", detail: win?.wardenNote ?? boost.antiGaming ?? boost.shortRule, slot: boost.slot ?? index + 1 };
   });
   return (
     <section className="motion-page space-y-4 overflow-hidden border border-[#2A2A2A] bg-[#101010] p-3 sm:p-5" data-testid="bosses-board-section">
@@ -1736,7 +1736,7 @@ function Leaderboard({ snapshot }: { snapshot: Snapshot }) {
           const detailId = `board-player-${p.id}-metrics`;
           const pointsGap = index === 0 ? "Leader" : `${Math.max(0, leaderPoints - Number(p.totalPoints ?? 0))} behind`;
           const previousGap = index === 0 ? "No gap" : `${Math.max(0, Number(ranked[index - 1]?.totalPoints ?? 0) - Number(p.totalPoints ?? 0))} to catch`;
-          const eliminationRisk = Number(p.riskScore ?? 0) >= 60 || Number(p.livesRemaining ?? 4) <= 1;
+          const eliminationRisk = Number(p.riskPoints ?? 0) >= 60 || Number(p.livesRemaining ?? 4) <= 1;
           const playerBoostWins = allBoostWins.filter((win: any) => String(win.userId) === String(p.id));
           const todayPlayerBoostWins = todayBoostWins.filter((win: any) => String(win.userId) === String(p.id));
           const totalBoostPoints = playerBoostWins.reduce((sum: number, win: any) => sum + Number(win.pointsAwarded ?? 5), 0);
@@ -1877,16 +1877,16 @@ function OnboardingGate({ user, refetch }: { user: any; refetch: () => void }) {
         </div>
         <form className="mx-auto max-w-3xl border border-[#2A2A2A] bg-[#101010] p-5 shadow-[0_22px_90px_rgba(0,0,0,0.38)]" onSubmit={event => { event.preventDefault(); haptics.submit(); complete.mutate({ displayName, primaryGoal, biggestObstacle, trainingLevel: trainingLevel as any, motivationStyle: "adaptive", profilePhotoDataUrl }); }}>
           <MicroLabel tone="red">Unknown email</MicroLabel>
-          <h1 className="mt-3 text-5xl font-black uppercase leading-none tracking-[-0.08em] text-white">Make it yours.</h1>
-          <p className="mt-4 text-sm font-bold leading-6 text-[#999]">{user?.email ?? "This account"} is signed in, but it is not yet recognised in the 6+1 platform. Answer the quick setup and the app will open with your profile, goal, and photo. The Warden adapts from your app activity and group-chat signals rather than a selected style.</p>
+          <h1 className="mt-3 text-5xl font-black uppercase leading-none tracking-[-0.08em] text-white">Enter the board.</h1>
+          <p className="mt-4 text-sm font-bold leading-6 text-[#999]">{user?.email ?? "This account"} is signed in, but not yet on the 6+1 board. Complete the intake and the app will open with your profile, goal, and photo. The Warden adapts from your work, private reflections, and group-chat signals rather than a chosen style.</p>
           <div className="mt-6 grid gap-4 md:grid-cols-[160px_1fr]">
             <label className="grid min-h-40 cursor-pointer place-items-center border border-dashed border-[#C8A96E]/70 bg-black/40 p-4 text-center text-[#C8A96E] transition hover:bg-[#17120A]">
               {profilePhotoDataUrl ? <img src={profilePhotoDataUrl} alt="Profile preview" className="h-28 w-28 object-cover" /> : <span className="flex flex-col items-center gap-2 text-[10px] font-black uppercase tracking-[0.16em]"><Camera className="h-6 w-6" />Upload photo</span>}
               <input type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={event => handlePhoto(event.target.files?.[0])} />
             </label>
             <div className="space-y-3">
-              <Field label="Display name"><TextInput value={displayName} onChange={event => setDisplayName(event.target.value)} placeholder="How the board should show you" /></Field>
-              <Field label="Main goal"><TextInput value={primaryGoal} onChange={event => setPrimaryGoal(event.target.value)} placeholder="Lose weight, rebuild discipline, build fitness..." /></Field>
+              <Field label="Display name"><TextInput value={displayName} onChange={event => setDisplayName(event.target.value)} placeholder="Name shown on the board" /></Field>
+              <Field label="Main goal"><TextInput value={primaryGoal} onChange={event => setPrimaryGoal(event.target.value)} placeholder="Drop weight, rebuild discipline, raise standards…" /></Field>
             </div>
           </div>
           <div className="mt-4 grid gap-3">

@@ -120,23 +120,23 @@ export default function Register() {
           <div className="flex min-w-0 items-center gap-3">
             <LogoMark />
             <div>
-              <MicroLabel tone="gold">6+1 registration</MicroLabel>
-              <p className="mt-2 text-xs font-black uppercase tracking-[0.18em] text-white">Five answers. One universal Warden.</p>
+              <MicroLabel tone="gold">6+1 intake</MicroLabel>
+              <p className="mt-2 text-xs font-black uppercase tracking-[0.18em] text-white">Five answers. One standard.</p>
             </div>
           </div>
-          <Link href="/" className="inline-flex min-h-11 items-center justify-center gap-2 border border-[#2A2A2A] bg-black px-4 text-xs font-black uppercase tracking-[0.16em] text-white transition hover:border-[#C8A96E] hover:text-[#C8A96E]"><ArrowLeft className="h-4 w-4" /> Back home</Link>
+          <Link href="/" className="inline-flex min-h-11 items-center justify-center gap-2 border border-[#2A2A2A] bg-black px-4 text-xs font-black uppercase tracking-[0.16em] text-white transition hover:border-[#C8A96E] hover:text-[#C8A96E]"><ArrowLeft className="h-4 w-4" /> Back to base</Link>
         </nav>
 
         <div className="grid gap-6 py-8 lg:grid-cols-[0.82fr_1.18fr] lg:items-start">
           <aside className="border border-[#2A2A2A] bg-[#101010] p-5 lg:sticky lg:top-6">
-            <MicroLabel tone="red">New challenger</MicroLabel>
-            <h1 className="mt-4 text-5xl font-black uppercase leading-[0.86] tracking-[-0.08em] text-white md:text-7xl">Register once.</h1>
+            <MicroLabel tone="red">New contender</MicroLabel>
+            <h1 className="mt-4 text-5xl font-black uppercase leading-[0.86] tracking-[-0.08em] text-white md:text-7xl">Enter once. Show up daily.</h1>
             <p className="mt-5 text-sm font-bold leading-7 text-[#BDBDBD]">This page keeps the home page clean. Your answers give the app enough context to start the journey, but you do not choose a Warden type.</p>
             <div className="mt-5 border border-[#C8A96E]/50 bg-black p-4">
               <div className="flex items-start gap-3">
                 <Shield className="mt-1 h-5 w-5 text-[#C8A96E]" />
                 <div>
-                  <MicroLabel tone="gold">Universal Warden</MicroLabel>
+                  <MicroLabel tone="gold">The Warden reads the work</MicroLabel>
                   <p className="mt-2 text-sm font-black leading-6 text-white">The Warden adapts from what you log in the app and what appears in the group-chat context. No style picker needed.</p>
                 </div>
               </div>
@@ -167,7 +167,7 @@ export default function Register() {
             <div className="flex items-start gap-3 border-b border-[#2A2A2A] pb-4">
               <div className="grid h-10 w-10 shrink-0 place-items-center border border-[#C8A96E]/70 text-[#C8A96E]"><UserRound className="h-4 w-4" /></div>
               <div>
-                <MicroLabel tone="gold">Registration questions</MicroLabel>
+                <MicroLabel tone="gold">Challenger intake</MicroLabel>
                 <p className="mt-2 text-sm font-bold leading-6 text-[#AFAFAF]">Answer these once. The home page stays for the challenge overview and returning-member login.</p>
               </div>
             </div>
@@ -198,7 +198,7 @@ export default function Register() {
 
             <div className="mt-5 grid gap-3 border-t border-[#2A2A2A] pt-4 sm:grid-cols-[1fr_auto] sm:items-center">
               <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#777]">No Warden type selection. The Warden learns from app data and group-chat signals.</p>
-              <SharpButton type="submit" disabled={register.isPending}><Mail className="h-4 w-4" />{register.isPending ? "Registering" : "Complete registration"}</SharpButton>
+              <SharpButton type="submit" disabled={register.isPending}><Mail className="h-4 w-4" />{register.isPending ? "Securing entry" : "Enter the challenge"}</SharpButton>
             </div>
           </form>
         </div>

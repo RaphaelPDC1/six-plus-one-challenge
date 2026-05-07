@@ -243,7 +243,7 @@ describe("Home onboarding shell", () => {
     expect(homeSource).toContain('data-testid="entry-choice-panel"');
     expect(homeSource).not.toContain('data-testid="registration-personalization"');
     expect(registerSource).toContain('data-testid="dedicated-registration-form"');
-    expect(registerSource).toContain('Back home');
+    expect(registerSource).toContain('Back to base');
     expect(registerSource).toContain('No Warden type selection. The Warden learns from app data and group-chat signals.');
     expect(registerSource).toContain('supportNeeded: combinedSupport');
     expect(registerSource).not.toContain('motivationStyle');
@@ -395,20 +395,20 @@ describe("Home onboarding shell", () => {
 
     expect(homeSource).toContain('data-testid="overview-metrics-dashboard"');
     expect(homeSource).toContain('data-testid="overview-red-alert-pace-card"');
-    expect(homeSource).toContain("Overview · pressure map");
+    expect(homeSource).toContain("Overview · pressure board");
     expect(homeSource).toContain("on pace.");
     expect(homeSource).toContain('data-testid="overview-intelligence-grid"');
     expect(homeSource).toContain('data-testid="personal-rivalry-cards"');
-    expect(homeSource).toContain("Who you chase. Who is hunting you.");
+    expect(homeSource).toContain("The gap above. The threat below.");
     expect(homeSource).toContain('data-testid="overview-compare-list"');
-    expect(homeSource).toContain("Lives. Pace bars. Risk badges.");
+    expect(homeSource).toContain("Live points bank");
     expect(homeSource).toContain('data-testid="pace-bar"');
     expect(homeSource).toContain("Board / Bosses");
     expect(homeSource).toContain('data-testid="boost-key-slots"');
     expect(homeSource).toContain("Rotating slots. Earned, not gamed.");
     expect(homeSource).toContain('data-testid="overview-active-boosts"');
     expect(homeSource).toContain('data-testid="warden-mood-card"');
-    expect(homeSource).toContain("+5 additive");
+    expect(homeSource).toContain("+5 bonus available");
     expect(homeSource).toContain("const saveProgressDocked = saveProgressScale >= 0.78;");
     expect(homeSource).toContain('data-mobile-save-progress-mini-to-section="true"');
     expect(homeSource).toContain('data-save-progress-docked={saveProgressDocked ? "true" : "false"}');
@@ -461,7 +461,7 @@ describe("Home onboarding shell", () => {
 
     expect(markup).toContain("Unknown email");
     expect(markup).toContain("New email found. Set your profile first.");
-    expect(markup).toContain("Make it yours.");
+    expect(markup).toContain("Enter the board.");
     expect(markup).toContain("new@example.com");
     expect(markup).toContain("brand-logo-image");
   });
@@ -469,12 +469,12 @@ describe("Home onboarding shell", () => {
   it("keeps the six-rule log framed as a must-do checklist with compact feedback and locked Ghost Life hooks", () => {
     const homeSource = readFileSync(new URL("./Home.tsx", import.meta.url), "utf8");
 
-    expect(homeSource).toContain("Must-do today");
-    expect(homeSource).toContain("Six rules. Five gets the day.");
-    expect(homeSource).toContain("5/6 is a pass. Submit the day to bank the points shown above.");
+    expect(homeSource).toContain("Daily Checklist");
+    expect(homeSource).toContain("Six rules. Five banks the day.");
+    expect(homeSource).toContain("5/6 banks the day. Submit once the work is real.");
     expect(homeSource).toContain('data-testid="live-task-points-strip"');
     expect(homeSource).toContain('aria-label="Live points compact strip"');
-    expect(homeSource).toContain("Live points strip");
+    expect(homeSource).toContain("Live points");
     expect(homeSource).toContain("motion-page grid min-w-0 max-w-full gap-5 overflow-x-hidden");
     expect(homeSource).toContain("mb-2 min-w-0 max-w-full overflow-hidden border");
     expect(homeSource).toContain("grid min-w-0 max-w-full grid-cols-4 gap-1");
@@ -491,7 +491,7 @@ describe("Home onboarding shell", () => {
     expect(homeSource).toContain("+{liveTaskPoints.visibleTotal} now");
     expect(readFileSync(new URL("../index.css", import.meta.url), "utf8")).toContain("overflow-x: hidden;");
     expect(homeSource).not.toContain('data-testid="live-task-points-panel"');
-    expect(homeSource).toContain("Draft only until 5/6 is reached. Lives judged after rollover.");
+    expect(homeSource).toContain("Draft only until 5/6 is real. Lives are judged at rollover.");
     expect(homeSource).toContain("function pulse(pattern: number | number[] = 18)");
     expect(homeSource).toContain("navigator.vibrate(pattern)");
     expect(homeSource).toContain("haptics.tap();");
@@ -501,7 +501,7 @@ describe("Home onboarding shell", () => {
     expect(homeSource).toContain('data-ghost-life-state={ghostLifeLocked ? "locked" : "available"}');
     expect(homeSource).toContain("Ghost Life locked");
     expect(homeSource).toContain("Your Purple Ghost Life has already restored a life. It is now locked for the rest of the challenge.");
-    expect(homeSource).toContain("Draft only until 5/6 is reached. Lives judged after rollover.");
+    expect(homeSource).toContain("Draft only until 5/6 is real. Lives are judged at rollover.");
     expect(homeSource).toContain("window.setTimeout(() => setSaveNotice(null), 2200);");
     expect(homeSource).not.toContain("Progress saved quietly");
     expect(homeSource).not.toContain("No life lost before rollover");
@@ -517,7 +517,7 @@ describe("Home onboarding shell", () => {
     expect(homeSource).toContain('`${DRAFT_STORAGE_PREFIX}_${userId}_day${dayNumber}`');
     expect(homeSource).toContain("window.localStorage.setItem(draftStorageKey");
     expect(homeSource).toContain("window.localStorage.removeItem(draftStorageKey);");
-    expect(homeSource).toContain("Draft restored");
+    expect(homeSource).toContain("Draft recovered");
     expect(homeSource).toContain("const savedToday = dailyLogToForm(snapshot?.myLog);");
     expect(homeSource).toContain("setForm(mergeTodayFormWithoutWipingSavedWork(savedToday, storedDraft));");
     expect(homeSource).toContain("setForm(savedToday);");
@@ -526,11 +526,11 @@ describe("Home onboarding shell", () => {
   it("uses a compact flick-card calendar with an expandable full journey view", () => {
     const calendarSource = readFileSync(new URL("./Calendar.tsx", import.meta.url), "utf8");
 
-    expect(calendarSource).toContain("Flick calendar");
-    expect(calendarSource).toContain("Expand full calendar");
-    expect(calendarSource).toContain("Hide full calendar");
+    expect(calendarSource).toContain("Day marker");
+    expect(calendarSource).toContain("Open full map");
+    expect(calendarSource).toContain("Hide full map");
     expect(calendarSource).toContain("setExpanded(value => !value)");
-    expect(calendarSource).toContain("full journey map");
+    expect(calendarSource).toContain("full campaign map");
   });
 
   it("makes Board participant cards tappable with a mobile-readable sheet, back navigation, and enlarged display pictures", () => {

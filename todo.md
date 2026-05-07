@@ -878,3 +878,11 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Ensure loading or refetch states do not visually flash a different fallback mood over a valid existing mood.
 - [x] Add regression coverage for stable mood reuse and non-flickering UI/query behaviour where practical.
 - [x] Validate with focused tests, full tests/typecheck/build as appropriate, project health check, and checkpoint before delivery.
+
+
+## Copy Refinement — Whole-Site Brand Tone
+- [x] Audit user-facing copy across the main site screens, including Today, Overview, Board, Proof, Rewards, Journey, Founder, onboarding, Warden, empty states, labels, CTAs, and status messages.
+- [x] Define and apply a consistent 6+1 brand voice: premium, direct, high-accountability, concise, intense, and clear.
+- [x] Tighten headlines, subcopy, button labels, helper text, and error/empty states without changing existing product behaviour.
+- [x] Add or update regression coverage where copy changes affect tested UI strings.
+- [x] Validate with relevant tests, typecheck/build as appropriate, project health check, and checkpoint before delivery.
