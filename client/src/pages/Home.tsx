@@ -1902,15 +1902,46 @@ function buildProofWardenInsight(owner: any, log: any, ownerLogs: any[]) {
   const pressureWeight = obstacle || supportNeeded || friction !== "easy-exit moment" ? 1 : 0;
   const seed = Math.abs(Number(log?.dayNumber ?? 0) + Number(log?.participantId ?? 0) + firstName.length + recentProofCount);
 
+  const publicProofText = teaching;
+  const proofTextSnippet = publicProofText
+    .replace(/[“”]/g, "\"")
+    .replace(/\s+/g, " ")
+    .split(/[.!?;:\n]/)[0]
+    .trim()
+    .slice(0, 72);
+  const hasPublicProofText = proofTextSnippet.length > 0;
+  const privateReflectionSignal = reflectionSignal
+    ? hasAny(["stress", "tired", "hard", "busy", "tempted", "struggle", "nearly"])
+      ? "you named the pressure without letting it own the day"
+      : "you noticed the pattern while it was still fresh"
+    : "the action gave the day a clean signal";
+
+  const textReading = hasPublicProofText
+    ? hasAny(["discipline", "standard", "routine", "habit", "consistency"])
+      ? "That is not just a quote; it is the standard you are trying to live by."
+      : hasAny(["hard", "struggle", "stress", "tired", "busy", "tempted"])
+        ? "That line matters because it names the fight instead of hiding it."
+        : hasAny(["learn", "read", "book", "lesson", "mindset", "thought"])
+          ? "That is useful because the lesson has already turned into a next decision."
+          : "That line is the personal receipt; it shows what today actually meant."
+    : "The proof is doing the talking today.";
+
   const effortSignal = exerciseDuration >= 45
     ? `${exerciseDuration} minutes was not a tick-box; it was a real block.`
     : exerciseDuration > 0 && exerciseType
-      ? `${exerciseDuration} minutes of ${exerciseType.toLowerCase()} is how the old pattern loses power.`
+      ? `${exerciseDuration} minutes of ${exerciseType.toLowerCase()} made the standard physical, not theoretical.`
       : exerciseType
         ? `${exerciseType.toLowerCase()} gave the day a shape.`
         : hasProof
           ? "You made the standard visible instead of leaving it as an intention."
           : "The honest line is a start; now the action has to match it.";
+
+  const textLinkedSignals = hasPublicProofText ? [
+    `${firstName}, “${proofTextSnippet}” is the read. ${textReading} ${effortSignal}`,
+    `${firstName}, the important bit is your own line: “${proofTextSnippet}.” Keep tomorrow connected to that, not to mood.`,
+    `${firstName}, your proof page already says it: “${proofTextSnippet}.” The move now is simple: repeat it before the ${friction} gets a vote.`,
+    `${firstName}, “${proofTextSnippet}” points at the real work. Do not make it dramatic; make it repeatable tomorrow.`,
+  ] : [];
 
   const sharpSignals = [
     `${firstName}, the win is not drama; it is evidence. ${effortSignal} Repeat the first move early tomorrow.`,
@@ -1921,15 +1952,18 @@ function buildProofWardenInsight(owner: any, log: any, ownerLogs: any[]) {
   ];
 
   const reflectiveSignals = [
-    `${firstName}, the thought is sharper than the proof: you caught the pattern while it was still fresh. Use that tomorrow before the day gets noisy.`,
+    `${firstName}, ${privateReflectionSignal}. Use that tomorrow before the day gets noisy.`,
     `${firstName}, the lesson only counts if it changes the next decision. Make tomorrow’s first choice easy to win.`,
     `${firstName}, this is not about looking locked in; it is about noticing where you usually fold and choosing earlier.`,
   ];
 
+  if (textLinkedSignals.length > 0) {
+    return textLinkedSignals[seed % textLinkedSignals.length];
+  }
   if (proofWeight + exerciseWeight + mindWeight + pressureWeight >= 5) {
     return sharpSignals[seed % sharpSignals.length];
   }
-  if (teaching || reflectionSignal || goal || obstacle || supportNeeded) {
+  if (reflectionSignal || goal || obstacle || supportNeeded) {
     return reflectiveSignals[seed % reflectiveSignals.length];
   }
   if (recentProofCount >= 2) {

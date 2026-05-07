@@ -977,3 +977,10 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Evaluate whether the current deterministic insight builder should be improved or supplemented with AI-backed generation for less repetitive outputs.
 - [x] Update regression coverage for concise length, varied openings, and non-generic individualized wording.
 - [x] Validate with tests, typecheck/build, project health check, and checkpoint before delivery.
+
+## Refinement — Link Deep Thought to Each Person’s Proof Text
+- [x] Audit the Proof Feed card fields to confirm which public proof text, read/teach text, exercise details, clean-eating notes, and participant context can safely shape Deep Thought.
+- [x] Rewrite Deep Thought generation so each insight references the participant’s own submitted proof-page wording or logged details when available, without sounding like raw variable regurgitation.
+- [x] Preserve privacy by avoiding direct exposure of private reflection text while still using safe high-level signals where appropriate.
+- [x] Add or update regression coverage proving Deep Thought is linked to per-person proof text and avoids generic repeated phrasing.
+- [x] Validate with tests, typecheck/build, project health check, and checkpoint before delivery.
