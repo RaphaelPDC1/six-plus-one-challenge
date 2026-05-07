@@ -1628,28 +1628,32 @@ function ProofMediaStrip({ items, onRemove }: { items: ProofMediaItem[]; onRemov
   );
 }
 
-function ProofCarousel({ items, dayNumber }: { items: ProofMediaItem[]; dayNumber: number }) {
+function ProofCarousel({ items, dayNumber, ownerName }: { items: ProofMediaItem[]; dayNumber: number; ownerName?: string }) {
   if (items.length === 0) return null;
+  const label = String(ownerName ?? "proof").trim().split(/\s+/)[0]?.toUpperCase() || "PROOF";
   return (
-    <div className="mt-4 rounded-[1.25rem] border border-[#3A3324] bg-[#050505] p-3 shadow-[0_0_28px_rgba(200,169,110,0.08)]" data-testid="proof-carousel">
-      <p className="pb-3 text-[10px] font-black uppercase tracking-[0.16em] text-[#F0D58A]">{items.length} visible proof item{items.length === 1 ? "" : "s"} · Day {dayNumber}</p>
-      <div className="grid gap-3 sm:grid-cols-2">
+    <div className="mt-3" data-testid="proof-carousel">
+      <p className="mb-2 text-[9px] font-black uppercase tracking-[0.16em] text-[#E0B85A]">{items.length} proof item{items.length === 1 ? "" : "s"} · Day {dayNumber}</p>
+      <div className="grid gap-2">
         {items.map((item, index) => {
           const imageSrc = proofImageSrc(item.url);
           const src = proofMediaSrc(item);
           const mediaType = proofMediaType(item);
           const isMedia = mediaType === "video" || Boolean(imageSrc);
           return (
-            <div key={`${item.url}-${index}`} className={classNames("overflow-hidden rounded-[1rem] border border-[#3A3324] bg-[#090909]", isMedia ? "aspect-[4/3] max-h-[22rem] min-h-[13rem]" : "min-h-[6rem]")} data-testid="proof-content-visible">
+            <div key={`${item.url}-${index}`} className={classNames("relative overflow-hidden border border-[#C8A96E]/45 bg-[#11100C]", isMedia ? "aspect-[4/3] min-h-[12rem]" : "min-h-[5.5rem]")} data-testid="proof-content-visible">
+              <div className="pointer-events-none absolute inset-0 z-10 bg-[linear-gradient(rgba(255,255,255,0.35)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.35)_1px,transparent_1px)] bg-[length:2rem_2rem] opacity-45" aria-hidden="true" />
+              <div className="pointer-events-none absolute inset-0 z-10 bg-[radial-gradient(circle_at_center,transparent_0,rgba(0,0,0,0.06)_38%,rgba(0,0,0,0.48)_100%)]" aria-hidden="true" />
               {mediaType === "video" ? (
-                <video className="h-full w-full bg-black object-contain" muted autoPlay loop playsInline controls preload="metadata" data-testid="proof-feed-video-autoplay" aria-label={`Day ${dayNumber} proof video ${index + 1}`}><source src={src} type={proofVideoMimeType(item.url, item.mimeType)} />Your browser cannot play this proof video.</video>
+                <video className="h-full w-full bg-black object-cover opacity-85" muted autoPlay loop playsInline controls preload="metadata" data-testid="proof-feed-video-autoplay" aria-label={`Day ${dayNumber} proof video ${index + 1}`}><source src={src} type={proofVideoMimeType(item.url, item.mimeType)} />Your browser cannot play this proof video.</video>
               ) : imageSrc ? (
-                <img src={src} alt={`Day ${dayNumber} proof ${index + 1}`} className="h-full w-full bg-black object-contain" loading="lazy" decoding="async" />
+                <img src={src} alt={`Day ${dayNumber} proof ${index + 1}`} className="h-full w-full bg-black object-cover opacity-85" loading="lazy" decoding="async" />
               ) : (
-                <div className="flex min-h-[6rem] items-center border-l-4 border-[#C8A96E] bg-[#130F08] p-4">
-                  <p className="break-words text-base font-black leading-7 text-white">{item.url}</p>
+                <div className="flex min-h-[5.5rem] items-center border-l-4 border-[#C8A96E] bg-[#130F08] p-4">
+                  <p className="break-words text-sm font-black leading-6 text-white">{item.url}</p>
                 </div>
               )}
+              {isMedia && <p className="absolute inset-x-4 top-1/2 z-20 -translate-y-1/2 text-center text-[9px] font-black uppercase tracking-[0.12em] text-white/80">{label} · {mediaType === "video" ? "training" : "proof"}</p>}
             </div>
           );
         })}
@@ -1864,16 +1868,18 @@ function buildProofWardenInsight(owner: any, log: any, ownerLogs: any[]) {
   const exerciseType = String(log?.exerciseType ?? "").trim();
   const exerciseDuration = Number(log?.exerciseDuration ?? 0);
   const proofItems = parseProofMedia(log?.exerciseProofUrl);
-  const bundle = [goal, obstacle, supportNeeded, teaching, reflectionSignal, cleanEatingNote, exerciseType].join(" ").toLowerCase();
+  const proofTypes = proofItems.map((item: any) => proofMediaType(item));
+  const proofNames = proofItems.map((item: any) => String(item?.name ?? "").trim()).filter(Boolean);
+  const bundle = [goal, obstacle, supportNeeded, teaching, reflectionSignal, cleanEatingNote, exerciseType, ...proofNames].join(" ").toLowerCase();
   const hasAny = (words: string[]) => words.some(word => bundle.includes(word));
-  const proofHas = (type: string) => proofItems.some((item: any) => item.type === type);
+  const proofHas = (type: string) => proofTypes.includes(type as ProofMediaItem["type"]);
   const hasProof = proofItems.length > 0;
 
   const aim = hasAny(["weight", "fat", "lean", "cut", "shape"])
-    ? "body-standard goal"
+    ? "body standard"
     : hasAny(["discipline", "routine", "habit", "consistency", "standard"])
       ? "discipline rebuild"
-      : hasAny(["fitness", "strength", "run", "gym", "train", "performance"])
+      : hasAny(["fitness", "strength", "run", "gym", "train", "performance", "conditioning"])
         ? "training identity"
         : goal
           ? "bigger goal"
@@ -1889,31 +1895,41 @@ function buildProofWardenInsight(owner: any, log: any, ownerLogs: any[]) {
           ? "usual friction"
           : "easy-exit moment";
 
-  const proofSignal = proofHas("video")
-    ? "The video proof makes this look lived, not claimed"
+  const uploadRead = proofHas("video")
+    ? "The video receipt carries more weight than a claim"
     : proofHas("image")
-      ? "The upload gives the day weight beyond the words"
+      ? "The image receipt gives the session a visible anchor"
       : proofHas("link")
-        ? "The linked receipt turns the claim into evidence"
-        : "The written entry is the evidence today";
+        ? "The linked receipt turns the day into evidence"
+        : "The written note is the receipt today";
 
-  const actionSignal = exerciseDuration >= 45
-    ? "a proper training block"
-    : exerciseType
-      ? `${exerciseType.toLowerCase()} done on purpose`
+  const mediaDetail = proofItems.length > 1
+    ? `${proofItems.length} uploads back up the entry`
+    : proofNames[0]
+      ? `the upload named “${proofNames[0].slice(0, 28)}” backs it up`
       : hasProof
-        ? "a visible action"
-        : "a logged choice";
+        ? "the upload backs it up"
+        : "the log has to carry the proof";
 
-  const mindSignal = hasAny(["plan", "prepare", "structure", "routine"])
-    ? "planning before pressure hits"
+  const actionRead = exerciseDuration >= 45
+    ? `${exerciseDuration} minutes is a real training block`
+    : exerciseDuration > 0 && exerciseType
+      ? `${exerciseDuration} minutes of ${exerciseType.toLowerCase()} still counts because it was logged and shown`
+      : exerciseType
+        ? `${exerciseType.toLowerCase()} is the action signal`
+        : hasProof
+          ? "the visible receipt is the action signal"
+          : "the honest entry is the action signal";
+
+  const mindRead = hasAny(["plan", "prepare", "structure", "routine"])
+    ? "This looks like planning before pressure hits"
     : hasAny(["learn", "read", "teach", "idea", "lesson"])
-      ? "turning the day into a lesson"
+      ? "There is a lesson attached, not just a tick-box"
       : hasAny(["hard", "struggle", "tempt", "craving", "stress", "tired"])
-        ? "staying honest when it was not clean"
+        ? "The useful part is the honesty under friction"
         : teaching || reflectionSignal
-          ? "noticing the pattern, not just ticking the box"
-          : "letting the proof speak";
+          ? "The words show awareness behind the receipt"
+          : "The receipt is doing most of the talking";
 
   const experience = trainingLevel.includes("beginner")
     ? "For a newer base"
@@ -1922,42 +1938,58 @@ function buildProofWardenInsight(owner: any, log: any, ownerLogs: any[]) {
       : "For this challenge";
 
   if (hasProof || teaching || reflectionSignal || goal || obstacle || supportNeeded) {
-    return `${firstName}: ${proofSignal}. ${experience}, ${actionSignal} points at the ${aim}: beat ${friction}, then repeat it tomorrow.`;
+    return `${firstName}: ${uploadRead}; ${mediaDetail}. ${experience}, ${actionRead}. This points at the ${aim}: handle ${friction}, then repeat it tomorrow.`;
   }
   if (recentProofCount >= 2) {
-    return `${firstName}: the pattern is starting to show. Recent proof says this is becoming behaviour, not a one-off. Protect it tomorrow.`;
+    return `${firstName}: the pattern is starting to show. Recent receipts say this is becoming behaviour, not a one-off. Protect it tomorrow.`;
   }
-  return `${firstName}: ${mindSignal}. Keep it simple tomorrow: one clear action, one honest receipt, no hiding.`;
+  return `${firstName}: ${mindRead}. Keep it simple tomorrow: one clear action, one honest receipt, no hiding.`;
 }
 
 function ProofFeed({ snapshot }: { snapshot: Snapshot }) {
   const publicLogs = (snapshot?.logs ?? []).filter((log: any) => parseProofMedia(log.exerciseProofUrl).length > 0 || String(log.readTeachText ?? "").trim().length > 0);
+  const latestDay = Math.max(1, ...((snapshot?.logs ?? []).map((log: any) => Number(log.dayNumber ?? 1))));
+  const waiting = (snapshot?.participants ?? []).filter((participant: any) => !publicLogs.some((log: any) => log.participantId === participant.id && Number(log.dayNumber ?? 0) === latestDay)).slice(0, 3);
   return (
-    <section className="border border-[#2A2A2A] bg-[#101010] p-4 sm:p-5">
+    <section className="mx-auto max-w-[34rem] border border-[#202020] bg-[#070707] p-3 shadow-[0_0_40px_rgba(0,0,0,0.45)] sm:p-5" data-testid="proof-feed-redesign">
       <MicroLabel tone="green">Proof feed</MicroLabel>
-      <h2 className="mt-2 break-words text-3xl font-black uppercase tracking-[-0.07em] text-white sm:text-4xl">Receipts. Deep thought. Momentum.</h2>
-      <p className="mt-3 max-w-2xl text-xs font-bold uppercase leading-5 tracking-[0.12em] text-[#BDBDBD]">Proof content is shown first, then Deep Thought reads the person behind the evidence.</p>
-      <div className="mt-5 grid gap-4 lg:grid-cols-2">
+      <h2 className="mt-2 break-words text-[2rem] font-black uppercase leading-[0.82] tracking-[-0.08em] text-white sm:text-5xl">Receipts.<br />Insights.<br />Momentum.</h2>
+      <p className="mt-3 max-w-sm text-[10px] font-black uppercase leading-4 tracking-[0.12em] text-[#858585]">Proof first. Then the Warden reads what it means.</p>
+      {waiting.length > 0 && (
+        <div className="mt-5 border border-[#C0392B]/35 bg-[#19090A]/70 p-3" data-testid="proof-waiting-bar">
+          <p className="text-[9px] font-black uppercase tracking-[0.18em] text-[#C0392B]">Waiting on {waiting.length} player{waiting.length === 1 ? "" : "s"} · Day {latestDay}</p>
+          <div className="mt-2 flex items-center gap-2">
+            {waiting.map((participant: any) => <ProfilePhoto key={participant.id} participant={participant} className="h-8 w-8 border-[#4A2A2A]" />)}
+            <span className="text-[10px] font-bold italic text-[#777]">No proof submitted yet today</span>
+          </div>
+        </div>
+      )}
+      <div className="mt-4 grid gap-3">
         {publicLogs.map((log: any) => {
           const owner = snapshot?.participants.find((p: any) => p.id === log.participantId);
           const wardenInsight = buildProofWardenInsight(owner, log, snapshot?.logs ?? []);
+          const quote = String(log.readTeachText ?? "").trim();
           return (
-            <article key={log.id} className="motion-card min-w-0 overflow-hidden border border-[#2A2A2A] bg-[#0D0D0D] p-4 sm:p-5" data-testid="proof-readable-card">
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <ProfilePhoto participant={owner} className="h-11 w-11" />
-                  <div>
-                    <p className="font-black uppercase text-white">{owner?.displayName ?? "Participant"}</p>
-                    <MicroLabel>Day {log.dayNumber}</MicroLabel>
+            <article key={log.id} className="motion-card min-w-0 overflow-hidden border border-[#1D1D1D] bg-[#101010] p-3 shadow-[0_0_24px_rgba(0,0,0,0.28)]" data-testid="proof-readable-card">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex min-w-0 items-center gap-3">
+                  <ProfilePhoto participant={owner} className="h-10 w-10 border-[#6A3A24]" />
+                  <div className="min-w-0">
+                    <p className="truncate text-base font-black uppercase tracking-[-0.03em] text-white">{owner?.displayName ?? "Participant"}</p>
+                    <p className="text-[9px] font-black uppercase tracking-[0.16em] text-[#777]">Day {log.dayNumber}</p>
                   </div>
                 </div>
-                <span className="border border-[#2ECC71]/50 bg-[#102018] px-3 py-1 text-[9px] font-black uppercase tracking-[0.2em] text-[#2ECC71]">Proof</span>
+                <span className="shrink-0 border border-[#2ECC71]/70 bg-[#07160E] px-2 py-1 text-[8px] font-black uppercase tracking-[0.18em] text-[#2ECC71]">Proof</span>
               </div>
-              {String(log.readTeachText ?? "").trim().length > 0 && <p className="mt-4 break-words border-l-4 border-[#C8A96E] bg-[#14100A] py-3 pl-4 pr-3 text-base font-black leading-7 text-white" data-testid="proof-readable-teaching">{log.readTeachText}</p>}
-              <ProofCarousel items={parseProofMedia(log.exerciseProofUrl)} dayNumber={log.dayNumber} />
-              <div className="mt-3 rounded-[1rem] border border-[#8E44AD]/60 bg-[#130A1B] p-3 shadow-[0_0_24px_rgba(142,68,173,0.12)] sm:p-4" data-testid="proof-deep-thought">
-                <MicroLabel tone="purple">Deep Thought</MicroLabel>
-                <p className="mt-2 break-words text-[13px] font-extrabold leading-5 text-[#F6E8FF] sm:text-[14px] sm:leading-6">{wardenInsight}</p>
+              {quote.length > 0 && <p className="mt-3 break-words border-l-2 border-[#C8A96E] py-1 pl-3 pr-1 text-[13px] font-bold italic leading-5 text-[#F1F1F1]" data-testid="proof-readable-teaching">“{quote}”</p>}
+              <ProofCarousel items={parseProofMedia(log.exerciseProofUrl)} dayNumber={log.dayNumber} ownerName={owner?.displayName} />
+              <div className="mt-3 border border-[#C8A96E]/45 bg-[#140E05] p-3 shadow-[inset_3px_0_0_#C8A96E]" data-testid="proof-deep-thought">
+                <div className="flex items-center justify-between gap-3">
+                  <MicroLabel tone="gold">Warden’s read</MicroLabel>
+                  <span className="text-[8px] font-black uppercase tracking-[0.16em] text-[#6F5A2E]">Day {log.dayNumber}</span>
+                </div>
+                <p className="mt-2 break-words text-[12px] font-bold italic leading-5 text-[#F0D58A] sm:text-[13px]">{wardenInsight}</p>
+                <p className="mt-3 text-[8px] font-black uppercase tracking-[0.16em] text-[#7A612C]">Generated from today’s upload + exercise log + challenge data</p>
               </div>
             </article>
           );

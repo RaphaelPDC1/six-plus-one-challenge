@@ -939,3 +939,11 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Ensure Proof section video cards render as muted plays-inline autoplay videos with controls or a clear unmute/play affordance.
 - [x] Add or update regression coverage for uploaded proof video rendering and autoplay attributes.
 - [x] Validate with tests, typecheck/build, project health check, and checkpoint before delivery.
+
+## Feature Update — Reference-Style Proof Feed and Upload-Based Insights
+- [x] Redesign the Proof Feed area to more closely match the provided receipt-style reference image with compact dark cards, strong header typography, proof labels, media blocks, and Warden/Deep Thought insight panels.
+- [x] Keep the Proof Feed mobile-first and bottom-navigation-safe while preserving video playback, controls, muted autoplay, and plays-inline behavior.
+- [x] Improve Deep Thought/Warden insight generation so it uses uploaded proof media evidence plus written log text, onboarding/profile context, rule completion data, and other available participant signals.
+- [x] Avoid regurgitating raw variables; generate a short interpreted insight that explains what the proof suggests and why it matters.
+- [x] Update regression coverage for the redesigned Proof Feed and richer upload-plus-context insight output.
+- [x] Validate with tests, typecheck/build, project health check, and checkpoint before delivery.

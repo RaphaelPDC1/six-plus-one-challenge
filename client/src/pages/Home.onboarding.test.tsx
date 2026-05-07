@@ -304,11 +304,13 @@ describe("Home onboarding shell", () => {
     expect(homeSource).toContain("declaredType === \"video\" || isProofVideoUrl(url, mimeType)");
     expect(homeSource).toContain("return [{ url: raw, type: isProofVideoUrl(raw) ? \"video\"");
     expect(homeSource).toContain("encodeProofMediaAfterRemoval(current.exerciseProofUrl, index)");
+    expect(homeSource).toContain("data-testid=\"proof-feed-redesign\"");
     expect(homeSource).toContain("data-testid=\"proof-content-visible\"");
-    expect(homeSource).toContain("bg-black object-contain");
+    expect(homeSource).toContain("bg-black object-cover opacity-85");
+    expect(homeSource).toContain("ownerName?: string");
     expect(homeSource).toContain("data-testid=\"proof-readable-card\"");
     expect(homeSource).toContain("data-testid=\"proof-readable-teaching\"");
-    expect(homeSource).toContain("text-base font-black leading-7 text-white");
+    expect(homeSource).toContain("text-[13px] font-bold italic leading-5 text-[#F1F1F1]");
     expect(homeSource).toContain("data-testid=\"mobile-floating-nav\"");
     expect(homeSource).toContain("min-w-0 overflow-hidden");
     expect(homeSource).toContain("break-words");
@@ -316,7 +318,7 @@ describe("Home onboarding shell", () => {
     expect(homeSource).not.toContain("No public proof yet");
   });
 
-  it("generates Deep Thought proof insight by interpreting onboarding context, proof uploads, and written evidence", () => {
+  it("generates Warden proof insight by interpreting upload evidence, onboarding context, and written evidence", () => {
     const homeSource = readFileSync(new URL("./Home.tsx", import.meta.url), "utf8");
 
     expect(homeSource).toContain("function buildProofWardenInsight(owner: any, log: any, ownerLogs: any[])");
@@ -328,14 +330,17 @@ describe("Home onboarding shell", () => {
     expect(homeSource).toContain("reflectionText");
     expect(homeSource).toContain("readTeachText");
     expect(homeSource).toContain("proofHas(\"video\")");
-    expect(homeSource).toContain("The upload gives the day weight beyond the words");
-    expect(homeSource).toContain("body-standard goal");
+    expect(homeSource).toContain("The video receipt carries more weight than a claim");
+    expect(homeSource).toContain("proofNames");
+    expect(homeSource).toContain("the upload named");
+    expect(homeSource).toContain("body standard");
     expect(homeSource).toContain("discipline rebuild");
-    expect(homeSource).toContain("beat ${friction}");
+    expect(homeSource).toContain("handle ${friction}");
     expect(homeSource).not.toContain("Takeaway:");
     expect(homeSource).not.toContain("lives/4");
     expect(homeSource).toContain("data-testid=\"proof-deep-thought\"");
-    expect(homeSource).toContain("Deep Thought</MicroLabel>");
+    expect(homeSource).toContain("Warden’s read</MicroLabel>");
+    expect(homeSource).toContain("Generated from today’s upload + exercise log + challenge data");
     expect(homeSource).not.toMatch(/Ren[eé]e/);
     expect(homeSource).toContain("const wardenInsight = buildProofWardenInsight(owner, log, snapshot?.logs ?? []);");
   });
