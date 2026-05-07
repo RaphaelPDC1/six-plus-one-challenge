@@ -128,10 +128,30 @@ function CleanBrandMark({ compact = false, decorative = false, placement }: { co
 function proofImageSrc(url: string) {
   const trimmed = url.trim();
   if (!trimmed) return "";
+  if (isProofVideoUrl(trimmed)) return "";
   if (trimmed.startsWith("/manus-storage/")) return `/api/storage-image/${encodeURIComponent(trimmed.slice("/manus-storage/".length))}`;
   if (trimmed.startsWith("/api/storage-image/")) return encodeURI(trimmed);
   if (/^https?:\/\//i.test(trimmed) && /\.(png|jpe?g|webp)(\?|#|$)/i.test(trimmed)) return trimmed;
   return "";
+}
+
+function proofVideoMimeType(url: string, mimeType?: string) {
+  if (mimeType?.startsWith("video/")) return mimeType;
+  const trimmed = url.trim().toLowerCase();
+  if (/\.(mp4|m4v)(\?|#|$)/i.test(trimmed)) return "video/mp4";
+  if (/\.webm(\?|#|$)/i.test(trimmed)) return "video/webm";
+  if (/\.mov(\?|#|$)/i.test(trimmed)) return "video/quicktime";
+  return undefined;
+}
+
+function isProofVideoUrl(url: string, mimeType?: string) {
+  return Boolean(proofVideoMimeType(url, mimeType));
+}
+
+function proofMediaType(item: ProofMediaItem): ProofMediaItem["type"] {
+  if (item.type === "video" || isProofVideoUrl(item.url, item.mimeType)) return "video";
+  if (item.type === "link") return "link";
+  return proofImageSrc(item.url) ? "image" : "link";
 }
 
 function parseProofMedia(value: string | null | undefined): ProofMediaItem[] {
@@ -141,18 +161,19 @@ function parseProofMedia(value: string | null | undefined): ProofMediaItem[] {
     const parsed = JSON.parse(raw);
     if (Array.isArray(parsed)) {
       return parsed
-        .map((item: any) => ({
-          url: String(item?.url ?? "").trim(),
-          type: (item?.type === "video" ? "video" : item?.type === "link" ? "link" : "image") as ProofMediaItem["type"],
-          mimeType: item?.mimeType ? String(item.mimeType) : undefined,
-          name: item?.name ? String(item.name) : undefined,
-        }))
+        .map((item: any) => {
+          const url = String(item?.url ?? "").trim();
+          const mimeType = item?.mimeType ? String(item.mimeType) : undefined;
+          const declaredType = item?.type === "video" ? "video" : item?.type === "link" ? "link" : item?.type === "image" ? "image" : undefined;
+          const type = declaredType === "video" || isProofVideoUrl(url, mimeType) ? "video" : declaredType === "link" ? "link" : proofImageSrc(url) ? "image" : "link";
+          return { url, type: type as ProofMediaItem["type"], mimeType, name: item?.name ? String(item.name) : undefined };
+        })
         .filter(item => item.url.length > 0);
     }
   } catch {
     // Existing logs stored a single proof URL or note. Keep them visible.
   }
-  return [{ url: raw, type: proofImageSrc(raw) ? "image" : "link" }];
+  return [{ url: raw, type: isProofVideoUrl(raw) ? "video" : proofImageSrc(raw) ? "image" : "link", mimeType: proofVideoMimeType(raw) }];
 }
 
 function encodeProofMedia(items: ProofMediaItem[]) {
@@ -173,7 +194,7 @@ function encodeProofMediaAfterRemoval(value: string, removeIndex: number) {
 }
 
 function proofMediaSrc(item: ProofMediaItem) {
-  if (item.type === "video") return item.url.trim();
+  if (proofMediaType(item) === "video") return item.url.trim();
   return proofImageSrc(item.url) || item.url.trim();
 }
 const emptyDay: MyDayForm = {
@@ -1596,9 +1617,9 @@ function ProofMediaStrip({ items, onRemove }: { items: ProofMediaItem[]; onRemov
         {items.map((item, index) => (
           <div key={`${item.url}-${index}`} className="relative min-w-[8.5rem] max-w-[8.5rem] border border-[#2A2A2A] bg-[#080808] p-2">
             <div className="aspect-video overflow-hidden bg-black">
-              {item.type === "video" ? <video src={proofMediaSrc(item)} className="h-full w-full object-cover" muted autoPlay loop playsInline preload="metadata" data-testid="proof-upload-video-preview" /> : proofImageSrc(item.url) ? <img src={proofImageSrc(item.url)} alt={`Proof media ${index + 1}`} className="h-full w-full object-cover" loading="lazy" decoding="async" /> : <div className="grid h-full place-items-center px-2 text-center text-[9px] font-black uppercase tracking-[0.12em] text-[#C8A96E]">Proof note</div>}
+              {proofMediaType(item) === "video" ? <video className="h-full w-full object-cover" muted autoPlay loop playsInline controls preload="metadata" data-testid="proof-upload-video-preview" aria-label={`Proof video preview ${index + 1}`}><source src={proofMediaSrc(item)} type={proofVideoMimeType(item.url, item.mimeType)} />Your browser cannot play this proof video.</video> : proofImageSrc(item.url) ? <img src={proofImageSrc(item.url)} alt={`Proof media ${index + 1}`} className="h-full w-full object-cover" loading="lazy" decoding="async" /> : <div className="grid h-full place-items-center px-2 text-center text-[9px] font-black uppercase tracking-[0.12em] text-[#C8A96E]">Proof note</div>}
             </div>
-            <p className="mt-2 truncate text-[9px] font-black uppercase tracking-[0.12em] text-[#777]">{item.type} {index + 1}</p>
+            <p className="mt-2 truncate text-[9px] font-black uppercase tracking-[0.12em] text-[#777]">{proofMediaType(item)} {index + 1}</p>
             {onRemove && <button type="button" onClick={() => onRemove(index)} className="absolute right-1 top-1 grid h-6 w-6 place-items-center border border-[#2A2A2A] bg-black/80 text-[#C0392B]" aria-label={`Remove proof item ${index + 1}`}><X className="h-3 w-3" /></button>}
           </div>
         ))}
@@ -1616,11 +1637,12 @@ function ProofCarousel({ items, dayNumber }: { items: ProofMediaItem[]; dayNumbe
         {items.map((item, index) => {
           const imageSrc = proofImageSrc(item.url);
           const src = proofMediaSrc(item);
-          const isMedia = item.type === "video" || Boolean(imageSrc);
+          const mediaType = proofMediaType(item);
+          const isMedia = mediaType === "video" || Boolean(imageSrc);
           return (
             <div key={`${item.url}-${index}`} className={classNames("overflow-hidden rounded-[1rem] border border-[#3A3324] bg-[#090909]", isMedia ? "aspect-[4/3] max-h-[22rem] min-h-[13rem]" : "min-h-[6rem]")} data-testid="proof-content-visible">
-              {item.type === "video" ? (
-                <video src={src} className="h-full w-full bg-black object-contain" muted autoPlay loop playsInline controls preload="metadata" data-testid="proof-feed-video-autoplay" />
+              {mediaType === "video" ? (
+                <video className="h-full w-full bg-black object-contain" muted autoPlay loop playsInline controls preload="metadata" data-testid="proof-feed-video-autoplay" aria-label={`Day ${dayNumber} proof video ${index + 1}`}><source src={src} type={proofVideoMimeType(item.url, item.mimeType)} />Your browser cannot play this proof video.</video>
               ) : imageSrc ? (
                 <img src={src} alt={`Day ${dayNumber} proof ${index + 1}`} className="h-full w-full bg-black object-contain" loading="lazy" decoding="async" />
               ) : (

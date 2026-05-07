@@ -932,3 +932,10 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Keep the Deep Thought output short, natural, mobile-readable, and free of Renee references.
 - [x] Add or update regression coverage proving Deep Thought uses evidence-synthesis hooks and avoids variable-regurgitation copy.
 - [x] Validate with tests, typecheck/build as appropriate, project health check, and checkpoint before delivery.
+
+## Bug Fix — Proof Video Playback and Autoplay
+- [x] Diagnose why uploaded proof videos do not play or autoplay in the Proof section.
+- [x] Verify proof upload persistence includes reliable media type or video-detection metadata.
+- [x] Ensure Proof section video cards render as muted plays-inline autoplay videos with controls or a clear unmute/play affordance.
+- [x] Add or update regression coverage for uploaded proof video rendering and autoplay attributes.
+- [x] Validate with tests, typecheck/build, project health check, and checkpoint before delivery.

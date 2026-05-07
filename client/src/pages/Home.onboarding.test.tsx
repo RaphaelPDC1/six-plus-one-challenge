@@ -298,7 +298,11 @@ describe("Home onboarding shell", () => {
     expect(homeSource).toContain("function ProofCarousel");
     expect(homeSource).toContain("data-testid=\"proof-upload-video-preview\"");
     expect(homeSource).toContain("data-testid=\"proof-feed-video-autoplay\"");
-    expect(homeSource).toContain("muted autoPlay loop playsInline");
+    expect(homeSource).toContain("muted autoPlay loop playsInline controls");
+    expect(homeSource).toContain("<source src={src} type={proofVideoMimeType(item.url, item.mimeType)} />");
+    expect(homeSource).toContain("function proofVideoMimeType");
+    expect(homeSource).toContain("declaredType === \"video\" || isProofVideoUrl(url, mimeType)");
+    expect(homeSource).toContain("return [{ url: raw, type: isProofVideoUrl(raw) ? \"video\"");
     expect(homeSource).toContain("encodeProofMediaAfterRemoval(current.exerciseProofUrl, index)");
     expect(homeSource).toContain("data-testid=\"proof-content-visible\"");
     expect(homeSource).toContain("bg-black object-contain");
@@ -434,9 +438,10 @@ describe("Home onboarding shell", () => {
     expect(appIconSvgSource).toContain('fill="#FF5B00"');
     expect(appIconSvgSource).toContain('fill="#050505"');
 
-    expect(storageProxySource).toContain("assetResp.arrayBuffer()");
+    expect(storageProxySource).toContain("Readable.fromWeb(assetResp.body as any)");
     expect(storageProxySource).toContain("cachePolicyForKey(key)");
     expect(storageProxySource).toContain("stale-while-revalidate=604800");
+    expect(storageProxySource).toContain('res.set("Accept-Ranges", assetResp.headers.get("accept-ranges") || "bytes")');
     expect(storageProxySource).not.toContain("res.redirect(307, url)");
     expect(storageProxySource).not.toContain('res.set("Cache-Control", "no-store")');
   });

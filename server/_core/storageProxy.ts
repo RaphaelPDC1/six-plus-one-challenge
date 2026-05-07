@@ -1,4 +1,5 @@
 import type { Express, Request, Response } from "express";
+import { Readable } from "node:stream";
 import { ENV } from "./env";
 
 function inferContentType(key: string, upstreamContentType: string | null) {
@@ -12,14 +13,17 @@ function inferContentType(key: string, upstreamContentType: string | null) {
   if (lower.endsWith(".webp")) return "image/webp";
   if (lower.endsWith(".svg")) return "image/svg+xml";
   if (lower.endsWith(".gif")) return "image/gif";
+  if (lower.endsWith(".mp4") || lower.endsWith(".m4v")) return "video/mp4";
+  if (lower.endsWith(".webm")) return "video/webm";
+  if (lower.endsWith(".mov")) return "video/quicktime";
   return upstreamContentType || "application/octet-stream";
 }
 
 function cachePolicyForKey(key: string) {
   const lower = key.toLowerCase();
-  const isImage = /\.(png|jpe?g|webp|svg|gif)$/i.test(lower);
+  const isVisualMedia = /\.(png|jpe?g|webp|svg|gif|mp4|m4v|webm|mov)$/i.test(lower);
 
-  if (!isImage) {
+  if (!isVisualMedia) {
     return "private, max-age=300";
   }
 
@@ -33,6 +37,11 @@ function decodeStorageKey(rawKey: string | undefined) {
   } catch {
     return rawKey;
   }
+}
+
+function setPassthroughHeader(res: Response, assetResp: globalThis.Response, headerName: string) {
+  const value = assetResp.headers.get(headerName);
+  if (value) res.set(headerName, value);
 }
 
 async function streamStorageAsset(req: Request, res: Response, rawKey: string | undefined) {
@@ -71,7 +80,10 @@ async function streamStorageAsset(req: Request, res: Response, rawKey: string | 
       return;
     }
 
-    const assetResp = await fetch(url);
+    const range = req.headers.range;
+    const assetResp = await fetch(url, {
+      headers: range ? { Range: range } : undefined,
+    });
     if (!assetResp.ok) {
       const body = await assetResp.text().catch(() => "");
       console.error(`[StorageProxy] asset fetch error: ${assetResp.status} ${body}`);
@@ -80,21 +92,35 @@ async function streamStorageAsset(req: Request, res: Response, rawKey: string | 
     }
 
     const contentType = inferContentType(key, assetResp.headers.get("content-type"));
-    const contentLength = assetResp.headers.get("content-length");
-    const etag = assetResp.headers.get("etag");
-    const lastModified = assetResp.headers.get("last-modified");
 
-    res.status(200);
+    res.status(assetResp.status === 206 ? 206 : 200);
+    res.set("Accept-Ranges", assetResp.headers.get("accept-ranges") || "bytes");
     res.set("Cache-Control", cachePolicyForKey(key));
     res.set("Content-Type", contentType);
     res.set("X-Content-Type-Options", "nosniff");
-    res.set("Vary", "Accept-Encoding");
-    if (contentLength) res.set("Content-Length", contentLength);
-    if (etag) res.set("ETag", etag);
-    if (lastModified) res.set("Last-Modified", lastModified);
+    res.set("Vary", "Accept-Encoding, Range");
+    setPassthroughHeader(res, assetResp, "content-length");
+    setPassthroughHeader(res, assetResp, "content-range");
+    setPassthroughHeader(res, assetResp, "etag");
+    setPassthroughHeader(res, assetResp, "last-modified");
 
-    const arrayBuffer = await assetResp.arrayBuffer();
-    res.send(Buffer.from(arrayBuffer));
+    if (req.method === "HEAD") {
+      res.end();
+      return;
+    }
+
+    if (!assetResp.body) {
+      res.end();
+      return;
+    }
+
+    Readable.fromWeb(assetResp.body as any)
+      .on("error", error => {
+        console.error("[StorageProxy] stream failed:", error);
+        if (!res.headersSent) res.status(502);
+        res.end();
+      })
+      .pipe(res);
   } catch (err) {
     console.error("[StorageProxy] failed:", err);
     res.status(502).send("Storage proxy error");
@@ -105,8 +131,14 @@ export function registerStorageProxy(app: Express) {
   app.get("/api/storage-image/*", async (req, res) => {
     await streamStorageAsset(req, res, (req.params as Record<string, string | undefined>)[0]);
   });
+  app.head("/api/storage-image/*", async (req, res) => {
+    await streamStorageAsset(req, res, (req.params as Record<string, string | undefined>)[0]);
+  });
 
   app.get("/manus-storage/*", async (req, res) => {
+    await streamStorageAsset(req, res, (req.params as Record<string, string | undefined>)[0]);
+  });
+  app.head("/manus-storage/*", async (req, res) => {
     await streamStorageAsset(req, res, (req.params as Record<string, string | undefined>)[0]);
   });
 }
