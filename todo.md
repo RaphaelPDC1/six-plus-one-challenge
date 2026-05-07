@@ -745,3 +745,12 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Remove the unwanted black rectangular backing behind the Save Progress pill while preserving its scroll-responsive behavior.
 - [x] Add or update regression coverage for contained counters and clean Save Progress pill styling.
 - [x] Validate the visual fixes with tests, production build, and project health check before checkpointing.
+
+
+## Bug Fix — Confirmed Mobile Viewport Overflow
+- [x] Fix whole-page horizontal overflow on phone screens where the app hangs off the right edge.
+- [x] Constrain the lives strip so four lives fit inside the card on narrow mobile widths without forcing page width expansion.
+- [x] Constrain the Live Points Strip so point tiles wrap or shrink inside the viewport instead of extending off-screen.
+- [x] Keep the floating Save Progress pill centred and viewport-bounded so it does not contribute to horizontal overflow.
+- [x] Add or update regression coverage for mobile-safe width constraints and no horizontal overflow markers.
+- [x] Validate the fix with focused tests, full tests, production build, project health check, and checkpoint before delivery.

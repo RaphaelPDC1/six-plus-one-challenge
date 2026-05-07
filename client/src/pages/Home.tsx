@@ -335,12 +335,12 @@ function SharpButton({ children, className, ...props }: React.ButtonHTMLAttribut
 function HealthBar({ lives = 4, label = "Lives", compact = false }: { lives?: number; label?: string; compact?: boolean }) {
   const safeLives = clampLives(lives);
   return (
-    <section className={classNames("motion-card border border-[#2A2A2A] bg-[#101010]", compact ? "p-2" : "p-4")}> 
-      <div className="mb-3 flex items-end justify-between gap-3">
+    <section className={classNames("motion-card min-w-0 max-w-full overflow-hidden border border-[#2A2A2A] bg-[#101010]", compact ? "p-2" : "p-4")}> 
+      <div className="mb-3 flex min-w-0 items-end justify-between gap-3">
         <MicroLabel tone={safeLives <= 1 ? "red" : "gold"}>{label}</MicroLabel>
         <span className={classNames("text-xs font-black uppercase tracking-[0.28em]", safeLives <= 1 ? "text-[#C0392B]" : "text-[#C8A96E]")}>{safeLives}/4</span>
       </div>
-      <div className="grid grid-cols-4 gap-1 bg-[#2A2A2A] p-[2px]">
+      <div className="grid min-w-0 grid-cols-4 gap-1 bg-[#2A2A2A] p-[2px]">
         {Array.from({ length: 4 }).map((_, index) => {
           const alive = index < safeLives;
           const critical = alive && safeLives <= 1;
@@ -370,7 +370,7 @@ function PosterStat({ label, value, tone = "gold" }: { label: string; value: str
     white: "text-white",
   };
   return (
-    <div className="motion-card border border-[#2A2A2A] bg-[#111] p-4">
+    <div className="motion-card min-w-0 max-w-full overflow-hidden border border-[#2A2A2A] bg-[#111] p-4">
       <MicroLabel tone={tone === "white" ? "muted" : tone}>{label}</MicroLabel>
       <p className={classNames("mt-3 max-w-full break-words text-4xl font-black uppercase leading-none tracking-[-0.08em] tabular-nums", tones[tone])}>{value}</p>
     </div>
@@ -1012,10 +1012,10 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
   }
 
   return (
-    <div className="motion-page grid gap-5 xl:grid-cols-[1fr_360px]">
-      <section className="space-y-5">
-        <div className="border border-[#2A2A2A] bg-[#101010] p-5">
-          <div className="grid gap-5 md:grid-cols-[1fr_320px]">
+    <div className="motion-page grid min-w-0 max-w-full gap-5 overflow-x-hidden xl:grid-cols-[minmax(0,1fr)_360px]">
+      <section className="min-w-0 max-w-full space-y-5 overflow-x-hidden">
+        <div className="min-w-0 max-w-full overflow-hidden border border-[#2A2A2A] bg-[#101010] p-4 sm:p-5">
+          <div className="grid min-w-0 gap-5 md:grid-cols-[minmax(0,1fr)_minmax(0,320px)]">
             <div>
               <MicroLabel tone="gold">Day {snapshot?.challenge.currentDay ?? "—"} / 50</MicroLabel>
               <h1 className="mt-3 text-5xl font-black uppercase leading-[0.86] tracking-[-0.08em] text-white md:text-7xl">Log today.</h1>
@@ -1025,23 +1025,23 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
           </div>
         </div>
 
-        <div data-save-progress-anchor className={classNames("must-do-rules motion-card border-2 p-3 transition-all duration-300 sm:p-4", allAddressed ? "must-do-rules-complete border-[#2ECC71] bg-[#07150D]" : "border-[#C0392B] bg-[#190B0A]")}> 
+        <div data-save-progress-anchor className={classNames("must-do-rules motion-card min-w-0 max-w-full overflow-hidden border-2 p-3 transition-all duration-300 sm:p-4", allAddressed ? "must-do-rules-complete border-[#2ECC71] bg-[#07150D]" : "border-[#C0392B] bg-[#190B0A]")}> 
           <div className="mb-3 flex flex-col gap-2 border-b border-white/10 pb-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <MicroLabel tone={allAddressed ? "green" : "red"}>{allAddressed ? "Pass secured" : "Must-do today"}</MicroLabel>
               <h2 className="mt-2 text-2xl font-black uppercase leading-none tracking-[-0.06em] text-white">Six rules. Five gets the day.</h2>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex min-w-0 flex-wrap gap-2">
               <div className={classNames("border px-3 py-2 text-[10px] font-black uppercase tracking-[0.18em]", allAddressed ? "border-[#2ECC71] bg-[#0F2A18] text-[#2ECC71]" : "border-[#C0392B] bg-[#2A0F0C] text-[#FFB3A8]")}>{allAddressed ? `${completedRules}/${totalRules} passed` : `${Math.max(0, passThreshold - completedRules)} more for pass`}</div>
               <div className="border border-[#C8A96E]/60 bg-[#16130B] px-3 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-[#C8A96E]">+{liveTaskPoints.visibleTotal} live pts</div>
             </div>
           </div>
-          <div className="mb-3 border border-[#2A2A2A] bg-black/35 p-2" data-testid="live-task-points-strip" aria-label="Live points horizontal strip">
+          <div className="mb-3 min-w-0 max-w-full overflow-hidden border border-[#2A2A2A] bg-black/35 p-2" data-testid="live-task-points-strip" aria-label="Live points horizontal strip">
             <div className="flex items-center justify-between gap-3 px-1 pb-2">
               <MicroLabel tone="gold">Live points strip</MicroLabel>
               <span className="text-[10px] font-black uppercase tracking-[0.18em] text-[#C8A96E]">+{liveTaskPoints.visibleTotal} now</span>
             </div>
-            <div className="flex snap-x gap-1 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="list">
+            <div className="flex max-w-full snap-x gap-1 overflow-x-auto overscroll-x-contain pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="list">
               {pointStripItems.map(item => {
                 const toneClasses = {
                   gold: "border-[#C8A96E]/55 bg-[#16130B] text-[#C8A96E]",
@@ -1050,7 +1050,7 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
                   white: "border-[#444] bg-[#111] text-white",
                 }[item.tone];
                 return (
-                  <div key={item.label} role="listitem" className={classNames("min-w-[6.75rem] flex-1 snap-start overflow-hidden border px-2.5 py-2 sm:min-w-0", toneClasses)}>
+                  <div key={item.label} role="listitem" className={classNames("min-w-[5.75rem] max-w-[7.25rem] flex-[0_0_5.75rem] snap-start overflow-hidden border px-2 py-2 min-[390px]:min-w-[6.25rem] min-[390px]:flex-[0_0_6.25rem] sm:max-w-none sm:flex-1 sm:basis-0 sm:px-2.5", toneClasses)}>
                     <div className="flex min-w-0 items-baseline justify-between gap-2">
                       <span className="min-w-0 truncate text-[9px] font-black uppercase tracking-[0.14em] text-[#BDBDBD]">{item.label}</span>
                       <span className="max-w-[4.5rem] shrink-0 truncate text-right text-xl font-black uppercase leading-none tracking-[-0.06em] tabular-nums">{item.value}</span>
@@ -1117,14 +1117,14 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
           </div>
         </div>
 
-        <div className="motion-list grid gap-2 bg-[#2A2A2A] p-[2px] sm:grid-cols-3" data-testid="myday-stats-after-must-do">
+        <div className="motion-list grid min-w-0 max-w-full gap-2 overflow-hidden bg-[#2A2A2A] p-[2px] sm:grid-cols-3" data-testid="myday-stats-after-must-do">
           <PosterStat label="Rules addressed" value={`${completedRules}/${totalRules}`} tone={allAddressed ? "green" : "gold"} />
           <PosterStat label="Current streak" value={participant?.currentStreak ?? 0} tone="green" />
           <PosterStat label="Projected pts" value={projectedPoints} tone="gold" />
         </div>
 
-        <div className={classNames("submit-dock motion-submit-dock relative sticky bottom-[104px] z-20 mx-auto transition-all duration-300 md:static", saveProgressScale < 0.35 ? "max-w-[15rem] rounded-full border border-transparent bg-transparent p-0 shadow-none backdrop-blur-none" : saveProgressScale < 0.75 ? "max-w-[22rem] rounded-2xl border border-[#2A2A2A] bg-[#0D0D0D]/95 p-2 backdrop-blur" : "max-w-none rounded-none border border-[#2A2A2A] bg-[#0D0D0D]/95 p-3 backdrop-blur md:border-transparent md:bg-transparent md:p-0 md:backdrop-blur-none", submit.isPending && "submit-dock-pending", allAddressed && !submit.isPending && "submit-dock-ready")} data-save-progress-scale={saveProgressScale}>
-          <SharpButton className={classNames("w-full max-w-full overflow-hidden text-center transition-all duration-300", saveProgressScale < 0.35 ? "rounded-full px-4 py-3 text-[10px] shadow-[0_0_24px_rgba(200,169,110,0.18)]" : saveProgressScale < 0.75 ? "rounded-full py-4 text-xs" : "py-5 text-sm", submit.isPending && "submit-button-pending")} disabled={submit.isPending} onClick={() => submit.mutate({ ...form, reflectionShared: false, dayNumber: snapshot?.challenge.currentDay ?? 1 })}>
+        <div className={classNames("submit-dock motion-submit-dock relative sticky bottom-[104px] z-20 mx-auto w-[min(100%,calc(100vw-2rem))] max-w-full transition-all duration-300 md:static md:w-full", saveProgressScale < 0.35 ? "max-w-[15rem] rounded-full border border-transparent bg-transparent p-0 shadow-none backdrop-blur-none" : saveProgressScale < 0.75 ? "max-w-[22rem] rounded-2xl border border-[#2A2A2A] bg-[#0D0D0D]/95 p-2 backdrop-blur" : "max-w-none rounded-none border border-[#2A2A2A] bg-[#0D0D0D]/95 p-3 backdrop-blur md:border-transparent md:bg-transparent md:p-0 md:backdrop-blur-none", submit.isPending && "submit-dock-pending", allAddressed && !submit.isPending && "submit-dock-ready")} data-save-progress-scale={saveProgressScale}>
+          <SharpButton className={classNames("w-full max-w-full overflow-hidden whitespace-normal break-words text-center transition-all duration-300", saveProgressScale < 0.35 ? "rounded-full px-4 py-3 text-[10px] shadow-[0_0_24px_rgba(200,169,110,0.18)]" : saveProgressScale < 0.75 ? "rounded-full py-4 text-xs" : "py-5 text-sm", submit.isPending && "submit-button-pending")} disabled={submit.isPending} onClick={() => submit.mutate({ ...form, reflectionShared: false, dayNumber: snapshot?.challenge.currentDay ?? 1 })}>
             {submit.isPending ? (allAddressed ? "Submitting the log" : "Saving progress") : allAddressed ? `Submit day ${snapshot?.challenge.currentDay ?? 1}` : `Save progress — ${Math.max(0, passThreshold - completedRules)} more for pass`}
           </SharpButton>
           {saveProgressScale >= 0.55 && !allAddressed && <p className="mt-2 text-center text-[10px] font-black uppercase tracking-[0.16em] text-[#C8A96E]/80">Draft only until 5/6 is reached. Lives judged after rollover.</p>}
@@ -1134,7 +1134,7 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
         </div>
       </section>
 
-      <aside className="space-y-5">
+      <aside className="min-w-0 max-w-full space-y-5 overflow-x-hidden">
         <WardenPresence snapshot={snapshot} />
         <HealthBar lives={participant?.livesRemaining ?? 4} label="Lives remain" />
         <div className={classNames("motion-card ghost-life-card border p-4 transition", ghostLifeLocked ? "border-[#4A315D] bg-[#120F18] opacity-80" : "border-[#2A2A2A] bg-[#101010]")} data-ghost-life-state={ghostLifeLocked ? "locked" : "available"}>
