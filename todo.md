@@ -754,3 +754,11 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Keep the floating Save Progress pill centred and viewport-bounded so it does not contribute to horizontal overflow.
 - [x] Add or update regression coverage for mobile-safe width constraints and no horizontal overflow markers.
 - [x] Validate the fix with focused tests, full tests, production build, project health check, and checkpoint before delivery.
+
+
+## Refinement — Mobile Live Points Strip Space Use
+- [x] Make the mobile Live Points Strip non-swipeable so all point tiles fit in the visible card area.
+- [x] Rework the strip spacing and tile sizing to use available mobile width efficiently without forcing horizontal overflow.
+- [x] Reduce unnecessary vertical length on the first My Day page so the rule checklist appears sooner on mobile.
+- [x] Add or update regression coverage for the compact non-swipeable mobile points strip.
+- [x] Validate the refinement with focused tests, full tests, production build, project health check, and checkpoint before delivery.

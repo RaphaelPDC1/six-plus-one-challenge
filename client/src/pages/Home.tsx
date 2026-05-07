@@ -1036,12 +1036,12 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
               <div className="border border-[#C8A96E]/60 bg-[#16130B] px-3 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-[#C8A96E]">+{liveTaskPoints.visibleTotal} live pts</div>
             </div>
           </div>
-          <div className="mb-3 min-w-0 max-w-full overflow-hidden border border-[#2A2A2A] bg-black/35 p-2" data-testid="live-task-points-strip" aria-label="Live points horizontal strip">
-            <div className="flex items-center justify-between gap-3 px-1 pb-2">
+          <div className="mb-2 min-w-0 max-w-full overflow-hidden border border-[#2A2A2A] bg-black/35 p-1.5 sm:p-2" data-testid="live-task-points-strip" aria-label="Live points compact strip">
+            <div className="flex min-w-0 items-center justify-between gap-2 px-1 pb-1.5">
               <MicroLabel tone="gold">Live points strip</MicroLabel>
-              <span className="text-[10px] font-black uppercase tracking-[0.18em] text-[#C8A96E]">+{liveTaskPoints.visibleTotal} now</span>
+              <span className="shrink-0 text-[9px] font-black uppercase tracking-[0.16em] text-[#C8A96E] sm:text-[10px]">+{liveTaskPoints.visibleTotal} now</span>
             </div>
-            <div className="flex max-w-full snap-x gap-1 overflow-x-auto overscroll-x-contain pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="list">
+            <div className="grid min-w-0 max-w-full grid-cols-4 gap-1" role="list">
               {pointStripItems.map(item => {
                 const toneClasses = {
                   gold: "border-[#C8A96E]/55 bg-[#16130B] text-[#C8A96E]",
@@ -1050,12 +1050,12 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
                   white: "border-[#444] bg-[#111] text-white",
                 }[item.tone];
                 return (
-                  <div key={item.label} role="listitem" className={classNames("min-w-[5.75rem] max-w-[7.25rem] flex-[0_0_5.75rem] snap-start overflow-hidden border px-2 py-2 min-[390px]:min-w-[6.25rem] min-[390px]:flex-[0_0_6.25rem] sm:max-w-none sm:flex-1 sm:basis-0 sm:px-2.5", toneClasses)}>
-                    <div className="flex min-w-0 items-baseline justify-between gap-2">
-                      <span className="min-w-0 truncate text-[9px] font-black uppercase tracking-[0.14em] text-[#BDBDBD]">{item.label}</span>
-                      <span className="max-w-[4.5rem] shrink-0 truncate text-right text-xl font-black uppercase leading-none tracking-[-0.06em] tabular-nums">{item.value}</span>
+                  <div key={item.label} role="listitem" className={classNames("min-w-0 overflow-hidden border px-1.5 py-1.5 sm:px-2 sm:py-2", toneClasses)}>
+                    <div className="flex min-w-0 items-baseline justify-between gap-1">
+                      <span className="min-w-0 truncate text-[8px] font-black uppercase tracking-[0.12em] text-[#BDBDBD] min-[390px]:text-[9px]">{item.label}</span>
+                      <span className="max-w-[2.75rem] shrink-0 truncate text-right text-base font-black uppercase leading-none tracking-[-0.06em] tabular-nums min-[390px]:text-lg sm:max-w-[4.5rem] sm:text-xl">{item.value}</span>
                     </div>
-                    <p className="mt-1 truncate text-[9px] font-black uppercase tracking-[0.14em] text-[#8F8F8F]">{item.detail}</p>
+                    <p className="mt-0.5 truncate text-[7px] font-black uppercase tracking-[0.1em] text-[#8F8F8F] min-[390px]:text-[8px] sm:mt-1 sm:text-[9px]">{item.detail}</p>
                   </div>
                 );
               })}
