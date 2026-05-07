@@ -443,6 +443,12 @@ function preferExistingWhenInputIsBlank(inputValue: string | undefined | null, e
   return inputText.length > 0 ? String(inputValue ?? "") : existingText;
 }
 
+function resolveProofInputValue(inputValue: string | undefined | null, existingValue: string | undefined | null) {
+  const inputText = String(inputValue ?? "").trim();
+  if (inputText === "[]") return "";
+  return preferExistingWhenInputIsBlank(inputValue, existingValue);
+}
+
 export function mergeDailyLogInputWithoutWipingExistingWork(existing: DailyLog | undefined, input: SubmitDailyLogInput): SubmitDailyLogInput {
   if (!existing) return input;
   const existingExerciseComplete = Boolean(existing.exerciseDone) || ((existing.exerciseDuration ?? 0) >= 30 && String(existing.exerciseType ?? "").trim().length > 0);
@@ -455,7 +461,7 @@ export function mergeDailyLogInputWithoutWipingExistingWork(existing: DailyLog |
     cleanEatingNote: preferExistingWhenInputIsBlank(input.cleanEatingNote, existing.cleanEatingNote),
     exerciseDuration: existingExerciseComplete && !inputExerciseComplete ? Math.max(existing.exerciseDuration ?? 0, input.exerciseDuration) : input.exerciseDuration,
     exerciseType: existingExerciseComplete && !inputExerciseComplete ? String(existing.exerciseType ?? "") : preferExistingWhenInputIsBlank(input.exerciseType, existing.exerciseType),
-    exerciseProofUrl: preferExistingWhenInputIsBlank(input.exerciseProofUrl, existing.exerciseProofUrl),
+    exerciseProofUrl: resolveProofInputValue(input.exerciseProofUrl, existing.exerciseProofUrl),
     reflectionText: Boolean(existing.reflectionDone) && input.reflectionText.trim().length === 0 ? String(existing.reflectionText ?? "") : preferExistingWhenInputIsBlank(input.reflectionText, existing.reflectionText),
     reflectionShared: Boolean(existing.reflectionShared) || input.reflectionShared,
     readTeachText: Boolean(existing.readTeachDone) && input.readTeachText.trim().length === 0 ? String(existing.readTeachText ?? "") : preferExistingWhenInputIsBlank(input.readTeachText, existing.readTeachText),

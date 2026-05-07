@@ -286,7 +286,7 @@ describe("Home onboarding shell", () => {
     expect(markup).toContain("href=\"/register\"");
   });
 
-  it("keeps reflections private, supports proof image upload, and constrains overview/name surfaces", () => {
+  it("keeps reflections private, supports proof image/video upload, and constrains overview/name surfaces", () => {
     const homeSource = readFileSync(new URL("./Home.tsx", import.meta.url), "utf8");
 
     expect(homeSource).toContain("No public reflection option. Saved privately to your challenge log.");
@@ -296,11 +296,29 @@ describe("Home onboarding shell", () => {
     expect(homeSource).toContain("trpc.challenge.uploadProof.useMutation");
     expect(homeSource).toContain("accept=\"image/png,image/jpeg,image/webp,video/mp4,video/webm,video/quicktime\"");
     expect(homeSource).toContain("function ProofCarousel");
+    expect(homeSource).toContain("data-testid=\"proof-upload-video-preview\"");
+    expect(homeSource).toContain("data-testid=\"proof-feed-video-autoplay\"");
+    expect(homeSource).toContain("muted autoPlay loop playsInline");
+    expect(homeSource).toContain("encodeProofMediaAfterRemoval(current.exerciseProofUrl, index)");
+    expect(homeSource).toContain("isMedia ? \"aspect-[4/3] max-h-[20rem]\" : \"min-h-0\"");
     expect(homeSource).toContain("data-testid=\"mobile-floating-nav\"");
     expect(homeSource).toContain("min-w-0 overflow-hidden");
     expect(homeSource).toContain("break-words");
     expect(homeSource).toContain("owner?.displayName ?? \"Participant\"");
     expect(homeSource).not.toContain("No public proof yet");
+  });
+
+  it("generates Warden proof insight from account-linked participant data rather than static quotes", () => {
+    const homeSource = readFileSync(new URL("./Home.tsx", import.meta.url), "utf8");
+
+    expect(homeSource).toContain("function buildProofWardenInsight(owner: any, log: any, ownerLogs: any[])");
+    expect(homeSource).toContain("owner?.primaryGoal");
+    expect(homeSource).toContain("owner?.biggestObstacle");
+    expect(homeSource).toContain("reflectionText");
+    expect(homeSource).toContain("readTeachText");
+    expect(homeSource).toContain("The account read uses this participant’s log, proof, streak, lives, and recent movement to generate the insight.");
+    expect(homeSource).toContain("data-testid=\"proof-warden-insight\"");
+    expect(homeSource).toContain("const wardenInsight = buildProofWardenInsight(owner, log, snapshot?.logs ?? []);");
   });
 
   it("wires installable web-app metadata to live-safe reference palette image icons", () => {

@@ -894,3 +894,14 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Ensure Proof page data refreshes or invalidates correctly after today’s proof is edited, without showing stale proof entries.
 - [x] Add or update regression coverage for same-day proof edits appearing in the Proof page/feed.
 - [x] Validate with relevant tests, typecheck/build as appropriate, project health check, and checkpoint before delivery.
+
+
+## Bug Fix and Feature — Production Proof Feed Media, Layout, and Warden Insight
+- [x] Audit current Proof feed rendering, daily proof save/delete behavior, and production stale-media path for deleted proof items.
+- [x] Ensure proof deleted or cleared from My Day no longer appears on the Proof page or production feed for the active day.
+- [x] Add support for video proof uploads alongside image proof uploads, including MIME/type validation and persisted media type metadata.
+- [x] Render proof videos in the Proof page as muted, plays-inline, autoplaying previews with sensible controls or unmute affordance.
+- [x] Correct Proof section proportions on mobile so empty/deleted media does not reserve oversized blank space and real proof media uses a controlled aspect ratio.
+- [x] Replace generic quote-style Warden copy with account-linked AI insight generated from each participant’s interpreted data, logs, reflections, and proof context.
+- [x] Add regression coverage for deleted proof disappearing, video proof rendering/autoplay attributes, mobile proof proportions, and Warden insight context behavior.
+- [x] Validate with relevant tests, typecheck/build, project health check, and checkpoint before delivery.

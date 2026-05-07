@@ -166,6 +166,16 @@ function encodeProofMedia(items: ProofMediaItem[]) {
 function appendProofMedia(value: string, item: ProofMediaItem) {
   return encodeProofMedia([...parseProofMedia(value), item]);
 }
+
+function encodeProofMediaAfterRemoval(value: string, removeIndex: number) {
+  const remaining = parseProofMedia(value).filter((_, itemIndex) => itemIndex !== removeIndex);
+  return remaining.length > 0 ? encodeProofMedia(remaining) : "[]";
+}
+
+function proofMediaSrc(item: ProofMediaItem) {
+  if (item.type === "video") return item.url.trim();
+  return proofImageSrc(item.url) || item.url.trim();
+}
 const emptyDay: MyDayForm = {
   noAlcohol: false,
   cleanEating: false,
@@ -1116,7 +1126,7 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
                   <button type="button" disabled={uploadProof.isPending} className="border border-[#C8A96E]/50 bg-[#16130B] px-4 py-3 text-[10px] font-black uppercase tracking-[0.22em] text-[#C8A96E] disabled:opacity-50" onClick={() => { pulse(12); cameraProofInputRef.current?.click(); }}>{uploadProof.isPending ? "Uploading" : "Take proof"}</button>
                   <button type="button" disabled={uploadProof.isPending} className="border border-[#2A2A2A] bg-[#111] px-4 py-3 text-[10px] font-black uppercase tracking-[0.22em] text-white disabled:opacity-50" onClick={() => { pulse(12); libraryProofInputRef.current?.click(); }}>{uploadProof.isPending ? "Uploading" : "Choose proof"}</button>
                 </div>
-                <ProofMediaStrip items={parseProofMedia(form.exerciseProofUrl)} onRemove={index => setForm(current => ({ ...current, exerciseProofUrl: encodeProofMedia(parseProofMedia(current.exerciseProofUrl).filter((_, itemIndex) => itemIndex !== index)) }))} />
+                <ProofMediaStrip items={parseProofMedia(form.exerciseProofUrl)} onRemove={index => setForm(current => ({ ...current, exerciseProofUrl: encodeProofMediaAfterRemoval(current.exerciseProofUrl, index) }))} />
               </div>
             </div>
           </RuleCard>
@@ -1586,7 +1596,7 @@ function ProofMediaStrip({ items, onRemove }: { items: ProofMediaItem[]; onRemov
         {items.map((item, index) => (
           <div key={`${item.url}-${index}`} className="relative min-w-[8.5rem] max-w-[8.5rem] border border-[#2A2A2A] bg-[#080808] p-2">
             <div className="aspect-video overflow-hidden bg-black">
-              {item.type === "video" ? <video src={proofImageSrc(item.url) || item.url} className="h-full w-full object-cover" muted playsInline preload="metadata" /> : proofImageSrc(item.url) ? <img src={proofImageSrc(item.url)} alt={`Proof media ${index + 1}`} className="h-full w-full object-cover" loading="lazy" decoding="async" /> : <div className="grid h-full place-items-center px-2 text-center text-[9px] font-black uppercase tracking-[0.12em] text-[#C8A96E]">Proof note</div>}
+              {item.type === "video" ? <video src={proofMediaSrc(item)} className="h-full w-full object-cover" muted autoPlay loop playsInline preload="metadata" data-testid="proof-upload-video-preview" /> : proofImageSrc(item.url) ? <img src={proofImageSrc(item.url)} alt={`Proof media ${index + 1}`} className="h-full w-full object-cover" loading="lazy" decoding="async" /> : <div className="grid h-full place-items-center px-2 text-center text-[9px] font-black uppercase tracking-[0.12em] text-[#C8A96E]">Proof note</div>}
             </div>
             <p className="mt-2 truncate text-[9px] font-black uppercase tracking-[0.12em] text-[#777]">{item.type} {index + 1}</p>
             {onRemove && <button type="button" onClick={() => onRemove(index)} className="absolute right-1 top-1 grid h-6 w-6 place-items-center border border-[#2A2A2A] bg-black/80 text-[#C0392B]" aria-label={`Remove proof item ${index + 1}`}><X className="h-3 w-3" /></button>}
@@ -1598,20 +1608,27 @@ function ProofMediaStrip({ items, onRemove }: { items: ProofMediaItem[]; onRemov
 }
 
 function ProofCarousel({ items, dayNumber }: { items: ProofMediaItem[]; dayNumber: number }) {
-  const [index, setIndex] = useState(0);
   if (items.length === 0) return null;
-  const item = items[Math.min(index, items.length - 1)];
-  const src = proofImageSrc(item.url) || item.url;
   return (
     <div className="mt-4 border border-[#2A2A2A] bg-black p-2" data-testid="proof-carousel">
-      <div className="flex items-center justify-between gap-3 pb-2">
-        <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#C8A96E]">{items.length} proof item{items.length === 1 ? "" : "s"} · Day {dayNumber}</p>
-        {items.length > 1 && <div className="flex gap-1">
-          {items.map((_, dot) => <button key={dot} type="button" onClick={() => setIndex(dot)} className={classNames("h-2 w-5", dot === index ? "bg-[#C8A96E]" : "bg-[#333]")} aria-label={`Show proof ${dot + 1}`} />)}
-        </div>}
-      </div>
-      <div className="aspect-video overflow-hidden bg-[#050505]">
-        {item.type === "video" ? <video src={src} className="h-full w-full object-contain" controls playsInline preload="metadata" /> : proofImageSrc(item.url) ? <img src={src} alt={`Day ${dayNumber} proof ${index + 1}`} className="h-full w-full object-contain" loading="lazy" decoding="async" /> : <p className="break-all p-4 text-xs font-bold leading-5 text-[#C8A96E]">Proof: {item.url}</p>}
+      <p className="pb-2 text-[10px] font-black uppercase tracking-[0.16em] text-[#C8A96E]">{items.length} proof item{items.length === 1 ? "" : "s"} · Day {dayNumber}</p>
+      <div className="grid gap-2 sm:grid-cols-2">
+        {items.map((item, index) => {
+          const imageSrc = proofImageSrc(item.url);
+          const src = proofMediaSrc(item);
+          const isMedia = item.type === "video" || Boolean(imageSrc);
+          return (
+            <div key={`${item.url}-${index}`} className={classNames("overflow-hidden border border-[#2A2A2A] bg-[#050505]", isMedia ? "aspect-[4/3] max-h-[20rem]" : "min-h-0")}> 
+              {item.type === "video" ? (
+                <video src={src} className="h-full w-full object-cover" muted autoPlay loop playsInline controls preload="metadata" data-testid="proof-feed-video-autoplay" />
+              ) : imageSrc ? (
+                <img src={src} alt={`Day ${dayNumber} proof ${index + 1}`} className="h-full w-full object-cover" loading="lazy" decoding="async" />
+              ) : (
+                <p className="break-words p-3 text-xs font-bold leading-5 text-[#C8A96E]">Proof note: {item.url}</p>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -1805,8 +1822,34 @@ function Leaderboard({ snapshot }: { snapshot: Snapshot }) {
   );
 }
 
+function buildProofWardenInsight(owner: any, log: any, ownerLogs: any[]) {
+  const recentLogs = ownerLogs
+    .filter((entry: any) => entry?.participantId === log?.participantId)
+    .sort((a: any, b: any) => Number(b.dayNumber ?? 0) - Number(a.dayNumber ?? 0))
+    .slice(0, 5);
+  const recentProofCount = recentLogs.filter((entry: any) => parseProofMedia(entry.exerciseProofUrl).length > 0).length;
+  const completedRules = getLogCompletedRuleCount(log);
+  const goal = String(owner?.primaryGoal ?? "").trim();
+  const obstacle = String(owner?.biggestObstacle ?? "").trim();
+  const teaching = String(log?.readTeachText ?? "").trim();
+  const reflectionSignal = String(log?.reflectionText ?? "").trim();
+  const proofItems = parseProofMedia(log?.exerciseProofUrl);
+  const proofPhrase = proofItems.some(item => item.type === "video") ? "video proof" : proofItems.length > 0 ? "proof" : "the written log";
+
+  if (reflectionSignal.length > 0 && teaching.length > 0) {
+    return `The account read links today’s private reflection with the shared lesson: ${completedRules}/${DAILY_RULE_COUNT} standards logged, ${proofPhrase} attached, and the next move is to turn that insight into tomorrow’s repeatable action.`;
+  }
+  if (goal || obstacle) {
+    return `The account read is using their profile context${goal ? ` around ${goal}` : ""}${obstacle ? ` and the obstacle of ${obstacle}` : ""}. Today’s ${proofPhrase} is treated as behaviour data, not a quote: ${completedRules}/${DAILY_RULE_COUNT} standards are on the board.`;
+  }
+  if (recentProofCount >= 2) {
+    return `The account read sees a pattern, not a one-off: ${recentProofCount} recent proof-backed days in the latest check. The Warden marks this as momentum that has to be repeated before the day closes.`;
+  }
+  return `The account read uses this participant’s log, proof, streak, lives, and recent movement to generate the insight. Today shows ${completedRules}/${DAILY_RULE_COUNT} standards with ${proofPhrase}; the instruction is to keep providing evidence and build from it.`;
+}
+
 function ProofFeed({ snapshot }: { snapshot: Snapshot }) {
-  const publicLogs = (snapshot?.logs ?? []).filter((log: any) => parseProofMedia(log.exerciseProofUrl).length > 0 || log.readTeachText);
+  const publicLogs = (snapshot?.logs ?? []).filter((log: any) => parseProofMedia(log.exerciseProofUrl).length > 0 || String(log.readTeachText ?? "").trim().length > 0);
   return (
     <section className="border border-[#2A2A2A] bg-[#101010] p-5">
       <MicroLabel tone="green">Proof feed</MicroLabel>
@@ -1814,8 +1857,9 @@ function ProofFeed({ snapshot }: { snapshot: Snapshot }) {
       <div className="mt-5 grid gap-3 lg:grid-cols-2">
         {publicLogs.map((log: any) => {
           const owner = snapshot?.participants.find((p: any) => p.id === log.participantId);
+          const wardenInsight = buildProofWardenInsight(owner, log, snapshot?.logs ?? []);
           return (
-            <article key={log.id} className="motion-card border border-[#2A2A2A] bg-[#0D0D0D] p-5">
+            <article key={log.id} className="motion-card border border-[#2A2A2A] bg-[#0D0D0D] p-4 sm:p-5">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                   <ProfilePhoto participant={owner} className="h-11 w-11" />
@@ -1826,8 +1870,12 @@ function ProofFeed({ snapshot }: { snapshot: Snapshot }) {
                 </div>
                 <span className="border border-[#2ECC71]/50 bg-[#102018] px-3 py-1 text-[9px] font-black uppercase tracking-[0.2em] text-[#2ECC71]">Proof</span>
               </div>
-              {log.readTeachText && <p className="mt-4 border-l-2 border-[#C8A96E] pl-4 text-sm font-bold leading-6 text-[#D8D8D8]">{log.readTeachText}</p>}
+              {String(log.readTeachText ?? "").trim().length > 0 && <p className="mt-4 border-l-2 border-[#C8A96E] pl-4 text-sm font-bold leading-6 text-[#D8D8D8]">{log.readTeachText}</p>}
               <ProofCarousel items={parseProofMedia(log.exerciseProofUrl)} dayNumber={log.dayNumber} />
+              <div className="mt-4 border border-[#C8A96E]/50 bg-[#17130C] p-4" data-testid="proof-warden-insight">
+                <MicroLabel tone="gold">The Warden responds</MicroLabel>
+                <p className="mt-3 text-sm font-bold italic leading-6 text-[#F0D58A]">{wardenInsight}</p>
+              </div>
             </article>
           );
         })}

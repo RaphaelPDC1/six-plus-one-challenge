@@ -208,6 +208,35 @@ describe("challengeLogic", () => {
     });
   });
 
+  it("clears saved proof media when the user explicitly removes every proof item", () => {
+    const existingTodayLog = {
+      exerciseDone: true,
+      exerciseDuration: 35,
+      exerciseType: "Run",
+      exerciseProofUrl: JSON.stringify([{ url: "/manus-storage/proof.webp", type: "image" }]),
+    } as any;
+
+    const explicitClear = {
+      dayNumber: 2,
+      noAlcohol: false,
+      cleanEating: false,
+      cleanEatingNote: "",
+      exerciseDuration: 35,
+      exerciseType: "Run",
+      exerciseProofUrl: "[]",
+      reflectionText: "",
+      reflectionShared: false,
+      readTeachText: "",
+      trackedEverything: false,
+    };
+
+    const merged = mergeDailyLogInputWithoutWipingExistingWork(existingTodayLog, explicitClear);
+
+    expect(merged.exerciseProofUrl).toBe("");
+    expect(merged.exerciseDuration).toBe(35);
+    expect(merged.exerciseType).toBe("Run");
+  });
+
   it("does not let a completed-to-draft-to-completed toggle re-open streak credit", () => {
     const originalSubmittedAt = new Date("2026-05-06T12:00:00Z");
     const draftToggle = resolveDailyCompletionAward({
