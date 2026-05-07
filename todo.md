@@ -914,3 +914,14 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Make Deep Thought Renee responses specific to the individual participant using their profile context, current log, proof, reflection, recent history, streak, and challenge state.
 - [x] Add regression coverage for visible Proof content rendering and Deep Thought Renee person-specific copy hooks.
 - [x] Validate with relevant tests, typecheck/build, project health check, and checkpoint before delivery.
+
+
+## Copy Fix — Remove Renee From Proof Insight Label
+- [x] Replace the mistaken “Deep Thought Renee” wording with “Deep Thought” across the Proof page UI.
+- [x] Update related tests or copy expectations so the deeper person-specific insight remains but the Renee name is removed.
+- [x] Validate the wording change with relevant tests/typecheck and save a checkpoint before delivery.
+
+- [x] Shorten Proof page Deep Thought copy so it is punchy and does not overflow behind the mobile bottom navigation
+- [x] Remove all remaining Renee references from Deep Thought source code and regression tests
+- [x] Compact the Proof page Deep Thought card typography and spacing for mobile readability
+- [x] Rewrite Proof page Deep Thought wording so it sounds natural, direct, and coaching-led rather than robotic or theatrical

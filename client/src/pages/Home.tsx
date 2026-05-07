@@ -1842,18 +1842,19 @@ function buildProofWardenInsight(owner: any, log: any, ownerLogs: any[]) {
   const proofPhrase = hasVideo ? "video evidence" : proofItems.length > 0 ? "visible evidence" : "written evidence";
   const streak = Number(owner?.currentStreak ?? owner?.streak ?? 0);
   const lives = Number(owner?.livesRemaining ?? 4);
-  const teachingLine = teaching ? ` The lesson they wrote down is the clue: “${teaching.slice(0, 120)}${teaching.length > 120 ? "…" : ""}”` : "";
-  const reflectionLine = reflectionSignal ? ` The private reflection adds the truth underneath it: “${reflectionSignal.slice(0, 120)}${reflectionSignal.length > 120 ? "…" : ""}”` : "";
-  const goalLine = goal ? ` Renee reads this against ${firstName}’s stated goal: ${goal}.` : "";
-  const obstacleLine = obstacle ? ` The pressure point is still ${obstacle}, so the proof matters because it shows action while that pressure is present.` : "";
+  const short = (value: string, max = 38) => (value.length > max ? `${value.slice(0, max).trim()}…` : value);
+  const proofDaysLabel = `${recentProofCount} proof day${recentProofCount === 1 ? "" : "s"}`;
+  const personalFocus = goal ? `That backs the goal: ${short(goal)}.` : obstacle ? `That pushes through: ${short(obstacle)}.` : "That is the standard.";
+  const noteSignal = teaching || reflectionSignal;
+  const noteLine = noteSignal ? ` Takeaway: ${short(noteSignal, 42)}.` : "";
 
   if (reflectionSignal.length > 0 || teaching.length > 0 || goal || obstacle) {
-    return `Deep Thought Renee is not giving ${firstName} a quote; she is reading the pattern. ${completedRules}/${DAILY_RULE_COUNT} standards are logged with ${proofPhrase}, ${recentProofCount} proof-backed day${recentProofCount === 1 ? "" : "s"} showing in the recent trail, ${lives}/4 lives still in play, and a streak of ${streak}. ${goalLine}${obstacleLine}${teachingLine}${reflectionLine} Renee’s insight: this is the moment to turn what ${firstName} already knows into the next repeated behaviour, not another thought they leave unused.`;
+    return `${firstName}: ${completedRules}/${DAILY_RULE_COUNT} done, ${proofPhrase}, streak ${streak}, ${lives}/4 lives. ${personalFocus}${noteLine} Repeat it tomorrow.`;
   }
   if (recentProofCount >= 2) {
-    return `Deep Thought Renee sees the repeat pattern for ${firstName}: ${recentProofCount} recent proof-backed days means this is becoming evidence, not intention. Today adds ${completedRules}/${DAILY_RULE_COUNT} standards and ${proofPhrase}; the next insight is simple but personal — protect the run before emotion, tiredness, or delay gets a vote.`;
+    return `${firstName}: ${proofDaysLabel} recently and ${completedRules}/${DAILY_RULE_COUNT} done today. The habit is forming — protect it tomorrow.`;
   }
-  return `Deep Thought Renee is building the read on ${firstName} from the data available: ${completedRules}/${DAILY_RULE_COUNT} standards, ${proofPhrase}, ${lives}/4 lives, and a streak of ${streak}. The insight is specific to this account: keep providing evidence until the app has enough pattern to challenge the exact excuse, not just celebrate the proof.`;
+  return `${firstName}: ${completedRules}/${DAILY_RULE_COUNT} done, ${proofPhrase}, ${lives}/4 lives. Simple target: show up again tomorrow.`;
 }
 
 function ProofFeed({ snapshot }: { snapshot: Snapshot }) {
@@ -1862,7 +1863,7 @@ function ProofFeed({ snapshot }: { snapshot: Snapshot }) {
     <section className="border border-[#2A2A2A] bg-[#101010] p-4 sm:p-5">
       <MicroLabel tone="green">Proof feed</MicroLabel>
       <h2 className="mt-2 break-words text-3xl font-black uppercase tracking-[-0.07em] text-white sm:text-4xl">Receipts. Deep thought. Momentum.</h2>
-      <p className="mt-3 max-w-2xl text-xs font-bold uppercase leading-5 tracking-[0.12em] text-[#BDBDBD]">Proof content is shown first, then Renee reads the person behind the evidence.</p>
+      <p className="mt-3 max-w-2xl text-xs font-bold uppercase leading-5 tracking-[0.12em] text-[#BDBDBD]">Proof content is shown first, then Deep Thought reads the person behind the evidence.</p>
       <div className="mt-5 grid gap-4 lg:grid-cols-2">
         {publicLogs.map((log: any) => {
           const owner = snapshot?.participants.find((p: any) => p.id === log.participantId);
@@ -1881,9 +1882,9 @@ function ProofFeed({ snapshot }: { snapshot: Snapshot }) {
               </div>
               {String(log.readTeachText ?? "").trim().length > 0 && <p className="mt-4 break-words border-l-4 border-[#C8A96E] bg-[#14100A] py-3 pl-4 pr-3 text-base font-black leading-7 text-white" data-testid="proof-readable-teaching">{log.readTeachText}</p>}
               <ProofCarousel items={parseProofMedia(log.exerciseProofUrl)} dayNumber={log.dayNumber} />
-              <div className="mt-4 rounded-[1.25rem] border border-[#8E44AD]/60 bg-[#130A1B] p-4 shadow-[0_0_34px_rgba(142,68,173,0.14)]" data-testid="proof-deep-thought-renee">
-                <MicroLabel tone="purple">Deep Thought Renee</MicroLabel>
-                <p className="mt-3 break-words text-[15px] font-bold leading-7 text-[#F6E8FF]">{wardenInsight}</p>
+              <div className="mt-3 rounded-[1rem] border border-[#8E44AD]/60 bg-[#130A1B] p-3 shadow-[0_0_24px_rgba(142,68,173,0.12)] sm:p-4" data-testid="proof-deep-thought">
+                <MicroLabel tone="purple">Deep Thought</MicroLabel>
+                <p className="mt-2 break-words text-[13px] font-extrabold leading-5 text-[#F6E8FF] sm:text-[14px] sm:leading-6">{wardenInsight}</p>
               </div>
             </article>
           );

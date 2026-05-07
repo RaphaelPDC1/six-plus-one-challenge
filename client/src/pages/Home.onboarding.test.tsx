@@ -312,7 +312,7 @@ describe("Home onboarding shell", () => {
     expect(homeSource).not.toContain("No public proof yet");
   });
 
-  it("generates Deep Thought Renee proof insight from person-specific account data instead of weak generic Warden quotes", () => {
+  it("generates Deep Thought proof insight from person-specific account data instead of weak generic Warden quotes", () => {
     const homeSource = readFileSync(new URL("./Home.tsx", import.meta.url), "utf8");
 
     expect(homeSource).toContain("function buildProofWardenInsight(owner: any, log: any, ownerLogs: any[])");
@@ -322,10 +322,11 @@ describe("Home onboarding shell", () => {
     expect(homeSource).toContain("owner?.livesRemaining");
     expect(homeSource).toContain("reflectionText");
     expect(homeSource).toContain("readTeachText");
-    expect(homeSource).toContain("Deep Thought Renee is not giving");
-    expect(homeSource).toContain("Renee reads this against");
-    expect(homeSource).toContain("data-testid=\"proof-deep-thought-renee\"");
-    expect(homeSource).toContain("Deep Thought Renee</MicroLabel>");
+    expect(homeSource).toContain("Repeat it tomorrow.");
+    expect(homeSource).toContain("Takeaway:");
+    expect(homeSource).toContain("data-testid=\"proof-deep-thought\"");
+    expect(homeSource).toContain("Deep Thought</MicroLabel>");
+    expect(homeSource).not.toMatch(/Ren[eé]e/);
     expect(homeSource).toContain("const wardenInsight = buildProofWardenInsight(owner, log, snapshot?.logs ?? []);");
   });
 
