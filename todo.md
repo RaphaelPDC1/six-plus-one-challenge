@@ -947,3 +947,17 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Avoid regurgitating raw variables; generate a short interpreted insight that explains what the proof suggests and why it matters.
 - [x] Update regression coverage for the redesigned Proof Feed and richer upload-plus-context insight output.
 - [x] Validate with tests, typecheck/build, project health check, and checkpoint before delivery.
+
+## Bug Fix — Proof Media Grid Pattern and Video Playback
+- [x] Remove the visible grid-pattern treatment from uploaded proof image and video media areas while preserving the surrounding Proof Feed design.
+- [x] Diagnose why uploaded proof videos are not playing in the Proof section across development and deployed environments.
+- [x] Fix proof video rendering/source handling so uploaded videos load, play inline, and remain muted/autoplay-capable with controls.
+- [x] Add or update regression coverage for grid-free media presentation and playable proof video markup/source behavior.
+- [x] Validate with relevant tests, typecheck/build, project health check, and checkpoint before delivery.
+
+## Bug Fix — Human Warden Insight Quality
+- [x] Rewrite the Deep Thought/Warden insight output so it sounds human, direct, and genuinely insightful rather than generic or mechanical.
+- [x] Stop the insight from defending, guessing, or describing uploaded image files when the app only has file metadata and cannot actually inspect the image content.
+- [x] Use visible evidence only: proof presence/type, exercise duration/type, written reflection, Read entry, streak, onboarding goal, obstacles, and friction signals.
+- [x] Keep the insight short, useful, and action-oriented, explaining what the pattern suggests and what to do next.
+- [x] Add or update regression coverage so Warden insight copy avoids fake visual claims and uses more natural interpreted language.

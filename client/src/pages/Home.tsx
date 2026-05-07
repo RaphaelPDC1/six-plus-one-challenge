@@ -194,8 +194,13 @@ function encodeProofMediaAfterRemoval(value: string, removeIndex: number) {
 }
 
 function proofMediaSrc(item: ProofMediaItem) {
-  if (proofMediaType(item) === "video") return item.url.trim();
-  return proofImageSrc(item.url) || item.url.trim();
+  const trimmed = item.url.trim();
+  if (proofMediaType(item) === "video") {
+    if (trimmed.startsWith("/manus-storage/")) return `/api/storage-image/${encodeURIComponent(trimmed.slice("/manus-storage/".length))}`;
+    if (trimmed.startsWith("/api/storage-image/")) return encodeURI(trimmed);
+    return trimmed;
+  }
+  return proofImageSrc(trimmed) || trimmed;
 }
 const emptyDay: MyDayForm = {
   noAlcohol: false,
@@ -1642,18 +1647,17 @@ function ProofCarousel({ items, dayNumber, ownerName }: { items: ProofMediaItem[
           const isMedia = mediaType === "video" || Boolean(imageSrc);
           return (
             <div key={`${item.url}-${index}`} className={classNames("relative overflow-hidden border border-[#C8A96E]/45 bg-[#11100C]", isMedia ? "aspect-[4/3] min-h-[12rem]" : "min-h-[5.5rem]")} data-testid="proof-content-visible">
-              <div className="pointer-events-none absolute inset-0 z-10 bg-[linear-gradient(rgba(255,255,255,0.35)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.35)_1px,transparent_1px)] bg-[length:2rem_2rem] opacity-45" aria-hidden="true" />
-              <div className="pointer-events-none absolute inset-0 z-10 bg-[radial-gradient(circle_at_center,transparent_0,rgba(0,0,0,0.06)_38%,rgba(0,0,0,0.48)_100%)]" aria-hidden="true" />
+              <div className="pointer-events-none absolute inset-0 z-10 bg-[radial-gradient(circle_at_center,transparent_0,rgba(0,0,0,0.02)_42%,rgba(0,0,0,0.34)_100%)]" aria-hidden="true" />
               {mediaType === "video" ? (
-                <video className="h-full w-full bg-black object-cover opacity-85" muted autoPlay loop playsInline controls preload="metadata" data-testid="proof-feed-video-autoplay" aria-label={`Day ${dayNumber} proof video ${index + 1}`}><source src={src} type={proofVideoMimeType(item.url, item.mimeType)} />Your browser cannot play this proof video.</video>
+                <video src={src} className="h-full w-full bg-black object-cover" muted autoPlay loop playsInline controls preload="auto" data-testid="proof-feed-video-autoplay" aria-label={`Day ${dayNumber} proof video ${index + 1}`}><source src={src} type={proofVideoMimeType(item.url, item.mimeType)} />Your browser cannot play this proof video.</video>
               ) : imageSrc ? (
-                <img src={src} alt={`Day ${dayNumber} proof ${index + 1}`} className="h-full w-full bg-black object-cover opacity-85" loading="lazy" decoding="async" />
+                <img src={src} alt={`Day ${dayNumber} proof ${index + 1}`} className="h-full w-full bg-black object-cover" loading="lazy" decoding="async" />
               ) : (
                 <div className="flex min-h-[5.5rem] items-center border-l-4 border-[#C8A96E] bg-[#130F08] p-4">
                   <p className="break-words text-sm font-black leading-6 text-white">{item.url}</p>
                 </div>
               )}
-              {isMedia && <p className="absolute inset-x-4 top-1/2 z-20 -translate-y-1/2 text-center text-[9px] font-black uppercase tracking-[0.12em] text-white/80">{label} · {mediaType === "video" ? "training" : "proof"}</p>}
+              {isMedia && <p className="pointer-events-none absolute inset-x-4 top-1/2 z-20 -translate-y-1/2 text-center text-[9px] font-black uppercase tracking-[0.12em] text-white/80">{label} · {mediaType === "video" ? "training" : "proof"}</p>}
             </div>
           );
         })}
@@ -1869,8 +1873,7 @@ function buildProofWardenInsight(owner: any, log: any, ownerLogs: any[]) {
   const exerciseDuration = Number(log?.exerciseDuration ?? 0);
   const proofItems = parseProofMedia(log?.exerciseProofUrl);
   const proofTypes = proofItems.map((item: any) => proofMediaType(item));
-  const proofNames = proofItems.map((item: any) => String(item?.name ?? "").trim()).filter(Boolean);
-  const bundle = [goal, obstacle, supportNeeded, teaching, reflectionSignal, cleanEatingNote, exerciseType, ...proofNames].join(" ").toLowerCase();
+  const bundle = [goal, obstacle, supportNeeded, teaching, reflectionSignal, cleanEatingNote, exerciseType].join(" ").toLowerCase();
   const hasAny = (words: string[]) => words.some(word => bundle.includes(word));
   const proofHas = (type: string) => proofTypes.includes(type as ProofMediaItem["type"]);
   const hasProof = proofItems.length > 0;
@@ -1895,55 +1898,53 @@ function buildProofWardenInsight(owner: any, log: any, ownerLogs: any[]) {
           ? "usual friction"
           : "easy-exit moment";
 
-  const uploadRead = proofHas("video")
-    ? "The video receipt carries more weight than a claim"
+  const evidenceRead = proofHas("video")
+    ? "There is video evidence attached, so the claim has something behind it"
     : proofHas("image")
-      ? "The image receipt gives the session a visible anchor"
+      ? "There is proof attached; I am reading the workout and the words around it, not pretending the file tells the whole story"
       : proofHas("link")
-        ? "The linked receipt turns the day into evidence"
-        : "The written note is the receipt today";
+        ? "There is an external receipt attached, which makes the log harder to hide from"
+        : "The written entry has to carry the proof today";
 
-  const mediaDetail = proofItems.length > 1
-    ? `${proofItems.length} uploads back up the entry`
-    : proofNames[0]
-      ? `the upload named “${proofNames[0].slice(0, 28)}” backs it up`
-      : hasProof
-        ? "the upload backs it up"
-        : "the log has to carry the proof";
+  const evidenceDetail = proofItems.length > 1
+    ? `${proofItems.length} proof items make this harder to dismiss`
+    : hasProof
+      ? "the upload matters because it turns intention into evidence"
+      : "the useful signal is the honesty in the log";
 
   const actionRead = exerciseDuration >= 45
-    ? `${exerciseDuration} minutes is a real training block`
+    ? `${exerciseDuration} minutes is not symbolic; that is a real training block`
     : exerciseDuration > 0 && exerciseType
-      ? `${exerciseDuration} minutes of ${exerciseType.toLowerCase()} still counts because it was logged and shown`
+      ? `${exerciseDuration} minutes of ${exerciseType.toLowerCase()} is modest, but it still beats the version of the day where nothing gets logged`
       : exerciseType
-        ? `${exerciseType.toLowerCase()} is the action signal`
+        ? `${exerciseType.toLowerCase()} is the action signal, but the next log needs more detail`
         : hasProof
-          ? "the visible receipt is the action signal"
-          : "the honest entry is the action signal";
+          ? "the proof shows effort was recorded, but the next win is adding clearer training detail"
+          : "the honest entry is the starting point, not the finish line";
 
   const mindRead = hasAny(["plan", "prepare", "structure", "routine"])
-    ? "This looks like planning before pressure hits"
+    ? "The useful signal is preparation: this person is trying to remove the argument before it starts"
     : hasAny(["learn", "read", "teach", "idea", "lesson"])
-      ? "There is a lesson attached, not just a tick-box"
+      ? "The Read entry is doing more than ticking a box; it gives the day a reason to repeat"
       : hasAny(["hard", "struggle", "tempt", "craving", "stress", "tired"])
-        ? "The useful part is the honesty under friction"
+        ? "The honest part is the strongest part here: they named the friction instead of hiding behind it"
         : teaching || reflectionSignal
-          ? "The words show awareness behind the receipt"
-          : "The receipt is doing most of the talking";
+          ? "The words add context, so this is not just proof for other people; it is feedback for tomorrow"
+          : "The proof is useful, but the next level is explaining what it changed";
 
-  const experience = trainingLevel.includes("beginner")
-    ? "For a newer base"
+  const experience = trainingLevel.includes("beginner") || trainingLevel.includes("starting")
+    ? "For someone building the base"
     : trainingLevel.includes("advanced") || trainingLevel.includes("experienced")
-      ? "For someone who knows the standard"
+      ? "For someone who already knows the standard"
       : "For this challenge";
 
   if (hasProof || teaching || reflectionSignal || goal || obstacle || supportNeeded) {
-    return `${firstName}: ${uploadRead}; ${mediaDetail}. ${experience}, ${actionRead}. This points at the ${aim}: handle ${friction}, then repeat it tomorrow.`;
+    return `${firstName}: ${evidenceRead}; ${evidenceDetail}. ${experience}, ${actionRead}. My read: this is less about the file and more about protecting the ${aim} when ${friction} shows up. Tomorrow, repeat the smallest part that made this possible.`;
   }
   if (recentProofCount >= 2) {
-    return `${firstName}: the pattern is starting to show. Recent receipts say this is becoming behaviour, not a one-off. Protect it tomorrow.`;
+    return `${firstName}: the pattern is starting to show. Recent receipts say this is becoming behaviour, not a one-off. Protect the boring repeat tomorrow.`;
   }
-  return `${firstName}: ${mindRead}. Keep it simple tomorrow: one clear action, one honest receipt, no hiding.`;
+  return `${firstName}: ${mindRead}. Keep it simple tomorrow: one clear action, one honest receipt, and one sentence about what nearly got in the way.`;
 }
 
 function ProofFeed({ snapshot }: { snapshot: Snapshot }) {
@@ -1989,7 +1990,7 @@ function ProofFeed({ snapshot }: { snapshot: Snapshot }) {
                   <span className="text-[8px] font-black uppercase tracking-[0.16em] text-[#6F5A2E]">Day {log.dayNumber}</span>
                 </div>
                 <p className="mt-2 break-words text-[12px] font-bold italic leading-5 text-[#F0D58A] sm:text-[13px]">{wardenInsight}</p>
-                <p className="mt-3 text-[8px] font-black uppercase tracking-[0.16em] text-[#7A612C]">Generated from today’s upload + exercise log + challenge data</p>
+                <p className="mt-3 text-[8px] font-black uppercase tracking-[0.16em] text-[#7A612C]">Generated from proof presence + exercise log + challenge context. No fake image reading.</p>
               </div>
             </article>
           );

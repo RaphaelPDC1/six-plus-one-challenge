@@ -299,6 +299,7 @@ describe("Home onboarding shell", () => {
     expect(homeSource).toContain("data-testid=\"proof-upload-video-preview\"");
     expect(homeSource).toContain("data-testid=\"proof-feed-video-autoplay\"");
     expect(homeSource).toContain("muted autoPlay loop playsInline controls");
+    expect(homeSource).toContain("<video src={src} className=\"h-full w-full bg-black object-cover\"");
     expect(homeSource).toContain("<source src={src} type={proofVideoMimeType(item.url, item.mimeType)} />");
     expect(homeSource).toContain("function proofVideoMimeType");
     expect(homeSource).toContain("declaredType === \"video\" || isProofVideoUrl(url, mimeType)");
@@ -306,7 +307,9 @@ describe("Home onboarding shell", () => {
     expect(homeSource).toContain("encodeProofMediaAfterRemoval(current.exerciseProofUrl, index)");
     expect(homeSource).toContain("data-testid=\"proof-feed-redesign\"");
     expect(homeSource).toContain("data-testid=\"proof-content-visible\"");
-    expect(homeSource).toContain("bg-black object-cover opacity-85");
+    expect(homeSource).toContain("bg-black object-cover");
+    expect(homeSource).not.toContain("opacity-85");
+    expect(homeSource).not.toContain("bg-[linear-gradient(rgba(255,255,255,0.35)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.35)_1px,transparent_1px)]");
     expect(homeSource).toContain("ownerName?: string");
     expect(homeSource).toContain("data-testid=\"proof-readable-card\"");
     expect(homeSource).toContain("data-testid=\"proof-readable-teaching\"");
@@ -330,17 +333,19 @@ describe("Home onboarding shell", () => {
     expect(homeSource).toContain("reflectionText");
     expect(homeSource).toContain("readTeachText");
     expect(homeSource).toContain("proofHas(\"video\")");
-    expect(homeSource).toContain("The video receipt carries more weight than a claim");
-    expect(homeSource).toContain("proofNames");
-    expect(homeSource).toContain("the upload named");
+    expect(homeSource).toContain("There is video evidence attached, so the claim has something behind it");
+    expect(homeSource).toContain("I am reading the workout and the words around it, not pretending the file tells the whole story");
+    expect(homeSource).not.toContain("The image receipt gives the session a visible anchor");
+    expect(homeSource).not.toContain("proofNames");
+    expect(homeSource).not.toContain("the upload named");
     expect(homeSource).toContain("body standard");
     expect(homeSource).toContain("discipline rebuild");
-    expect(homeSource).toContain("handle ${friction}");
+    expect(homeSource).toContain("protecting the ${aim} when ${friction} shows up");
     expect(homeSource).not.toContain("Takeaway:");
     expect(homeSource).not.toContain("lives/4");
     expect(homeSource).toContain("data-testid=\"proof-deep-thought\"");
     expect(homeSource).toContain("Warden’s read</MicroLabel>");
-    expect(homeSource).toContain("Generated from today’s upload + exercise log + challenge data");
+    expect(homeSource).toContain("Generated from proof presence + exercise log + challenge context. No fake image reading.");
     expect(homeSource).not.toMatch(/Ren[eé]e/);
     expect(homeSource).toContain("const wardenInsight = buildProofWardenInsight(owner, log, snapshot?.logs ?? []);");
   });
@@ -493,6 +498,8 @@ describe("Home onboarding shell", () => {
     const storageProxySource = readFileSync(new URL("../../../server/_core/storageProxy.ts", import.meta.url), "utf8");
 
     expect(homeSource).toContain('if (trimmed.startsWith("/manus-storage/")) return `/api/storage-image/${encodeURIComponent(trimmed.slice("/manus-storage/".length))}`;');
+    expect(homeSource).toContain("function proofMediaSrc(item: ProofMediaItem)");
+    expect(homeSource).toContain("if (proofMediaType(item) === \"video\")");
     expect(homeSource).toContain("function ProofImage");
     expect(homeSource).toContain("src={src}");
     expect(homeSource).toContain('loading="lazy"');
