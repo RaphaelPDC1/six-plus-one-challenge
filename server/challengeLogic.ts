@@ -56,9 +56,15 @@ export function calculateCheckpointAward(dayNumber: number, complete: boolean): 
   return complete ? calculateCheckpointBonus(dayNumber) : 0;
 }
 
-export function calculateDailyPoints(dayNumber: number, complete: boolean): number {
+export function calculateDailyPoints(dayNumber: number, complete: boolean, options: { completedRules?: number; submittedAt?: Date; ghostLifeUsed?: boolean; currentStreak?: number } = {}): number {
   if (!complete) return 0;
-  return 10 + calculateCheckpointBonus(dayNumber);
+  const completedRules = Math.max(0, Math.min(DAILY_RULE_COUNT, options.completedRules ?? DAILY_PASS_THRESHOLD));
+  const fullGreenBonus = completedRules >= DAILY_RULE_COUNT ? 3 : 0;
+  const earlyCompletionBonus = options.submittedAt && options.submittedAt.getHours() < 14 ? 1 : 0;
+  const restraintBonus = options.ghostLifeUsed ? 0 : 1;
+  const nextStreak = (options.currentStreak ?? 0) + 1;
+  const streakMilestoneBonus = nextStreak > 0 && nextStreak % 5 === 0 ? 2 : 0;
+  return 10 + fullGreenBonus + earlyCompletionBonus + restraintBonus + streakMilestoneBonus + calculateCheckpointBonus(dayNumber);
 }
 
 export function applyLifeLoss(currentLives: number): number {

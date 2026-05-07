@@ -41,6 +41,13 @@ import {
 
 type Snapshot = any;
 
+type ProofMediaItem = {
+  url: string;
+  type: "image" | "video" | "link";
+  mimeType?: string;
+  name?: string;
+};
+
 type MyDayForm = {
   noAlcohol: boolean;
   cleanEating: boolean;
@@ -123,6 +130,39 @@ function proofImageSrc(url: string) {
   if (trimmed.startsWith("/api/storage-image/")) return encodeURI(trimmed);
   if (/^https?:\/\//i.test(trimmed) && /\.(png|jpe?g|webp)(\?|#|$)/i.test(trimmed)) return trimmed;
   return "";
+}
+
+function parseProofMedia(value: string | null | undefined): ProofMediaItem[] {
+  const raw = String(value ?? "").trim();
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      return parsed
+        .map((item: any) => ({
+          url: String(item?.url ?? "").trim(),
+          type: (item?.type === "video" ? "video" : item?.type === "link" ? "link" : "image") as ProofMediaItem["type"],
+          mimeType: item?.mimeType ? String(item.mimeType) : undefined,
+          name: item?.name ? String(item.name) : undefined,
+        }))
+        .filter(item => item.url.length > 0);
+    }
+  } catch {
+    // Existing logs stored a single proof URL or note. Keep them visible.
+  }
+  return [{ url: raw, type: proofImageSrc(raw) ? "image" : "link" }];
+}
+
+function encodeProofMedia(items: ProofMediaItem[]) {
+  const cleaned: ProofMediaItem[] = items
+    .map(item => ({ url: item.url.trim(), type: item.type as ProofMediaItem["type"], mimeType: item.mimeType, name: item.name }))
+    .filter(item => item.url.length > 0);
+  if (cleaned.length === 0) return "";
+  return JSON.stringify(cleaned).slice(0, 12000);
+}
+
+function appendProofMedia(value: string, item: ProofMediaItem) {
+  return encodeProofMedia([...parseProofMedia(value), item]);
 }
 const emptyDay: MyDayForm = {
   noAlcohol: false,
@@ -832,6 +872,7 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
   const [saveNotice, setSaveNotice] = useState<{ title: string; complete: boolean } | null>(null);
   const [draftRestored, setDraftRestored] = useState(false);
   const [draftReady, setDraftReady] = useState(false);
+  const [saveProgressScale, setSaveProgressScale] = useState(0);
   const cameraProofInputRef = useRef<HTMLInputElement | null>(null);
   const libraryProofInputRef = useRef<HTMLInputElement | null>(null);
   const participant = snapshot?.participant;
@@ -875,6 +916,25 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
     return () => window.clearTimeout(timeout);
   }, [draftReady, draftStorageKey, form]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const updateSaveProgressScale = () => {
+      const target = document.querySelector("[data-save-progress-anchor]");
+      if (!target) return;
+      const rect = target.getBoundingClientRect();
+      const viewport = Math.max(window.innerHeight, 1);
+      const progress = 1 - Math.min(1, Math.max(0, rect.bottom / (viewport * 1.12)));
+      setSaveProgressScale(Number(progress.toFixed(2)));
+    };
+    updateSaveProgressScale();
+    window.addEventListener("scroll", updateSaveProgressScale, { passive: true });
+    window.addEventListener("resize", updateSaveProgressScale);
+    return () => {
+      window.removeEventListener("scroll", updateSaveProgressScale);
+      window.removeEventListener("resize", updateSaveProgressScale);
+    };
+  }, []);
+
   const submit = trpc.challenge.submitMyDay.useMutation({
     onSuccess: data => {
       setLastMissed(data.deadlinePassed ? data.missedRules : []);
@@ -906,11 +966,11 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
   });
   const uploadProof = trpc.challenge.uploadProof.useMutation({
     onSuccess: data => {
-      setForm(current => ({ ...current, exerciseProofUrl: data.url }));
+      setForm(current => ({ ...current, exerciseProofUrl: appendProofMedia(current.exerciseProofUrl, { url: data.url, type: data.mediaType, mimeType: data.mimeType, name: data.fileName }) }));
       pulse([12, 28, 12]);
-      toast("Proof image uploaded and attached to today’s exercise log.");
+      toast(`${data.mediaType === "video" ? "Video" : "Image"} proof uploaded. ${parseProofMedia(form.exerciseProofUrl).length + 1} proof item${parseProofMedia(form.exerciseProofUrl).length + 1 === 1 ? "" : "s"} attached.`);
     },
-    onError: error => toast.error(error.message || "Could not upload proof image."),
+    onError: error => toast.error(error.message || "Could not upload proof media."),
   });
 
   function markChecklistItem(key: "noAlcohol" | "cleanEating" | "trackedEverything", checked: boolean) {
@@ -919,15 +979,22 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
     setForm(current => ({ ...current, [key]: checked }));
   }
 
-  function handleProofFile(file?: File) {
-    if (!file) return;
-    if (!file.type.match(/^image\/(png|jpeg|webp)$/)) { toast.error("Use a PNG, JPG, or WEBP proof image."); return; }
-    if (file.size > 4_000_000) { toast.error("Proof image must be under 4MB."); return; }
-    const reader = new FileReader();
-    const mimeType = file.type as "image/png" | "image/jpeg" | "image/webp";
-    reader.onload = () => uploadProof.mutate({ fileName: file.name || "exercise-proof", mimeType, dataUrl: String(reader.result) });
-    reader.onerror = () => toast.error("Could not read that proof image.");
-    reader.readAsDataURL(file);
+  function handleProofFiles(fileList?: FileList | null) {
+    const files = Array.from(fileList ?? []);
+    if (files.length === 0) return;
+    const availableSlots = Math.max(0, 6 - parseProofMedia(form.exerciseProofUrl).length);
+    if (availableSlots === 0) { toast.error("You can attach up to 6 proof items per day."); return; }
+    files.slice(0, availableSlots).forEach(file => {
+      if (!file.type.match(/^(image\/(png|jpeg|webp)|video\/(mp4|webm|quicktime))$/)) { toast.error("Use PNG, JPG, WEBP, MP4, MOV, or WEBM proof media."); return; }
+      const limit = file.type.startsWith("video/") ? 12_000_000 : 5_000_000;
+      if (file.size > limit) { toast.error(file.type.startsWith("video/") ? "Proof video must be under 12MB." : "Proof image must be under 5MB."); return; }
+      const reader = new FileReader();
+      const mimeType = file.type as "image/png" | "image/jpeg" | "image/webp" | "video/mp4" | "video/webm" | "video/quicktime";
+      reader.onload = () => uploadProof.mutate({ fileName: file.name || "exercise-proof", mimeType, dataUrl: String(reader.result) });
+      reader.onerror = () => toast.error("Could not read that proof media.");
+      reader.readAsDataURL(file);
+    });
+    if (files.length > availableSlots) toast("Only the first available proof slots were queued.");
   }
 
   return (
@@ -944,7 +1011,7 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
           </div>
         </div>
 
-        <div className={classNames("must-do-rules motion-card border-2 p-3 transition-all duration-300 sm:p-4", allAddressed ? "must-do-rules-complete border-[#2ECC71] bg-[#07150D]" : "border-[#C0392B] bg-[#190B0A]")}> 
+        <div data-save-progress-anchor className={classNames("must-do-rules motion-card border-2 p-3 transition-all duration-300 sm:p-4", allAddressed ? "must-do-rules-complete border-[#2ECC71] bg-[#07150D]" : "border-[#C0392B] bg-[#190B0A]")}> 
           <div className="mb-3 flex flex-col gap-2 border-b border-white/10 pb-3 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <MicroLabel tone={allAddressed ? "green" : "red"}>{allAddressed ? "Pass secured" : "Must-do today"}</MicroLabel>
@@ -976,14 +1043,14 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
               <Field label="Minutes"><TextInput type="number" value={form.exerciseDuration || ""} onChange={event => setForm({ ...form, exerciseDuration: event.target.value === "" ? 0 : Number(event.target.value) })} placeholder="30+" /></Field>
               <Field label="Workout type"><TextInput value={form.exerciseType} onChange={event => setForm({ ...form, exerciseType: event.target.value })} placeholder="Run, gym, mobility..." /></Field>
               <div className="sm:col-span-2">
-                <Field label="Proof image / link"><TextInput value={form.exerciseProofUrl} onChange={event => setForm({ ...form, exerciseProofUrl: event.target.value })} placeholder="Upload a gym proof image, paste Strava, or add a proof note" /></Field>
-                <input ref={cameraProofInputRef} type="file" accept="image/png,image/jpeg,image/webp" capture="environment" className="sr-only" onChange={event => { handleProofFile(event.target.files?.[0]); event.currentTarget.value = ""; }} />
-                <input ref={libraryProofInputRef} type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={event => { handleProofFile(event.target.files?.[0]); event.currentTarget.value = ""; }} />
+                <Field label="Proof media / link"><TextInput value={parseProofMedia(form.exerciseProofUrl).filter(item => item.type === "link").map(item => item.url).join(" ")} onChange={event => setForm({ ...form, exerciseProofUrl: appendProofMedia(encodeProofMedia(parseProofMedia(form.exerciseProofUrl).filter(item => item.type !== "link")), { url: event.target.value, type: "link" }) })} placeholder="Upload images/videos, paste Strava, or add a proof note" /></Field>
+                <input ref={cameraProofInputRef} type="file" accept="image/png,image/jpeg,image/webp,video/mp4,video/webm,video/quicktime" capture="environment" multiple className="sr-only" onChange={event => { handleProofFiles(event.target.files); event.currentTarget.value = ""; }} />
+                <input ref={libraryProofInputRef} type="file" accept="image/png,image/jpeg,image/webp,video/mp4,video/webm,video/quicktime" multiple className="sr-only" onChange={event => { handleProofFiles(event.target.files); event.currentTarget.value = ""; }} />
                 <div className="mt-2 grid grid-cols-2 gap-2">
                   <button type="button" disabled={uploadProof.isPending} className="border border-[#C8A96E]/50 bg-[#16130B] px-4 py-3 text-[10px] font-black uppercase tracking-[0.22em] text-[#C8A96E] disabled:opacity-50" onClick={() => { pulse(12); cameraProofInputRef.current?.click(); }}>{uploadProof.isPending ? "Uploading" : "Camera"}</button>
                   <button type="button" disabled={uploadProof.isPending} className="border border-[#2A2A2A] bg-[#111] px-4 py-3 text-[10px] font-black uppercase tracking-[0.22em] text-white disabled:opacity-50" onClick={() => { pulse(12); libraryProofInputRef.current?.click(); }}>{uploadProof.isPending ? "Uploading" : "Library"}</button>
                 </div>
-                {form.exerciseProofUrl.startsWith("/manus-storage/") && <p className="mt-2 text-[10px] font-black uppercase tracking-[0.16em] text-[#2ECC71]">Image attached</p>}
+                <ProofMediaStrip items={parseProofMedia(form.exerciseProofUrl)} onRemove={index => setForm(current => ({ ...current, exerciseProofUrl: encodeProofMedia(parseProofMedia(current.exerciseProofUrl).filter((_, itemIndex) => itemIndex !== index)) }))} />
               </div>
             </div>
           </RuleCard>
@@ -1014,11 +1081,11 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
           <PosterStat label="Points" value={participant?.totalPoints ?? 0} tone="gold" />
         </div>
 
-        <div className={classNames("submit-dock motion-submit-dock relative sticky bottom-[106px] z-20 border border-[#2A2A2A] bg-[#0D0D0D]/95 p-3 backdrop-blur transition-all duration-300 md:static md:bg-transparent md:p-0", submit.isPending && "submit-dock-pending", allAddressed && !submit.isPending && "submit-dock-ready")}>
-          <SharpButton className={classNames("w-full py-5 text-sm transition-all duration-300", submit.isPending && "submit-button-pending")} disabled={submit.isPending} onClick={() => submit.mutate({ ...form, reflectionShared: false, dayNumber: snapshot?.challenge.currentDay ?? 1 })}>
+        <div className={classNames("submit-dock motion-submit-dock relative sticky bottom-[104px] z-20 mx-auto border border-[#2A2A2A] bg-[#0D0D0D]/95 backdrop-blur transition-all duration-300 md:static md:bg-transparent", saveProgressScale < 0.35 ? "max-w-[15rem] rounded-full p-1.5" : saveProgressScale < 0.75 ? "max-w-[22rem] rounded-2xl p-2" : "max-w-none rounded-none p-3 md:p-0", submit.isPending && "submit-dock-pending", allAddressed && !submit.isPending && "submit-dock-ready")} data-save-progress-scale={saveProgressScale}>
+          <SharpButton className={classNames("w-full transition-all duration-300", saveProgressScale < 0.35 ? "py-3 text-[10px]" : saveProgressScale < 0.75 ? "py-4 text-xs" : "py-5 text-sm", submit.isPending && "submit-button-pending")} disabled={submit.isPending} onClick={() => submit.mutate({ ...form, reflectionShared: false, dayNumber: snapshot?.challenge.currentDay ?? 1 })}>
             {submit.isPending ? (allAddressed ? "Submitting the log" : "Saving progress") : allAddressed ? `Submit day ${snapshot?.challenge.currentDay ?? 1}` : `Save progress — ${Math.max(0, passThreshold - completedRules)} more for pass`}
           </SharpButton>
-          {!allAddressed && <p className="mt-2 text-center text-[10px] font-black uppercase tracking-[0.16em] text-[#C8A96E]/80">Draft only until 5/6 is reached. Lives judged after rollover.</p>}
+          {saveProgressScale >= 0.55 && !allAddressed && <p className="mt-2 text-center text-[10px] font-black uppercase tracking-[0.16em] text-[#C8A96E]/80">Draft only until 5/6 is reached. Lives judged after rollover.</p>}
           {saveNotice && <div role="status" className={classNames("pointer-events-none absolute -top-3 right-3 rounded-full border bg-black/90 px-2 py-1 text-[9px] font-black uppercase leading-none tracking-[0.16em] shadow-[0_0_18px_rgba(0,0,0,0.45)]", saveNotice.complete ? "border-[#2ECC71]/70 text-[#2ECC71]" : "border-[#C8A96E]/70 text-[#C8A96E]")}>{saveNotice.title}</div>}
           {draftRestored && <div role="status" className="pointer-events-none absolute -top-3 left-3 rounded-full border border-[#C8A96E]/70 bg-black/90 px-2 py-1 text-[9px] font-black uppercase leading-none tracking-[0.16em] text-[#C8A96E] shadow-[0_0_18px_rgba(0,0,0,0.45)]">Draft restored</div>}
           {lastMissed.length > 0 && <div className="mt-3 border-l-4 border-[#C0392B] bg-[#180F0F] p-4 text-sm font-bold text-[#F0B7AE]">Missed after rollover: {lastMissed.join(", ")}. Penalty logged.</div>}
@@ -1088,6 +1155,8 @@ function OverviewBar({ label, value, detail, tone = "gold" }: { label: string; v
 
 function Overview({ snapshot }: { snapshot: Snapshot }) {
   const [selected, setSelected] = useState<any>(null);
+  const [focusedParticipantId, setFocusedParticipantId] = useState<number | string | null>(null);
+  const [comparisonOpen, setComparisonOpen] = useState(false);
   const participants = snapshot?.participants ?? [];
   const logs = snapshot?.logs ?? [];
   const payments = snapshot?.payments ?? [];
@@ -1108,18 +1177,16 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
   const todayLoggedIds = new Set(todayLogs.map((log: any) => log.participantId));
   const atRisk = participants.filter((p: any) => Number(p.livesRemaining ?? 4) <= 1 || !todayLoggedIds.has(p.id));
 
-  const chartKeys = participants.map((participant: any, index: number) => ({ ...participant, chartKey: `participant_${participant.id ?? index}` }));
-  const chartData = useMemo(() => {
+  const focusedParticipant = participants.find((participant: any) => participant.id === focusedParticipantId) ?? participants[0];
+  const focusedChartData = useMemo(() => {
     const dayCount = Math.max(currentDay, 10);
     return Array.from({ length: dayCount }, (_, index) => {
       const day = index + 1;
-      const row: Record<string, number> = { day };
-      chartKeys.forEach((participant: any) => {
-        row[participant.chartKey] = logs.filter((log: any) => log.participantId === participant.id && log.dayNumber <= day && log.dayComplete).length;
-      });
-      return row;
+      const focusedComplete = focusedParticipant ? logs.filter((log: any) => log.participantId === focusedParticipant.id && log.dayNumber <= day && log.dayComplete).length : 0;
+      const groupAverage = participantCount ? Math.round((logs.filter((log: any) => log.dayNumber <= day && log.dayComplete).length / participantCount) * 10) / 10 : 0;
+      return { day, focused: focusedComplete, groupAverage };
     });
-  }, [chartKeys, currentDay, logs]);
+  }, [currentDay, focusedParticipant?.id, logs, participantCount]);
 
   const recentDays = Array.from({ length: Math.min(7, currentDay) }, (_, index) => currentDay - Math.min(6, currentDay - 1) + index);
   const trendRows = recentDays.map(day => {
@@ -1145,12 +1212,16 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
   const participantMetrics = participants.map((p: any) => {
     const ownedLogs = logs.filter((log: any) => log.participantId === p.id);
     const completeCount = ownedLogs.filter((log: any) => log.dayComplete).length;
+    const lastThreeComplete = ownedLogs.filter((log: any) => log.dayComplete && Number(log.dayNumber ?? 0) >= Math.max(1, currentDay - 2)).length;
     const submitRate = pct(ownedLogs.length, currentDay);
     const completionRate = pct(completeCount, currentDay);
     const latestLog = ownedLogs.reduce((latest: any, log: any) => Number(log.dayNumber ?? 0) > Number(latest?.dayNumber ?? 0) ? log : latest, null);
     const riskScore = Math.max(0, 100 - completionRate) + Math.max(0, 4 - Number(p.livesRemaining ?? 4)) * 12 + (todayLoggedIds.has(p.id) ? 0 : 18);
-    return { ...p, ownedLogs, completeCount, submitRate, completionRate, latestLog, riskScore };
+    return { ...p, ownedLogs, completeCount, lastThreeComplete, submitRate, completionRate, latestLog, riskScore };
   }).sort((a: any, b: any) => b.riskScore - a.riskScore || b.totalPoints - a.totalPoints);
+  const mostConsistent = [...participantMetrics].sort((a: any, b: any) => b.currentStreak - a.currentStreak || b.completionRate - a.completionRate)[0];
+  const topMover = [...participantMetrics].sort((a: any, b: any) => b.lastThreeComplete - a.lastThreeComplete || b.totalPoints - a.totalPoints)[0];
+  const riskLeader = participantMetrics[0];
 
   return (
     <div className="motion-page space-y-5" data-testid="overview-metrics-dashboard">
@@ -1172,27 +1243,46 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
         </div>
       </section>
 
-      <section className="sticky top-[58px] z-30 min-w-0 overflow-hidden border border-[#2A2A2A] bg-[#101010]/98 p-3 shadow-[0_18px_55px_rgba(0,0,0,0.35)] backdrop-blur sm:top-[68px] sm:p-5 md:top-[78px]">
-        <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+      <section className="min-w-0 overflow-hidden border border-[#2A2A2A] bg-[#101010] p-4 sm:p-5" data-testid="group-pulse-and-focused-chart">
+        <div className="flex flex-wrap items-end justify-between gap-3">
           <div className="min-w-0">
-            <MicroLabel tone="gold">Complex tracker</MicroLabel>
-            <h2 className="mt-2 break-words text-xl font-black uppercase tracking-[-0.06em] text-white sm:text-3xl">Progress curves by participant.</h2>
+            <MicroLabel tone="gold">Group Pulse</MicroLabel>
+            <h2 className="mt-2 break-words text-2xl font-black uppercase tracking-[-0.06em] text-white sm:text-4xl">Signal first. Graph second.</h2>
           </div>
-          <p className="max-w-sm text-[10px] font-bold uppercase tracking-[0.12em] text-[#777] sm:text-xs">Lines show cumulative complete days, not just raw check-ins.</p>
+          <button type="button" onClick={() => { pulse(10); setComparisonOpen(open => !open); }} className="min-h-11 border border-[#C8A96E]/60 bg-[#16130B] px-4 text-[10px] font-black uppercase tracking-[0.16em] text-[#C8A96E]" aria-expanded={comparisonOpen}>
+            {comparisonOpen ? "Hide focused graph" : "Open focused graph"}
+          </button>
         </div>
-        <div className="h-56 min-w-0 overflow-hidden sm:h-80">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData} margin={{ left: -18, right: 4, top: 10, bottom: 0 }}>
-              <CartesianGrid stroke="#242424" strokeDasharray="3 3" />
-              <XAxis dataKey="day" stroke="#777" tick={{ fill: "#777", fontSize: 11, fontWeight: 900 }} />
-              <YAxis allowDecimals={false} stroke="#777" tick={{ fill: "#777", fontSize: 11, fontWeight: 900 }} />
-              <Tooltip contentStyle={{ background: "#0D0D0D", border: "1px solid #C8A96E", borderRadius: 0, color: "#fff" }} />
-              {chartKeys.map((participant: any, index: number) => (
-                <Line key={participant.id} type="monotone" dataKey={participant.chartKey} name={participant.displayName} stroke={chartColors[index % chartColors.length]} strokeWidth={3} dot={false} activeDot={{ r: 6 }} />
-              ))}
-            </LineChart>
-          </ResponsiveContainer>
+        <div className="mt-4 grid gap-2 sm:grid-cols-3">
+          <OverviewMetricCard label="Top mover" value={topMover?.displayName ?? "—"} detail={`${topMover?.lastThreeComplete ?? 0}/3 recent passes · ${topMover?.totalPoints ?? 0} pts`} tone="green" />
+          <OverviewMetricCard label="Most consistent" value={mostConsistent?.displayName ?? "—"} detail={`${mostConsistent?.currentStreak ?? 0} current streak · ${mostConsistent?.completionRate ?? 0}% pass rate`} tone="gold" />
+          <OverviewMetricCard label="At risk" value={riskLeader?.displayName ?? "—"} detail={`${riskLeader?.riskScore ?? 0} risk score · ${riskLeader?.livesRemaining ?? 4} lives`} tone={riskLeader?.riskScore > 35 ? "red" : "white"} />
         </div>
+        {comparisonOpen && (
+          <div className="mt-4 border border-[#2A2A2A] bg-black p-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <MicroLabel tone="green">Focused comparison</MicroLabel>
+                <h3 className="mt-2 text-xl font-black uppercase tracking-[-0.05em] text-white">{focusedParticipant?.displayName ?? "Participant"} vs group average.</h3>
+              </div>
+              <select value={focusedParticipant?.id ?? ""} onChange={event => setFocusedParticipantId(event.target.value)} className="min-h-11 border border-[#2A2A2A] bg-[#0D0D0D] px-3 text-xs font-black uppercase tracking-[0.12em] text-white">
+                {participants.map((participant: any) => <option key={participant.id} value={participant.id}>{participant.displayName}</option>)}
+              </select>
+            </div>
+            <div className="mt-3 h-56 min-w-0 overflow-hidden sm:h-72">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={focusedChartData} margin={{ left: -18, right: 4, top: 10, bottom: 0 }}>
+                  <CartesianGrid stroke="#242424" strokeDasharray="3 3" />
+                  <XAxis dataKey="day" stroke="#777" tick={{ fill: "#777", fontSize: 11, fontWeight: 900 }} />
+                  <YAxis allowDecimals={false} stroke="#777" tick={{ fill: "#777", fontSize: 11, fontWeight: 900 }} />
+                  <Tooltip contentStyle={{ background: "#0D0D0D", border: "1px solid #C8A96E", borderRadius: 0, color: "#fff" }} />
+                  <Line type="monotone" dataKey="focused" name={focusedParticipant?.displayName ?? "Selected"} stroke={GOLD} strokeWidth={4} dot={false} activeDot={{ r: 6 }} />
+                  <Line type="monotone" dataKey="groupAverage" name="Group average" stroke={GREEN} strokeWidth={3} strokeDasharray="7 5" dot={false} activeDot={{ r: 5 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        )}
       </section>
 
       <section className="border border-[#2A2A2A] bg-[#101010] p-4 sm:p-5">
@@ -1303,12 +1393,13 @@ function ParticipantSheet({ participant, onClose }: { participant: any; onClose:
   const recentLogs = sheetLogs.slice(0, 7);
   const recentPassed = recentLogs.filter((log: any) => log.completed || getLogCompletedRuleCount(log) >= DAILY_PASS_THRESHOLD).length;
   return (
-    <div className={classNames("sheet-backdrop fixed inset-0 z-50 flex items-end overflow-y-auto bg-black/70 sm:items-center sm:p-4", closing && "sheet-backdrop-out")} onClick={onClose}>
-      <div className={classNames("sheet-panel motion-sheet-panel max-h-[100svh] w-full overflow-y-auto border-t-2 border-[#C8A96E] bg-[#0D0D0D] p-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] shadow-2xl sm:max-h-[calc(100svh-2rem)] sm:p-5 md:mx-auto md:max-w-xl md:border", closing && "sheet-panel-out")} onClick={event => event.stopPropagation()} role="dialog" aria-modal="true" aria-label={`${visibleParticipant.displayName} Board participant details`}>
-        <div className="sticky top-0 z-10 -mx-4 -mt-4 mb-4 flex items-center justify-between gap-3 border-b border-[#2A2A2A] bg-[#0D0D0D]/95 px-4 py-3 backdrop-blur sm:static sm:mx-0 sm:mt-0 sm:mb-0 sm:border-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none">
+    <div className={classNames("sheet-backdrop fixed inset-0 z-50 flex items-end overflow-hidden bg-black/70 sm:items-center sm:p-4", closing && "sheet-backdrop-out")} onClick={onClose}>
+      <div className={classNames("sheet-panel motion-sheet-panel flex max-h-[92svh] w-full flex-col overflow-hidden border-t-2 border-[#C8A96E] bg-[#0D0D0D] shadow-2xl sm:max-h-[calc(100svh-2rem)] md:mx-auto md:max-w-xl md:border", closing && "sheet-panel-out")} onClick={event => event.stopPropagation()} role="dialog" aria-modal="true" aria-label={`${visibleParticipant.displayName} Board participant details`}>
+        <div className="sticky top-0 z-10 flex shrink-0 items-center justify-between gap-3 border-b border-[#2A2A2A] bg-[#0D0D0D]/95 px-4 py-3 backdrop-blur">
           <button type="button" onClick={onClose} className="min-h-11 border border-[#C8A96E]/60 px-4 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-[#C8A96E] hover:bg-[#C8A96E] hover:text-black" aria-label="Back to Board list">Back to Board</button>
           <button type="button" onClick={onClose} className="grid min-h-11 min-w-11 shrink-0 place-items-center border border-[#2A2A2A] text-[#777] hover:border-[#C8A96E] hover:text-[#C8A96E]" aria-label="Close participant details"><X className="h-5 w-5" /></button>
         </div>
+        <div className="overflow-y-auto p-4 pb-[calc(1.25rem+env(safe-area-inset-bottom))] sm:p-5">
         <div className="flex min-w-0 items-start gap-3 sm:gap-4">
           <ProfilePhoto participant={visibleParticipant} className="h-14 w-14 shrink-0 sm:h-20 sm:w-20" enlargeable onOpen={() => setPhotoExpanded(true)} />
           <div className="min-w-0 flex-1">
@@ -1353,6 +1444,46 @@ function ParticipantSheet({ participant, onClose }: { participant: any; onClose:
             <img src={normaliseProfilePhotoUrl(visibleParticipant.profilePhotoUrl)} alt={`${visibleParticipant.displayName} enlarged display picture`} className="motion-image-zoom max-h-[82vh] max-w-full border border-[#C8A96E] bg-black object-contain" loading="eager" decoding="async" onClick={event => event.stopPropagation()} />
           </div>
         )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ProofMediaStrip({ items, onRemove }: { items: ProofMediaItem[]; onRemove?: (index: number) => void }) {
+  if (items.length === 0) return <p className="mt-2 text-[10px] font-black uppercase tracking-[0.16em] text-[#777]">No proof media attached yet.</p>;
+  return (
+    <div className="mt-3 overflow-x-auto">
+      <div className="flex gap-2 pb-1">
+        {items.map((item, index) => (
+          <div key={`${item.url}-${index}`} className="relative min-w-[8.5rem] max-w-[8.5rem] border border-[#2A2A2A] bg-[#080808] p-2">
+            <div className="aspect-video overflow-hidden bg-black">
+              {item.type === "video" ? <video src={proofImageSrc(item.url) || item.url} className="h-full w-full object-cover" muted playsInline preload="metadata" /> : proofImageSrc(item.url) ? <img src={proofImageSrc(item.url)} alt={`Proof media ${index + 1}`} className="h-full w-full object-cover" loading="lazy" decoding="async" /> : <div className="grid h-full place-items-center px-2 text-center text-[9px] font-black uppercase tracking-[0.12em] text-[#C8A96E]">Link / note</div>}
+            </div>
+            <p className="mt-2 truncate text-[9px] font-black uppercase tracking-[0.12em] text-[#777]">{item.type} {index + 1}</p>
+            {onRemove && <button type="button" onClick={() => onRemove(index)} className="absolute right-1 top-1 grid h-6 w-6 place-items-center border border-[#2A2A2A] bg-black/80 text-[#C0392B]" aria-label={`Remove proof item ${index + 1}`}><X className="h-3 w-3" /></button>}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ProofCarousel({ items, dayNumber }: { items: ProofMediaItem[]; dayNumber: number }) {
+  const [index, setIndex] = useState(0);
+  if (items.length === 0) return null;
+  const item = items[Math.min(index, items.length - 1)];
+  const src = proofImageSrc(item.url) || item.url;
+  return (
+    <div className="mt-4 border border-[#2A2A2A] bg-black p-2" data-testid="proof-carousel">
+      <div className="flex items-center justify-between gap-3 pb-2">
+        <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#C8A96E]">{items.length} proof item{items.length === 1 ? "" : "s"} · Day {dayNumber}</p>
+        {items.length > 1 && <div className="flex gap-1">
+          {items.map((_, dot) => <button key={dot} type="button" onClick={() => setIndex(dot)} className={classNames("h-2 w-5", dot === index ? "bg-[#C8A96E]" : "bg-[#333]")} aria-label={`Show proof ${dot + 1}`} />)}
+        </div>}
+      </div>
+      <div className="aspect-video overflow-hidden bg-[#050505]">
+        {item.type === "video" ? <video src={src} className="h-full w-full object-contain" controls playsInline preload="metadata" /> : proofImageSrc(item.url) ? <img src={src} alt={`Day ${dayNumber} proof ${index + 1}`} className="h-full w-full object-contain" loading="lazy" decoding="async" /> : <p className="break-all p-4 text-xs font-bold leading-5 text-[#C8A96E]">Proof: {item.url}</p>}
       </div>
     </div>
   );
@@ -1433,7 +1564,7 @@ function Leaderboard({ snapshot }: { snapshot: Snapshot }) {
 }
 
 function ProofFeed({ snapshot }: { snapshot: Snapshot }) {
-  const publicLogs = (snapshot?.logs ?? []).filter((log: any) => log.exerciseProofUrl || log.readTeachText);
+  const publicLogs = (snapshot?.logs ?? []).filter((log: any) => parseProofMedia(log.exerciseProofUrl).length > 0 || log.readTeachText);
   return (
     <section className="border border-[#2A2A2A] bg-[#101010] p-5">
       <MicroLabel tone="green">Proof feed</MicroLabel>
@@ -1454,7 +1585,7 @@ function ProofFeed({ snapshot }: { snapshot: Snapshot }) {
                 <span className="border border-[#2ECC71]/50 bg-[#102018] px-3 py-1 text-[9px] font-black uppercase tracking-[0.2em] text-[#2ECC71]">Proof</span>
               </div>
               {log.readTeachText && <p className="mt-4 border-l-2 border-[#C8A96E] pl-4 text-sm font-bold leading-6 text-[#D8D8D8]">{log.readTeachText}</p>}
-              {log.exerciseProofUrl && <ProofImage url={log.exerciseProofUrl} dayNumber={log.dayNumber} />}
+              <ProofCarousel items={parseProofMedia(log.exerciseProofUrl)} dayNumber={log.dayNumber} />
             </article>
           );
         })}

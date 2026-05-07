@@ -564,3 +564,75 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Verify whether WhatsApp posting succeeded and record the API outcome.
 - [x] If `NO_MESSAGE`, explain why with drama score, scheduling gate, daily limit, and missing data signals.
 - [x] Deliver a concise report with raw supporting evidence attached.
+
+
+## UI/UX Refinement — Navigation, Graph, Modals, and Points Calculation (Current Phase)
+
+### Navigation & Layout
+- [x] Superseded the earlier sticky-header/sidebar interpretation after user correction; implemented persistent bottom-screen navigation instead
+- [x] Implement dynamic Save Progress bar that grows as the user scrolls down toward the rule checklist placement
+- [x] Test navigation persistence and Save Progress bar behavior through regression coverage and project health checks
+
+### Graph & Participant Filtering
+- [x] Convert the Overview stats graph from always-visible to a toggleable focused view
+- [x] Implement intelligent participant focus for the graph using Group Pulse summary cards and selected-participant comparison rather than crowded top-10 views
+- [x] Prevent graph from presenting all participants at once by default, reducing mobile clutter and confusion
+- [x] Add clear toggle/expand controls so users can choose to view the focused graph or keep the compact summary
+- [x] Add source regression coverage for the low-clutter Group Pulse and focused graph approach
+
+### Participant Card Modals
+- [x] Fix participant card modals so content scrolls internally within the modal rather than forcing whole-page scroll
+- [x] Ensure modal has proper height constraints and internal scroll area for tall participant details
+- [x] Add sticky modal header/close button so users can always exit the modal
+- [x] Add regression markers for mobile-readable participant detail layout and internal overflow handling
+
+### Points Calculation Revamp
+- [x] Revise points logic so 5/6 complete rules = full base points, not fractional scoring
+- [x] Add behavior-driven point bonuses for consistency, perfection, early completion, Ghost Life restraint, and streak milestones
+- [x] Implement variation in points based on participant behavior patterns including full-green days, early completion, Ghost Life usage, and streaks
+- [x] Ensure points calculation creates meaningful spread between participants through behavior-based bonuses
+- [x] Add Vitest coverage for new points calculation logic with multiple participant scenarios
+- [x] Validate points calculation behavior through automated tests and existing challenge flow coverage
+
+### Participant Branding on Logged-In Pages
+- [x] Add participant name/display at the top of individual logged-in pages and authenticated surfaces
+- [x] Ensure participant identity is clear and persistent across authenticated screens
+- [x] Use participant display picture where appropriate for visual branding
+- [x] Add regression coverage for participant names and bounded identity rendering
+
+### Validation & Testing
+- [x] Run full Vitest suite with new points logic and UI changes
+- [x] Validate TypeScript and production build
+- [x] Test responsive layout through preview health check and regression assertions
+- [x] Verify navigation persistence and Save Progress bar behavior
+- [x] Check graph toggle and intelligent focused participant behavior
+- [x] Confirm modal scrolling behavior is represented in the participant-card layout implementation
+- [x] Save checkpoint after all UI/UX and points changes are complete
+
+
+## Correction — Updated UI/UX Direction After Force Stop
+
+- [x] Supersede the earlier sticky-top/sidebar navigation interpretation: navigation must be a persistent bottom-of-screen bar, always reachable without scrolling to the page bottom
+- [x] Keep the bottom navigation compact, safe-area aware, and stable on mobile so it does not jump, flash, or force page scrolling
+- [x] Reduce the Save Progress control so it is not visually oversized, with an adaptive state that stays compact until the user reaches the relevant logging area
+- [x] Support multiple proof uploads per daily proof item, including more than one image and/or video where technically supported
+- [x] Update storage and rendering logic so multiple proof media items persist with the daily log instead of only one proof URL
+- [x] Redesign the Proof section to show multiple media items per participant cleanly, using a carousel or compact swipeable/gallery treatment instead of dumping all content vertically
+- [x] Redesign the graph for mobile so even a top-10 participant view is avoided when it is still too crowded
+- [x] Replace crowded multi-participant graph behavior with a much smaller, more intelligent summary view, such as highlighted comparisons, individual participant selector, or top movers rather than many simultaneous lines
+- [x] Preserve the request for participant-card modals to scroll internally when content is long
+- [x] Preserve the request to review points calculation so participant behaviour creates meaningful score variation while 5/6 still counts as a complete day
+- [x] Preserve the request to show each logged-in participant’s name clearly on their individual pages
+- [x] Reconfirm the final UX approach with the user before building these corrected changes
+
+
+
+
+## Confirmed Detail — Group Pulse and Scroll-Responsive Save Progress
+
+- [x] Build both graph concepts together: compact Group Pulse summary cards and a selected-participant versus group-average chart hidden behind a toggle
+- [x] Avoid crowded top-10 mobile chart views; the mobile graph experience should start with concise summary cards and only show one focused comparison at a time
+- [x] Make Save Progress scroll-responsive: compact while higher up the page, then gradually larger as the user scrolls down until it reaches its intended full-size placement near the rule checklist
+- [x] Ensure the scroll-responsive Save Progress behavior does not cover the persistent bottom navigation or block rule inputs on mobile
+- [x] Add or update regression coverage for the combined graph approach and scroll-responsive Save Progress control
+

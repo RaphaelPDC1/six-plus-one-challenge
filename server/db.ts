@@ -400,11 +400,14 @@ export function resolveDailyCompletionAward(existing: Pick<DailyLog, "dayComplet
   dayNumber: number;
   submittedAt: Date;
   deadlinePassed: boolean;
+  completedRules?: number;
+  ghostLifeUsed?: boolean;
+  currentStreak?: number;
 }) {
   const alreadyComplete = Boolean(existing?.dayComplete);
   const dayComplete = alreadyComplete || input.complete;
   const newlyComplete = input.complete && !alreadyComplete;
-  const pointsAwarded = alreadyComplete ? (existing?.pointsAwarded ?? 0) : input.complete ? calculateDailyPoints(input.dayNumber, true) : 0;
+  const pointsAwarded = alreadyComplete ? (existing?.pointsAwarded ?? 0) : input.complete ? calculateDailyPoints(input.dayNumber, true, { completedRules: input.completedRules, submittedAt: input.submittedAt, ghostLifeUsed: input.ghostLifeUsed, currentStreak: input.currentStreak }) : 0;
   const submittedAt = alreadyComplete ? (existing?.submittedAt ?? input.submittedAt) : input.deadlinePassed || input.complete ? input.submittedAt : null;
 
   return {
@@ -483,7 +486,10 @@ export async function submitDailyLog(participantId: number, input: SubmitDailyLo
     submittedAt: deadlinePassed ? submittedAt : undefined,
     deadline,
   });
-  const awardState = resolveDailyCompletionAward(existing, { complete, dayNumber: protectedInput.dayNumber, submittedAt, deadlinePassed });
+  const participantRows = await db.select().from(participants).where(eq(participants.id, participantId)).limit(1);
+  const currentParticipant = participantRows[0];
+  const completedRules = [protectedInput.noAlcohol, protectedInput.cleanEating, exerciseDone, reflectionDone, readTeachDone, protectedInput.trackedEverything].filter(Boolean).length;
+  const awardState = resolveDailyCompletionAward(existing, { complete, dayNumber: protectedInput.dayNumber, submittedAt, deadlinePassed, completedRules, ghostLifeUsed: Boolean(currentParticipant?.ghostLifeUsed), currentStreak: currentParticipant?.currentStreak ?? 0 });
   const values = {
     participantId,
     dayNumber: protectedInput.dayNumber,
@@ -513,8 +519,7 @@ export async function submitDailyLog(participantId: number, input: SubmitDailyLo
   }
 
   if (awardState.newlyComplete) {
-    const participant = await db.select().from(participants).where(eq(participants.id, participantId)).limit(1);
-    const current = participant[0];
+    const current = currentParticipant;
     const newStreak = (current?.currentStreak ?? 0) + 1;
     await db.update(participants).set({
       currentStreak: newStreak,

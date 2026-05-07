@@ -273,9 +273,9 @@ describe("Home onboarding shell", () => {
     expect(homeSource).toContain("submit.mutate({ ...form, reflectionShared: false");
     expect(homeSource).not.toContain("Make public");
     expect(homeSource).toContain("trpc.challenge.uploadProof.useMutation");
-    expect(homeSource).toContain("accept=\"image/png,image/jpeg,image/webp\"");
-    expect(homeSource).toContain("Image attached");
-    expect(homeSource).toContain("sticky top-[58px]");
+    expect(homeSource).toContain("accept=\"image/png,image/jpeg,image/webp,video/mp4,video/webm,video/quicktime\"");
+    expect(homeSource).toContain("function ProofCarousel");
+    expect(homeSource).toContain("data-testid=\"mobile-floating-nav\"");
     expect(homeSource).toContain("min-w-0 overflow-hidden");
     expect(homeSource).toContain("break-words");
     expect(homeSource).toContain("owner?.displayName ?? \"Participant\"");
@@ -394,7 +394,8 @@ describe("Home onboarding shell", () => {
     expect(homeSource).toContain('data-testid="overview-metrics-dashboard"');
     expect(homeSource).toContain("Overview · all participants");
     expect(homeSource).toContain("Group command centre.");
-    expect(homeSource).toContain("Overview simplified");
+    expect(homeSource).toContain("Group Pulse");
+    expect(homeSource).toContain("Focused comparison");
     expect(homeSource).toContain("High-level signal only.");
     expect(homeSource).toContain("Compliance drill-downs moved to the Board");
     expect(homeSource).toContain("Participant comparison");
@@ -417,7 +418,7 @@ describe("Home onboarding shell", () => {
     expect(homeSource).toContain('loading="lazy"');
     expect(homeSource).toContain('decoding="async"');
     expect(routerSource).toContain("const stored = await storagePut(`exercise-proof/participant-${participant.id}/${Date.now()}-${safeName}.${extension}`, bytes, input.mimeType);");
-    expect(routerSource).toContain("url: stored.url");
+    expect(routerSource).toContain("mediaType: input.mimeType.startsWith");
     expect(storageProxySource).toContain("/api/storage-image/*");
     expect(storageProxySource).toContain("Content-Type");
     expect(storageProxySource).toContain("X-Content-Type-Options");
@@ -502,7 +503,7 @@ describe("Home onboarding shell", () => {
     expect(homeSource).toContain("const [selected, setSelected] = useState<any>(null);");
     expect(homeSource).toContain("aria-label={`Open ${p.displayName} participant stats`}");
     expect(homeSource).toContain("<ParticipantSheet participant={selected} onClose={() => setSelected(null)} />");
-    expect(homeSource).toContain("max-h-[100svh] w-full overflow-y-auto");
+    expect(homeSource).toContain("flex max-h-[92svh] w-full flex-col overflow-hidden");
     expect(homeSource).toContain("Back to Board");
     expect(homeSource).toContain('aria-label="Back to Board list"');
     expect(homeSource).toContain('aria-label="Close participant details"');

@@ -37,13 +37,15 @@ describe("PWA and mobile layout refinements", () => {
     const css = readProjectFile("client/src/index.css");
     const rulesIndex = source.indexOf("must-do-rules");
     const statsIndex = source.indexOf('data-testid="myday-stats-after-must-do"');
-    const submitIndex = source.indexOf("submit-dock motion-submit-dock relative sticky bottom-[106px]");
+    const submitIndex = source.indexOf("submit-dock motion-submit-dock relative sticky bottom-[104px]");
 
     expect(rulesIndex).toBeGreaterThan(-1);
     expect(statsIndex).toBeGreaterThan(rulesIndex);
     expect(submitIndex).toBeGreaterThan(statsIndex);
     expect(source).toContain('data-testid="mobile-floating-nav"');
     expect(source).toContain("pb-[calc(0.7rem+env(safe-area-inset-bottom))]");
+    expect(source).toContain("saveProgressScale");
+    expect(source).toContain("data-save-progress-scale");
     expect(source).toContain('className="tab-stage tab-stage-stable"');
     expect(source).not.toContain("key={activeTab}");
     expect(source).not.toContain('data-testid="pwa-install-guide"');

@@ -3,6 +3,7 @@ import {
   DAILY_PASS_THRESHOLD,
   DAILY_RULE_KEYS,
   calculateCheckpointAward,
+  calculateDailyPoints,
   canPostWardenMessage,
   evaluateDailyRules,
   getGhostLifeEligibility,
@@ -155,8 +156,8 @@ describe("challengeLogic", () => {
       deadlinePassed: false,
     });
 
-    expect(firstCompletion).toMatchObject({ dayComplete: true, newlyComplete: true, pointsAwarded: 10, draftSaved: false });
-    expect(repeatedCompletion).toMatchObject({ dayComplete: true, newlyComplete: false, pointsAwarded: 10, draftSaved: false });
+    expect(firstCompletion).toMatchObject({ dayComplete: true, newlyComplete: true, pointsAwarded: 12, draftSaved: false });
+    expect(repeatedCompletion).toMatchObject({ dayComplete: true, newlyComplete: false, pointsAwarded: 12, draftSaved: false });
     expect(repeatedCompletion.submittedAt).toBe(submittedAt);
   });
 
@@ -211,7 +212,7 @@ describe("challengeLogic", () => {
     const originalSubmittedAt = new Date("2026-05-06T12:00:00Z");
     const draftToggle = resolveDailyCompletionAward({
       dayComplete: true,
-      pointsAwarded: 10,
+      pointsAwarded: 12,
       submittedAt: originalSubmittedAt,
     }, {
       complete: false,
@@ -231,9 +232,17 @@ describe("challengeLogic", () => {
       deadlinePassed: false,
     });
 
-    expect(draftToggle).toMatchObject({ alreadyComplete: true, dayComplete: true, newlyComplete: false, pointsAwarded: 10, draftSaved: false });
+    expect(draftToggle).toMatchObject({ alreadyComplete: true, dayComplete: true, newlyComplete: false, pointsAwarded: 12, draftSaved: false });
     expect(draftToggle.submittedAt).toBe(originalSubmittedAt);
-    expect(retickedCompletion).toMatchObject({ alreadyComplete: true, dayComplete: true, newlyComplete: false, pointsAwarded: 10, draftSaved: false });
+    expect(retickedCompletion).toMatchObject({ alreadyComplete: true, dayComplete: true, newlyComplete: false, pointsAwarded: 12, draftSaved: false });
     expect(retickedCompletion.submittedAt).toBe(originalSubmittedAt);
+  });
+
+  it("adds behaviour-driven bonus variation while preserving 5/6 as a complete day", () => {
+    const fiveOfSix = calculateDailyPoints(4, true, { completedRules: 5, submittedAt: new Date("2026-05-06T18:00:00Z"), ghostLifeUsed: true, currentStreak: 1 });
+    const fullGreenEarly = calculateDailyPoints(4, true, { completedRules: 6, submittedAt: new Date("2026-05-06T10:00:00Z"), ghostLifeUsed: false, currentStreak: 4 });
+
+    expect(fiveOfSix).toBe(10);
+    expect(fullGreenEarly).toBeGreaterThan(fiveOfSix);
   });
 });
