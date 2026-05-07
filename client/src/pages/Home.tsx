@@ -223,6 +223,25 @@ export function mergeTodayFormWithoutWipingSavedWork(saved: MyDayForm, draft: My
   };
 }
 
+export function patchDailyLogIntoSnapshot(snapshot: Snapshot | undefined, updatedLog: any): Snapshot | undefined {
+  if (!snapshot || !updatedLog) return snapshot;
+  const logs = Array.isArray(snapshot.logs) ? snapshot.logs : [];
+  const matchesUpdatedLog = (log: any) => {
+    if (!log) return false;
+    if (updatedLog.id != null && log.id != null) return String(log.id) === String(updatedLog.id);
+    return String(log.participantId) === String(updatedLog.participantId) && Number(log.dayNumber) === Number(updatedLog.dayNumber);
+  };
+  const hasExistingLog = logs.some(matchesUpdatedLog);
+  const nextLogs = hasExistingLog ? logs.map((log: any) => matchesUpdatedLog(log) ? { ...log, ...updatedLog } : log) : [updatedLog, ...logs];
+  const shouldPatchMyLog = Boolean(snapshot.myLog && matchesUpdatedLog(snapshot.myLog)) || String(snapshot?.participant?.id ?? "") === String(updatedLog.participantId ?? "");
+
+  return {
+    ...snapshot,
+    myLog: shouldPatchMyLog ? { ...(snapshot.myLog ?? {}), ...updatedLog } : snapshot.myLog,
+    logs: nextLogs,
+  };
+}
+
 function hasDraftContent(draft: MyDayForm) {
   return draft.noAlcohol || draft.cleanEating || draft.cleanEatingNote.trim().length > 0 || draft.exerciseDuration > 0 || draft.exerciseType.trim().length > 0 || draft.exerciseProofUrl.trim().length > 0 || draft.reflectionText.trim().length > 0 || draft.reflectionShared || draft.readTeachText.trim().length > 0 || draft.trackedEverything;
 }
@@ -868,6 +887,7 @@ function JournalReflectionCard({
 }
 
 function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void }) {
+  const utils = trpc.useUtils();
   const [form, setForm] = useState<MyDayForm>(emptyDay);
   const [openRule, setOpenRule] = useState<RuleKey>("exercise");
   const [lastMissed, setLastMissed] = useState<string[]>([]);
@@ -968,6 +988,8 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
         window.localStorage.removeItem(draftStorageKey);
       }
       window.setTimeout(() => setSaveNotice(null), 2200);
+      utils.challenge.snapshot.setData(undefined, previous => patchDailyLogIntoSnapshot(previous, data.log));
+      void utils.challenge.snapshot.invalidate();
       refetch();
     },
     onError: error => toast.error(error.message),

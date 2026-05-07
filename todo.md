@@ -886,3 +886,11 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Tighten headlines, subcopy, button labels, helper text, and error/empty states without changing existing product behaviour.
 - [x] Add or update regression coverage where copy changes affect tested UI strings.
 - [x] Validate with relevant tests, typecheck/build as appropriate, project health check, and checkpoint before delivery.
+
+
+## Bug Fix — Active-Day Proof Sync
+- [x] Audit how proof entered or edited in Today/My Day is saved and how the Proof page reads that proof for the current challenge day.
+- [x] Ensure edits made to today’s proof remain visible on the Proof page for the active day until the day ends.
+- [x] Ensure Proof page data refreshes or invalidates correctly after today’s proof is edited, without showing stale proof entries.
+- [x] Add or update regression coverage for same-day proof edits appearing in the Proof page/feed.
+- [x] Validate with relevant tests, typecheck/build as appropriate, project health check, and checkpoint before delivery.

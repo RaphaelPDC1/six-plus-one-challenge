@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import Home, { LogoMark, dailyLogToForm, mergeTodayFormWithoutWipingSavedWork } from "./Home";
+import Home, { LogoMark, dailyLogToForm, mergeTodayFormWithoutWipingSavedWork, patchDailyLogIntoSnapshot } from "./Home";
 import { buildParticipantInsights } from "@/lib/challengeInsights";
 
 const mockState = vi.hoisted(() => ({
@@ -166,6 +166,26 @@ describe("Home onboarding shell", () => {
     expect(merged.reflectionText).toBe("Morning reflection done.");
     expect(merged.readTeachText).toBe("Discipline compounds.");
     expect(merged.trackedEverything).toBe(true);
+  });
+
+  it("patches a submitted same-day proof log into the shared snapshot cache", () => {
+    const staleSnapshot = {
+      participant: { id: 42, displayName: "Taylor" },
+      myLog: { id: 7, participantId: 42, dayNumber: 9, exerciseProofUrl: "" },
+      logs: [
+        { id: 7, participantId: 42, dayNumber: 9, exerciseProofUrl: "", exerciseDuration: 30 },
+        { id: 6, participantId: 18, dayNumber: 9, exerciseProofUrl: "/manus-storage/other.webp", exerciseDuration: 35 },
+      ],
+    };
+    const updatedLog = { id: 7, participantId: 42, dayNumber: 9, exerciseProofUrl: "/manus-storage/new-proof.webp", exerciseDuration: 45 };
+
+    const patched = patchDailyLogIntoSnapshot(staleSnapshot, updatedLog) as typeof staleSnapshot;
+
+    expect(patched.myLog?.exerciseProofUrl).toBe("/manus-storage/new-proof.webp");
+    expect(patched.logs).toHaveLength(2);
+    expect(patched.logs[0].exerciseProofUrl).toBe("/manus-storage/new-proof.webp");
+    expect(patched.logs[0].exerciseDuration).toBe(45);
+    expect(patched.logs[1].exerciseProofUrl).toBe("/manus-storage/other.webp");
   });
 
   it("renders the actual image logo in the reusable logo mark without a stacked text fallback", () => {
