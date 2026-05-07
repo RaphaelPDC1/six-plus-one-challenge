@@ -216,6 +216,47 @@ const emptyDay: MyDayForm = {
 };
 
 const DRAFT_STORAGE_PREFIX = "draft_6plus1";
+const CHALLENGE_TIME_ZONE = "Europe/London";
+
+function getZonedParts(date: Date, timeZone = CHALLENGE_TIME_ZONE) {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(date);
+  const part = (type: string) => Number(parts.find(item => item.type === type)?.value ?? 0);
+  return {
+    year: part("year"),
+    month: part("month"),
+    day: part("day"),
+    hour: part("hour"),
+    minute: part("minute"),
+    second: part("second"),
+  };
+}
+
+function getTimeZoneOffsetMs(date: Date, timeZone = CHALLENGE_TIME_ZONE) {
+  const parts = getZonedParts(date, timeZone);
+  const zonedAsUtc = Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute, parts.second, date.getUTCMilliseconds());
+  return zonedAsUtc - date.getTime();
+}
+
+function zonedLocalTimeToUtc(input: { year: number; month: number; day: number; hour?: number; minute?: number; second?: number; millisecond?: number }, timeZone = CHALLENGE_TIME_ZONE) {
+  const localAsUtc = Date.UTC(input.year, input.month - 1, input.day, input.hour ?? 0, input.minute ?? 0, input.second ?? 0, input.millisecond ?? 0);
+  const firstPass = new Date(localAsUtc - getTimeZoneOffsetMs(new Date(localAsUtc), timeZone));
+  return new Date(localAsUtc - getTimeZoneOffsetMs(firstPass, timeZone));
+}
+
+export function getMillisecondsUntilNextLondonDay(now = new Date()) {
+  const londonNow = getZonedParts(now);
+  const nextLondonMidnight = zonedLocalTimeToUtc({ year: londonNow.year, month: londonNow.month, day: londonNow.day + 1 });
+  return Math.max(1000, nextLondonMidnight.getTime() - now.getTime());
+}
 
 function getDraftStorageKey(userId: string | number | undefined, dayNumber: number | undefined) {
   if (!userId || !dayNumber) return "";
@@ -1854,7 +1895,7 @@ function Leaderboard({ snapshot }: { snapshot: Snapshot }) {
   );
 }
 
-function buildProofWardenInsight(owner: any, log: any, ownerLogs: any[]) {
+export function buildProofWardenInsight(owner: any, log: any, ownerLogs: any[]) {
   const recentLogs = ownerLogs
     .filter((entry: any) => entry?.participantId === log?.participantId)
     .sort((a: any, b: any) => Number(b.dayNumber ?? 0) - Number(a.dayNumber ?? 0))
@@ -1914,13 +1955,23 @@ function buildProofWardenInsight(owner: any, log: any, ownerLogs: any[]) {
   const hasPublicProofText = normalizedTeaching.length > 0;
   const teachingLower = normalizedTeaching.toLowerCase();
   const hasTeachingAny = (words: string[]) => words.some(word => teachingLower.includes(word));
+  const teachingThemeWords = [
+    "discipline", "standard", "routine", "habit", "consistency", "non-negotiable",
+    "account", "responsib", "excuse", "blame", "honest", "truth", "own",
+    "hard", "struggle", "fail", "fall", "quit", "pain", "advers", "resilien", "tough",
+    "patient", "process", "small", "step", "repeat", "compound", "daily", "brick",
+    "focus", "distract", "noise", "priority", "attention",
+    "believe", "identity", "become", "person", "character", "confidence", "self",
+  ];
+  const teachingMindsetWords = ["mind", "mental", "attitude", "choice", "choose", "decide", "decision", "commit", "purpose", "why", "lesson", "learn", "growth", "courage", "show up", "keep going", "tomorrow", "promise"];
+  const isMotivationalTeaching = hasPublicProofText && (hasTeachingAny(teachingThemeWords) || hasTeachingAny(teachingMindsetWords));
   const privateReflectionSignal = reflectionSignal
     ? hasAny(["stress", "tired", "hard", "busy", "tempted", "struggle", "nearly"])
       ? "you named the pressure without letting it own the day"
       : "you noticed the pattern while it was still fresh"
     : "the action gave the day a clean signal";
 
-  const teachingMeaning = hasPublicProofText
+  const teachingMeaning = isMotivationalTeaching
     ? hasTeachingAny(["discipline", "standard", "routine", "habit", "consistency", "non-negotiable"])
       ? {
           theme: "standards before mood",
@@ -1978,9 +2029,9 @@ function buildProofWardenInsight(owner: any, log: any, ownerLogs: any[]) {
     `${firstName}, the teaching here is ${teachingMeaning.theme}. ${teachingMeaning.connect} ${effortSignal}`,
     `${firstName}, ${teachingMeaning.read} ${teachingMeaning.connect}`,
     `${firstName}, this does not need the quote repeated back. It needs the meaning lived: ${teachingMeaning.theme}. Carry that into tomorrow’s first choice.`,
-    proofTextSnippet.length > 0
+    (proofTextSnippet.length > 0
       ? `${firstName}, the line about “${proofTextSnippet}” points to ${teachingMeaning.theme}. Make the next proof match that meaning.`
-      : `${firstName}, the teaching points to ${teachingMeaning.theme}. Make the next proof match that meaning.`,
+      : `${firstName}, the teaching points to ${teachingMeaning.theme}. Make the next proof match that meaning.`),
   ] : [];
 
   const sharpSignals = [
@@ -2306,8 +2357,28 @@ export default function Home() {
   const [entryVisible, setEntryVisible] = useState(() => typeof window !== "undefined" && window.sessionStorage.getItem("sixone-entry-seen") !== "true");
   const [loginEntryVisible, setLoginEntryVisible] = useState(false);
   const previousAuthRef = useRef(isAuthenticated);
+  const utils = trpc.useUtils();
   const snapshotQuery = trpc.challenge.snapshot.useQuery(undefined, { enabled: isAuthenticated });
   const snapshot = snapshotQuery.data;
+
+  useEffect(() => {
+    if (!isAuthenticated || typeof window === "undefined") return;
+    let disposed = false;
+    let timer: number | undefined;
+    const scheduleNextLondonRollover = () => {
+      timer = window.setTimeout(() => {
+        if (disposed) return;
+        void snapshotQuery.refetch();
+        void utils.challenge.snapshot.invalidate();
+        scheduleNextLondonRollover();
+      }, getMillisecondsUntilNextLondonDay(new Date()) + 1500);
+    };
+    scheduleNextLondonRollover();
+    return () => {
+      disposed = true;
+      if (timer !== undefined) window.clearTimeout(timer);
+    };
+  }, [isAuthenticated, snapshotQuery.refetch, utils.challenge.snapshot]);
 
   useEffect(() => {
     if (loading || !entryVisible || typeof window === "undefined") return;

@@ -11,6 +11,7 @@ import {
 } from "./challengeLogic";
 import {
   CHALLENGE_START_DATE,
+  CHALLENGE_TIME_ZONE,
   getChallengeCalendar,
   getChallengeDateIsoForDay,
   getChallengeDeadlineForDay,
@@ -113,13 +114,17 @@ describe("challengeLogic", () => {
     expect(canPostWardenMessage(3, 3)).toBe(false);
   });
 
-  it("anchors challenge day calculations to 6 May and clamps before/after the 50-day window", () => {
+  it("anchors challenge day calculations to 6 May and resets on Europe/London midnight", () => {
     expect(CHALLENGE_START_DATE).toBe("2026-05-06");
+    expect(CHALLENGE_TIME_ZONE).toBe("Europe/London");
     expect(getChallengeDateIsoForDay(1)).toBe("2026-05-06");
     expect(getChallengeDateIsoForDay(2)).toBe("2026-05-07");
     expect(getChallengeDateIsoForDay(50)).toBe("2026-06-24");
     expect(getCurrentChallengeDay(new Date("2026-05-05T23:59:59Z"))).toBe(1);
     expect(getCurrentChallengeDay(new Date("2026-05-06T00:00:00Z"))).toBe(1);
+    expect(getCurrentChallengeDay(new Date("2026-05-06T22:59:59Z"))).toBe(1);
+    expect(getCurrentChallengeDay(new Date("2026-05-06T23:00:00Z"))).toBe(2);
+    expect(getCurrentChallengeDay(new Date("2026-05-07T23:05:00Z"))).toBe(3);
     expect(getCurrentChallengeDay(new Date("2026-05-20T12:00:00Z"))).toBe(15);
     expect(getCurrentChallengeDay(new Date("2026-07-20T12:00:00Z"))).toBe(50);
   });
@@ -132,7 +137,7 @@ describe("challengeLogic", () => {
     expect(calendar.map(day => day.dateIso)).toEqual(["2026-05-06", "2026-05-07", "2026-05-08", "2026-05-09", "2026-05-10"]);
     expect(calendar[0]).toMatchObject({ dayNumber: 1, dateIso: "2026-05-06", isToday: false });
     expect(calendar[4]).toMatchObject({ dayNumber: 5, dateIso: "2026-05-10", isToday: true });
-    expect(getChallengeDeadlineForDay(1).toISOString()).toBe("2026-05-06T23:59:59.999Z");
+    expect(getChallengeDeadlineForDay(1).toISOString()).toBe("2026-05-06T22:59:59.999Z");
   });
 
   it("awards streak and points only the first time a participant completes a calendar day", () => {

@@ -1,0 +1,44 @@
+{
+  "query": "SELECT p.id AS participant_id, p.displayName, p.avatarInitials, dl.id AS log_id, dl.dayNumber, dl.logDate, dl.exerciseDuration, dl.exerciseType, dl.exerciseProofUrl, dl.reflectionShared, CASE WHEN dl.reflectionShared = true THEN dl.reflectionText ELSE NULL END AS publicReflectionText, dl.readTeachText, dl.dayComplete, dl.pointsAwarded, dl.submittedAt FROM participants p LEFT JOIN daily_logs dl ON dl.participantId = p.id WHERE LOWER(p.displayName) LIKE '%ctm%' OR LOWER(p.avatarInitials) LIKE '%ctm%' ORDER BY dl.dayNumber DESC, dl.submittedAt DESC LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2P9ir9M7b3E7Qkh.8b2c854ea8b3 --database HPubf4auNvt8KXvgrLad5c --execute SELECT p.id AS participant_id, p.displayName, p.avatarInitials, dl.id AS log_id, dl.dayNumber, dl.logDate, dl.exerciseDuration, dl.exerciseType, dl.exerciseProofUrl, dl.reflectionShared, CASE WHEN dl.reflectionShared = true THEN dl.reflectionText ELSE NULL END AS publicReflectionText, dl.readTeachText, dl.dayComplete, dl.pointsAwarded, dl.submittedAt FROM participants p LEFT JOIN daily_logs dl ON dl.participantId = p.id WHERE LOWER(p.displayName) LIKE '%ctm%' OR LOWER(p.avatarInitials) LIKE '%ctm%' ORDER BY dl.dayNumber DESC, dl.submittedAt DESC LIMIT 10;",
+  "rows": [
+    {
+      "participant_id": "90005",
+      "displayName": "CTM",
+      "avatarInitials": "C",
+      "log_id": "150001",
+      "dayNumber": "2",
+      "logDate": "2026-05-07",
+      "exerciseDuration": "31",
+      "exerciseType": "Run",
+      "exerciseProofUrl": "[{\"url\":\"/manus-storage/exercise-proof/participant-90005/1778183520359-IMG_7581.png_b4afbdd3.png\",\"type\":\"image\",\"mimeType\":\"image/png\",\"name\":\"IMG_7581.png\"}]",
+      "reflectionShared": "0",
+      "publicReflectionText": "NULL",
+      "readTeachText": "Chafe cream in Spanish is crema anti-rozaduras (necesito comprarlo mañana) ",
+      "dayComplete": "1",
+      "pointsAwarded": "14",
+      "submittedAt": "2026-05-07 19:54:44"
+    },
+    {
+      "participant_id": "90005",
+      "displayName": "CTM",
+      "avatarInitials": "C",
+      "log_id": "30004",
+      "dayNumber": "1",
+      "logDate": "2026-05-06",
+      "exerciseDuration": "60",
+      "exerciseType": "Gym - legs ",
+      "exerciseProofUrl": "/manus-storage/exercise-proof/participant-90005/1778094614591-IMG_7572.png_2910e556.png",
+      "reflectionShared": "0",
+      "publicReflectionText": "NULL",
+      "readTeachText": "Bread spread quickly from Jordan across the world once wheat was cultivated in the Fertile Crescent and it played a significant role in the establishment of settled towns in preference to nomadic lifestyles.",
+      "dayComplete": "1",
+      "pointsAwarded": "10",
+      "submittedAt": "2026-05-06 19:20:25"
+    }
+  ],
+  "messages": [],
+  "stdout": "participant_id\tdisplayName\tavatarInitials\tlog_id\tdayNumber\tlogDate\texerciseDuration\texerciseType\texerciseProofUrl\treflectionShared\tpublicReflectionText\treadTeachText\tdayComplete\tpointsAwarded\tsubmittedAt\n90005\tCTM\tC\t150001\t2\t2026-05-07\t31\tRun\t[{\"url\":\"/manus-storage/exercise-proof/participant-90005/1778183520359-IMG_7581.png_b4afbdd3.png\",\"type\":\"image\",\"mimeType\":\"image/png\",\"name\":\"IMG_7581.png\"}]\t0\tNULL\tChafe cream in Spanish is crema anti-rozaduras (necesito comprarlo mañana) \t1\t14\t2026-05-07 19:54:44\n90005\tCTM\tC\t30004\t1\t2026-05-06\t60\tGym - legs \t/manus-storage/exercise-proof/participant-90005/1778094614591-IMG_7572.png_2910e556.png\t0\tNULL\tBread spread quickly from Jordan across the world once wheat was cultivated in the Fertile Crescent and it played a significant role in the establishment of settled towns in preference to nomadic lifestyles.\t1\t10\t2026-05-06 19:20:25\n",
+  "stderr": "",
+  "execution_time_ms": 624
+}

@@ -23,6 +23,7 @@ import { BOOST_CHALLENGE_ID, evaluateBoostWinners, getActiveBoostsForDay } from 
 let _db: ReturnType<typeof drizzle> | null = null;
 
 export const CHALLENGE_START_DATE = "2026-05-06";
+export const CHALLENGE_TIME_ZONE = "Europe/London";
 export const DEFAULT_MONZO_PAYMENT_LINK = "https://monzo.me/6plus1challenge/25";
 
 const REQUESTED_REWARD_CATALOGUE = [
@@ -312,24 +313,85 @@ function initials(name?: string | null) {
 
 const DAY_MS = 86_400_000;
 
-export function getChallengeDateForDay(dayNumber: number) {
+function parseIsoDateParts(dateIso: string) {
+  const [year, month, day] = dateIso.split("-").map(Number);
+  return { year, month, day };
+}
+
+function getIsoDateOffset(dateIso: string, days: number) {
+  const { year, month, day } = parseIsoDateParts(dateIso);
+  return new Date(Date.UTC(year, month - 1, day + days, 12, 0, 0, 0)).toISOString().slice(0, 10);
+}
+
+function localDateOrdinal(dateIso: string) {
+  const { year, month, day } = parseIsoDateParts(dateIso);
+  return Math.floor(Date.UTC(year, month - 1, day) / DAY_MS);
+}
+
+function getZonedParts(date: Date, timeZone = CHALLENGE_TIME_ZONE) {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(date);
+  const part = (type: string) => Number(parts.find(item => item.type === type)?.value ?? 0);
+  return {
+    year: part("year"),
+    month: part("month"),
+    day: part("day"),
+    hour: part("hour"),
+    minute: part("minute"),
+    second: part("second"),
+  };
+}
+
+function getZonedDateIso(date: Date, timeZone = CHALLENGE_TIME_ZONE) {
+  const parts = getZonedParts(date, timeZone);
+  return `${parts.year}-${String(parts.month).padStart(2, "0")}-${String(parts.day).padStart(2, "0")}`;
+}
+
+function getTimeZoneOffsetMs(date: Date, timeZone = CHALLENGE_TIME_ZONE) {
+  const parts = getZonedParts(date, timeZone);
+  const zonedAsUtc = Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute, parts.second, date.getUTCMilliseconds());
+  return zonedAsUtc - date.getTime();
+}
+
+function zonedLocalTimeToUtc(input: { year: number; month: number; day: number; hour?: number; minute?: number; second?: number; millisecond?: number }, timeZone = CHALLENGE_TIME_ZONE) {
+  const localAsUtc = Date.UTC(input.year, input.month - 1, input.day, input.hour ?? 0, input.minute ?? 0, input.second ?? 0, input.millisecond ?? 0);
+  const firstPass = new Date(localAsUtc - getTimeZoneOffsetMs(new Date(localAsUtc), timeZone));
+  const corrected = new Date(localAsUtc - getTimeZoneOffsetMs(firstPass, timeZone));
+  return corrected;
+}
+
+function getChallengeDateIsoOffset(dayNumber: number) {
   const safeDay = Math.min(50, Math.max(1, Math.trunc(dayNumber)));
-  const start = new Date(`${CHALLENGE_START_DATE}T00:00:00Z`);
-  return new Date(start.getTime() + (safeDay - 1) * DAY_MS);
+  return getIsoDateOffset(CHALLENGE_START_DATE, safeDay - 1);
+}
+
+export function getChallengeDateForDay(dayNumber: number) {
+  const dateIso = getChallengeDateIsoOffset(dayNumber);
+  const { year, month, day } = parseIsoDateParts(dateIso);
+  return zonedLocalTimeToUtc({ year, month, day });
 }
 
 export function getChallengeDateIsoForDay(dayNumber: number) {
-  return getChallengeDateForDay(dayNumber).toISOString().slice(0, 10);
+  return getChallengeDateIsoOffset(dayNumber);
 }
 
 export function getChallengeDeadlineForDay(dayNumber: number) {
-  const date = getChallengeDateForDay(dayNumber);
-  return new Date(date.getTime() + DAY_MS - 1);
+  const nextDateIso = getChallengeDateIsoOffset(dayNumber + 1);
+  const { year, month, day } = parseIsoDateParts(nextDateIso);
+  return new Date(zonedLocalTimeToUtc({ year, month, day }).getTime() - 1);
 }
 
 export function getCurrentChallengeDay(now = new Date()) {
-  const start = new Date(`${CHALLENGE_START_DATE}T00:00:00Z`);
-  const diff = Math.floor((now.getTime() - start.getTime()) / DAY_MS) + 1;
+  const localTodayIso = getZonedDateIso(now);
+  const diff = localDateOrdinal(localTodayIso) - localDateOrdinal(CHALLENGE_START_DATE) + 1;
   return Math.min(50, Math.max(1, diff));
 }
 
@@ -337,11 +399,12 @@ export function getChallengeCalendar(now = new Date()) {
   const currentDay = getCurrentChallengeDay(now);
   return Array.from({ length: currentDay }, (_, index) => {
     const dayNumber = index + 1;
+    const dateIso = getChallengeDateIsoForDay(dayNumber);
     const date = getChallengeDateForDay(dayNumber);
     return {
       dayNumber,
-      dateIso: date.toISOString().slice(0, 10),
-      label: date.toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" }),
+      dateIso,
+      label: date.toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: CHALLENGE_TIME_ZONE }),
       isToday: dayNumber === currentDay,
     };
   });

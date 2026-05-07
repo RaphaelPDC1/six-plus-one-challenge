@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import Home, { LogoMark, dailyLogToForm, mergeTodayFormWithoutWipingSavedWork, patchDailyLogIntoSnapshot } from "./Home";
+import Home, { LogoMark, buildProofWardenInsight, dailyLogToForm, getMillisecondsUntilNextLondonDay, mergeTodayFormWithoutWipingSavedWork, patchDailyLogIntoSnapshot } from "./Home";
 import { buildParticipantInsights } from "@/lib/challengeInsights";
 
 const mockState = vi.hoisted(() => ({
@@ -168,6 +168,12 @@ describe("Home onboarding shell", () => {
     expect(merged.trackedEverything).toBe(true);
   });
 
+  it("computes the next Today’s Log reset from the Europe/London midnight boundary", () => {
+    expect(getMillisecondsUntilNextLondonDay(new Date("2026-05-06T22:59:30.000Z"))).toBe(30_000);
+    expect(getMillisecondsUntilNextLondonDay(new Date("2026-05-06T23:00:00.000Z"))).toBe(24 * 60 * 60 * 1000);
+    expect(getMillisecondsUntilNextLondonDay(new Date("2026-12-06T23:59:30.000Z"))).toBe(30_000);
+  });
+
   it("patches a submitted same-day proof log into the shared snapshot cache", () => {
     const staleSnapshot = {
       participant: { id: 42, displayName: "Taylor" },
@@ -251,6 +257,9 @@ describe("Home onboarding shell", () => {
     expect(homeSource).toContain("onSuccess: async data =>");
     expect(homeSource).toContain("utils.auth.me.setData(undefined, data.user);");
     expect(homeSource.indexOf("utils.auth.me.setData(undefined, data.user);")).toBeLessThan(homeSource.indexOf("await utils.auth.me.invalidate();"));
+    expect(homeSource).toContain("getMillisecondsUntilNextLondonDay(new Date()) + 1500");
+    expect(homeSource).toContain("void snapshotQuery.refetch();");
+    expect(homeSource).toContain("void utils.challenge.snapshot.invalidate();");
   });
 
   it("keeps registration on a dedicated route with back-home navigation and universal Warden copy", () => {
@@ -332,7 +341,8 @@ describe("Home onboarding shell", () => {
     expect(homeSource).toContain("cleanEatingNote");
     expect(homeSource).toContain("reflectionText");
     expect(homeSource).toContain("readTeachText");
-    expect(homeSource).toContain("const teachingMeaning = hasPublicProofText");
+    expect(homeSource).toContain("const isMotivationalTeaching = hasPublicProofText");
+    expect(homeSource).toContain("const teachingMeaning = isMotivationalTeaching");
     expect(homeSource).toContain("const teachingLinkedSignals = teachingMeaning ? [");
     expect(homeSource).toContain("const sharpSignals = [");
     expect(homeSource).toContain("const reflectiveSignals = [");
@@ -373,6 +383,38 @@ describe("Home onboarding shell", () => {
     expect(homeSource).not.toContain("No fake image reading");
     expect(homeSource).not.toMatch(/Ren[eé]e/);
     expect(homeSource).toContain("const wardenInsight = buildProofWardenInsight(owner, log, snapshot?.logs ?? []);");
+  });
+
+  it("falls back to proof and exercise context when Deep Thought sees factual notes rather than motivational teaching", () => {
+    const participant = {
+      id: 90005,
+      displayName: "CTM",
+      primaryGoal: "",
+      biggestObstacle: "",
+      supportNeeded: "",
+      trainingLevel: "",
+    };
+    const factualLog = {
+      participantId: 90005,
+      dayNumber: 2,
+      readTeachText: "Chafe cream in Spanish is crema anti-rozaduras (necesito comprarlo mañana)",
+      exerciseDuration: 31,
+      exerciseType: "Run",
+      exerciseProofUrl: "[{\"url\":\"/manus-storage/exercise-proof/participant-90005/day-2.png\",\"type\":\"image\",\"mimeType\":\"image/png\"}]",
+      reflectionText: "",
+      cleanEatingNote: "",
+    };
+    const insight = buildProofWardenInsight(participant, factualLog, [
+      factualLog,
+      { ...factualLog, dayNumber: 1, readTeachText: "Bread spread quickly from Jordan across the world once wheat was cultivated in the Fertile Crescent." },
+    ]);
+
+    expect(insight).toContain("CTM,");
+    expect(insight).not.toContain("the teaching here is");
+    expect(insight).not.toContain("line about");
+    expect(insight).not.toContain("lesson into action");
+    expect(insight).not.toContain("crema anti-rozaduras");
+    expect(insight).toMatch(/proof|standard|Run|run|evidence|decision|ordinary moments/);
   });
 
   it("wires installable web-app metadata to live-safe reference palette image icons", () => {

@@ -992,3 +992,22 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Avoid simply repeating the quote back to the user unless a short phrase genuinely helps the insight land.
 - [x] Update regression coverage for teaching interpretation, contextual fit, concise wording, and privacy-safe handling of private reflections.
 - [x] Validate with tests, typecheck/build, project health check, and checkpoint before delivery.
+
+## Bug — Midnight Daily Reset for To-Dos and Multipliers
+- [x] Investigate why Today’s Log to-do completion state has not reset after midnight.
+- [x] Investigate why daily multipliers or live-point multipliers have not reset after midnight.
+- [x] Confirm whether the app is using UTC/server time instead of the intended local challenge day boundary.
+- [x] Implement timezone-safe daily reset logic so a new challenge day starts with fresh to-dos and reset multipliers.
+- [x] Add regression tests for before-midnight and after-midnight daily reset behavior.
+- [x] Validate with tests, typecheck/build, project health check, and checkpoint before delivery.
+
+## Bug — CTM Deep Thought Does Not Match Proof Context
+- [x] Inspect CTM’s current proof post example and the generated Deep Thought to identify why the interpretation does not follow from the quote or teaching.
+- [x] Adjust Deep Thought logic so it understands the quote’s meaning in the context of the proof rather than forcing a generic theme.
+- [x] Ensure Deep Thought uses only context that is safe to display publicly and avoids exposing private reflections directly.
+- [x] Add regression coverage for a CTM-style proof where the teaching and generated insight must align semantically.
+- [x] Validate with tests, typecheck/build, project health check, and checkpoint before delivery.
+
+## Refinement Pass (v4.7) — Proof Feed Deep Thought and Day Rollover Fixes
+- [x] Fix Proof Feed Deep Thought so factual Read & Teach posts such as CTM’s Spanish chafe-cream note do not get treated as motivational teaching quotes
+- [x] Refresh authenticated challenge snapshot at the Europe/London day rollover so Today’s Log resets without requiring a manual page reload
