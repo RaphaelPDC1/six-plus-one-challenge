@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE `boost_wins` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`challenge_id` int NOT NULL,\n\t`user_id` int NOT NULL,\n\t`day` int NOT NULL,\n\t`boost_id` varchar(64) NOT NULL,\n\t`boost_name` varchar(140) NOT NULL,\n\t`boost_icon` varchar(10) NOT NULL,\n\t`points_awarded` int NOT NULL DEFAULT 5,\n\t`awarded_at` timestamp NOT NULL DEFAULT (now()),\n\t`warden_note` text,\n\tCONSTRAINT `boost_wins_id` PRIMARY KEY(`id`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2P9ir9M7b3E7Qkh.8b2c854ea8b3 --database HPubf4auNvt8KXvgrLad5c --execute CREATE TABLE `boost_wins` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`challenge_id` int NOT NULL,\n\t`user_id` int NOT NULL,\n\t`day` int NOT NULL,\n\t`boost_id` varchar(64) NOT NULL,\n\t`boost_name` varchar(140) NOT NULL,\n\t`boost_icon` varchar(10) NOT NULL,\n\t`points_awarded` int NOT NULL DEFAULT 5,\n\t`awarded_at` timestamp NOT NULL DEFAULT (now()),\n\t`warden_note` text,\n\tCONSTRAINT `boost_wins_id` PRIMARY KEY(`id`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 713
+}

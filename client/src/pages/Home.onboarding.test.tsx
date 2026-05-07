@@ -405,9 +405,10 @@ describe("Home onboarding shell", () => {
     expect(homeSource).toContain('data-testid="pace-bar"');
     expect(homeSource).toContain("Board / Bosses");
     expect(homeSource).toContain('data-testid="boost-key-slots"');
-    expect(homeSource).toContain("Three slots. Earned, not gamed.");
-    expect(homeSource).toContain("Proof beats claims");
-    expect(homeSource).toContain("No gaming the board");
+    expect(homeSource).toContain("Rotating slots. Earned, not gamed.");
+    expect(homeSource).toContain('data-testid="overview-active-boosts"');
+    expect(homeSource).toContain('data-testid="warden-mood-card"');
+    expect(homeSource).toContain("+5 additive");
     expect(homeSource).toContain("const saveProgressDocked = saveProgressScale >= 0.78;");
     expect(homeSource).toContain('data-mobile-save-progress-mini-to-section="true"');
     expect(homeSource).toContain('data-save-progress-docked={saveProgressDocked ? "true" : "false"}');

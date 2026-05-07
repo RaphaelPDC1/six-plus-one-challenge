@@ -145,6 +145,19 @@ export const wardenMessages = mysqlTable("warden_messages", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
+export const boostWins = mysqlTable("boost_wins", {
+  id: int("id").autoincrement().primaryKey(),
+  challengeId: int("challenge_id").notNull(),
+  userId: int("user_id").notNull(),
+  day: int("day").notNull(),
+  boostId: varchar("boost_id", { length: 64 }).notNull(),
+  boostName: varchar("boost_name", { length: 140 }).notNull(),
+  boostIcon: varchar("boost_icon", { length: 10 }).notNull(),
+  pointsAwarded: int("points_awarded").notNull().default(5),
+  awardedAt: timestamp("awarded_at").defaultNow().notNull(),
+  wardenNote: text("warden_note"),
+});
+
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 export type SignupRequest = typeof signupRequests.$inferSelect;
@@ -155,3 +168,5 @@ export type RewardCatalogueItem = typeof rewardCatalogue.$inferSelect;
 export type RedemptionRequest = typeof redemptionRequests.$inferSelect;
 export type WhatsappChatMessage = typeof whatsappChatHistory.$inferSelect;
 export type WardenMessage = typeof wardenMessages.$inferSelect;
+export type BoostWin = typeof boostWins.$inferSelect;
+export type InsertBoostWin = typeof boostWins.$inferInsert;

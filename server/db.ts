@@ -1,9 +1,11 @@
 import { and, desc, eq, gte, inArray, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
+  boostWins,
   dailyLogs,
   type DailyLog,
   InsertUser,
+  type InsertBoostWin,
   participants,
   paymentEvents,
   redemptionRequests,
@@ -16,6 +18,7 @@ import {
 import { applyLifeLoss, calculateDailyPoints, canEarnGhostLife, canSendWardenMessage, getMissedRules, isDayComplete } from "./challengeLogic";
 import { ENV } from "./_core/env";
 import { storagePut } from "./storage";
+import { BOOST_CHALLENGE_ID, evaluateBoostWinners, getActiveBoostsForDay } from "../shared/boostSystem";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -632,6 +635,68 @@ export async function tryApplyGhostLife(participantId: number, exerciseDuration:
   return { applied: true, livesRemaining };
 }
 
+export async function getBoostWinsForChallenge(challengeId = BOOST_CHALLENGE_ID) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  return db.select().from(boostWins).where(eq(boostWins.challengeId, challengeId)).orderBy(desc(boostWins.awardedAt));
+}
+
+export async function getBoostWinsForParticipant(challengeId: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  return db.select().from(boostWins).where(and(eq(boostWins.challengeId, challengeId), eq(boostWins.userId, userId))).orderBy(desc(boostWins.awardedAt));
+}
+
+export async function awardBoostWin(input: InsertBoostWin) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  const challengeId = Number(input.challengeId ?? BOOST_CHALLENGE_ID);
+  const day = Number(input.day ?? getCurrentChallengeDay());
+  const pointsAwarded = Number(input.pointsAwarded ?? 5);
+  const existing = await db.select().from(boostWins).where(and(
+    eq(boostWins.challengeId, challengeId),
+    eq(boostWins.userId, Number(input.userId)),
+    eq(boostWins.day, day),
+    eq(boostWins.boostId, String(input.boostId)),
+  )).limit(1);
+  if (existing[0]) return { created: false as const, boostWin: existing[0] };
+  await db.insert(boostWins).values({ ...input, challengeId, day, pointsAwarded });
+  const created = await db.select().from(boostWins).where(and(
+    eq(boostWins.challengeId, challengeId),
+    eq(boostWins.userId, Number(input.userId)),
+    eq(boostWins.day, day),
+    eq(boostWins.boostId, String(input.boostId)),
+  )).orderBy(desc(boostWins.awardedAt)).limit(1);
+  return { created: true as const, boostWin: created[0] };
+}
+
+export async function calculateAndAwardBoostsForDay(day: number, challengeId = BOOST_CHALLENGE_ID) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  const [rawParticipants, rawLogs, existingWins] = await Promise.all([
+    db.select().from(participants),
+    db.select().from(dailyLogs),
+    db.select().from(boostWins).where(eq(boostWins.challengeId, challengeId)),
+  ]);
+  const activeBoosts = getActiveBoostsForDay(day);
+  const awards = evaluateBoostWinners({ day, participants: rawParticipants, logs: rawLogs, boostWins: existingWins, activeBoosts });
+  const results = [];
+  for (const award of awards) {
+    const result = await awardBoostWin({
+      challengeId,
+      userId: Number(award.participant.id),
+      day,
+      boostId: award.boost.id,
+      boostName: award.boost.name,
+      boostIcon: award.boost.icon,
+      pointsAwarded: award.pointsAwarded,
+      wardenNote: award.wardenNote,
+    });
+    results.push(result);
+  }
+  return { day, activeBoosts, awards: results, createdCount: results.filter(result => result.created).length };
+}
+
 export async function getAppSnapshot(userId: number, role: "admin" | "user" = "user", email: string | null = null) {
   const db = await getDb();
   if (!db) throw new Error("Database unavailable");
@@ -650,12 +715,18 @@ export async function getAppSnapshot(userId: number, role: "admin" | "user" = "u
       wardenMessages: [],
       chatHistory: [],
       signupRequests: [],
+      boostWins: [],
+      activeBoosts: getActiveBoostsForDay(getCurrentChallengeDay()),
     };
   }
   const participant = role === "admin" ? null : await getOrCreateParticipant({ id: userId, name: null, email });
   if (participant) await finalizePreviousDayIfNeeded(participant.id);
   await seedRewardsIfEmpty();
-  const [allUsers, rawParticipants, rawLogs, rewards, rawPayments, rawRedemptions, warden, chat, accessRequests] = await Promise.all([
+  const currentDay = getCurrentChallengeDay();
+  if (currentDay > 1) {
+    await calculateAndAwardBoostsForDay(currentDay - 1).catch(error => console.warn("[Boosts] Previous-day award calculation skipped", error));
+  }
+  const [allUsers, rawParticipants, rawLogs, rewards, rawPayments, rawRedemptions, warden, chat, accessRequests, rawBoostWins] = await Promise.all([
     db.select().from(users),
     db.select().from(participants),
     db.select().from(dailyLogs).orderBy(desc(dailyLogs.createdAt)).limit(250),
@@ -665,6 +736,7 @@ export async function getAppSnapshot(userId: number, role: "admin" | "user" = "u
     db.select().from(wardenMessages).orderBy(desc(wardenMessages.createdAt)).limit(50),
     db.select().from(whatsappChatHistory).orderBy(desc(whatsappChatHistory.createdAt)).limit(50),
     role === "admin" ? listSignupRequests() : Promise.resolve([]),
+    db.select().from(boostWins).where(eq(boostWins.challengeId, BOOST_CHALLENGE_ID)).orderBy(desc(boostWins.awardedAt)).limit(250),
   ]);
   const adminUserIds = new Set(allUsers.filter(user => user.role === "admin").map(user => user.id));
   const allParticipants = rawParticipants.filter(participantRow => !adminUserIds.has(participantRow.userId));
@@ -675,7 +747,7 @@ export async function getAppSnapshot(userId: number, role: "admin" | "user" = "u
   const myLog = participant ? await getTodayLog(participant.id) : null;
   return {
     accessState: { status: "ready" as const, reason: onboarding.reason },
-    challenge: { currentDay: getCurrentChallengeDay(), totalDays: 50, startDate: CHALLENGE_START_DATE, calendar: getChallengeCalendar(), monzoPaymentLink: DEFAULT_MONZO_PAYMENT_LINK },
+    challenge: { currentDay, totalDays: 50, startDate: CHALLENGE_START_DATE, calendar: getChallengeCalendar(), monzoPaymentLink: DEFAULT_MONZO_PAYMENT_LINK },
     participant,
     myLog,
     participants: allParticipants,
@@ -686,6 +758,8 @@ export async function getAppSnapshot(userId: number, role: "admin" | "user" = "u
     wardenMessages: warden,
     chatHistory: chat,
     signupRequests: accessRequests,
+    boostWins: rawBoostWins,
+    activeBoosts: getActiveBoostsForDay(currentDay),
   };
 }
 

@@ -7,12 +7,16 @@ import { systemRouter } from "./_core/systemRouter";
 import { adminProcedure, protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import {
   approveSignupRequest,
+  awardBoostWin,
+  calculateAndAwardBoostsForDay,
   captureWhatsAppMessage,
   createSiteNativeUser,
   createRedemption,
   completeOnboarding,
   createSignupRequest,
   getAppSnapshot,
+  getBoostWinsForChallenge,
+  getBoostWinsForParticipant,
   getCurrentChallengeDay,
   getOrCreateParticipant,
   getParticipantByUserId,
@@ -30,6 +34,7 @@ import { generateWardenCommentary } from "./warden";
 import { wardenRouter } from "./warden/wardenRouters";
 import { storagePut } from "./storage";
 import { notifyOwner } from "./_core/notification";
+import { BOOST_CHALLENGE_ID, BOOST_POINTS, BOOST_SEQUENCE, getActiveBoostsForDay } from "../shared/boostSystem";
 
 const signupRequestInput = z.object({
   email: z.string().trim().email().max(320),
@@ -208,6 +213,45 @@ export const appRouter = router({
         }
         return { success: true, reward: redemption.reward } as const;
       }),
+  }),
+
+  boost: router({
+    active: protectedProcedure
+      .input(z.object({ day: z.number().int().min(1).max(50).optional() }).optional())
+      .query(({ input }) => ({ day: input?.day ?? getCurrentChallengeDay(), activeBoosts: getActiveBoostsForDay(input?.day ?? getCurrentChallengeDay()), allBoosts: BOOST_SEQUENCE })),
+
+    getWins: protectedProcedure
+      .input(z.object({ participantId: z.number().int().optional(), challengeId: z.number().int().optional() }).optional())
+      .query(async ({ ctx, input }) => {
+        const challengeId = input?.challengeId ?? BOOST_CHALLENGE_ID;
+        const participant = await getParticipantByUserId(ctx.user.id);
+        const participantId = input?.participantId ?? participant?.id;
+        if (!participantId) return [];
+        if (ctx.user.role !== "admin" && (!participant || String(participant.id) !== String(participantId))) {
+          throw new TRPCError({ code: "FORBIDDEN", message: "You can only view your own boost wins." });
+        }
+        return getBoostWinsForParticipant(challengeId, participantId);
+      }),
+
+    getChallengeWins: protectedProcedure
+      .input(z.object({ challengeId: z.number().int().optional() }).optional())
+      .query(async ({ input }) => getBoostWinsForChallenge(input?.challengeId ?? BOOST_CHALLENGE_ID)),
+
+    award: adminProcedure
+      .input(z.object({
+        userId: z.number().int(),
+        day: z.number().int().min(1).max(50).default(getCurrentChallengeDay()),
+        boostId: z.string().min(1).max(64),
+        boostName: z.string().min(1).max(140),
+        boostIcon: z.string().min(1).max(10).default("+"),
+        pointsAwarded: z.number().int().min(1).max(25).default(BOOST_POINTS),
+        wardenNote: z.string().max(1000).optional(),
+      }))
+      .mutation(async ({ input }) => awardBoostWin({ challengeId: BOOST_CHALLENGE_ID, ...input, wardenNote: input.wardenNote ?? null })),
+
+    calculateDay: adminProcedure
+      .input(z.object({ day: z.number().int().min(1).max(50).default(getCurrentChallengeDay()) }))
+      .mutation(async ({ input }) => calculateAndAwardBoostsForDay(input.day)),
   }),
 
   admin: router({

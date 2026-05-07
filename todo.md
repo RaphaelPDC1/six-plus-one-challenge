@@ -788,3 +788,72 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Preserve bottom navigation visibility, safe-area spacing, and no horizontal overflow.
 - [x] Add or update regression coverage for the mini-to-expanded Save Progress behavior.
 - [x] Validate the fix with tests, typecheck, production build, project health check, and checkpoint before delivery.
+
+
+## Feature — Warden Mood (AI-Generated Vibe)
+
+- [x] Replace the "Pace" metric in the Overview card with "Warden Mood"
+- [x] Implement Warden Mood AI interpretation layer that reads participant logs, reflections, teach data, and proof submissions
+- [x] Generate personalized mood statements based on data patterns: consistency, quality, depth, effort trajectory
+- [x] Add regression coverage for Warden Mood generation and Overview display
+- [x] Validate with tests, typecheck, build, and project health check
+
+## Feature — Boost System (15 Rotating Competitive Modifiers)
+
+### Database & Core Logic
+- [x] Create boost_wins table in drizzle/schema.ts with all required fields (challengeId, userId, day, boostId, boostName, boostIcon, pointsAwarded, awardedAt, wardenNote)
+- [ ] Generate and apply Drizzle migration for boost_wins table
+- [x] Create shared boost system helper with all 15 boost definitions, rotation logic, and anti-gaming rules
+- [x] Implement getBoostsForDay(day) rotation function using deterministic offset formula
+- [x] Implement calculateBoostWinners() function with all 15 boost winner determination logic
+- [ ] Hook boost calculation into end-of-day finalisation in server/challengeLogic.ts
+- [x] Update snapshot data in server/db.ts to expose boost wins and active boosts while preserving additive-only base scoring
+
+### Participant Insights & Data Model
+- [x] Add boost data fields to snapshot/participant-facing model: activeBoosts, boostWins, claimed status, and participant boost history display
+- [x] Ensure boost data is read-only and does not modify existing daily_logs records
+
+### Board UI Integration
+- [x] Add Boost Key display at top of Board showing 3 active boost slots with names, icons, anti-game rules, and claimed status
+- [ ] Show boost-won badges on player rows when they win a boost today
+- [ ] Include totalBoostPoints in leaderboard display alongside daily points
+
+### Overview UI Integration
+- [x] Add active/claimed boost display to Overview with daily claimed state and additive +5 copy
+- [ ] Add "Top boost earner overall" to group intelligence section
+- [ ] Add player's total boost wins to personal rivalry section
+- [ ] Show alert if any boost slot remains unclaimed at end of day
+
+### Warden Integration
+- [ ] Add boostContext to Warden payload with todayBoosts, todayWinners, playerBoostHistory, groupBoostLeader, rivalBoostWins
+- [ ] Add boost trigger events to Warden messaging: boost won, multiple boosts same day, streak of boosts, survivor won, Warden's Pick won, Iron Week, Dead Heat, boost leader change, unclaimed boosts
+- [ ] Update Warden system prompt with boost context instructions and narrative guidance
+- [ ] Ensure Warden references boost wins with same sharpness as life events and uses display names (FIRST UP, STREAK KING, etc.)
+
+### Testing & Validation
+- [x] Write tests for boost rotation logic (deterministic, no randomness)
+- [ ] Write tests for each boost winner determination logic
+- [x] Write tests for anti-gaming rule enforcement
+- [x] Write tests for conditional boost availability (skip when condition not met)
+- [x] Write tests for Warden Mood AI interpretation and display
+- [x] Verify no historical player data was altered after boost system deployment
+- [ ] Test single boost fires correctly for a test day
+- [ ] Test anti-gaming rules block ineligible players
+- [ ] Test Warden references boost win in next message
+- [x] Run full test suite, typecheck, production build, and project health check
+- [ ] Validate total points calculation includes both daily and boost points
+- [x] Validate Boost Key display on Board and Overview stats are accurate
+
+### Checkpoint & Delivery
+- [x] Save checkpoint after Boost System and Warden Mood implementation and validation
+
+
+## Redo Request — Warden Mood and Boost System Under Manus 1.6
+
+- [x] Re-read `boost-system-spec.docx` and treat it as the source of truth for boost rules, additive-only scoring, and Warden integration.
+- [x] Audit the current partial state, including the already-added `boost_wins` schema/migration, before writing more code.
+- [x] Preserve the spec’s safety rule: do not recalculate historical points, streaks, lives, daily awards, payment events, or existing `daily_logs.pointsAwarded` values.
+- [x] Replace or supplement the Overview pace bar with personalized Warden Mood based on each participant’s own logs, reflections, Read & Teach entries, proof data, and effort trajectory.
+- [x] Implement the Boost System only as additive new data through `boost_wins`, with deterministic rotation, anti-gaming rules, UI display, and Warden context.
+- [x] Add regression tests for Warden Mood, boost rotation, boost eligibility, additive scoring, Board/Overview display contracts, and historical-data safety.
+- [x] Run full tests, typecheck, production build, project health check, and save a checkpoint before delivery.

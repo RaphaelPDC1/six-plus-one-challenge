@@ -1,14 +1,25 @@
-import { z, type ZodType } from "zod";
+import fs from 'node:fs';
+
+const path = '/home/ubuntu/six-plus-one-challenge/server/warden/wardenRouters.ts';
+let text = fs.readFileSync(path, 'utf8');
+function replaceOnce(find, replace) {
+  const count = text.split(find).length - 1;
+  if (count !== 1) throw new Error(`Expected one occurrence, found ${count}: ${find.slice(0, 80)}`);
+  text = text.replace(find, replace);
+}
+
+replaceOnce(String.raw`import type { ZodType } from "zod";
+import { publicProcedure, router } from "../_core/trpc";
+import { runWardenCycle, triggerImmediateMessage } from "./runner";
+`, String.raw`import { z, type ZodType } from "zod";
 import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
 import { runWardenCycle, triggerImmediateMessage } from "./runner";
 import { getAppSnapshot, getCurrentChallengeDay, getParticipantByUserId } from "../db";
 import { invokeLLM } from "../_core/llm";
+`);
 
-/**
- * Warden tRPC router for Make.com webhook integration
- * These endpoints are public and called by Make automation
- */
-type WardenMoodTone = "green" | "gold" | "red" | "purple" | "white";
+replaceOnce(String.raw`export const wardenRouter = router({
+`, String.raw`type WardenMoodTone = "green" | "gold" | "red" | "purple" | "white";
 
 function completedRuleCount(log: Record<string, any> | null | undefined) {
   if (!log) return 0;
@@ -106,141 +117,6 @@ export const wardenRouter = router({
         return fallback;
       }
     }),
-  /**
-   * Run a scheduled Warden cycle during randomized organic windows.
-   * Called by Make.com automation
-   * Returns the generated message and whether it was sent
-   */
-  runCycle: publicProcedure
-    .input(
-      z.object({
-        source: z.string().optional(),
-      }).optional()
-    )
-    .mutation(async ({ input }) => {
-      try {
-        console.log("[Warden] tRPC runCycle called", { source: input?.source || "unknown" });
+`);
 
-        const result = await runWardenCycle();
-
-        return {
-          success: true,
-          messageGenerated: result.messageGenerated,
-          messageSent: result.messageSent,
-          message: result.message,
-          reason: result.reason,
-          timestamp: new Date().toISOString(),
-        };
-      } catch (error) {
-        console.error("[Warden] tRPC runCycle failed:", error);
-        return {
-          success: false,
-          error: error instanceof Error ? error.message : "Unknown error",
-          timestamp: new Date().toISOString(),
-        };
-      }
-    }),
-
-  /**
-   * Trigger an immediate Warden message for a specific event
-   * Called by Make.com when a life loss, milestone, or other event occurs
-   */
-  triggerImmediate: publicProcedure
-    .input(
-      z.object({
-        triggerType: z.enum(["life_loss", "milestone", "streak", "emergency"]),
-        context: z.record(z.string(), z.any() as ZodType).optional(),
-        source: z.string().optional(),
-      })
-    )
-    .mutation(async ({ input }) => {
-      try {
-        console.log("[Warden] tRPC triggerImmediate called", {
-          triggerType: input.triggerType,
-          source: input.source || "unknown",
-        });
-
-        const result = await triggerImmediateMessage(
-          input.triggerType,
-          input.context || {}
-        );
-
-        return {
-          success: true,
-          messageSent: result.messageSent,
-          message: result.message,
-          triggerType: input.triggerType,
-          timestamp: new Date().toISOString(),
-        };
-      } catch (error) {
-        console.error("[Warden] tRPC triggerImmediate failed:", error);
-        return {
-          success: false,
-          error: error instanceof Error ? error.message : "Unknown error",
-          triggerType: input.triggerType,
-          timestamp: new Date().toISOString(),
-        };
-      }
-    }),
-
-  /**
-   * Get the current challenge state for debugging/monitoring
-   * Called by Make.com or admin dashboard to inspect live data
-   */
-  getState: publicProcedure
-    .query(async () => {
-      try {
-        const { getChallengeState } = await import("./challengeState");
-        const state = await getChallengeState();
-
-        return {
-          success: true,
-          state,
-          timestamp: new Date().toISOString(),
-        };
-      } catch (error) {
-        console.error("[Warden] tRPC getState failed:", error);
-        return {
-          success: false,
-          error: error instanceof Error ? error.message : "Unknown error",
-          timestamp: new Date().toISOString(),
-        };
-      }
-    }),
-
-  /**
-   * Get today's message count for monitoring daily limits
-   * Called by Make.com or admin dashboard
-   */
-  getDailyStats: publicProcedure
-    .query(async () => {
-      try {
-        const { getMessagesCountToday, getNoMessageCountToday, hasHitDailyLimit } = await import("./messageLogger");
-        const { getChallengeState } = await import("./challengeState");
-
-        const messageCount = await getMessagesCountToday();
-        const noMessageCount = await getNoMessageCountToday();
-        const state = await getChallengeState();
-        const dailyLimit = state.max_warden_messages_today;
-        const hitLimit = await hasHitDailyLimit(dailyLimit);
-
-        return {
-          success: true,
-          messagesSentToday: messageCount,
-          noMessageDecisions: noMessageCount,
-          dailyLimitHit: hitLimit,
-          dailyDramaScore: state.daily_drama_score,
-          dailyMessageLimit: dailyLimit,
-          remainingMessages: Math.max(0, dailyLimit - messageCount),
-          timestamp: new Date().toISOString(),
-        };
-      } catch (error) {
-        console.error("[Warden] tRPC getDailyStats failed:", error);
-        return {
-          success: false,
-          error: error instanceof Error ? error.message : "Unknown error",
-          timestamp: new Date().toISOString(),
-        };
-      }
-    }),
-});
+fs.writeFileSync(path, text);
