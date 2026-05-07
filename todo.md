@@ -762,3 +762,11 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Reduce unnecessary vertical length on the first My Day page so the rule checklist appears sooner on mobile.
 - [x] Add or update regression coverage for the compact non-swipeable mobile points strip.
 - [x] Validate the refinement with focused tests, full tests, production build, project health check, and checkpoint before delivery.
+
+
+## Bug Fix — Mobile Save Progress Button Position
+- [x] Ensure the floating Save Progress button starts above the mobile bottom navigation bar on page load.
+- [x] Ensure the Save Progress button settles above the mobile bottom navigation bar after scroll or animation changes.
+- [x] Preserve the clean pill styling without reintroducing a black backing or horizontal overflow.
+- [x] Add or update regression coverage for the mobile safe-area bottom offset.
+- [x] Validate the fix with focused tests, full tests, production build, project health check, and checkpoint before delivery.
