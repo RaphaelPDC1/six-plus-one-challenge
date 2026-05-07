@@ -689,3 +689,10 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Revamp the Board/Bosses section so leaderboard, podium, boost, and comparison content feel polished and useful
 - [x] Add regression coverage for new scoring, group signal calculations, graph placement behavior, participant comparison metrics, and podium ranking display
 
+
+## Fix — Stop Background Warden Task Triggers
+
+- [x] Identify every Warden-related scheduled/background trigger that can create extra Manus tasks or chats.
+- [x] Disable or neutralize the task-creating background Warden trigger path without removing Make.com/manual HTTP Warden endpoints.
+- [x] Add safeguards or documentation so future Warden delivery uses Make.com/manual calls rather than Manus background task creation.
+- [x] Validate that Warden HTTP/manual endpoints still work and no app code schedules new Manus task chats.

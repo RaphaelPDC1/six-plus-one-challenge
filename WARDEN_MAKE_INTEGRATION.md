@@ -4,6 +4,10 @@ This document describes how to run the 6+1 Warden through **Make.com only**, wit
 
 > **Operating rule:** Do not create new Manus scheduled tasks for routine Warden automation. They are not needed for this setup.
 
+## Background Manus Task Status
+
+The previous Manus background Warden trigger has been neutralized and replaced with an expiring no-op placeholder named **Disabled Warden Background Trigger**. This stops the repeated creation of Manus task chats from Warden automation. Do not recreate a Manus scheduled/background task for routine Warden delivery; Make.com should be the only clock for automated Warden windows, and the app should only run Warden when Make.com or an admin/manual HTTP call hits the endpoints below.
+
 ## Current Architecture
 
 ```text
