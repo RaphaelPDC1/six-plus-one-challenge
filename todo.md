@@ -984,3 +984,11 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Preserve privacy by avoiding direct exposure of private reflection text while still using safe high-level signals where appropriate.
 - [x] Add or update regression coverage proving Deep Thought is linked to per-person proof text and avoids generic repeated phrasing.
 - [x] Validate with tests, typecheck/build, project health check, and checkpoint before delivery.
+
+## Refinement — Interpret Teaching Quotes in Deep Thought
+- [x] Audit current Deep Thought handling to identify where it quotes teaching text without interpreting the meaning.
+- [x] Add teaching-aware interpretation so Deep Thought understands themes such as discipline, accountability, resilience, identity, patience, excuses, focus, and consistency.
+- [x] Connect the interpreted teaching theme back to the participant’s proof, exercise effort, and day context so the insight makes sense rather than feeling pasted on.
+- [x] Avoid simply repeating the quote back to the user unless a short phrase genuinely helps the insight land.
+- [x] Update regression coverage for teaching interpretation, contextual fit, concise wording, and privacy-safe handling of private reflections.
+- [x] Validate with tests, typecheck/build, project health check, and checkpoint before delivery.

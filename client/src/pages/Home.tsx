@@ -1903,28 +1903,66 @@ function buildProofWardenInsight(owner: any, log: any, ownerLogs: any[]) {
   const seed = Math.abs(Number(log?.dayNumber ?? 0) + Number(log?.participantId ?? 0) + firstName.length + recentProofCount);
 
   const publicProofText = teaching;
-  const proofTextSnippet = publicProofText
+  const normalizedTeaching = publicProofText
     .replace(/[“”]/g, "\"")
     .replace(/\s+/g, " ")
+    .trim();
+  const proofTextSnippet = normalizedTeaching
     .split(/[.!?;:\n]/)[0]
     .trim()
     .slice(0, 72);
-  const hasPublicProofText = proofTextSnippet.length > 0;
+  const hasPublicProofText = normalizedTeaching.length > 0;
+  const teachingLower = normalizedTeaching.toLowerCase();
+  const hasTeachingAny = (words: string[]) => words.some(word => teachingLower.includes(word));
   const privateReflectionSignal = reflectionSignal
     ? hasAny(["stress", "tired", "hard", "busy", "tempted", "struggle", "nearly"])
       ? "you named the pressure without letting it own the day"
       : "you noticed the pattern while it was still fresh"
     : "the action gave the day a clean signal";
 
-  const textReading = hasPublicProofText
-    ? hasAny(["discipline", "standard", "routine", "habit", "consistency"])
-      ? "That is not just a quote; it is the standard you are trying to live by."
-      : hasAny(["hard", "struggle", "stress", "tired", "busy", "tempted"])
-        ? "That line matters because it names the fight instead of hiding it."
-        : hasAny(["learn", "read", "book", "lesson", "mindset", "thought"])
-          ? "That is useful because the lesson has already turned into a next decision."
-          : "That line is the personal receipt; it shows what today actually meant."
-    : "The proof is doing the talking today.";
+  const teachingMeaning = hasPublicProofText
+    ? hasTeachingAny(["discipline", "standard", "routine", "habit", "consistency", "non-negotiable"])
+      ? {
+          theme: "standards before mood",
+          read: "The teaching is really about making the standard decide before feelings get involved.",
+          connect: `Today’s proof matters because it turns that idea into ${aim}, not just a nice sentence.`,
+        }
+      : hasTeachingAny(["account", "responsib", "excuse", "blame", "honest", "truth", "own"])
+        ? {
+            theme: "accountability",
+            read: "The teaching is about refusing the easy escape route of excuses.",
+            connect: `That fits today because the ${friction} still had to meet an honest action.`,
+          }
+        : hasTeachingAny(["hard", "struggle", "fail", "fall", "quit", "pain", "advers", "resilien", "tough"])
+          ? {
+              theme: "resilience under pressure",
+              read: "The teaching is about what a person does when the day pushes back.",
+              connect: `That makes the proof stronger because it shows movement while the ${friction} was still real.`,
+            }
+          : hasTeachingAny(["patient", "process", "small", "step", "repeat", "compound", "daily", "brick"])
+            ? {
+                theme: "small repeated proof",
+                read: "The teaching is about trusting the small repeatable action before the big result appears.",
+                connect: "That is why this log matters: it is one brick, not a speech about the wall.",
+              }
+            : hasTeachingAny(["focus", "distract", "noise", "priority", "time", "attention", "busy"])
+              ? {
+                  theme: "protected focus",
+                  read: "The teaching is about protecting attention from the noise that normally wins by default.",
+                  connect: `Today’s proof shows the priority got protected long enough for action.`,
+                }
+              : hasTeachingAny(["believe", "identity", "become", "person", "character", "confidence", "self"])
+                ? {
+                    theme: "identity built through evidence",
+                    read: "The teaching is about becoming the kind of person who has proof, not just intent.",
+                    connect: `That connects to today because the ${aim} needs receipts like this to feel real.`,
+                  }
+                : {
+                    theme: "lesson into action",
+                    read: "The teaching only lands if it changes the next decision.",
+                    connect: hasProof ? "The proof gives the lesson a body, so it is not just words on the page." : "The value is in carrying that line into one clean action tomorrow.",
+                  }
+    : null;
 
   const effortSignal = exerciseDuration >= 45
     ? `${exerciseDuration} minutes was not a tick-box; it was a real block.`
@@ -1936,11 +1974,13 @@ function buildProofWardenInsight(owner: any, log: any, ownerLogs: any[]) {
           ? "You made the standard visible instead of leaving it as an intention."
           : "The honest line is a start; now the action has to match it.";
 
-  const textLinkedSignals = hasPublicProofText ? [
-    `${firstName}, “${proofTextSnippet}” is the read. ${textReading} ${effortSignal}`,
-    `${firstName}, the important bit is your own line: “${proofTextSnippet}.” Keep tomorrow connected to that, not to mood.`,
-    `${firstName}, your proof page already says it: “${proofTextSnippet}.” The move now is simple: repeat it before the ${friction} gets a vote.`,
-    `${firstName}, “${proofTextSnippet}” points at the real work. Do not make it dramatic; make it repeatable tomorrow.`,
+  const teachingLinkedSignals = teachingMeaning ? [
+    `${firstName}, the teaching here is ${teachingMeaning.theme}. ${teachingMeaning.connect} ${effortSignal}`,
+    `${firstName}, ${teachingMeaning.read} ${teachingMeaning.connect}`,
+    `${firstName}, this does not need the quote repeated back. It needs the meaning lived: ${teachingMeaning.theme}. Carry that into tomorrow’s first choice.`,
+    proofTextSnippet.length > 0
+      ? `${firstName}, the line about “${proofTextSnippet}” points to ${teachingMeaning.theme}. Make the next proof match that meaning.`
+      : `${firstName}, the teaching points to ${teachingMeaning.theme}. Make the next proof match that meaning.`,
   ] : [];
 
   const sharpSignals = [
@@ -1957,8 +1997,8 @@ function buildProofWardenInsight(owner: any, log: any, ownerLogs: any[]) {
     `${firstName}, this is not about looking locked in; it is about noticing where you usually fold and choosing earlier.`,
   ];
 
-  if (textLinkedSignals.length > 0) {
-    return textLinkedSignals[seed % textLinkedSignals.length];
+  if (teachingLinkedSignals.length > 0) {
+    return teachingLinkedSignals[seed % teachingLinkedSignals.length];
   }
   if (proofWeight + exerciseWeight + mindWeight + pressureWeight >= 5) {
     return sharpSignals[seed % sharpSignals.length];
