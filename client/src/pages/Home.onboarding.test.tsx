@@ -395,7 +395,8 @@ describe("Home onboarding shell", () => {
     expect(homeSource).toContain("Overview · all participants");
     expect(homeSource).toContain("Group command centre.");
     expect(homeSource).toContain("Group Pulse");
-    expect(homeSource).toContain("Focused comparison");
+    expect(homeSource).toContain("Pick one name. The graph stays readable on phones.");
+    expect(homeSource).toContain('data-testid="graph-participant-select"');
     expect(homeSource).toContain("High-level signal only.");
     expect(homeSource).toContain("Compliance drill-downs moved to the Board");
     expect(homeSource).toContain("Participant comparison");
@@ -503,7 +504,9 @@ describe("Home onboarding shell", () => {
     expect(homeSource).toContain("const [selected, setSelected] = useState<any>(null);");
     expect(homeSource).toContain("aria-label={`Open ${p.displayName} participant stats`}");
     expect(homeSource).toContain("<ParticipantSheet participant={selected} onClose={() => setSelected(null)} />");
-    expect(homeSource).toContain("flex max-h-[92svh] w-full flex-col overflow-hidden");
+    expect(homeSource).toContain('data-testid="participant-profile-overlay"');
+    expect(homeSource).toContain("max-h-[min(92svh,46rem)] w-full max-w-xl flex-col overflow-hidden");
+    expect(homeSource).toContain("createPortal(sheet, document.body)");
     expect(homeSource).toContain("Back to Board");
     expect(homeSource).toContain('aria-label="Back to Board list"');
     expect(homeSource).toContain('aria-label="Close participant details"');

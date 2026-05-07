@@ -636,3 +636,19 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Ensure the scroll-responsive Save Progress behavior does not cover the persistent bottom navigation or block rule inputs on mobile
 - [x] Add or update regression coverage for the combined graph approach and scroll-responsive Save Progress control
 
+
+
+## Bug Fix — Fixed Bottom Navigation, Simpler Graph, and Proper Profile Overlays
+
+- [x] Make the bottom navigation truly fixed to the viewport so it is always visible without scrolling to the page bottom
+- [x] Add bottom page padding/safe-area spacing so the fixed bottom navigation does not cover page content or action controls
+- [x] Simplify the graph section so the default experience is easier to understand and not over-engineered
+- [x] When users click View Graph, render the actual graph with the relevant participant data plotted clearly
+- [x] Add direct participant-name selection inside the graph view so users can choose a specific person without hunting through the page
+- [x] Ensure selected graph participant comparison is obvious on mobile and desktop
+- [x] Fix participant profile viewing so tapping a profile opens a proper visible overlay/modal immediately in the viewport rather than inserting a card into the page flow
+- [x] Fix Board participant profile viewing with the same proper overlay/modal behavior
+- [x] Ensure profile overlays include a clear close/back control and internal scrolling for long content
+- [x] Add or update regression coverage for fixed bottom nav, graph participant selection, and modal overlay behavior
+- [x] Run validation, production build, preview health check, and save a checkpoint after the fixes
+
