@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS `boost_wins` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `challenge_id` int NOT NULL,\n  `user_id` int NOT NULL,\n  `day` int NOT NULL,\n  `boost_id` varchar(64) NOT NULL,\n  `boost_name` varchar(140) NOT NULL,\n  `boost_icon` varchar(10) NOT NULL,\n  `points_awarded` int NOT NULL DEFAULT 5,\n  `awarded_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  `warden_note` text,\n  PRIMARY KEY (`id`),\n  INDEX `boost_wins_challenge_day_idx` (`challenge_id`, `day`),\n  INDEX `boost_wins_user_idx` (`user_id`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2P9ir9M7b3E7Qkh.8b2c854ea8b3 --database HPubf4auNvt8KXvgrLad5c --execute CREATE TABLE IF NOT EXISTS `boost_wins` (\n  `id` int AUTO_INCREMENT NOT NULL,\n  `challenge_id` int NOT NULL,\n  `user_id` int NOT NULL,\n  `day` int NOT NULL,\n  `boost_id` varchar(64) NOT NULL,\n  `boost_name` varchar(140) NOT NULL,\n  `boost_icon` varchar(10) NOT NULL,\n  `points_awarded` int NOT NULL DEFAULT 5,\n  `awarded_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  `warden_note` text,\n  PRIMARY KEY (`id`),\n  INDEX `boost_wins_challenge_day_idx` (`challenge_id`, `day`),\n  INDEX `boost_wins_user_idx` (`user_id`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 602
+}

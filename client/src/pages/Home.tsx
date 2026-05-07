@@ -1248,6 +1248,20 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
   const boostWins = snapshot?.boostWins ?? [];
   const todayBoostWins = boostWins.filter((win: any) => Number(win.day ?? 0) === currentDay);
   const ownBoostWins = boostWins.filter((win: any) => String(win.userId) === String(currentParticipantId));
+  const ownTotalBoostPoints = ownBoostWins.reduce((sum: number, win: any) => sum + Number(win.pointsAwarded ?? 5), 0);
+  const boostLeaderboard = participants
+    .map((participant: any) => {
+      const wins = boostWins.filter((win: any) => String(win.userId) === String(participant.id));
+      return {
+        participant,
+        wins,
+        totalBoostPoints: wins.reduce((sum: number, win: any) => sum + Number(win.pointsAwarded ?? 5), 0),
+      };
+    })
+    .filter((entry: any) => entry.wins.length > 0)
+    .sort((a: any, b: any) => b.totalBoostPoints - a.totalBoostPoints || b.wins.length - a.wins.length);
+  const topBoostEarner = boostLeaderboard[0];
+  const unclaimedTodayBoosts = activeBoosts.filter((boost: any) => !todayBoostWins.some((win: any) => win.boostId === boost.id));
   const currentRank = Math.max(0, rankedInsights.findIndex((participant: any) => String(participant.id) === String(currentParticipant?.id)));
   const chasing = currentRank > 0 ? rankedInsights[currentRank - 1] : null;
   const beingChasedBy = currentRank >= 0 ? rankedInsights[currentRank + 1] : null;
@@ -1308,7 +1322,7 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
       <section className="grid gap-2 sm:grid-cols-3" data-testid="overview-intelligence-grid">
         <OverviewMetricCard label="Risk flags" value={riskCount} detail={`${riskLeader?.displayName ?? "No one"} is the current pressure signal`} tone={riskCount ? "red" : "green"} />
         <OverviewMetricCard label="Live app points" value={liveAppPoints} detail="Visible task, proof, insight and tracking value from today" tone="green" />
-        <OverviewMetricCard label="Ops drag" value={pendingPayments + pendingRewards} detail={`${pendingPayments} payments · ${pendingRewards} rewards · ${totalLivesLost} lives lost`} tone={pendingPayments + pendingRewards ? "purple" : "white"} />
+        <OverviewMetricCard label="Top boost earner" value={topBoostEarner ? `+${topBoostEarner.totalBoostPoints}` : 0} detail={topBoostEarner ? `${topBoostEarner.participant.displayName} · ${topBoostEarner.wins.length} wins` : "No boost wins banked yet"} tone={topBoostEarner ? "gold" : "white"} />
       </section>
 
       <section className="grid gap-3 lg:grid-cols-[0.9fr_1.1fr]" data-testid="overview-boost-warden-grid">
@@ -1338,7 +1352,8 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
               );
             })}
           </div>
-          <p className="mt-3 text-[9px] font-black uppercase tracking-[0.15em] text-[#777]">Your banked boosts: {ownBoostWins.length}. Base scores stay untouched.</p>
+          <p className="mt-3 text-[9px] font-black uppercase tracking-[0.15em] text-[#777]">Your banked boosts: {ownBoostWins.length} wins · +{ownTotalBoostPoints} additive. Base scores stay untouched.</p>
+          {unclaimedTodayBoosts.length > 0 && <p className="mt-2 rounded-full border border-[#C8A96E]/45 bg-[#16130B] px-3 py-2 text-[9px] font-black uppercase tracking-[0.14em] text-[#C8A96E]" data-testid="unclaimed-boost-alert">Unclaimed windows still open: {unclaimedTodayBoosts.map((boost: any) => boost.name).join(" · ")}</p>}
         </article>
       </section>
 
@@ -1364,6 +1379,7 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
                   </div>
                 </div>
                 {rival && <p className="mt-3 text-[10px] font-black uppercase leading-5 tracking-[0.12em] text-[#BDBDBD]">{rival.statusLine}</p>}
+                {rival && <p className="mt-2 text-[9px] font-black uppercase tracking-[0.15em] text-[#C8A96E]">Boost wins: {boostWins.filter((win: any) => String(win.userId) === String(rival.id)).length} · You: {ownBoostWins.length}</p>}
               </button>
             );
           })}
@@ -1651,7 +1667,8 @@ function Leaderboard({ snapshot }: { snapshot: Snapshot }) {
   const podium = ranked.slice(0, 3);
   const leaderPoints = Number(ranked[0]?.totalPoints ?? 0);
   const activeBoosts = snapshot?.activeBoosts ?? [];
-  const todayBoostWins = (snapshot?.boostWins ?? []).filter((win: any) => Number(win.day ?? 0) === Number(currentDay));
+  const allBoostWins = snapshot?.boostWins ?? [];
+  const todayBoostWins = allBoostWins.filter((win: any) => Number(win.day ?? 0) === Number(currentDay));
   const boostSlots = activeBoosts.map((boost: any, index: number) => {
     const win = todayBoostWins.find((item: any) => item.boostId === boost.id);
     const owner = win ? participants.find((participant: any) => String(participant.id) === String(win.userId)) : null;
@@ -1711,6 +1728,9 @@ function Leaderboard({ snapshot }: { snapshot: Snapshot }) {
           const pointsGap = index === 0 ? "Leader" : `${Math.max(0, leaderPoints - Number(p.totalPoints ?? 0))} behind`;
           const previousGap = index === 0 ? "No gap" : `${Math.max(0, Number(ranked[index - 1]?.totalPoints ?? 0) - Number(p.totalPoints ?? 0))} to catch`;
           const eliminationRisk = Number(p.riskScore ?? 0) >= 60 || Number(p.livesRemaining ?? 4) <= 1;
+          const playerBoostWins = allBoostWins.filter((win: any) => String(win.userId) === String(p.id));
+          const todayPlayerBoostWins = todayBoostWins.filter((win: any) => String(win.userId) === String(p.id));
+          const totalBoostPoints = playerBoostWins.reduce((sum: number, win: any) => sum + Number(win.pointsAwarded ?? 5), 0);
           return (
             <article key={p.id} className={classNames("motion-row overflow-hidden rounded-[1.15rem] border bg-[#0D0D0D] transition hover:border-[#C8A96E]", eliminationRisk ? "border-[#C0392B]/75 bg-[#190B0A] shadow-[0_0_26px_rgba(192,57,43,0.12)]" : index === 0 ? "border-[#C8A96E]/70 bg-[#16130B]" : "border-[#2A2A2A]")} data-testid="board-player-row" data-elimination-risk={eliminationRisk ? "true" : "false"}>
               <button type="button" onClick={() => { pulse(14); setExpandedParticipantId(isExpanded ? null : p.id); }} className="motion-press grid w-full grid-cols-[42px_minmax(0,1fr)] gap-3 p-3 text-left sm:grid-cols-[56px_56px_minmax(0,1fr)_minmax(155px,0.65fr)_auto_32px] sm:items-center sm:p-4" aria-expanded={isExpanded} aria-controls={detailId} aria-label={`Toggle ${p.displayName} Board metrics`}>
@@ -1720,6 +1740,7 @@ function Leaderboard({ snapshot }: { snapshot: Snapshot }) {
                   <span className="flex min-w-0 flex-wrap items-center gap-2">
                     <span className="block min-w-0 break-words text-lg font-black uppercase tracking-[-0.04em] text-white sm:text-xl">{p.displayName}</span>
                     {eliminationRisk && <span className="rounded-full border border-[#C0392B] bg-[#C0392B]/15 px-2 py-1 text-[8px] font-black uppercase tracking-[0.13em] text-[#FFB3A8]" data-testid="elimination-risk-badge">⚠ ELIMINATION RISK</span>}
+                    {todayPlayerBoostWins.map((win: any) => <span key={win.id ?? `${win.boostId}-${win.userId}`} className="rounded-full border border-[#C8A96E] bg-[#16130B] px-2 py-1 text-[8px] font-black uppercase tracking-[0.13em] text-[#C8A96E]" data-testid="boost-won-badge">{win.boostIcon} {win.boostName}</span>)}
                   </span>
                   <span className="mt-1 block break-words text-[11px] font-bold uppercase tracking-[0.1em] text-[#C8A96E] sm:text-xs sm:tracking-[0.14em]" data-testid="board-player-status-line">{p.statusLine}</span>
                   <span className="mt-3 flex items-center gap-3"><LifeDots lives={p.livesRemaining} compact /><span className="text-[10px] font-black uppercase tracking-[0.14em] text-[#777]">{p.livesRemaining}/4 lives</span></span>
@@ -1730,7 +1751,7 @@ function Leaderboard({ snapshot }: { snapshot: Snapshot }) {
                 </span>
                 <span className="col-span-2 mt-1 min-w-0 text-left sm:col-span-1 sm:mt-0 sm:text-right">
                   <span className="block max-w-full break-words text-2xl font-black leading-none text-[#C8A96E] sm:text-3xl">{p.totalPoints}</span>
-                  <span className="poster-label text-[#777]">points</span>
+                  <span className="poster-label text-[#777]">points · +{totalBoostPoints} boost</span>
                 </span>
                 <span className="hidden text-[#777] sm:grid sm:place-items-center">{isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}</span>
               </button>
@@ -1739,6 +1760,7 @@ function Leaderboard({ snapshot }: { snapshot: Snapshot }) {
                   <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#777]">Detail view · {p.comparisonLine}</p>
                   <div className="mt-3 flex flex-wrap gap-2">
                     {p.comparisonStats.map((stat: any) => <InsightPill key={stat.label} label={stat.label} value={stat.value} tone={stat.tone} />)}
+                    <InsightPill label="Boost" value={`+${totalBoostPoints} / ${playerBoostWins.length} wins`} tone={totalBoostPoints > 0 ? "gold" : "white"} />
                   </div>
                   <button type="button" onClick={() => { pulse([12, 24, 12]); setSelected(p); }} className="mt-3 min-h-10 border border-[#C8A96E]/60 px-4 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-[#C8A96E] hover:bg-[#C8A96E] hover:text-black" aria-label={`Open ${p.displayName} participant stats`}>Open full profile</button>
                 </div>

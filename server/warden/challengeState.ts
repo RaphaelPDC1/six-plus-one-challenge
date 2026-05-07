@@ -5,7 +5,9 @@ import {
   dailyLogs,
   paymentEvents,
   whatsappChatHistory,
+  boostWins,
 } from "../../drizzle/schema";
+import { BOOST_POINTS, getActiveBoostsForDay } from "../../shared/boostSystem";
 import { getMaxMessagesForDramaScore } from "./organicScheduler";
 
 /**
@@ -102,6 +104,36 @@ export interface ChallengeState {
     participant_name: string;
     timestamp: string;
   }>;
+  boost_context: {
+    today_boosts: Array<{
+      boost_id: string;
+      boost_name: string;
+      boost_icon: string;
+      slot: number;
+      anti_gaming_rule: string;
+      status: "claimed" | "unclaimed";
+      winner_name: string | null;
+      points_awarded: number;
+      warden_note: string | null;
+    }>;
+    today_winners: Array<{
+      participant_name: string;
+      boost_name: string;
+      boost_icon: string;
+      points_awarded: number;
+      warden_note: string | null;
+    }>;
+    player_boost_history: Array<{
+      participant_name: string;
+      total_boost_wins: number;
+      total_boost_points: number;
+      latest_boost: string | null;
+    }>;
+    group_boost_leader: { participant_name: string; total_boost_wins: number; total_boost_points: number } | null;
+    rival_boost_wins: Array<{ participant_name: string; total_boost_wins: number; total_boost_points: number }>;
+    trigger_events: string[];
+    unclaimed_boosts: string[];
+  };
   daily_drama_score: number;
   max_warden_messages_today: number;
   drama_score_breakdown: {
@@ -232,6 +264,13 @@ export async function getChallengeState(): Promise<ChallengeState> {
     .where(gte(whatsappChatHistory.messageTimestamp, twelveHoursAgo))
     .orderBy(desc(whatsappChatHistory.messageTimestamp))
     .limit(50);
+
+  const recentBoostWins = await db
+    .select()
+    .from(boostWins)
+    .where(lte(boostWins.day, challengeDay))
+    .orderBy(desc(boostWins.awardedAt))
+    .limit(500);
 
   const participantSnapshots = allParticipants.map((p: typeof participants.$inferSelect) => {
     const participantTodayLogs = todayLogs.filter((log) => log.participantId === p.id);
@@ -470,6 +509,63 @@ export async function getChallengeState(): Promise<ChallengeState> {
     .filter((p) => p.current_streak >= 7)
     .map((p) => p.display_name);
 
+  const todaysActiveBoosts = getActiveBoostsForDay(challengeDay);
+  const todayBoostWins = recentBoostWins.filter((win) => Number(win.day ?? 0) === challengeDay);
+  const participantBoostSummary = allParticipants.map((participant) => {
+    const wins = recentBoostWins.filter((win) => String(win.userId) === String(participant.id));
+    const latest = wins.slice().sort((a, b) => b.awardedAt.getTime() - a.awardedAt.getTime())[0];
+    return {
+      participant_name: participant.displayName,
+      total_boost_wins: wins.length,
+      total_boost_points: wins.reduce((sum, win) => sum + Number(win.pointsAwarded ?? BOOST_POINTS), 0),
+      latest_boost: latest?.boostName ?? null,
+    };
+  });
+  const groupBoostLeader = participantBoostSummary
+    .filter((item) => item.total_boost_wins > 0)
+    .sort((a, b) => b.total_boost_points - a.total_boost_points || b.total_boost_wins - a.total_boost_wins)[0] ?? null;
+  const boostContextTodayBoosts = todaysActiveBoosts.map((boost) => {
+    const win = todayBoostWins.find((item) => item.boostId === boost.id);
+    return {
+      boost_id: boost.id,
+      boost_name: boost.name,
+      boost_icon: boost.icon,
+      slot: boost.slot,
+      anti_gaming_rule: boost.antiGaming,
+      status: win ? "claimed" as const : "unclaimed" as const,
+      winner_name: win ? participantNameById(allParticipants, win.userId) : null,
+      points_awarded: win ? Number(win.pointsAwarded ?? BOOST_POINTS) : BOOST_POINTS,
+      warden_note: win?.wardenNote ?? null,
+    };
+  });
+  const boostTriggerEvents = [
+    ...todayBoostWins.map((win) => {
+      const name = participantNameById(allParticipants, win.userId);
+      return `${name} won ${win.boostName.toUpperCase()} for +${Number(win.pointsAwarded ?? BOOST_POINTS)}: ${win.wardenNote ?? "boost claimed"}`;
+    }),
+    ...participantBoostSummary.filter((item) => item.total_boost_wins >= 3).map((item) => `${item.participant_name} has ${item.total_boost_wins} total boost wins`),
+    ...(todayBoostWins.length >= 2 ? [`${todayBoostWins.length} boosts have been claimed today`] : []),
+    ...(boostContextTodayBoosts.some((boost) => boost.status === "unclaimed") ? [`Unclaimed boost slots remain: ${boostContextTodayBoosts.filter((boost) => boost.status === "unclaimed").map((boost) => boost.boost_name).join(", ")}`] : []),
+  ];
+  const boostContext = {
+    today_boosts: boostContextTodayBoosts,
+    today_winners: todayBoostWins.map((win) => ({
+      participant_name: participantNameById(allParticipants, win.userId),
+      boost_name: win.boostName,
+      boost_icon: win.boostIcon,
+      points_awarded: Number(win.pointsAwarded ?? BOOST_POINTS),
+      warden_note: win.wardenNote ?? null,
+    })),
+    player_boost_history: participantBoostSummary,
+    group_boost_leader: groupBoostLeader,
+    rival_boost_wins: participantBoostSummary
+      .filter((item) => item.total_boost_wins > 0)
+      .sort((a, b) => b.total_boost_points - a.total_boost_points || b.total_boost_wins - a.total_boost_wins)
+      .slice(0, 5),
+    trigger_events: boostTriggerEvents,
+    unclaimed_boosts: boostContextTodayBoosts.filter((boost) => boost.status === "unclaimed").map((boost) => boost.boost_name),
+  };
+
   const uniqueLateNightLoggers = new Set(lateLogsToday.map((log) => log.participant_name)).size;
   const uniqueBeforeMiddayCompletions = new Set(beforeMiddayFullRuleCompletions.map((log) => log.participant_name)).size;
   const deepInsightCount = [
@@ -490,6 +586,7 @@ export async function getChallengeState(): Promise<ChallengeState> {
     silent_returns: silentReturnsToday.length * 2,
     ghost_life_uses: ghostLifeSignalsToday.length * 3,
     before_midday_completions: uniqueBeforeMiddayCompletions,
+    boost_events: Math.min(6, todayBoostWins.length * 2 + (boostContext.unclaimed_boosts.length > 0 ? 1 : 0)),
   };
   const dailyDramaScore = Object.values(dramaScoreBreakdown).reduce((sum, value) => sum + value, 0);
 
@@ -518,6 +615,7 @@ export async function getChallengeState(): Promise<ChallengeState> {
     silent_returns_today: silentReturnsToday,
     ghost_life_signals_today: ghostLifeSignalsToday,
     before_midday_full_rule_completions: beforeMiddayFullRuleCompletions,
+    boost_context: boostContext,
     daily_drama_score: dailyDramaScore,
     max_warden_messages_today: getMaxMessagesForDramaScore(dailyDramaScore),
     drama_score_breakdown: dramaScoreBreakdown,

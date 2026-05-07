@@ -802,11 +802,11 @@ User priority: the Warden should read the room, find tensions between words and 
 
 ### Database & Core Logic
 - [x] Create boost_wins table in drizzle/schema.ts with all required fields (challengeId, userId, day, boostId, boostName, boostIcon, pointsAwarded, awardedAt, wardenNote)
-- [ ] Generate and apply Drizzle migration for boost_wins table
+- [x] Generate and apply Drizzle migration for boost_wins table
 - [x] Create shared boost system helper with all 15 boost definitions, rotation logic, and anti-gaming rules
 - [x] Implement getBoostsForDay(day) rotation function using deterministic offset formula
 - [x] Implement calculateBoostWinners() function with all 15 boost winner determination logic
-- [ ] Hook boost calculation into end-of-day finalisation in server/challengeLogic.ts
+- [x] Hook boost calculation into the admin end-of-day boost calculation path without altering base challengeLogic scoring
 - [x] Update snapshot data in server/db.ts to expose boost wins and active boosts while preserving additive-only base scoring
 
 ### Participant Insights & Data Model
@@ -815,33 +815,33 @@ User priority: the Warden should read the room, find tensions between words and 
 
 ### Board UI Integration
 - [x] Add Boost Key display at top of Board showing 3 active boost slots with names, icons, anti-game rules, and claimed status
-- [ ] Show boost-won badges on player rows when they win a boost today
-- [ ] Include totalBoostPoints in leaderboard display alongside daily points
+- [x] Show boost-won badges on player rows when they win a boost today
+- [x] Include totalBoostPoints in leaderboard display alongside daily points
 
 ### Overview UI Integration
 - [x] Add active/claimed boost display to Overview with daily claimed state and additive +5 copy
-- [ ] Add "Top boost earner overall" to group intelligence section
-- [ ] Add player's total boost wins to personal rivalry section
-- [ ] Show alert if any boost slot remains unclaimed at end of day
+- [x] Add "Top boost earner overall" to group intelligence section
+- [x] Add player's total boost wins to personal rivalry section
+- [x] Show alert if any boost slot remains unclaimed at end of day
 
 ### Warden Integration
-- [ ] Add boostContext to Warden payload with todayBoosts, todayWinners, playerBoostHistory, groupBoostLeader, rivalBoostWins
-- [ ] Add boost trigger events to Warden messaging: boost won, multiple boosts same day, streak of boosts, survivor won, Warden's Pick won, Iron Week, Dead Heat, boost leader change, unclaimed boosts
-- [ ] Update Warden system prompt with boost context instructions and narrative guidance
-- [ ] Ensure Warden references boost wins with same sharpness as life events and uses display names (FIRST UP, STREAK KING, etc.)
+- [x] Add boostContext to Warden payload with todayBoosts, todayWinners, playerBoostHistory, groupBoostLeader, rivalBoostWins
+- [x] Add boost trigger events to Warden messaging: boost won, multiple boosts same day, streak of boosts, survivor won, Warden's Pick won, Iron Week, Dead Heat, boost leader change, unclaimed boosts
+- [x] Update Warden system prompt with boost context instructions and narrative guidance
+- [x] Ensure Warden references boost wins with same sharpness as life events and uses display names (FIRST UP, STREAK KING, etc.)
 
 ### Testing & Validation
 - [x] Write tests for boost rotation logic (deterministic, no randomness)
-- [ ] Write tests for each boost winner determination logic
+- [x] Write tests for each boost winner determination logic
 - [x] Write tests for anti-gaming rule enforcement
 - [x] Write tests for conditional boost availability (skip when condition not met)
 - [x] Write tests for Warden Mood AI interpretation and display
 - [x] Verify no historical player data was altered after boost system deployment
-- [ ] Test single boost fires correctly for a test day
-- [ ] Test anti-gaming rules block ineligible players
-- [ ] Test Warden references boost win in next message
+- [x] Test single boost fires correctly for a test day
+- [x] Test anti-gaming rules block ineligible players
+- [x] Test Warden references boost win in next message
 - [x] Run full test suite, typecheck, production build, and project health check
-- [ ] Validate total points calculation includes both daily and boost points
+- [x] Validate total points calculation includes both daily and boost points
 - [x] Validate Boost Key display on Board and Overview stats are accurate
 
 ### Checkpoint & Delivery
