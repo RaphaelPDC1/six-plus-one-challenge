@@ -770,3 +770,13 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Preserve the clean pill styling without reintroducing a black backing or horizontal overflow.
 - [x] Add or update regression coverage for the mobile safe-area bottom offset.
 - [x] Validate the fix with focused tests, full tests, production build, project health check, and checkpoint before delivery.
+
+
+## Redesign — Mobile Board and Overview from Claude Mockups
+- [x] Rebuild the mobile Board screen around the provided concept: Boost Key at top, podium with stepped ranking emphasis, full leaderboard rows with life dots, Warden status copy, delta gaps, and elimination-risk styling.
+- [x] Add the Boost Key presentation with three rotating-style slots, one claimed example/status state, two open boost rules, and anti-game explanatory copy.
+- [x] Rebuild the mobile Overview screen around the provided concept: alarming on-pace stat, three intelligence stats, personal rivalry cards, compare list, lives, pace bars, and risk badges.
+- [x] Preserve existing challenge data, leaderboard calculations, participant names, lives, points, and app navigation while changing presentation only.
+- [x] Keep the redesign mobile-first, dark, high-contrast, gold/red/green accented, and free of horizontal overflow.
+- [x] Add or update regression coverage for the new Board and Overview mobile presentation markers.
+- [x] Validate the redesign with focused tests, full tests, production build, project health check, and checkpoint before delivery.

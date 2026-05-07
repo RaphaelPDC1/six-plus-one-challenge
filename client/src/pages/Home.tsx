@@ -1208,33 +1208,26 @@ function InsightPill({ label, value, tone = "gold" }: { label: string; value: st
 
 function Overview({ snapshot }: { snapshot: Snapshot }) {
   const [selected, setSelected] = useState<any>(null);
-  const [focusedParticipantId, setFocusedParticipantId] = useState<number | string | null>(null);
-  const [comparisonOpen, setComparisonOpen] = useState(false);
   const participants = snapshot?.participants ?? [];
   const logs = snapshot?.logs ?? [];
   const payments = snapshot?.payments ?? [];
   const redemptions = snapshot?.redemptions ?? [];
   const currentDay = Math.max(Number(snapshot?.challenge?.currentDay ?? 1), 1);
   const participantCount = participants.length;
-  const expectedSlots = participantCount * currentDay;
   const insights = useMemo(() => buildParticipantInsights({ participants, logs, currentDay }), [participants, logs, currentDay]);
   const rankedInsights = useMemo(() => rankForPodium(insights), [insights]);
-  const focusedParticipant = insights.find((participant: any) => String(participant.id) === String(focusedParticipantId ?? insights[0]?.id)) ?? insights[0];
-  const focusedChartData = useMemo(() => buildFocusedChartData({ logs, participants, focusedParticipantId: focusedParticipant?.id, currentDay }), [currentDay, focusedParticipant?.id, logs, participants]);
-  const completedLogs = insights.reduce((sum: number, p: any) => sum + p.completeCount, 0);
+  const currentParticipant = insights.find((participant: any) => String(participant.id) === String(snapshot?.participant?.id)) ?? rankedInsights[0];
+  const currentRank = Math.max(0, rankedInsights.findIndex((participant: any) => String(participant.id) === String(currentParticipant?.id)));
+  const chasing = currentRank > 0 ? rankedInsights[currentRank - 1] : null;
+  const beingChasedBy = currentRank >= 0 ? rankedInsights[currentRank + 1] : null;
+  const onPaceCount = insights.filter((p: any) => Number(p.completeCount ?? 0) >= currentDay).length;
   const todayOpened = insights.filter((p: any) => p.todayLog).length;
   const todayComplete = insights.filter((p: any) => p.completedRulesToday >= DAILY_PASS_THRESHOLD).length;
   const totalLivesLost = insights.reduce((sum: number, p: any) => sum + p.livesLost, 0);
-  const averageStreak = participantCount ? Math.round(insights.reduce((sum: number, p: any) => sum + Number(p.currentStreak ?? 0), 0) / participantCount) : 0;
-  const strongestStreak = insights.reduce((max: number, p: any) => Math.max(max, Number(p.currentStreak ?? 0), Number(p.longestStreak ?? 0)), 0);
   const pendingPayments = payments.filter((p: any) => p.status === "pending").length;
   const pendingRewards = redemptions.filter((r: any) => r.status === "pending").length;
-  const topMover = [...insights].sort((a: any, b: any) => b.moverScore - a.moverScore || b.recentPointGain - a.recentPointGain)[0];
-  const mostConsistent = [...insights].sort((a: any, b: any) => b.consistencyScore - a.consistencyScore || b.currentStreak - a.currentStreak)[0];
+  const riskCount = insights.filter((p: any) => Number(p.riskScore ?? 0) >= 42 || Number(p.livesRemaining ?? 4) <= 2).length;
   const riskLeader = [...insights].sort((a: any, b: any) => b.riskScore - a.riskScore || a.livesRemaining - b.livesRemaining)[0];
-  const boostedLeader = [...insights].sort((a: any, b: any) => b.boostScore - a.boostScore || b.totalPoints - a.totalPoints)[0];
-  const riskSorted = [...insights].sort((a: any, b: any) => b.riskScore - a.riskScore || b.passTasksLeft - a.passTasksLeft);
-  const comparisonRows = [...insights].sort((a: any, b: any) => b.riskScore - a.riskScore || b.moverScore - a.moverScore);
   const liveAppPoints = insights.reduce((sum: number, participant: any) => {
     const taskPoints = calculateLiveTaskPoints(participant.completedRulesToday, {
       hasProof: logHasProof(participant.todayLog),
@@ -1243,140 +1236,112 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
     });
     return sum + taskPoints.visibleTotal;
   }, 0);
+  const compareRows = [...rankedInsights].sort((a: any, b: any) => b.riskScore - a.riskScore || b.totalPoints - a.totalPoints);
+  const rivalryCards = [
+    {
+      label: "You are chasing",
+      tone: "gold" as const,
+      participant: chasing,
+      emptyTitle: "Top of your lane",
+      emptyDetail: "No one sits directly above you right now.",
+      gap: chasing ? Math.max(0, Number(chasing.totalPoints ?? 0) - Number(currentParticipant?.totalPoints ?? 0)) : 0,
+    },
+    {
+      label: "Behind you",
+      tone: "red" as const,
+      participant: beingChasedBy,
+      emptyTitle: "No immediate tail",
+      emptyDetail: "Hold the standard before someone closes the gap.",
+      gap: beingChasedBy ? Math.max(0, Number(currentParticipant?.totalPoints ?? 0) - Number(beingChasedBy.totalPoints ?? 0)) : 0,
+    },
+  ];
 
   return (
-    <div className="motion-page space-y-5" data-testid="overview-metrics-dashboard">
-      <section className="border border-[#2A2A2A] bg-[#101010] p-4 sm:p-5">
-        <div className="flex flex-wrap items-end justify-between gap-4 border-b border-[#2A2A2A] pb-4">
-          <div>
-            <MicroLabel tone="gold">Overview · command centre</MicroLabel>
-            <h2 className="mt-2 text-3xl font-black uppercase leading-none tracking-[-0.07em] text-white sm:text-5xl">Score. Risk. Momentum.</h2>
-          </div>
-          <p className="max-w-md text-[10px] font-black uppercase leading-5 tracking-[0.16em] text-[#777]">The overview now treats every tick, proof, life, streak, and time-pressure signal as part of one command view. Board remains the deeper competitive layer.</p>
-        </div>
-        <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-6">
-          <OverviewMetricCard label="Participants" value={participantCount} detail="Active competitors tracked" tone="white" />
-          <OverviewMetricCard label="Today green" value={`${todayComplete}/${participantCount}`} detail={`${todayOpened}/${participantCount} opened their daily log`} tone={todayComplete === participantCount && participantCount > 0 ? "green" : "gold"} />
-          <OverviewMetricCard label="Live app points" value={liveAppPoints} detail="Visible task, proof, insight and tracking value from today's ticks" tone="green" />
-          <OverviewMetricCard label="Group pass rate" value={`${pct(completedLogs, expectedSlots)}%`} detail={`${completedLogs}/${expectedSlots || 0} challenge pass slots`} tone="green" />
-          <OverviewMetricCard label="Average streak" value={averageStreak} detail={`Best active/longest: ${strongestStreak}`} tone="gold" />
-          <OverviewMetricCard label="Lives lost" value={totalLivesLost} detail={`${riskSorted.filter((p: any) => p.riskScore >= 42).length} meaningful risk flags`} tone={totalLivesLost > 0 ? "red" : "green"} />
-        </div>
-      </section>
-
-      <section className="min-w-0 overflow-hidden border border-[#2A2A2A] bg-[#101010] p-4 sm:p-5" data-testid="group-pulse-and-focused-chart">
-        <div className="flex flex-wrap items-end justify-between gap-3">
+    <div className="motion-page space-y-4 overflow-hidden" data-testid="overview-metrics-dashboard">
+      <section className="relative overflow-hidden rounded-[1.6rem] border border-[#C0392B]/55 bg-[#160908] p-4 shadow-[0_0_40px_rgba(192,57,43,0.12)] sm:p-6" data-testid="overview-red-alert-pace-card">
+        <div className="pointer-events-none absolute -right-12 -top-16 h-40 w-40 rounded-full bg-[#C0392B]/20 blur-3xl" />
+        <MicroLabel tone="red">Overview · pressure map</MicroLabel>
+        <div className="relative mt-3 grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
           <div className="min-w-0">
-            <MicroLabel tone="gold">Simple group signals</MicroLabel>
-            <h2 className="mt-2 break-words text-2xl font-black uppercase tracking-[-0.06em] text-white sm:text-4xl">Tap graph first. Then read the signals.</h2>
-            <p className="mt-2 max-w-xl text-xs font-bold leading-5 text-[#8D8D8D]">The graph now opens directly under this control, not hidden below the signal cards. Signals are calculated from tasks left, time pressure, lives lost, streaks, proof, and recent points.</p>
+            <h2 className="break-words text-4xl font-black uppercase leading-none tracking-[-0.09em] text-white sm:text-6xl">{onPaceCount}/{participantCount || 0} on pace.</h2>
+            <p className="mt-3 max-w-xl text-xs font-black uppercase leading-5 tracking-[0.13em] text-[#FFB3A8]">Alarming pace check: participants only count as on pace when their completed challenge days have kept up with day {currentDay}.</p>
           </div>
-          <button type="button" onClick={() => { pulse(10); setComparisonOpen(open => !open); }} className="min-h-11 border border-[#C8A96E]/60 bg-[#16130B] px-4 text-[10px] font-black uppercase tracking-[0.16em] text-[#C8A96E]" aria-expanded={comparisonOpen} data-testid="view-focused-graph-button">
-            {comparisonOpen ? "Hide graph" : "View graph"}
-          </button>
-        </div>
-        {comparisonOpen && (
-          <div className="mt-4 border border-[#C8A96E]/35 bg-black p-3" data-testid="focused-participant-graph-panel">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <MicroLabel tone="green">Focused graph</MicroLabel>
-                <h3 className="mt-2 text-xl font-black uppercase tracking-[-0.05em] text-white">{focusedParticipant?.displayName ?? "Participant"} vs group pace.</h3>
-                <p className="mt-2 text-[10px] font-black uppercase leading-5 tracking-[0.14em] text-[#777]">Gold shows selected days passed. Green shows group average. The pale line shows selected points banked.</p>
-              </div>
-              <label className="grid gap-2 text-[10px] font-black uppercase tracking-[0.16em] text-[#C8A96E]">
-                Select participant
-                <select value={String(focusedParticipant?.id ?? "")} onChange={event => setFocusedParticipantId(event.target.value)} className="min-h-11 min-w-[14rem] border border-[#C8A96E]/45 bg-[#0D0D0D] px-3 text-xs font-black uppercase tracking-[0.12em] text-white" data-testid="graph-participant-select">
-                  {insights.map((participant: any) => <option key={participant.id} value={String(participant.id)}>{participant.displayName}</option>)}
-                </select>
-              </label>
-            </div>
-            <div className="mt-3 flex gap-2 overflow-x-auto pb-1" aria-label="Quick participant graph selector">
-              {rankedInsights.slice(0, 18).map((participant: any) => {
-                const active = String(participant.id) === String(focusedParticipant?.id);
-                return <button key={participant.id} type="button" onClick={() => { pulse(8); setFocusedParticipantId(String(participant.id)); }} className={classNames("shrink-0 border px-3 py-2 text-[10px] font-black uppercase tracking-[0.12em]", active ? "border-[#C8A96E] bg-[#C8A96E] text-black" : "border-[#2A2A2A] bg-[#0D0D0D] text-[#BDBDBD]")} aria-pressed={active}>{participant.displayName}</button>;
-              })}
-            </div>
-            <div className="mt-3 h-64 min-w-0 overflow-hidden sm:h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={focusedChartData} margin={{ left: -18, right: 4, top: 10, bottom: 0 }}>
-                  <CartesianGrid stroke="#242424" strokeDasharray="3 3" />
-                  <XAxis dataKey="day" stroke="#777" tick={{ fill: "#777", fontSize: 11, fontWeight: 900 }} />
-                  <YAxis allowDecimals={false} stroke="#777" tick={{ fill: "#777", fontSize: 11, fontWeight: 900 }} />
-                  <Tooltip contentStyle={{ background: "#0D0D0D", border: "1px solid #C8A96E", borderRadius: 0, color: "#fff" }} />
-                  <Line type="monotone" dataKey="focused" name={`${focusedParticipant?.displayName ?? "Selected"} days passed`} stroke={GOLD} strokeWidth={4} dot={false} activeDot={{ r: 6 }} />
-                  <Line type="monotone" dataKey="groupAverage" name="Group average days passed" stroke={GREEN} strokeWidth={3} strokeDasharray="7 5" dot={false} activeDot={{ r: 5 }} />
-                  <Line type="monotone" dataKey="focusedPoints" name="Selected points" stroke="#ECF0F1" strokeWidth={2} strokeDasharray="2 4" dot={false} yAxisId={0} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
+          <div className="rounded-[1.1rem] border border-[#C0392B]/60 bg-black/35 p-3 text-right">
+            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#777]">Today green</p>
+            <p className="mt-1 text-3xl font-black leading-none text-[#C8A96E]">{todayComplete}/{participantCount || 0}</p>
+            <p className="mt-2 text-[9px] font-black uppercase tracking-[0.14em] text-[#777]">{todayOpened}/{participantCount || 0} opened</p>
           </div>
-        )}
-        <div className="mt-4 grid gap-3 lg:grid-cols-4">
-          <button type="button" onClick={() => topMover && setSelected(topMover)} className="motion-card motion-press border border-[#2ECC71]/45 bg-[#07150D] p-4 text-left">
-            <MicroLabel tone="green">Top mover</MicroLabel>
-            <h3 className="mt-3 text-2xl font-black uppercase tracking-[-0.06em] text-white">{topMover?.displayName ?? "—"}</h3>
-            <p className="mt-2 text-[10px] font-black uppercase leading-5 tracking-[0.14em] text-[#A8EFC5]">{topMover?.moverReasons?.[0] ?? "Movement needs a green day"}</p>
-            <InsightPill label="Mover score" value={topMover?.moverScore ?? 0} tone="green" />
-          </button>
-          <button type="button" onClick={() => mostConsistent && setSelected(mostConsistent)} className="motion-card motion-press border border-[#C8A96E]/45 bg-[#16130B] p-4 text-left">
-            <MicroLabel tone="gold">Most consistent</MicroLabel>
-            <h3 className="mt-3 text-2xl font-black uppercase tracking-[-0.06em] text-white">{mostConsistent?.displayName ?? "—"}</h3>
-            <p className="mt-2 text-[10px] font-black uppercase leading-5 tracking-[0.14em] text-[#D9C89A]">{mostConsistent?.consistencyReasons?.[0] ?? "Consistency building"}</p>
-            <InsightPill label="Consistency" value={mostConsistent?.consistencyScore ?? 0} tone="gold" />
-          </button>
-          <button type="button" onClick={() => riskLeader && setSelected(riskLeader)} className="motion-card motion-press border border-[#C0392B]/55 bg-[#190B0A] p-4 text-left">
-            <MicroLabel tone="red">Most at risk</MicroLabel>
-            <h3 className="mt-3 text-2xl font-black uppercase tracking-[-0.06em] text-white">{riskLeader?.displayName ?? "—"}</h3>
-            <p className="mt-2 text-[10px] font-black uppercase leading-5 tracking-[0.14em] text-[#FFB3A8]">{riskLeader?.riskReasons?.[0] ?? "No immediate pressure"}</p>
-            <InsightPill label="Risk" value={riskLeader?.riskScore ?? 0} tone="red" />
-          </button>
-          <button type="button" onClick={() => boostedLeader && setSelected(boostedLeader)} className="motion-card motion-press border border-[#9B59B6]/50 bg-[#150E1A] p-4 text-left">
-            <MicroLabel tone="purple">Boosted</MicroLabel>
-            <h3 className="mt-3 text-2xl font-black uppercase tracking-[-0.06em] text-white">{boostedLeader?.displayName ?? "—"}</h3>
-            <p className="mt-2 text-[10px] font-black uppercase leading-5 tracking-[0.14em] text-[#D9B3F0]">{boostedLeader?.boostReasons?.[0] ?? "No boost yet"}</p>
-            <InsightPill label="Boost" value={boostedLeader?.boostScore ?? 0} tone="purple" />
-          </button>
         </div>
       </section>
 
-      <section className="border border-[#2A2A2A] bg-[#101010] p-4 sm:p-5">
+      <section className="grid gap-2 sm:grid-cols-3" data-testid="overview-intelligence-grid">
+        <OverviewMetricCard label="Risk flags" value={riskCount} detail={`${riskLeader?.displayName ?? "No one"} is the current pressure signal`} tone={riskCount ? "red" : "green"} />
+        <OverviewMetricCard label="Live app points" value={liveAppPoints} detail="Visible task, proof, insight and tracking value from today" tone="green" />
+        <OverviewMetricCard label="Ops drag" value={pendingPayments + pendingRewards} detail={`${pendingPayments} payments · ${pendingRewards} rewards · ${totalLivesLost} lives lost`} tone={pendingPayments + pendingRewards ? "purple" : "white"} />
+      </section>
+
+      <section className="rounded-[1.4rem] border border-[#2A2A2A] bg-[#101010] p-4 sm:p-5" data-testid="personal-rivalry-cards">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <MicroLabel tone="green">Points engine</MicroLabel>
-            <h3 className="mt-2 text-2xl font-black uppercase tracking-[-0.06em] text-white sm:text-4xl">Ticks now show value.</h3>
+            <MicroLabel tone="gold">Personal rivalry</MicroLabel>
+            <h3 className="mt-2 text-2xl font-black uppercase leading-none tracking-[-0.07em] text-white">Who you chase. Who is hunting you.</h3>
           </div>
-          <p className="max-w-sm text-[10px] font-black uppercase tracking-[0.16em] text-[#777]">Backend awards still happen on submit, but the app now shows visible earning routes as tasks are ticked: rule points, pass bonus, full-green bonus, proof, insight and tracking value.</p>
+          <span className="rounded-full border border-[#C8A96E]/45 bg-[#16130B] px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.16em] text-[#C8A96E]">Your rank #{currentRank + 1 || "—"}</span>
         </div>
-        <div className="mt-4 grid gap-2 sm:grid-cols-3">
-          <OverviewMetricCard label="Today submitted" value={`${todayOpened}/${participantCount}`} detail="Opened logs now contribute to live point pressure" tone="gold" />
-          <OverviewMetricCard label="Today passed" value={`${todayComplete}/${participantCount}`} detail={`Pass still means ${DAILY_PASS_THRESHOLD}/${DAILY_RULE_COUNT} rules`} tone={todayComplete === participantCount && participantCount > 0 ? "green" : "gold"} />
-          <OverviewMetricCard label="Ops queue" value={pendingPayments + pendingRewards} detail={`${pendingPayments} payments · ${pendingRewards} rewards`} tone={pendingPayments + pendingRewards ? "purple" : "white"} />
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          {rivalryCards.map(card => {
+            const rival = card.participant;
+            return (
+              <button key={card.label} type="button" onClick={() => rival && setSelected(rival)} className={classNames("motion-card motion-press min-w-0 rounded-[1.2rem] border p-4 text-left", card.tone === "red" ? "border-[#C0392B]/55 bg-[#190B0A]" : "border-[#C8A96E]/55 bg-[#16130B]")} data-testid="rivalry-card">
+                <MicroLabel tone={card.tone}>{card.label}</MicroLabel>
+                <div className="mt-4 flex min-w-0 items-center gap-3">
+                  {rival && <ProfilePhoto participant={rival} className="h-12 w-12 shrink-0" />}
+                  <div className="min-w-0">
+                    <p className="truncate text-xl font-black uppercase tracking-[-0.05em] text-white">{rival?.displayName ?? card.emptyTitle}</p>
+                    <p className="mt-1 text-[10px] font-black uppercase tracking-[0.14em] text-[#BDBDBD]">{rival ? `${card.gap} point gap` : card.emptyDetail}</p>
+                  </div>
+                </div>
+                {rival && <p className="mt-3 text-[10px] font-black uppercase leading-5 tracking-[0.12em] text-[#BDBDBD]">{rival.statusLine}</p>}
+              </button>
+            );
+          })}
         </div>
       </section>
 
-      <section className="border border-[#2A2A2A] bg-[#101010] p-4 sm:p-5">
+      <section className="rounded-[1.4rem] border border-[#2A2A2A] bg-[#101010] p-4 sm:p-5" data-testid="overview-compare-list">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <MicroLabel tone="red">Participant comparison</MicroLabel>
-            <h3 className="mt-2 text-2xl font-black uppercase tracking-[-0.06em] text-white sm:text-4xl">Compare what matters.</h3>
+            <MicroLabel tone="red">Compare list</MicroLabel>
+            <h3 className="mt-2 text-2xl font-black uppercase leading-none tracking-[-0.07em] text-white">Lives. Pace bars. Risk badges.</h3>
           </div>
-          <p className="max-w-sm text-[10px] font-black uppercase tracking-[0.16em] text-[#777]">Rows now compare pass pace, point velocity, proof reliability, and risk instead of flat totals. Tap anyone for their Board-style drill-down.</p>
+          <p className="max-w-sm text-[10px] font-black uppercase leading-5 tracking-[0.14em] text-[#777]">Presentation only: the same participant points, lives, logs, pass pace, proof and risk calculations are still used underneath.</p>
         </div>
-        <div className="mt-5 space-y-2">
-          {comparisonRows.map((p: any, index: number) => (
-            <button key={p.id} type="button" onClick={() => { pulse(14); setSelected(p); }} className="motion-row motion-press grid w-full gap-3 border border-[#2A2A2A] bg-[#0D0D0D] p-3 text-left transition hover:border-[#C8A96E] focus-visible:border-[#C8A96E] focus-visible:outline-none sm:grid-cols-[2.5rem_3.5rem_minmax(0,1fr)_minmax(260px,1fr)] sm:items-center" aria-label={`Open ${p.displayName} participant stats`}>
-              <span className={classNames("text-2xl font-black", p.riskScore >= 60 ? "text-[#C0392B]" : index < 3 ? "text-[#C8A96E]" : "text-[#777]")}>#{index + 1}</span>
-              <ProfilePhoto participant={p} className="h-12 w-12" />
-              <span className="min-w-0">
-                <span className="block break-words text-lg font-black uppercase tracking-[-0.04em] text-white">{p.displayName}</span>
-                <span className="mt-1 block text-[10px] font-black uppercase tracking-[0.14em] text-[#777]">{p.comparisonLine}</span>
-                <span className="mt-2 block max-w-[260px]"><HealthBar lives={p.livesRemaining} label="" compact /></span>
-              </span>
-              <span className="flex flex-wrap gap-2">
-                {p.comparisonStats.map((stat: any) => <InsightPill key={stat.label} label={stat.label} value={stat.value} tone={stat.tone} />)}
-              </span>
-            </button>
-          ))}
+        <div className="mt-4 space-y-2">
+          {compareRows.map((p: any, index: number) => {
+            const pace = Math.max(0, Math.min(100, pct(Number(p.completeCount ?? 0), currentDay)));
+            const riskTone = Number(p.riskScore ?? 0) >= 60 || Number(p.livesRemaining ?? 4) <= 1 ? "red" : Number(p.riskScore ?? 0) >= 42 || Number(p.livesRemaining ?? 4) <= 2 ? "gold" : "green";
+            const riskLabel = riskTone === "red" ? "High risk" : riskTone === "gold" ? "Watch" : "Stable";
+            return (
+              <button key={p.id} type="button" onClick={() => { pulse(14); setSelected(p); }} className={classNames("motion-row motion-press w-full rounded-[1.1rem] border bg-[#0D0D0D] p-3 text-left transition hover:border-[#C8A96E] focus-visible:border-[#C8A96E] focus-visible:outline-none", riskTone === "red" ? "border-[#C0392B]/70" : "border-[#2A2A2A]")} aria-label={`Open ${p.displayName} participant stats`} data-testid="overview-compare-row">
+                <div className="grid grid-cols-[34px_minmax(0,1fr)_auto] items-start gap-3">
+                  <span className={classNames("text-2xl font-black", riskTone === "red" ? "text-[#FFB3A8]" : index < 3 ? "text-[#C8A96E]" : "text-[#777]")}>#{index + 1}</span>
+                  <span className="min-w-0">
+                    <span className="block truncate text-lg font-black uppercase tracking-[-0.04em] text-white">{p.displayName}</span>
+                    <span className="mt-1 block text-[10px] font-black uppercase tracking-[0.13em] text-[#777]">{p.completeCount}/{currentDay} pass pace · {p.totalPoints} pts</span>
+                  </span>
+                  <span className={classNames("rounded-full border px-2.5 py-1 text-[8px] font-black uppercase tracking-[0.13em]", riskTone === "red" ? "border-[#C0392B] bg-[#C0392B]/15 text-[#FFB3A8]" : riskTone === "gold" ? "border-[#C8A96E] bg-[#16130B] text-[#C8A96E]" : "border-[#2ECC71] bg-[#07150D] text-[#2ECC71]")}>{riskLabel}</span>
+                </div>
+                <div className="mt-3 flex items-center justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="h-2 overflow-hidden rounded-full bg-[#242424]" aria-label={`${pace}% pace bar`} data-testid="pace-bar">
+                      <div className={classNames("h-full rounded-full", riskTone === "red" ? "bg-[#C0392B]" : riskTone === "gold" ? "bg-[#C8A96E]" : "bg-[#2ECC71]")} style={{ width: `${pace}%` }} />
+                    </div>
+                  </div>
+                  <LifeDots lives={p.livesRemaining} compact />
+                </div>
+              </button>
+            );
+          })}
         </div>
       </section>
       <ParticipantSheet participant={selected} onClose={() => setSelected(null)} />
@@ -1569,28 +1534,47 @@ function ProofImage({ url, dayNumber }: { url: string; dayNumber: number }) {
   );
 }
 
+function LifeDots({ lives, compact = false }: { lives: number; compact?: boolean }) {
+  const safeLives = Math.max(0, Math.min(4, Number(lives ?? 0)));
+  return (
+    <span className={classNames("inline-flex items-center", compact ? "gap-1" : "gap-1.5")} aria-label={`${safeLives} of 4 lives remaining`} data-testid="life-dots">
+      {Array.from({ length: 4 }).map((_, index) => {
+        const alive = index < safeLives;
+        return <span key={index} className={classNames("rounded-full border", compact ? "h-2.5 w-2.5" : "h-3 w-3", alive ? "border-[#2ECC71] bg-[#2ECC71] shadow-[0_0_12px_rgba(46,204,113,0.42)]" : "border-[#3A1815] bg-[#180A08]")} />;
+      })}
+    </span>
+  );
+}
+
 function PodiumCard({ participant, index, onSelect, className }: { participant: any; index: number; onSelect: () => void; className?: string }) {
   const rank = index + 1;
   const styles = rank === 1
-    ? { label: "1st", border: "border-[#C8A96E]", bg: "bg-[#181207]", text: "text-[#C8A96E]", ring: "shadow-[0_0_40px_rgba(200,169,110,0.22)]", height: "sm:min-h-[17rem]" }
+    ? { label: "1st", border: "border-[#C8A96E]", bg: "bg-[#181207]", text: "text-[#C8A96E]", ring: "shadow-[0_0_56px_rgba(200,169,110,0.32)]", height: "min-h-[15rem] sm:min-h-[18rem]", crown: "CHALLENGE LEADER" }
     : rank === 2
-      ? { label: "2nd", border: "border-[#BFC7D5]", bg: "bg-[#10131A]", text: "text-[#BFC7D5]", ring: "shadow-[0_0_32px_rgba(191,199,213,0.14)]", height: "sm:min-h-[15rem]" }
-      : { label: "3rd", border: "border-[#B87333]", bg: "bg-[#1A1009]", text: "text-[#D58A45]", ring: "shadow-[0_0_32px_rgba(184,115,51,0.16)]", height: "sm:min-h-[14rem]" };
+      ? { label: "2nd", border: "border-[#BFC7D5]", bg: "bg-[#10131A]", text: "text-[#BFC7D5]", ring: "shadow-[0_0_32px_rgba(191,199,213,0.14)]", height: "min-h-[13rem] sm:min-h-[15.5rem]", crown: "CLOSEST THREAT" }
+      : { label: "3rd", border: "border-[#B87333]", bg: "bg-[#1A1009]", text: "text-[#D58A45]", ring: "shadow-[0_0_32px_rgba(184,115,51,0.16)]", height: "min-h-[12rem] sm:min-h-[14rem]", crown: "PODIUM HOLD" };
   return (
-    <button type="button" onClick={onSelect} className={classNames("motion-card motion-press relative overflow-hidden border-2 p-4 text-left transition hover:-translate-y-1", styles.border, styles.bg, styles.ring, styles.height, className)} data-podium-rank={rank}>
-      <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-white/5 blur-xl" />
-      <div className="flex items-start justify-between gap-3">
-        <span className={classNames("text-5xl font-black uppercase leading-none tracking-[-0.1em]", styles.text)}>{styles.label}</span>
-        <ProfilePhoto participant={participant} className="h-14 w-14" />
+    <button type="button" onClick={onSelect} className={classNames("motion-card motion-press relative isolate overflow-hidden border-2 p-4 text-left transition hover:-translate-y-1", styles.border, styles.bg, styles.ring, styles.height, className)} data-podium-rank={rank} data-testid="stepped-podium-card">
+      <div className={classNames("pointer-events-none absolute inset-x-6 -top-10 h-28 rounded-full blur-3xl", rank === 1 ? "bg-[#C8A96E]/25" : "bg-white/5")} />
+      <div className="relative flex items-start justify-between gap-3">
+        <div>
+          <span className={classNames("block text-6xl font-black uppercase leading-none tracking-[-0.12em]", styles.text)}>{styles.label}</span>
+          <span className="mt-2 inline-flex border border-white/10 bg-black/35 px-2.5 py-1 text-[8px] font-black uppercase tracking-[0.16em] text-[#BDBDBD]">{styles.crown}</span>
+        </div>
+        <ProfilePhoto participant={participant} className={classNames("shrink-0", rank === 1 ? "h-16 w-16" : "h-14 w-14")} />
       </div>
-      <h3 className="mt-5 break-words text-2xl font-black uppercase leading-none tracking-[-0.07em] text-white">{participant?.displayName ?? "—"}</h3>
-      <div className="mt-4 grid grid-cols-2 gap-2">
-        <InsightPill label="Points" value={participant?.totalPoints ?? 0} tone={rank === 1 ? "gold" : "white"} />
-        <InsightPill label="Lives" value={`${participant?.livesRemaining ?? 4}/4`} tone={(participant?.livesRemaining ?? 4) <= 1 ? "red" : "green"} />
-        <InsightPill label="Status" value={participant?.statusTag ?? "Watch"} tone={participant?.statusTone ?? "white"} />
-        <InsightPill label="Boost" value={participant?.boostScore ?? 0} tone="purple" />
+      <h3 className="relative mt-5 break-words text-2xl font-black uppercase leading-none tracking-[-0.07em] text-white">{participant?.displayName ?? "—"}</h3>
+      <div className="relative mt-4 flex items-end justify-between gap-3">
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#777]">Score</p>
+          <p className={classNames("mt-1 text-4xl font-black leading-none tabular-nums", styles.text)}>{participant?.totalPoints ?? 0}</p>
+        </div>
+        <div className="text-right">
+          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#777]">Lives</p>
+          <span className="mt-2 flex justify-end"><LifeDots lives={participant?.livesRemaining ?? 4} /></span>
+        </div>
       </div>
-      <p className="mt-4 text-[10px] font-black uppercase leading-5 tracking-[0.14em] text-[#BDBDBD]">{participant?.statusLine ?? participant?.boostReasons?.[0] ?? "Keep banking green days to hold the podium"}</p>
+      <p className="relative mt-4 text-[10px] font-black uppercase leading-5 tracking-[0.14em] text-[#BDBDBD]">{participant?.statusLine ?? participant?.boostReasons?.[0] ?? "Keep banking green days to hold the podium"}</p>
     </button>
   );
 }
@@ -1604,65 +1588,84 @@ function Leaderboard({ snapshot }: { snapshot: Snapshot }) {
   const ranked = useMemo(() => rankForPodium(buildParticipantInsights({ participants, logs, currentDay })), [participants, logs, currentDay]);
   const podium = ranked.slice(0, 3);
   const boosted = [...ranked].sort((a: any, b: any) => b.boostScore - a.boostScore || b.recentPointGain - a.recentPointGain).slice(0, 4);
+  const leaderPoints = Number(ranked[0]?.totalPoints ?? 0);
+  const boostSlots = [
+    { state: "Claimed", tone: "green", title: boosted[0]?.displayName ?? "Open slot", value: boosted[0] ? `${boosted[0].boostLabel} · +${boosted[0].boostScore}` : "Bank a full green day", detail: boosted[0]?.boostReasons?.[0] ?? "First boost goes to the cleanest verified effort today." },
+    { state: "Open", tone: "gold", title: "Proof beats claims", value: "+proof reliability", detail: "Upload real exercise proof and keep the receipts inside the app." },
+    { state: "Open", tone: "red", title: "No gaming the board", value: "+anti-coast rule", detail: "Boosts fade if points rise without today's tasks, reflection depth, or recent movement." },
+  ];
   return (
-    <section className="border border-[#2A2A2A] bg-[#101010] p-5" data-testid="bosses-board-section">
-      <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <MicroLabel tone="gold">Board / Bosses</MicroLabel>
-          <h2 className="mt-2 break-words text-3xl font-black uppercase leading-none tracking-[-0.07em] text-white sm:text-4xl">Podium, boosts, pressure.</h2>
-        </div>
-        <p className="max-w-sm text-xs font-bold uppercase tracking-[0.14em] text-[#777]">Rank still respects points, but each row now tells the story first: status, lives, points, then tap-to-expand metrics for the competitors who want the numbers.</p>
+    <section className="motion-page space-y-4 overflow-hidden border border-[#2A2A2A] bg-[#101010] p-3 sm:p-5" data-testid="bosses-board-section">
+      <div className="rounded-[1.4rem] border border-[#2A2A2A] bg-[#0D0D0D] p-4 sm:p-5" data-testid="board-mobile-redesign-shell">
+        <MicroLabel tone="gold">Board / Bosses</MicroLabel>
+        <h2 className="mt-2 break-words text-3xl font-black uppercase leading-none tracking-[-0.08em] text-white sm:text-5xl">Podium pressure.</h2>
+        <p className="mt-3 max-w-xl text-xs font-bold uppercase leading-5 tracking-[0.12em] text-[#8D8D8D]">Claude-inspired mobile board: boost key first, stepped podium next, then every challenger with lives, Warden status, delta gaps, and risk callouts.</p>
       </div>
+
+      <section className="rounded-[1.4rem] border border-[#2ECC71]/30 bg-[#07150D] p-4" data-testid="boost-key-slots">
+        <div className="flex items-end justify-between gap-3">
+          <div>
+            <MicroLabel tone="green">Boost Key</MicroLabel>
+            <h3 className="mt-2 text-2xl font-black uppercase leading-none tracking-[-0.07em] text-white">Three slots. Earned, not gamed.</h3>
+          </div>
+          <span className="shrink-0 rounded-full border border-[#2ECC71]/55 bg-black/45 px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.16em] text-[#2ECC71]">Live rules</span>
+        </div>
+        <div className="mt-4 grid gap-2 sm:grid-cols-3">
+          {boostSlots.map((slot, index) => {
+            const toneClass = slot.tone === "green" ? "border-[#2ECC71]/55 bg-[#082016] text-[#2ECC71]" : slot.tone === "red" ? "border-[#C0392B]/55 bg-[#190B0A] text-[#FFB3A8]" : "border-[#C8A96E]/55 bg-[#16130B] text-[#C8A96E]";
+            return (
+              <article key={slot.title} className={classNames("min-w-0 rounded-[1rem] border p-3", toneClass)} data-boost-slot={index + 1}>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[9px] font-black uppercase tracking-[0.16em]">Slot {index + 1}</span>
+                  <span className="rounded-full border border-current/40 bg-black/40 px-2 py-1 text-[8px] font-black uppercase tracking-[0.14em]">{slot.state}</span>
+                </div>
+                <p className="mt-3 truncate text-sm font-black uppercase tracking-[-0.03em] text-white">{slot.title}</p>
+                <p className="mt-1 text-[10px] font-black uppercase tracking-[0.13em]">{slot.value}</p>
+                <p className="mt-3 text-[10px] font-black uppercase leading-5 tracking-[0.12em] text-[#BDBDBD]">{slot.detail}</p>
+              </article>
+            );
+          })}
+        </div>
+      </section>
 
       <div className="grid gap-3 lg:grid-cols-[0.95fr_1.1fr_0.95fr] lg:items-end" data-testid="top-three-podium" aria-label="Top three ordered first, second, third on mobile">
         {podium[0] && <PodiumCard participant={podium[0]} index={0} className="lg:order-2" onSelect={() => { pulse([12, 24, 12]); setSelected(podium[0]); }} />}
-        {podium[1] && <PodiumCard participant={podium[1]} index={1} className="lg:order-1" onSelect={() => { pulse(14); setSelected(podium[1]); }} />}
-        {podium[2] && <PodiumCard participant={podium[2]} index={2} className="lg:order-3" onSelect={() => { pulse(14); setSelected(podium[2]); }} />}
+        {podium[1] && <PodiumCard participant={podium[1]} index={1} className="lg:order-1 lg:translate-y-5" onSelect={() => { pulse(14); setSelected(podium[1]); }} />}
+        {podium[2] && <PodiumCard participant={podium[2]} index={2} className="lg:order-3 lg:translate-y-9" onSelect={() => { pulse(14); setSelected(podium[2]); }} />}
       </div>
 
-      <div className="mt-5 border border-[#9B59B6]/35 bg-[#150E1A] p-4" data-testid="boosted-insights-strip">
-        <div className="flex flex-wrap items-end justify-between gap-3">
+      <div className="space-y-2" data-testid="full-board-compare-list">
+        <div className="flex items-end justify-between gap-3 px-1">
           <div>
-            <MicroLabel tone="purple">Boosted right now</MicroLabel>
-            <h3 className="mt-2 text-2xl font-black uppercase tracking-[-0.06em] text-white">Not just a badge. A reason.</h3>
+            <MicroLabel tone="red">Full leaderboard</MicroLabel>
+            <h3 className="mt-2 text-2xl font-black uppercase tracking-[-0.07em] text-white">Everyone exposed.</h3>
           </div>
-          <p className="max-w-sm text-[10px] font-black uppercase leading-5 tracking-[0.14em] text-[#D9B3F0]">Boosts come from today’s awarded points, full 6/6 days, proof uploaded in the app, teaching/reflection depth and recent point movement.</p>
+          <span className="text-right text-[9px] font-black uppercase tracking-[0.16em] text-[#777]">Tap rows for metrics</span>
         </div>
-        <div className="mt-4 grid gap-2 md:grid-cols-2 xl:grid-cols-4">
-          {boosted.map((participant: any) => (
-            <button key={participant.id} type="button" onClick={() => { pulse(12); setSelected(participant); }} className="motion-row motion-press border border-[#9B59B6]/35 bg-black/35 p-3 text-left">
-              <div className="flex items-center gap-3">
-                <ProfilePhoto participant={participant} className="h-10 w-10" />
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-black uppercase tracking-[-0.03em] text-white">{participant.displayName}</p>
-                  <p className="mt-1 text-[9px] font-black uppercase tracking-[0.14em] text-[#D9B3F0]">{participant.boostLabel} · {participant.boostScore}</p>
-                </div>
-              </div>
-              <p className="mt-3 text-[10px] font-black uppercase leading-5 tracking-[0.12em] text-[#BDBDBD]">{participant.boostReasons[0]}</p>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="mt-5 space-y-2">
         {ranked.map((p: any, index: number) => {
           const isExpanded = String(expandedParticipantId) === String(p.id);
           const detailId = `board-player-${p.id}-metrics`;
+          const pointsGap = index === 0 ? "Leader" : `${Math.max(0, leaderPoints - Number(p.totalPoints ?? 0))} behind`;
+          const previousGap = index === 0 ? "No gap" : `${Math.max(0, Number(ranked[index - 1]?.totalPoints ?? 0) - Number(p.totalPoints ?? 0))} to catch`;
+          const eliminationRisk = Number(p.riskScore ?? 0) >= 60 || Number(p.livesRemaining ?? 4) <= 1;
           return (
-            <article key={p.id} className={classNames("motion-row border bg-[#0D0D0D] transition hover:border-[#C8A96E]", index === 0 ? "border-l-4 border-l-[#C8A96E] border-[#3C3423]" : index === 1 ? "border-l-4 border-l-[#BFC7D5] border-[#2A2A2A]" : index === 2 ? "border-l-4 border-l-[#B87333] border-[#2A2A2A]" : "border-[#2A2A2A]")} data-testid="board-player-row">
-              <button type="button" onClick={() => { pulse(14); setExpandedParticipantId(isExpanded ? null : p.id); }} className="motion-press grid w-full grid-cols-[48px_minmax(0,1fr)] items-center gap-3 p-3 text-left sm:grid-cols-[56px_56px_minmax(0,1fr)_minmax(170px,0.75fr)_auto_36px] sm:gap-4 sm:p-4" aria-expanded={isExpanded} aria-controls={detailId} aria-label={`Toggle ${p.displayName} Board metrics`}>
-                <span className={classNames("text-2xl font-black sm:text-3xl", index === 0 ? "text-[#C8A96E]" : index === 1 ? "text-[#BFC7D5]" : index === 2 ? "text-[#D58A45]" : "text-[#777]")}>#{index + 1}</span>
+            <article key={p.id} className={classNames("motion-row overflow-hidden rounded-[1.15rem] border bg-[#0D0D0D] transition hover:border-[#C8A96E]", eliminationRisk ? "border-[#C0392B]/75 bg-[#190B0A] shadow-[0_0_26px_rgba(192,57,43,0.12)]" : index === 0 ? "border-[#C8A96E]/70 bg-[#16130B]" : "border-[#2A2A2A]")} data-testid="board-player-row" data-elimination-risk={eliminationRisk ? "true" : "false"}>
+              <button type="button" onClick={() => { pulse(14); setExpandedParticipantId(isExpanded ? null : p.id); }} className="motion-press grid w-full grid-cols-[42px_minmax(0,1fr)] gap-3 p-3 text-left sm:grid-cols-[56px_56px_minmax(0,1fr)_minmax(155px,0.65fr)_auto_32px] sm:items-center sm:p-4" aria-expanded={isExpanded} aria-controls={detailId} aria-label={`Toggle ${p.displayName} Board metrics`}>
+                <span className={classNames("row-span-2 text-2xl font-black sm:row-span-1 sm:text-3xl", eliminationRisk ? "text-[#FFB3A8]" : index === 0 ? "text-[#C8A96E]" : index === 1 ? "text-[#BFC7D5]" : index === 2 ? "text-[#D58A45]" : "text-[#777]")}>#{index + 1}</span>
                 <span className="hidden sm:block"><ProfilePhoto participant={p} className="h-12 w-12" /></span>
                 <span className="min-w-0">
-                  <span className="block break-words text-lg font-black uppercase tracking-[-0.04em] text-white sm:text-xl">{p.displayName}</span>
+                  <span className="flex min-w-0 flex-wrap items-center gap-2">
+                    <span className="block min-w-0 break-words text-lg font-black uppercase tracking-[-0.04em] text-white sm:text-xl">{p.displayName}</span>
+                    {eliminationRisk && <span className="rounded-full border border-[#C0392B] bg-[#C0392B]/15 px-2 py-1 text-[8px] font-black uppercase tracking-[0.13em] text-[#FFB3A8]" data-testid="elimination-risk-badge">⚠ ELIMINATION RISK</span>}
+                  </span>
                   <span className="mt-1 block break-words text-[11px] font-bold uppercase tracking-[0.1em] text-[#C8A96E] sm:text-xs sm:tracking-[0.14em]" data-testid="board-player-status-line">{p.statusLine}</span>
-                  <span className="mt-3 block max-w-[260px]"><HealthBar lives={p.livesRemaining} label="" compact /></span>
+                  <span className="mt-3 flex items-center gap-3"><LifeDots lives={p.livesRemaining} compact /><span className="text-[10px] font-black uppercase tracking-[0.14em] text-[#777]">{p.livesRemaining}/4 lives</span></span>
                 </span>
                 <span className="col-span-2 flex flex-wrap gap-2 sm:col-span-1">
-                  <InsightPill label="Status" value={p.statusTag} tone={p.statusTone} />
-                  <InsightPill label="Lives" value={`${p.livesRemaining}/4`} tone={p.livesRemaining <= 1 ? "red" : p.livesRemaining <= 2 ? "gold" : "green"} />
+                  <InsightPill label="Gap" value={pointsGap} tone={index === 0 ? "gold" : eliminationRisk ? "red" : "white"} />
+                  <InsightPill label="Delta" value={previousGap} tone={index <= 2 ? "gold" : "white"} />
                 </span>
-                <span className="col-span-2 mt-2 min-w-0 text-left sm:col-span-1 sm:mt-0 sm:text-right">
+                <span className="col-span-2 mt-1 min-w-0 text-left sm:col-span-1 sm:mt-0 sm:text-right">
                   <span className="block max-w-full break-words text-2xl font-black leading-none text-[#C8A96E] sm:text-3xl">{p.totalPoints}</span>
                   <span className="poster-label text-[#777]">points</span>
                 </span>

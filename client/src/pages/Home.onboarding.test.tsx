@@ -388,22 +388,25 @@ describe("Home onboarding shell", () => {
     expect(storageProxySource).not.toContain('res.set("Cache-Control", "no-store")');
   });
 
-  it("documents the upgraded Overview dashboard and all-green haptic submit flow", () => {
+  it("documents the Claude-inspired Overview, Board, and all-green haptic submit flow", () => {
     const homeSource = readFileSync(new URL("./Home.tsx", import.meta.url), "utf8");
     const hapticsSource = readFileSync(new URL("../lib/haptics.ts", import.meta.url), "utf8");
 
     expect(homeSource).toContain('data-testid="overview-metrics-dashboard"');
-    expect(homeSource).toContain("Overview · command centre");
-    expect(homeSource).toContain("Tap graph first. Then read the signals.");
-    expect(homeSource).toContain("Simple group signals");
-    expect(homeSource).toContain("The graph now opens directly under this control, not hidden below the signal cards.");
-    expect(homeSource).toContain('data-testid="graph-participant-select"');
-    expect(homeSource).toContain("Most at risk");
-    expect(homeSource).toContain("tasks left, time pressure, lives lost, streaks, proof, and recent points");
-    expect(homeSource).toContain("Participant comparison");
-    expect(homeSource).toContain("Rows now compare pass pace, point velocity, proof reliability, and risk instead of flat totals.");
+    expect(homeSource).toContain('data-testid="overview-red-alert-pace-card"');
+    expect(homeSource).toContain("Overview · pressure map");
+    expect(homeSource).toContain("on pace.");
+    expect(homeSource).toContain('data-testid="overview-intelligence-grid"');
+    expect(homeSource).toContain('data-testid="personal-rivalry-cards"');
+    expect(homeSource).toContain("Who you chase. Who is hunting you.");
+    expect(homeSource).toContain('data-testid="overview-compare-list"');
+    expect(homeSource).toContain("Lives. Pace bars. Risk badges.");
+    expect(homeSource).toContain('data-testid="pace-bar"');
     expect(homeSource).toContain("Board / Bosses");
-    expect(homeSource).toContain("status, lives, points, then tap-to-expand metrics");
+    expect(homeSource).toContain('data-testid="boost-key-slots"');
+    expect(homeSource).toContain("Three slots. Earned, not gamed.");
+    expect(homeSource).toContain("Proof beats claims");
+    expect(homeSource).toContain("No gaming the board");
     expect(homeSource).toContain("playAllGreenSubmitHaptic();");
     expect(homeSource).toContain("if (data.complete)");
     expect(hapticsSource).toContain("submit: [28, 42, 28, 64, 72]");
@@ -525,6 +528,12 @@ describe("Home onboarding shell", () => {
     expect(homeSource).toContain("const [expandedParticipantId, setExpandedParticipantId] = useState<string | number | null>(null);");
     expect(homeSource).toContain("data-testid=\"board-player-status-line\"");
     expect(homeSource).toContain("data-testid=\"board-player-expanded-metrics\"");
+    expect(homeSource).toContain("function LifeDots");
+    expect(homeSource).toContain('data-testid=\"life-dots\"');
+    expect(homeSource).toContain('data-testid=\"stepped-podium-card\"');
+    expect(homeSource).toContain('data-testid=\"full-board-compare-list\"');
+    expect(homeSource).toContain('data-testid=\"elimination-risk-badge\"');
+    expect(homeSource).toContain("⚠ ELIMINATION RISK");
     expect(homeSource).toContain("inline-flex max-w-full min-w-0 items-center gap-1 overflow-hidden");
     expect(homeSource).toContain("<span className=\"min-w-0 truncate tabular-nums\">{value}</span>");
     expect(homeSource).toContain("block max-w-full break-words text-2xl font-black leading-none text-[#C8A96E]");
@@ -537,8 +546,8 @@ describe("Home onboarding shell", () => {
     expect(homeSource.indexOf("{podium[0] && <PodiumCard")).toBeLessThan(homeSource.indexOf("{podium[1] && <PodiumCard"));
     expect(homeSource.indexOf("{podium[1] && <PodiumCard")).toBeLessThan(homeSource.indexOf("{podium[2] && <PodiumCard"));
     expect(homeSource).toContain('className="lg:order-2"');
-    expect(homeSource).toContain('className="lg:order-1"');
-    expect(homeSource).toContain('className="lg:order-3"');
+    expect(homeSource).toContain('className="lg:order-1 lg:translate-y-5"');
+    expect(homeSource).toContain('className="lg:order-3 lg:translate-y-9"');
     expect(homeSource).toContain("data-testid=\"participant-profile-overlay\"");
     expect(homeSource).toContain("max-h-[min(92svh,46rem)] w-full max-w-xl flex-col overflow-hidden");
     expect(homeSource).toContain("createPortal(sheet, document.body)");
