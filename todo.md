@@ -657,7 +657,7 @@ User priority: the Warden should read the room, find tensions between words and 
 ## Issue — Warden Morning Messages Not Sending
 
 - [x] Clarify how Warden messages are supposed to run without creating many extra Manus task chats
-- [ ] Investigate why no Warden messages were sent this morning, if the user approves inspection
+- [x] Investigation intentionally skipped here; user is handling the Warden message issue externally through Claude
 - [x] Confirm whether Warden delivery is currently driven by Manus scheduled tasks, Make.com, Whapi, or a deployed site endpoint
 - [x] Propose a cleaner Warden delivery setup that avoids clogging the user's Manus chat list where possible
 
