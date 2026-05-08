@@ -475,17 +475,18 @@ describe("Home onboarding shell", () => {
 
     expect(homeSource).toContain('data-testid="overview-metrics-dashboard"');
     expect(homeSource).toContain('data-testid="overview-red-alert-pace-card"');
-    expect(homeSource).toContain("Overview · pressure board");
-    expect(homeSource).toContain("on pace.");
+    expect(homeSource).toContain("Overview · quick read");
+    expect(homeSource).toContain("Days left");
+    expect(homeSource).toContain("tap for wins");
     expect(homeSource).toContain('data-testid="overview-intelligence-grid"');
     expect(homeSource).toContain('data-testid="personal-rivalry-cards"');
     expect(homeSource).toContain("The gap above. The threat below.");
     expect(homeSource).toContain('data-testid="overview-compare-list"');
-    expect(homeSource).toContain("Live points bank");
+    expect(homeSource).toContain("Live bank");
     expect(homeSource).toContain('data-testid="pace-bar"');
     expect(homeSource).toContain("Board / Bosses");
     expect(homeSource).toContain('data-testid="boost-key-slots"');
-    expect(homeSource).toContain("Rotating slots. Earned, not gamed.");
+    expect(homeSource).toContain("Tap to learn what this boost does");
     expect(homeSource).toContain('data-testid="overview-active-boosts"');
     expect(homeSource).toContain('data-testid="warden-mood-card"');
     expect(homeSource).toContain("+5 bonus available");

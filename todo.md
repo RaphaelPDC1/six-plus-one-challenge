@@ -1073,4 +1073,16 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Add collapsible sections with tap-to-expand for secondary details (progressive disclosure via existing card design)
 - [x] Implement high-end transitions and progressive disclosure for visual polish (motion-card classes active)
 - [x] Validate refactored Overview page with visual inspection and ensure all dependent features work
-- [ ] Save checkpoint with Overview page refactor complete
+- [x] Save checkpoint with Overview page refactor complete
+
+
+## Overview Page Redo After Feedback
+- [x] Rebuild the Overview top section into a genuinely horizontal, scannable insight strip for Days Remaining, Live Points Bank, and Boost Leader.
+- [x] Replace the old pressure concept with useful days-remaining intelligence that changes tone based on time left and progress.
+- [x] Make the Boost Leader card tappable and reveal which boost or boosts they claimed, without cluttering the default view.
+- [x] Rewrite active boost cards so each one says plainly what the user gets and what they need to do, with details hidden until tapped.
+- [x] Rewrite Warden Mood so it interprets what participants have and have not done, relative to days passed and days remaining, instead of sounding generic or blaring.
+- [x] Reduce wordiness across the Overview page by using short labels, visual state, and tap-to-review details.
+- [x] Add polished transitions for tap-to-reveal sections and card state changes.
+- [x] Add or update tests for the Overview helper wording/state logic.
+- [ ] Validate with typecheck/build/tests and save a corrected checkpoint. Tests, typecheck, build, and health check passed; checkpoint pending.
