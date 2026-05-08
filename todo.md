@@ -1102,5 +1102,5 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Redesign the Overview page around phone-first hierarchy, clearer rank/points/lives/day context, boost status, rival pressure, and pressure list usability.
 - [x] Preserve existing challenge data, participant detail interactions, boost logic, lives logic, and current navigation.
 - [x] Add or update regression coverage for the Overview helper logic and redesigned states.
-- [x] Validate with tests, typecheck/build as practical, project health check, checkpoint, and report the completed redesign clearly. Tests, build, and project health check passed; checkpoint pending.
+- [x] Validate with tests, typecheck/build as practical, project health check, checkpoint, and report the completed redesign clearly. Tests, build, project health check, and checkpoint completed.
 
