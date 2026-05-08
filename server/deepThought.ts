@@ -128,6 +128,42 @@ function extractThemes(logs: Record<string, any>[]) {
     .slice(0, 4);
 }
 
+function inferTeachingMeaning(text: string) {
+  const lower = text.toLowerCase();
+  if (!lower) return "the standard has to be proved in action, not explained afterwards";
+  if (/excuse|blame|fault|responsib|accountab|own/.test(lower)) return "accountability is shifting from explanation to ownership";
+  if (/discipline|standard|habit|routine|consisten|daily|repeat/.test(lower)) return "discipline is becoming a repeated standard rather than a one-off mood";
+  if (/comfort|hard|pain|struggle|resilien|suffer|pressure|friction|chafe|awkward|irritation|rub|rubbing|sore/.test(lower)) return "the uncomfortable part is being treated as the training, not the interruption";
+  if (/patien|slow|process|progress|compound|small/.test(lower)) return "small actions are being trusted before the result is visible";
+  if (/focus|attention|present|control|choice|decision/.test(lower)) return "control is moving back to the next decision instead of the whole day at once";
+  if (/fear|doubt|confidence|identity|become|person/.test(lower)) return "identity is being rebuilt through evidence rather than self-talk";
+  if (/food|eat|clean|craving|nutrition|diet/.test(lower)) return "the food choice is becoming a boundary instead of a negotiation";
+  if (/learn|teach|read|quote|book|knowledge/.test(lower)) return "the lesson is only counting because it is being tested against the day";
+  return "the useful part is not the sentence itself, but whether it changes the next ordinary choice";
+}
+
+function meaningfulWords(text: string) {
+  const stop = new Set(["the", "and", "that", "this", "with", "from", "your", "you", "are", "was", "were", "have", "has", "had", "into", "they", "them", "for", "but", "not", "what", "when", "where", "why", "how", "its", "it's", "their", "there", "then", "than", "today", "quote"]);
+  return compactText(text, 900)
+    .toLowerCase()
+    .replace(/[“”'\".,!?;:()\[\]{}]/g, " ")
+    .split(/\s+/)
+    .filter(word => word.length > 4 && !stop.has(word));
+}
+
+function repeatsSourceTooClosely(insight: string, source: string) {
+  const sourceText = compactText(source, 900);
+  const output = compactText(insight, 900).toLowerCase();
+  if (!sourceText || !output) return false;
+  const sourceLower = sourceText.toLowerCase();
+  const sourceSentences = sourceLower.split(/[.!?;:\n]/).map(part => compactText(part, 160).toLowerCase()).filter(part => part.length >= 28);
+  if (sourceSentences.some(sentence => output.includes(sentence))) return true;
+  const words = Array.from(new Set(meaningfulWords(sourceText)));
+  if (words.length < 5) return false;
+  const repeated = words.filter(word => output.includes(word)).length;
+  return repeated / words.length >= 0.58;
+}
+
 function reflectionSignal(logs: Record<string, any>[]) {
   const privateText = logs.map(log => compactText(log.reflectionText, 220).toLowerCase()).join(" ");
   if (!privateText) return "no private reflection pattern used";
@@ -197,8 +233,8 @@ export function fallbackDeepThought(context: DeepThoughtContext): string {
       : "today's entry";
   const pressure = context.participantSignals.obstacleSignal !== "no stated friction" ? context.participantSignals.obstacleSignal : context.participantSignals.supportSignal;
   if (proofText.length > 0) {
-    const anchor = proofText.split(/[.!?;:\n]/)[0]?.trim().slice(0, 90) || "that line";
-    return `${name}, the interesting part is not the quote — it is that “${anchor}” met ${exercise}. That turns the post into evidence: the standard is starting to show up in the ordinary moments where ${pressure} usually gets a vote.`;
+    const meaning = inferTeachingMeaning(proofText);
+    return `${name}, the value is not in repeating the line — it is in what the post proves after it. ${meaning}, and ${exercise} makes that lesson visible in the part of the day where ${pressure} usually gets a vote.`;
   }
   if (context.recentPattern.proofDays >= 3) {
     return `${name}, this is starting to look less like a good day and more like a pattern. ${exercise} is another receipt that the identity is being built before anyone claps for it.`;
@@ -211,7 +247,8 @@ function sanitizeInsight(value: unknown, context: DeepThoughtContext) {
     .replace(/^['"“”]+|['"“”]+$/g, "")
     .replace(/\b(reflectionText|readTeachText|exerciseProofUrl|JSON|field name|prompt|system)\b/gi, "")
     .trim();
-  if (text.length < 45) return fallbackDeepThought(context);
+  if (text.length < 45) return null;
+  if (repeatsSourceTooClosely(text, context.proof.readTeachText)) return null;
   if (!new RegExp(`\\b${context.firstName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i").test(text)) {
     return `${context.firstName}, ${text.charAt(0).toLowerCase()}${text.slice(1)}`.slice(0, 520);
   }
@@ -247,7 +284,7 @@ async function generateAiDeepThoughts(contexts: DeepThoughtContext[]) {
     messages: [
       {
         role: "system",
-        content: "You are the Deep Thought engine for the 6+1 Four Lives Challenge. For each proof card, privately follow the provided sequence and output one public-safe insight. The result must feel personal, intelligent, direct, and slightly surprising. It must connect the participant's submitted proof or Read & Teach text with their challenge pattern. Do not expose internal reasoning. Do not quote private reflections. Do not invent image contents. Do not write generic motivation. Write as if you noticed the specific choice behind the post.",
+        content: "You are the Deep Thought engine for the 6+1 Four Lives Challenge. For each proof card, privately follow the provided sequence and output one public-safe insight. The result must feel personal, intelligent, direct, and slightly surprising. Interpret the meaning behind the participant's submitted quote or Read & Teach text, then connect that interpretation to the proof, exercise, completion signals, and recent pattern. Do not repeat, quote, or closely paraphrase the submitted quote; add the layer underneath it. Do not expose internal reasoning. Do not quote private reflections. Do not invent image contents. Do not write generic motivation. Write as if you noticed the specific choice behind the post and can explain why it matters.",
       },
       {
         role: "user",
@@ -308,8 +345,12 @@ export async function generateDeepThoughtsForSnapshot(snapshot: Snapshot, reques
       const aiItems = await generateAiDeepThoughts(missing);
       const aiByLogId = new Map(aiItems.map(item => [Number(item.logId), item.insight]));
       for (const context of missing) {
-        const insight = sanitizeInsight(aiByLogId.get(context.logId), context);
-        result[String(context.logId)] = rememberDeepThought(context, "ai", insight);
+        const sanitized = sanitizeInsight(aiByLogId.get(context.logId), context);
+        if (sanitized) {
+          result[String(context.logId)] = rememberDeepThought(context, "ai", sanitized);
+        } else {
+          result[String(context.logId)] = rememberDeepThought(context, "fallback", fallbackDeepThought(context));
+        }
       }
     } catch (error) {
       console.warn("[DeepThought] Falling back after AI generation failed", error);

@@ -4,6 +4,7 @@ import { Link } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { CalendarView } from "./Calendar";
 import { trpc } from "@/lib/trpc";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { DAILY_PASS_THRESHOLD, DAILY_RULE_COUNT, clampLives, getDailyLogProgress } from "@/lib/challengeUi";
 import { buildFocusedChartData, buildParticipantInsights, calculateLiveTaskPoints, logHasInsight, logHasProof, rankForPodium } from "@/lib/challengeInsights";
 import { haptics } from "@/lib/haptics";
@@ -1677,32 +1678,50 @@ function ProofMediaStrip({ items, onRemove }: { items: ProofMediaItem[]; onRemov
 function ProofCarousel({ items, dayNumber, ownerName }: { items: ProofMediaItem[]; dayNumber: number; ownerName?: string }) {
   if (items.length === 0) return null;
   const label = String(ownerName ?? "proof").trim().split(/\s+/)[0]?.toUpperCase() || "PROOF";
+  const hasMultiple = items.length > 1;
   return (
     <div className="mt-3" data-testid="proof-carousel">
-      <p className="mb-2 text-[9px] font-black uppercase tracking-[0.16em] text-[#E0B85A]">{items.length} proof item{items.length === 1 ? "" : "s"} · Day {dayNumber}</p>
-      <div className="grid gap-2">
-        {items.map((item, index) => {
-          const imageSrc = proofImageSrc(item.url);
-          const src = proofMediaSrc(item);
-          const mediaType = proofMediaType(item);
-          const isMedia = mediaType === "video" || Boolean(imageSrc);
-          return (
-            <div key={`${item.url}-${index}`} className={classNames("relative overflow-hidden border border-[#C8A96E]/45 bg-[#11100C]", isMedia ? "aspect-[4/3] min-h-[12rem]" : "min-h-[5.5rem]")} data-testid="proof-content-visible">
-              <div className="pointer-events-none absolute inset-0 z-10 bg-[radial-gradient(circle_at_center,transparent_0,rgba(0,0,0,0.02)_42%,rgba(0,0,0,0.34)_100%)]" aria-hidden="true" />
-              {mediaType === "video" ? (
-                <video src={src} className="h-full w-full bg-black object-cover" muted autoPlay loop playsInline controls preload="auto" data-testid="proof-feed-video-autoplay" aria-label={`Day ${dayNumber} proof video ${index + 1}`}><source src={src} type={proofVideoMimeType(item.url, item.mimeType)} />Your browser cannot play this proof video.</video>
-              ) : imageSrc ? (
-                <img src={src} alt={`Day ${dayNumber} proof ${index + 1}`} className="h-full w-full bg-black object-cover" loading="lazy" decoding="async" />
-              ) : (
-                <div className="flex min-h-[5.5rem] items-center border-l-4 border-[#C8A96E] bg-[#130F08] p-4">
-                  <p className="break-words text-sm font-black leading-6 text-white">{item.url}</p>
-                </div>
-              )}
-              {isMedia && <p className="pointer-events-none absolute inset-x-4 top-1/2 z-20 -translate-y-1/2 text-center text-[9px] font-black uppercase tracking-[0.12em] text-white/80">{label} · {mediaType === "video" ? "training" : "proof"}</p>}
-            </div>
-          );
-        })}
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <p className="text-[9px] font-black uppercase tracking-[0.16em] text-[#E0B85A]">{items.length} proof item{items.length === 1 ? "" : "s"} · Day {dayNumber}</p>
+        {hasMultiple && <p className="rounded-full border border-[#C8A96E]/40 bg-black/70 px-2 py-1 text-[8px] font-black uppercase tracking-[0.14em] text-[#F4D58D]" data-testid="proof-swipe-prompt">Swipe to view all</p>}
       </div>
+      <Carousel opts={{ align: "start", loop: false }} className="relative" aria-label={`Day ${dayNumber} proof media carousel`}>
+        <CarouselContent className="-ml-2">
+          {items.map((item, index) => {
+            const imageSrc = proofImageSrc(item.url);
+            const src = proofMediaSrc(item);
+            const mediaType = proofMediaType(item);
+            const isMedia = mediaType === "video" || Boolean(imageSrc);
+            return (
+              <CarouselItem key={`${item.url}-${index}`} className="basis-[88%] pl-2 sm:basis-[72%] md:basis-[54%]">
+                <div className={classNames("relative overflow-hidden border border-[#C8A96E]/45 bg-[#11100C] shadow-[0_0_22px_rgba(200,169,110,0.12)]", isMedia ? "aspect-[4/3] min-h-[12rem]" : "min-h-[5.5rem]")} data-testid="proof-content-visible">
+                  <div className="pointer-events-none absolute inset-0 z-10 bg-[radial-gradient(circle_at_center,transparent_0,rgba(0,0,0,0.02)_42%,rgba(0,0,0,0.34)_100%)]" aria-hidden="true" />
+                  {mediaType === "video" ? (
+                    <video src={src} className="h-full w-full bg-black object-cover" muted autoPlay loop playsInline controls preload="auto" data-testid="proof-feed-video-autoplay" aria-label={`Day ${dayNumber} proof video ${index + 1} of ${items.length}`}><source src={src} type={proofVideoMimeType(item.url, item.mimeType)} />Your browser cannot play this proof video.</video>
+                  ) : imageSrc ? (
+                    <img src={src} alt={`Day ${dayNumber} proof ${index + 1} of ${items.length}`} className="h-full w-full bg-black object-cover" loading="lazy" decoding="async" />
+                  ) : (
+                    <div className="flex min-h-[5.5rem] items-center border-l-4 border-[#C8A96E] bg-[#130F08] p-4">
+                      <p className="break-words text-sm font-black leading-6 text-white">{item.url}</p>
+                    </div>
+                  )}
+                  <div className="pointer-events-none absolute left-3 top-3 z-20 rounded-full border border-white/20 bg-black/70 px-2 py-1 text-[8px] font-black uppercase tracking-[0.12em] text-white/90">{index + 1}/{items.length}</div>
+                  {isMedia && <p className="pointer-events-none absolute inset-x-4 top-1/2 z-20 -translate-y-1/2 text-center text-[9px] font-black uppercase tracking-[0.12em] text-white/80">{label} · {mediaType === "video" ? "training" : "proof"}</p>}
+                </div>
+              </CarouselItem>
+            );
+          })}
+        </CarouselContent>
+        {hasMultiple && (
+          <>
+            <CarouselPrevious className="left-2 border-[#C8A96E]/50 bg-black/75 text-[#F4D58D] hover:bg-[#1A1408] hover:text-white" />
+            <CarouselNext className="right-2 border-[#C8A96E]/50 bg-black/75 text-[#F4D58D] hover:bg-[#1A1408] hover:text-white" />
+            <div className="mt-2 flex justify-center gap-1.5" aria-hidden="true">
+              {items.map((item, index) => <span key={`${item.url}-dot-${index}`} className="h-1.5 w-1.5 rounded-full bg-[#C8A96E]/55" />)}
+            </div>
+          </>
+        )}
+      </Carousel>
     </div>
   );
 }

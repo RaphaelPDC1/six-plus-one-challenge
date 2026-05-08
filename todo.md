@@ -1022,3 +1022,10 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Update the Proof Feed UI to show the final Deep Thought only, without exposing internal reasoning steps.
 - [x] Add regression coverage for unique per-person output, proof/quote alignment, privacy protection, cache stability, and fallback behavior.
 - [x] Validate with focused tests, full tests/typecheck/build as practical, project health check, and save a checkpoint before delivery.
+
+## Bug Fix — Proof Multi-Media Visibility and Deep Thought Interpretation
+- [x] Fix Proof section media cards so when a participant uploads more than one image or video, all media are clearly reachable and users can tell there is more to swipe/view.
+- [x] Add an obvious but compact swipe/view-more prompt or pagination cue for multi-image and multi-video Proof posts, including Simone-style multi-upload posts.
+- [x] Refine Deep Thought so it interprets and adds meaning to the submitted quote/proof instead of repeating or paraphrasing the quote.
+- [x] Strengthen regression coverage for multiple proof media visibility, swipe/pagination cues, and Deep Thought outputs that do not echo the source quote.
+- [x] Validate with focused tests, full tests/typecheck/build where practical, project health check, and save a checkpoint before delivery.

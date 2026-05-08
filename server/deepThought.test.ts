@@ -142,16 +142,40 @@ describe("Deep Thought contextual engine", () => {
 
     expect(thoughts["303"].source).toBe("fallback");
     expect(thoughts["303"].insight).toContain("CTM");
-    expect(thoughts["303"].insight).toContain("Chafe cream");
+    expect(thoughts["303"].insight).toContain("the value is not in repeating the line");
+    expect(thoughts["303"].insight).not.toContain("Chafe cream prevented the small friction");
     expect(thoughts["303"].insight).not.toContain("embarrassed");
   });
 
-  it("fallback copy still links the quote to the proof instead of generic motivation", () => {
+  it("fallback copy interprets the quote instead of repeating it", () => {
     const context = buildDeepThoughtContext(snapshot.participants[0], snapshot.logs[0], snapshot.logs);
     const fallback = fallbackDeepThought(context);
 
-    expect(fallback).toContain("Chafe cream");
+    expect(fallback).toContain("the value is not in repeating the line");
     expect(fallback).toContain("35 minutes of run");
-    expect(fallback).toContain("evidence");
+    expect(fallback).toContain("the uncomfortable part is being treated as the training");
+    expect(fallback).not.toContain("Chafe cream prevented the small friction");
+  });
+
+  it("rejects AI output that mostly repeats the submitted teaching and uses the interpretive fallback", async () => {
+    vi.mocked(invokeLLM).mockResolvedValueOnce({
+      choices: [
+        {
+          message: {
+            content: JSON.stringify({
+              items: [
+                { logId: 101, insight: "CTM, chafe cream prevented the small friction from becoming the reason I stopped, so chafe cream prevented the small friction from becoming the reason I stopped." },
+              ],
+            }),
+          },
+        },
+      ],
+    } as any);
+
+    const thoughts = await generateDeepThoughtsForSnapshot(snapshot, [101]);
+
+    expect(thoughts["101"].source).toBe("fallback");
+    expect(thoughts["101"].insight).toContain("the value is not in repeating the line");
+    expect(thoughts["101"].insight).not.toContain("chafe cream prevented the small friction from becoming the reason I stopped");
   });
 });

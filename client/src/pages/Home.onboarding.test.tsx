@@ -314,6 +314,14 @@ describe("Home onboarding shell", () => {
     expect(homeSource).toContain("trpc.challenge.uploadProof.useMutation");
     expect(homeSource).toContain("accept=\"image/png,image/jpeg,image/webp,video/mp4,video/webm,video/quicktime\"");
     expect(homeSource).toContain("function ProofCarousel");
+    expect(homeSource).toContain("CarouselContent");
+    expect(homeSource).toContain("CarouselItem");
+    expect(homeSource).toContain("data-testid=\"proof-swipe-prompt\"");
+    expect(homeSource).toContain("Swipe to view all");
+    expect(homeSource).toContain("{index + 1}/{items.length}");
+    expect(homeSource).toContain("basis-[88%] pl-2");
+    expect(homeSource).toContain("CarouselPrevious");
+    expect(homeSource).toContain("CarouselNext");
     expect(homeSource).toContain("data-testid=\"proof-upload-video-preview\"");
     expect(homeSource).toContain("data-testid=\"proof-feed-video-autoplay\"");
     expect(homeSource).toContain("muted autoPlay loop playsInline controls");
@@ -339,94 +347,19 @@ describe("Home onboarding shell", () => {
     expect(homeSource).not.toContain("No public proof yet");
   });
 
-  it("generates Deep Thought insight as human individualized output without visible meta-source copy", () => {
+  it("uses the backend Deep Thought query and does not show visible meta-source copy", () => {
     const homeSource = readFileSync(new URL("./Home.tsx", import.meta.url), "utf8");
 
-    expect(homeSource).toContain("function buildProofWardenInsight(owner: any, log: any, ownerLogs: any[])");
-    expect(homeSource).toContain("owner?.primaryGoal");
-    expect(homeSource).toContain("owner?.biggestObstacle");
-    expect(homeSource).toContain("owner?.supportNeeded");
-    expect(homeSource).toContain("owner?.trainingLevel");
-    expect(homeSource).toContain("cleanEatingNote");
-    expect(homeSource).toContain("reflectionText");
-    expect(homeSource).toContain("readTeachText");
-    expect(homeSource).toContain("const isMotivationalTeaching = hasPublicProofText");
-    expect(homeSource).toContain("const teachingMeaning = isMotivationalTeaching");
-    expect(homeSource).toContain("const teachingLinkedSignals = teachingMeaning ? [");
-    expect(homeSource).toContain("const sharpSignals = [");
-    expect(homeSource).toContain("const reflectiveSignals = [");
-    expect(homeSource).toContain("seed % teachingLinkedSignals.length");
-    expect(homeSource).toContain("publicProofText");
-    expect(homeSource).toContain("proofTextSnippet");
-    expect(homeSource).toContain("standards before mood");
-    expect(homeSource).toContain("accountability");
-    expect(homeSource).toContain("resilience under pressure");
-    expect(homeSource).toContain("small repeated proof");
-    expect(homeSource).toContain("The teaching is really about making the standard decide before feelings get involved");
-    expect(homeSource).toContain("this does not need the quote repeated back");
-    expect(homeSource).toContain("the win is not drama; it is evidence");
-    expect(homeSource).not.toContain("this reads like a hinge day");
-    expect(homeSource).not.toContain("what nearly pulled you off, and what kept you on");
-    expect(homeSource).not.toContain("The image receipt gives the session a visible anchor");
-    expect(homeSource).not.toContain("your proof page already says it");
-    expect(homeSource).not.toContain("That line is the personal receipt");
-    expect(homeSource).not.toContain("reflectionSnippet");
-    expect(homeSource).toContain("privateReflectionSignal");
-    expect(homeSource).not.toContain("proofHas(\"video\")");
-    expect(homeSource).not.toContain("There is video evidence attached, so the claim has something behind it");
-    expect(homeSource).not.toContain("not pretending the file tells the whole story");
-    expect(homeSource).not.toContain("proofNames");
-    expect(homeSource).not.toContain("the upload named");
-    expect(homeSource).toContain("body standard");
-    expect(homeSource).toContain("discipline rebuild");
-    expect(homeSource).toContain("ordinary moments, not speeches");
-    expect(homeSource).toContain("Do not make it bigger; make it harder to skip");
-    expect(homeSource).not.toContain("the real test is not intensity");
-    expect(homeSource).not.toContain("protect the smallest repeatable move from today");
-    expect(homeSource).not.toContain("Takeaway:");
-    expect(homeSource).not.toContain("lives/4");
     expect(homeSource).toContain("data-testid=\"proof-deep-thought\"");
     expect(homeSource).toContain("Deep thought</MicroLabel>");
     expect(homeSource).toContain("trpc.challenge.deepThoughts.useQuery");
     expect(homeSource).toContain("Reading the quote, proof, and recent pattern before speaking");
     expect(homeSource).toContain("Context read");
+    expect(homeSource).toContain("deepThoughtQuery.data?.[String(log.id)]?.insight");
+    expect(homeSource).toContain("deepThoughtQuery.data?.[String(log.id)]?.insight");
     expect(homeSource).not.toContain("Generated from proof presence + exercise log + challenge context. No fake image reading.");
     expect(homeSource).not.toContain("No fake image reading");
     expect(homeSource).not.toMatch(/Ren[eé]e/);
-    expect(homeSource).toContain("deepThoughtQuery.data?.[String(log.id)]?.insight");
-    expect(homeSource).toContain("buildProofWardenInsight(owner, log, snapshot?.logs ?? [])");
-  });
-
-  it("falls back to proof and exercise context when Deep Thought sees factual notes rather than motivational teaching", () => {
-    const participant = {
-      id: 90005,
-      displayName: "CTM",
-      primaryGoal: "",
-      biggestObstacle: "",
-      supportNeeded: "",
-      trainingLevel: "",
-    };
-    const factualLog = {
-      participantId: 90005,
-      dayNumber: 2,
-      readTeachText: "Chafe cream in Spanish is crema anti-rozaduras (necesito comprarlo mañana)",
-      exerciseDuration: 31,
-      exerciseType: "Run",
-      exerciseProofUrl: "[{\"url\":\"/manus-storage/exercise-proof/participant-90005/day-2.png\",\"type\":\"image\",\"mimeType\":\"image/png\"}]",
-      reflectionText: "",
-      cleanEatingNote: "",
-    };
-    const insight = buildProofWardenInsight(participant, factualLog, [
-      factualLog,
-      { ...factualLog, dayNumber: 1, readTeachText: "Bread spread quickly from Jordan across the world once wheat was cultivated in the Fertile Crescent." },
-    ]);
-
-    expect(insight).toContain("CTM,");
-    expect(insight).not.toContain("the teaching here is");
-    expect(insight).not.toContain("line about");
-    expect(insight).not.toContain("lesson into action");
-    expect(insight).not.toContain("crema anti-rozaduras");
-    expect(insight).toMatch(/proof|standard|Run|run|evidence|decision|ordinary moments/);
   });
 
   it("wires installable web-app metadata to live-safe reference palette image icons", () => {
