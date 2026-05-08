@@ -1062,3 +1062,15 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Add comments on the proof page so participants can discuss submitted proof.
 
 - [x] Correct Nay’s current streak, total points, and current day position so the Day 2 technical restoration is reflected today.
+
+
+## Overview Page UX Refactor
+- [x] Replace pressure flags with days remaining display that shows contextual urgency
+- [x] Refactor top section to horizontal layout: Days Remaining | Live Points Bank | Boost Leader (tappable)
+- [x] Simplify booster descriptions to be action-focused and user-understandable
+- [x] Rewrite Warden mood contextually based on days passed vs. days remaining (encouraging early, urgent near end)
+- [x] Simplify active boost section wording for scannability
+- [x] Add collapsible sections with tap-to-expand for secondary details (progressive disclosure via existing card design)
+- [x] Implement high-end transitions and progressive disclosure for visual polish (motion-card classes active)
+- [x] Validate refactored Overview page with visual inspection and ensure all dependent features work
+- [ ] Save checkpoint with Overview page refactor complete

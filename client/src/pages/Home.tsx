@@ -1436,13 +1436,32 @@ function getBoostToneClass(tone?: string) {
   return "border-[#C8A96E]/55 bg-[#16130B] text-[#C8A96E]";
 }
 
-function WardenMoodCard({ mood, isLoading }: { mood: any; isLoading?: boolean }) {
-  const safeMood = mood ?? { label: "Reading the evidence", tone: "white", detail: "The Warden is reading today’s log, proof, lives, and private reflection signal.", confidence: 0, source: "fallback" };
+function WardenMoodCard({ mood, isLoading, currentDay, completedRules, totalRules }: { mood: any; isLoading?: boolean; currentDay?: number; completedRules?: number; totalRules?: number }) {
+  const daysRemaining = Math.max(0, 50 - (currentDay ?? 1));
+  const progressPercent = Math.round(((completedRules ?? 0) / (totalRules ?? 6)) * 100);
+  
+  // Contextual mood based on progress and days remaining
+  let contextualMood = mood;
+  if (!mood || mood.source === "fallback") {
+    if (daysRemaining <= 10 && progressPercent < 50) {
+      contextualMood = { label: "Pressure mounting", tone: "red", detail: "Days are short. Rules need attention.", confidence: 0.8, source: "contextual" };
+    } else if (daysRemaining <= 10 && progressPercent >= 50) {
+      contextualMood = { label: "Final push", tone: "gold", detail: "You're in the home stretch. Finish what you started.", confidence: 0.85, source: "contextual" };
+    } else if (daysRemaining > 25 && progressPercent >= 80) {
+      contextualMood = { label: "Solid foundation", tone: "green", detail: "Early consistency is paying off. Keep the rhythm.", confidence: 0.8, source: "contextual" };
+    } else if (progressPercent < 30) {
+      contextualMood = { label: "Building momentum", tone: "gold", detail: "You're finding the pattern. Stay with it.", confidence: 0.75, source: "contextual" };
+    } else {
+      contextualMood = { label: "On track", tone: "green", detail: "The work is showing. Keep moving.", confidence: 0.8, source: "contextual" };
+    }
+  }
+  
+  const safeMood = contextualMood ?? { label: "Reading the evidence", tone: "white", detail: "The Warden is reading today's log, proof, lives, and private reflection signal.", confidence: 0, source: "fallback" };
   return (
     <article className={classNames("motion-card min-w-0 rounded-[1.4rem] border p-4", getBoostToneClass(safeMood.tone))} data-testid="warden-mood-card">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <MicroLabel tone={safeMood.tone === "red" ? "red" : safeMood.tone === "green" ? "green" : safeMood.tone === "purple" ? "purple" : "gold"}>Warden Mood</MicroLabel>
-        <span className="rounded-full border border-current/40 bg-black/40 px-2 py-1 text-[8px] font-black uppercase tracking-[0.14em]">{isLoading ? "Reading" : safeMood.source === "ai" ? "Warden read" : "Rules read"}</span>
+        <span className="rounded-full border border-current/40 bg-black/40 px-2 py-1 text-[8px] font-black uppercase tracking-[0.14em]">{isLoading ? "Reading" : safeMood.source === "ai" ? "Warden read" : safeMood.source === "contextual" ? "Progress read" : "Rules read"}</span>
       </div>
       <h3 className="mt-3 break-words text-2xl font-black uppercase leading-none tracking-[-0.07em] text-white">{safeMood.label}</h3>
       <p className="mt-3 text-xs font-black uppercase leading-5 tracking-[0.12em] text-[#D8D8D8]">{safeMood.detail}</p>
@@ -1549,13 +1568,13 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
       </section>
 
       <section className="grid gap-2 sm:grid-cols-3" data-testid="overview-intelligence-grid">
-        <OverviewMetricCard label="Pressure flags" value={riskCount} detail={`${riskLeader?.displayName ?? "No one"} is carrying the current pressure signal`} tone={riskCount ? "red" : "green"} />
-        <OverviewMetricCard label="Live points bank" value={liveAppPoints} detail="Today’s visible value from tasks, proof, insight, and tracking" tone="green" />
+        <OverviewMetricCard label="Days remaining" value={Math.max(0, 50 - currentDay)} detail={currentDay <= 10 ? "Pace is building. Stay consistent." : currentDay <= 25 ? "Halfway through. Momentum matters." : currentDay <= 40 ? "Final stretch. Hold the line." : "Last 10 days. Finish strong."} tone={currentDay <= 10 ? "green" : currentDay <= 25 ? "gold" : currentDay <= 40 ? "gold" : "red"} />
+        <OverviewMetricCard label="Live points bank" value={liveAppPoints} detail="Today's visible value from tasks, proof, insight, and tracking" tone="green" />
         <OverviewMetricCard label="Boost leader" value={topBoostEarner ? `+${topBoostEarner.totalBoostPoints}` : 0} detail={topBoostEarner ? `${topBoostEarner.participant.displayName} · ${topBoostEarner.wins.length} wins` : "No boosts banked yet"} tone={topBoostEarner ? "gold" : "white"} />
       </section>
 
       <section className="grid gap-3 lg:grid-cols-[0.9fr_1.1fr]" data-testid="overview-boost-warden-grid">
-        <WardenMoodCard mood={wardenMoodQuery.data} isLoading={wardenMoodQuery.isLoading} />
+        <WardenMoodCard mood={wardenMoodQuery.data} isLoading={wardenMoodQuery.isLoading} currentDay={currentDay} completedRules={currentParticipant?.completedRulesToday ?? 0} totalRules={6} />
         <article className="rounded-[1.4rem] border border-[#2ECC71]/30 bg-[#07150D] p-4" data-testid="overview-active-boosts">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
@@ -1576,12 +1595,12 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
                   </div>
                   <p className="mt-3 text-sm font-black uppercase tracking-[-0.03em] text-white">{boost.name}</p>
                   <p className="mt-1 text-[10px] font-black uppercase tracking-[0.13em]">{win ? `+${win.pointsAwarded} · ${owner?.displayName ?? "Winner"}` : "+5 bonus available"}</p>
-                  <p className="mt-3 text-[10px] font-black uppercase leading-5 tracking-[0.12em] text-[#BDBDBD]">{win?.wardenNote ?? boost.shortRule}</p>
+                  <p className="mt-3 text-[10px] font-black uppercase leading-5 tracking-[0.12em] text-[#BDBDBD]">{win?.wardenNote ?? boost.description ?? boost.shortRule}</p>
                 </div>
               );
             })}
           </div>
-          <p className="mt-3 text-[9px] font-black uppercase tracking-[0.15em] text-[#777]">Your boost bank: {ownBoostWins.length} wins · +{ownTotalBoostPoints} additive. Base scoring stays clean.</p>
+          <p className="mt-3 text-[9px] font-black uppercase tracking-[0.15em] text-[#777]">Your boosts: {ownBoostWins.length} claimed · +{ownTotalBoostPoints} points total.</p>
           {unclaimedTodayBoosts.length > 0 && <p className="mt-2 rounded-full border border-[#C8A96E]/45 bg-[#16130B] px-3 py-2 text-[9px] font-black uppercase tracking-[0.14em] text-[#C8A96E]" data-testid="unclaimed-boost-alert">Still open: {unclaimedTodayBoosts.map((boost: any) => boost.name).join(" · ")}</p>}
         </article>
       </section>
