@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS `proof_comments` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`dailyLogId` int NOT NULL,\n\t`participantId` int NOT NULL,\n\t`comment` text NOT NULL,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\t`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n\tCONSTRAINT `proof_comments_id` PRIMARY KEY(`id`)\n);\nCREATE TABLE IF NOT EXISTS `proof_reactions` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`dailyLogId` int NOT NULL,\n\t`participantId` int NOT NULL,\n\t`reaction` enum('fire','strong','inspired','accountable') NOT NULL DEFAULT 'fire',\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\t`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n\tCONSTRAINT `proof_reactions_id` PRIMARY KEY(`id`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2P9ir9M7b3E7Qkh.8b2c854ea8b3 --database HPubf4auNvt8KXvgrLad5c --execute CREATE TABLE IF NOT EXISTS `proof_comments` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`dailyLogId` int NOT NULL,\n\t`participantId` int NOT NULL,\n\t`comment` text NOT NULL,\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\t`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n\tCONSTRAINT `proof_comments_id` PRIMARY KEY(`id`)\n);\nCREATE TABLE IF NOT EXISTS `proof_reactions` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`dailyLogId` int NOT NULL,\n\t`participantId` int NOT NULL,\n\t`reaction` enum('fire','strong','inspired','accountable') NOT NULL DEFAULT 'fire',\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\t`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n\tCONSTRAINT `proof_reactions_id` PRIMARY KEY(`id`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 446
+}

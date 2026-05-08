@@ -4,6 +4,7 @@ import { clampLives, getDailyLogProgress, getLivesTone } from "./challengeUi";
 const completeForm = {
   noAlcohol: true,
   cleanEating: true,
+  cleanEatingNote: "eggs, salad, chicken",
   exerciseDuration: 30,
   exerciseType: "Strength",
   reflectionText: "Today exposed a weak point.",
@@ -31,6 +32,23 @@ describe("challenge UI redesign helpers", () => {
       completedRules: 4,
       allAddressed: false,
       passThreshold: 5,
+    });
+  });
+
+  it("does not count Clean Eating from an early checkbox unless a meal note confirms the day", () => {
+    expect(getDailyLogProgress({ ...completeForm, cleanEating: true, cleanEatingNote: "" })).toMatchObject({
+      completedRules: 5,
+      allAddressed: true,
+    });
+
+    expect(getDailyLogProgress({ ...completeForm, cleanEating: true, cleanEatingNote: "eggs" })).toMatchObject({
+      completedRules: 5,
+      allAddressed: true,
+    });
+
+    expect(getDailyLogProgress({ ...completeForm, cleanEating: true, cleanEatingNote: "eggs, salad, chicken" })).toMatchObject({
+      completedRules: 6,
+      allAddressed: true,
     });
   });
 

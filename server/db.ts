@@ -8,6 +8,8 @@ import {
   type InsertBoostWin,
   participants,
   paymentEvents,
+  proofComments,
+  proofReactions,
   redemptionRequests,
   rewardCatalogue,
   signupRequests,
@@ -461,6 +463,91 @@ export async function getTodayLog(participantId: number, dayNumber = getCurrentC
   return rows[0];
 }
 
+const PROOF_REACTION_TYPES = ["fire", "strong", "inspired", "accountable"] as const;
+type ProofReactionType = (typeof PROOF_REACTION_TYPES)[number];
+
+async function assertVisibleProofLog(dailyLogId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  const log = (await db.select().from(dailyLogs).where(eq(dailyLogs.id, dailyLogId)).limit(1))[0];
+  if (!log) throw new Error("Proof post not found");
+  if (!String(log.exerciseProofUrl ?? "").trim() && !String(log.readTeachText ?? "").trim()) {
+    throw new Error("This log is not visible on the proof page yet.");
+  }
+  return log;
+}
+
+export async function getProofSocialForLogs(logIds: number[], viewerParticipantId?: number | null) {
+  const db = await getDb();
+  if (!db || logIds.length === 0) return { reactionsByLog: {}, commentsByLog: {} };
+  const uniqueIds = Array.from(new Set(logIds.filter(id => Number.isFinite(id))));
+  if (uniqueIds.length === 0) return { reactionsByLog: {}, commentsByLog: {} };
+  const [reactionRows, commentRows, participantRows] = await Promise.all([
+    db.select().from(proofReactions).where(inArray(proofReactions.dailyLogId, uniqueIds)),
+    db.select().from(proofComments).where(inArray(proofComments.dailyLogId, uniqueIds)).orderBy(desc(proofComments.createdAt)),
+    db.select().from(participants),
+  ]);
+  const participantById = new Map(participantRows.map(row => [row.id, row]));
+  const reactionsByLog: Record<number, { counts: Record<ProofReactionType, number>; viewerReaction: ProofReactionType | null; total: number }> = {};
+  const commentsByLog: Record<number, Array<{ id: number; dailyLogId: number; participantId: number; participantName: string; participantInitials: string; comment: string; createdAt: Date }>> = {};
+  for (const id of uniqueIds) {
+    reactionsByLog[id] = { counts: { fire: 0, strong: 0, inspired: 0, accountable: 0 }, viewerReaction: null, total: 0 };
+    commentsByLog[id] = [];
+  }
+  for (const reaction of reactionRows) {
+    const type = PROOF_REACTION_TYPES.includes(reaction.reaction as ProofReactionType) ? reaction.reaction as ProofReactionType : "fire";
+    const bucket = reactionsByLog[reaction.dailyLogId] ?? { counts: { fire: 0, strong: 0, inspired: 0, accountable: 0 }, viewerReaction: null, total: 0 };
+    bucket.counts[type] += 1;
+    bucket.total += 1;
+    if (viewerParticipantId && reaction.participantId === viewerParticipantId) bucket.viewerReaction = type;
+    reactionsByLog[reaction.dailyLogId] = bucket;
+  }
+  for (const comment of commentRows) {
+    const author = participantById.get(comment.participantId);
+    commentsByLog[comment.dailyLogId] = commentsByLog[comment.dailyLogId] ?? [];
+    commentsByLog[comment.dailyLogId].push({
+      id: comment.id,
+      dailyLogId: comment.dailyLogId,
+      participantId: comment.participantId,
+      participantName: author?.displayName ?? author?.whatsappName ?? "Participant",
+      participantInitials: author?.avatarInitials ?? "6+",
+      comment: comment.comment,
+      createdAt: comment.createdAt,
+    });
+  }
+  return { reactionsByLog, commentsByLog };
+}
+
+export async function toggleProofReaction(participantId: number, input: { dailyLogId: number; reaction: ProofReactionType }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  if (!PROOF_REACTION_TYPES.includes(input.reaction)) throw new Error("Unsupported reaction type");
+  await assertVisibleProofLog(input.dailyLogId);
+  const existing = (await db.select().from(proofReactions).where(and(eq(proofReactions.dailyLogId, input.dailyLogId), eq(proofReactions.participantId, participantId))).limit(1))[0];
+  if (existing?.reaction === input.reaction) {
+    await db.delete(proofReactions).where(eq(proofReactions.id, existing.id));
+    return { active: false as const, reaction: null };
+  }
+  if (existing) {
+    await db.update(proofReactions).set({ reaction: input.reaction }).where(eq(proofReactions.id, existing.id));
+  } else {
+    await db.insert(proofReactions).values({ dailyLogId: input.dailyLogId, participantId, reaction: input.reaction });
+  }
+  return { active: true as const, reaction: input.reaction };
+}
+
+export async function addProofComment(participantId: number, input: { dailyLogId: number; comment: string }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  await assertVisibleProofLog(input.dailyLogId);
+  const comment = input.comment.trim().replace(/\s+/g, " ");
+  if (comment.length < 2) throw new Error("Comment must include at least two characters.");
+  if (comment.length > 500) throw new Error("Comment must be 500 characters or fewer.");
+  await db.insert(proofComments).values({ dailyLogId: input.dailyLogId, participantId, comment });
+  const rows = await db.select().from(proofComments).where(and(eq(proofComments.dailyLogId, input.dailyLogId), eq(proofComments.participantId, participantId))).orderBy(desc(proofComments.createdAt)).limit(1);
+  return rows[0];
+}
+
 export function resolveDailyCompletionAward(existing: Pick<DailyLog, "dayComplete" | "pointsAwarded" | "submittedAt"> | undefined, input: {
   complete: boolean;
   dayNumber: number;
@@ -548,9 +635,10 @@ export async function submitDailyLog(participantId: number, input: SubmitDailyLo
   const exerciseDone = protectedInput.exerciseDuration >= 30 && protectedInput.exerciseType.trim().length > 0;
   const reflectionDone = protectedInput.reflectionText.trim().length > 0;
   const readTeachDone = protectedInput.readTeachText.trim().length > 0;
+  const cleanEatingDone = protectedInput.cleanEating && String(protectedInput.cleanEatingNote ?? "").trim().length >= 10;
   const complete = isDayComplete({
     noAlcohol: protectedInput.noAlcohol,
-    cleanEating: protectedInput.cleanEating,
+    cleanEating: cleanEatingDone,
     exerciseDone,
     reflectionDone,
     readTeachDone,
@@ -560,14 +648,14 @@ export async function submitDailyLog(participantId: number, input: SubmitDailyLo
   });
   const participantRows = await db.select().from(participants).where(eq(participants.id, participantId)).limit(1);
   const currentParticipant = participantRows[0];
-  const completedRules = [protectedInput.noAlcohol, protectedInput.cleanEating, exerciseDone, reflectionDone, readTeachDone, protectedInput.trackedEverything].filter(Boolean).length;
+  const completedRules = [protectedInput.noAlcohol, cleanEatingDone, exerciseDone, reflectionDone, readTeachDone, protectedInput.trackedEverything].filter(Boolean).length;
   const awardState = resolveDailyCompletionAward(existing, { complete, dayNumber: protectedInput.dayNumber, submittedAt, deadlinePassed, completedRules, ghostLifeUsed: Boolean(currentParticipant?.ghostLifeUsed), currentStreak: currentParticipant?.currentStreak ?? 0 });
   const values = {
     participantId,
     dayNumber: protectedInput.dayNumber,
     logDate,
     noAlcohol: protectedInput.noAlcohol,
-    cleanEating: protectedInput.cleanEating,
+    cleanEating: cleanEatingDone,
     cleanEatingNote: protectedInput.cleanEatingNote || null,
     exerciseDone,
     exerciseDuration: protectedInput.exerciseDuration,
@@ -603,7 +691,7 @@ export async function submitDailyLog(participantId: number, input: SubmitDailyLo
 
   const missedRules = getMissedRules({
     noAlcohol: protectedInput.noAlcohol,
-    cleanEating: protectedInput.cleanEating,
+    cleanEating: cleanEatingDone,
     exerciseDone,
     reflectionDone,
     readTeachDone,
@@ -611,6 +699,78 @@ export async function submitDailyLog(participantId: number, input: SubmitDailyLo
   });
 
   return { complete: awardState.dayComplete, pointsAwarded: awardState.pointsAwarded, missedRules, deadlinePassed, draftSaved: awardState.draftSaved, log: await getTodayLog(participantId, protectedInput.dayNumber) };
+}
+
+export async function recordNayBackdatedTechnicalProof(participantId: number, input: { dayNumber?: number; proofMedia: string; note?: string }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  const participant = (await db.select().from(participants).where(eq(participants.id, participantId)).limit(1))[0];
+  if (!participant) throw new Error("Participant not found");
+  const participantName = `${participant.displayName ?? ""} ${participant.whatsappName ?? ""}`.toLowerCase();
+  if (!participantName.includes("nay")) {
+    throw new Error("This backdated technical upload is only available for Nay.");
+  }
+
+  const dayNumber = input.dayNumber ?? 2;
+  const existing = await getTodayLog(participantId, dayNumber);
+  const deadline = getChallengeDeadlineForDay(dayNumber);
+  const completedRules = 6;
+  const pointsAwarded = existing?.pointsAwarded && existing.pointsAwarded > 0
+    ? existing.pointsAwarded
+    : calculateDailyPoints(dayNumber, true, { completedRules, submittedAt: deadline, ghostLifeUsed: Boolean(participant.ghostLifeUsed), currentStreak: Math.max(0, (participant.currentStreak ?? 0) - 1) });
+  const proofMedia = String(input.proofMedia ?? "").trim();
+  const technicalNote = String(input.note ?? "Backdated proof accepted after the Day 2 upload technical issue.").trim();
+  const values = {
+    participantId,
+    dayNumber,
+    logDate: getChallengeDateForDay(dayNumber),
+    noAlcohol: true,
+    cleanEating: true,
+    cleanEatingNote: existing?.cleanEatingNote || "Backdated technical correction: clean eating confirmed for the day.",
+    exerciseDone: true,
+    exerciseDuration: Math.max(30, existing?.exerciseDuration ?? 0),
+    exerciseType: existing?.exerciseType || "Backdated technical proof upload",
+    exerciseProofUrl: proofMedia || existing?.exerciseProofUrl || "Backdated technical proof accepted by exception.",
+    reflectionDone: true,
+    reflectionText: existing?.reflectionText || technicalNote,
+    reflectionShared: Boolean(existing?.reflectionShared),
+    readTeachDone: true,
+    readTeachText: existing?.readTeachText || technicalNote,
+    trackedEverything: true,
+    dayComplete: true,
+    pointsAwarded,
+    submittedAt: deadline,
+  };
+
+  if (existing) {
+    await db.update(dailyLogs).set(values).where(eq(dailyLogs.id, existing.id));
+  } else {
+    await db.insert(dailyLogs).values(values);
+  }
+
+  const lifeRows = await db.select().from(paymentEvents).where(and(eq(paymentEvents.participantId, participantId), eq(paymentEvents.status, "pending"))).limit(8);
+  for (const payment of lifeRows) {
+    const reason = String(payment.reason ?? "").toLowerCase();
+    if (reason.includes("day 2") || reason.includes("technical") || reason.includes("proof")) {
+      await db.update(paymentEvents).set({ status: "waived", confirmedAt: new Date() }).where(eq(paymentEvents.id, payment.id));
+    }
+  }
+
+  if (!existing?.dayComplete) {
+    await db.update(participants).set({
+      livesRemaining: Math.min(4, Math.max(0, participant.livesRemaining ?? 0) + 1),
+      totalPoints: (participant.totalPoints ?? 0) + pointsAwarded,
+      daysComplete: (participant.daysComplete ?? 0) + 1,
+    }).where(eq(participants.id, participantId));
+  }
+
+  await logWardenMessage({
+    mode: "system",
+    sourceEvent: "nay_life_restored_technical_issue",
+    content: "Nay has had one life restored because her Day 2 proof upload was affected by a technical issue. Her backdated proof window is now available and the related payment request is waived.",
+  });
+
+  return { success: true as const, dayNumber, log: await getTodayLog(participantId, dayNumber) };
 }
 
 export async function triggerLifeLoss(participantId: number, reason: string, dailyLogId?: number | null) {
@@ -678,9 +838,10 @@ export async function finalizePreviousDayIfNeeded(participantId: number, now = n
 
   const exerciseDone = Boolean(log.exerciseDone) || ((log.exerciseDuration ?? 0) >= 30 && String(log.exerciseType ?? "").trim().length > 0);
   const readTeachDone = Boolean(log.readTeachDone) || String(log.readTeachText ?? "").trim().length > 0;
+  const cleanEatingDone = Boolean(log.cleanEating) && String(log.cleanEatingNote ?? "").trim().length >= 10;
   const missedRules = getMissedRules({
     noAlcohol: Boolean(log.noAlcohol),
-    cleanEating: Boolean(log.cleanEating),
+    cleanEating: cleanEatingDone,
     exerciseDone,
     reflectionDone: Boolean(log.reflectionDone),
     readTeachDone,
@@ -832,13 +993,19 @@ export async function getAppSnapshot(userId: number, role: "admin" | "user" = "u
   const payments = rawPayments.filter(payment => participantIds.has(payment.participantId));
   const redemptions = rawRedemptions.filter(redemption => participantIds.has(redemption.participantId));
   const myLog = participant ? await getTodayLog(participant.id) : null;
+  const proofSocial = await getProofSocialForLogs(allLogs.filter(log => String(log.exerciseProofUrl ?? "").trim() || String(log.readTeachText ?? "").trim()).map(log => log.id), participant?.id ?? null);
+  const logsWithProofSocial = allLogs.map(log => ({
+    ...log,
+    proofReactions: proofSocial.reactionsByLog[log.id] ?? { counts: { fire: 0, strong: 0, inspired: 0, accountable: 0 }, viewerReaction: null, total: 0 },
+    proofComments: proofSocial.commentsByLog[log.id] ?? [],
+  }));
   return {
     accessState: { status: "ready" as const, reason: onboarding.reason },
     challenge: { currentDay, totalDays: 50, startDate: CHALLENGE_START_DATE, calendar: getChallengeCalendar(), monzoPaymentLink: DEFAULT_MONZO_PAYMENT_LINK },
     participant,
     myLog,
     participants: allParticipants,
-    logs: allLogs,
+    logs: logsWithProofSocial,
     rewards,
     payments,
     redemptions,

@@ -1044,4 +1044,21 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Ensure life-loss state is consistently reflected on Today, Board, Overview, and relevant participant detail views when a life is actually lost.
 - [x] Add or fix group-facing life-loss feedback, including a pop-up/toast and animation where the product expects everyone to see a life-loss event.
 - [x] Add or update regression coverage for proof upload failure handling, life-loss persistence, Board/Overview sync, and life-loss feedback.
-- [ ] Validate with tests, typecheck/build as practical, project health check, checkpoint, and explain the root cause clearly. Tests, typecheck, and project health check passed; checkpoint pending.
+- [x] Validate with tests, typecheck/build as practical, project health check, checkpoint, and explain the root cause clearly. Tests, typecheck, project health check, and checkpoint completed.
+
+## Data Correction and Feature — Nay Life Restoration and Backdated Proof Prompt
+- [x] Restore Nay’s lost life because the Day 2 loss was caused by a proof-upload technical issue rather than a genuine missed day.
+- [x] Reconcile or annotate Nay’s pending Day 2 life-loss/payment event so Board, Overview, and payment state no longer treat it as an active penalty.
+- [x] Add a Nay-only pop-up that lets her submit a backdated proof post for the affected day.
+- [x] Ensure the Nay-only backdated proof prompt remains available until she either submits the post or explicitly closes it.
+- [x] Add a group-facing notification explaining Nay got her life back due to a technical issue.
+- [x] Ensure the group notification only disappears after each participant taps/clicks to close it, not automatically.
+- [x] Add or update regression coverage for Nay life restoration, backdated proof prompt visibility, and tap-to-close technical reversal notification.
+- [x] Validate with tests, typecheck/build as practical, project health check, checkpoint, and report the completed correction clearly. Tests, typecheck, build, and health check completed; checkpoint pending.
+
+- [x] Prevent participants from treating Clean Eating as a start-of-day checkbox; require end-of-day confirmation or supporting meal note so the rule cannot be gamed early.
+
+- [x] Add reactions on the proof page so participants can respond to submitted proof.
+- [x] Add comments on the proof page so participants can discuss submitted proof.
+
+- [x] Correct Nay’s current streak, total points, and current day position so the Day 2 technical restoration is reflected today.

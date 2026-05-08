@@ -1,0 +1,19 @@
+{
+  "query": "UPDATE participants SET livesRemaining = 4 WHERE id = 60011 AND livesRemaining < 4; UPDATE payment_events SET status = 'waived', reason = CONCAT(reason, ' — Life restored: technical upload failure. Waived by admin.'), confirmedAt = NOW() WHERE id = 30001 AND participantId = 60011; SELECT p.id AS participantId, p.displayName, p.livesRemaining, pe.id AS paymentEventId, pe.status, pe.reason, pe.confirmedAt FROM participants p LEFT JOIN payment_events pe ON pe.participantId = p.id AND pe.id = 30001 WHERE p.id = 60011;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2P9ir9M7b3E7Qkh.8b2c854ea8b3 --database HPubf4auNvt8KXvgrLad5c --execute UPDATE participants SET livesRemaining = 4 WHERE id = 60011 AND livesRemaining < 4; UPDATE payment_events SET status = 'waived', reason = CONCAT(reason, ' — Life restored: technical upload failure. Waived by admin.'), confirmedAt = NOW() WHERE id = 30001 AND participantId = 60011; SELECT p.id AS participantId, p.displayName, p.livesRemaining, pe.id AS paymentEventId, pe.status, pe.reason, pe.confirmedAt FROM participants p LEFT JOIN payment_events pe ON pe.participantId = p.id AND pe.id = 30001 WHERE p.id = 60011;",
+  "rows": [
+    {
+      "participantId": "60011",
+      "displayName": "Nay",
+      "livesRemaining": "4",
+      "paymentEventId": "30001",
+      "status": "waived",
+      "reason": "Deadline passed for day 2. Missed rule(s): No Alcohol, Clean Eating, 30m Exercise, Daily Reflection, Read & Teach, Track Everything — Life restored: technical upload failure. Waived by admin.",
+      "confirmedAt": "2026-05-08 10:46:23"
+    }
+  ],
+  "messages": [],
+  "stdout": "participantId\tdisplayName\tlivesRemaining\tpaymentEventId\tstatus\treason\tconfirmedAt\n60011\tNay\t4\t30001\twaived\tDeadline passed for day 2. Missed rule(s): No Alcohol, Clean Eating, 30m Exercise, Daily Reflection, Read & Teach, Track Everything — Life restored: technical upload failure. Waived by admin.\t2026-05-08 10:46:23\n",
+  "stderr": "",
+  "execution_time_ms": 298
+}

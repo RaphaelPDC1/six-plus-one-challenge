@@ -1024,8 +1024,11 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
   const [draftRestored, setDraftRestored] = useState(false);
   const [draftReady, setDraftReady] = useState(false);
   const [saveProgressScale, setSaveProgressScale] = useState(0);
+  const [backdatedNote, setBackdatedNote] = useState("Day 2 proof uploaded after the original technical issue.");
+  const [technicalNoticeDismissed, setTechnicalNoticeDismissed] = useState(() => typeof window !== "undefined" && window.localStorage.getItem("nay-life-restored-technical-notice-dismissed") === "yes");
   const cameraProofInputRef = useRef<HTMLInputElement | null>(null);
   const libraryProofInputRef = useRef<HTMLInputElement | null>(null);
+  const backdatedProofInputRef = useRef<HTMLInputElement | null>(null);
   const participant = snapshot?.participant;
   const currentDayNumber = snapshot?.challenge?.currentDay ?? 1;
   const draftStorageKey = getDraftStorageKey(participant?.userId ?? participant?.id, currentDayNumber);
@@ -1044,6 +1047,11 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
     { label: "Bank", value: projectedPoints, detail: "projected", tone: "green" as const },
   ];
   const ghostLifeLocked = Boolean(participant?.ghostLifeUsed);
+  const participantNameForNayCheck = `${participant?.displayName ?? ""} ${participant?.whatsappName ?? ""}`.toLowerCase();
+  const isNayParticipant = participantNameForNayCheck.includes("nay");
+  const nayDayTwoLog = (snapshot?.logs ?? []).find((log: any) => log.participantId === participant?.id && Number(log.dayNumber) === 2);
+  const nayBackdatedProofComplete = Boolean(nayDayTwoLog?.dayComplete && String(nayDayTwoLog?.exerciseProofUrl ?? "").trim());
+  const technicalRestorationNotice = [...(snapshot?.wardenMessages ?? [])].reverse().find((message: any) => String(message.content ?? "").toLowerCase().includes("nay has had one life restored"));
 
   useEffect(() => {
     setDraftReady(false);
@@ -1139,6 +1147,22 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
     },
     onError: error => toast.error(error.message || "Could not upload proof media."),
   });
+  const submitNayBackdatedProof = trpc.challenge.submitNayBackdatedTechnicalProof.useMutation({
+    onSuccess: () => {
+      haptics.success();
+      toast("Backdated Day 2 proof saved. Nay’s restored life stays corrected.");
+      void utils.challenge.snapshot.invalidate();
+      refetch();
+    },
+    onError: error => toast.error(error.message || "Could not save Nay’s backdated proof."),
+  });
+  const uploadBackdatedProof = trpc.challenge.uploadProof.useMutation({
+    onSuccess: data => {
+      const proofMedia = appendProofMedia("", { url: data.url, type: data.mediaType, mimeType: data.mimeType, name: data.fileName });
+      submitNayBackdatedProof.mutate({ dayNumber: 2, proofMedia, note: backdatedNote });
+    },
+    onError: error => toast.error(error.message || "Could not upload the backdated proof media."),
+  });
 
   function markChecklistItem(key: "noAlcohol" | "cleanEating" | "trackedEverything", checked: boolean) {
     pulse(checked ? [18, 30, 18] : 12);
@@ -1164,9 +1188,50 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
     if (files.length > availableSlots) toast("Only the first available proof slots were queued.");
   }
 
+  function handleBackdatedProofFile(file?: File | null) {
+    if (!file) return;
+    if (!file.type.match(/^(image\/(png|jpeg|webp)|video\/(mp4|webm|quicktime))$/)) { toast.error("Use PNG, JPG, WEBP, MP4, MOV, or WEBM proof media."); return; }
+    const limit = file.type.startsWith("video/") ? 12_000_000 : 5_000_000;
+    if (file.size > limit) { toast.error(file.type.startsWith("video/") ? "Backdated proof video must be under 12MB." : "Backdated proof image must be under 5MB."); return; }
+    const reader = new FileReader();
+    const mimeType = file.type as "image/png" | "image/jpeg" | "image/webp" | "video/mp4" | "video/webm" | "video/quicktime";
+    reader.onload = () => uploadBackdatedProof.mutate({ fileName: file.name || "nay-day-2-proof", mimeType, dataUrl: String(reader.result) });
+    reader.onerror = () => toast.error("Could not read that backdated proof media.");
+    reader.readAsDataURL(file);
+  }
+
+  function dismissTechnicalNotice() {
+    setTechnicalNoticeDismissed(true);
+    if (typeof window !== "undefined") window.localStorage.setItem("nay-life-restored-technical-notice-dismissed", "yes");
+  }
+
   return (
     <div className="motion-page grid min-w-0 max-w-full gap-5 overflow-x-hidden xl:grid-cols-[minmax(0,1fr)_360px]">
+      {technicalRestorationNotice && !technicalNoticeDismissed && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/82 p-4" role="dialog" aria-modal="true" aria-labelledby="technical-restoration-title" data-testid="technical-restoration-notice">
+          <div className="w-full max-w-md border-2 border-[#2ECC71] bg-[#07150D] p-5 shadow-[0_0_70px_rgba(46,204,113,0.22)]">
+            <MicroLabel tone="green">Technical correction</MicroLabel>
+            <h2 id="technical-restoration-title" className="mt-3 text-4xl font-black uppercase leading-none tracking-[-0.07em] text-white">Nay’s life is restored.</h2>
+            <p className="mt-4 text-sm font-bold leading-6 text-[#CFF5DA]">{technicalRestorationNotice.content}</p>
+            <p className="mt-3 text-[10px] font-black uppercase tracking-[0.16em] text-[#85C99A]">This notice stays visible until you tap the close button below.</p>
+            <button type="button" onClick={dismissTechnicalNotice} className="motion-press mt-5 w-full border border-[#2ECC71] bg-[#2ECC71] px-4 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-black" data-testid="technical-restoration-close">Tap to close</button>
+          </div>
+        </div>
+      )}
       <section className="min-w-0 max-w-full space-y-5 overflow-x-hidden">
+        {isNayParticipant && !nayBackdatedProofComplete && (
+          <div className="border-2 border-[#9B59B6] bg-[#160D1D] p-4 shadow-[0_0_45px_rgba(155,89,182,0.18)]" data-testid="nay-backdated-proof-prompt">
+            <MicroLabel tone="purple">Nay only · Technical upload fix</MicroLabel>
+            <h2 className="mt-2 text-3xl font-black uppercase leading-none tracking-[-0.06em] text-white">Upload your backdated Day 2 proof.</h2>
+            <p className="mt-3 text-sm font-bold leading-6 text-[#D8B4FE]">Your life has already been restored because the original upload issue was technical. Add the missing Day 2 proof here so the proof feed and challenge record match the correction.</p>
+            <textarea value={backdatedNote} onChange={event => setBackdatedNote(event.target.value)} maxLength={300} className="mt-4 min-h-20 w-full border border-[#3E2A4D] bg-black/50 p-3 text-sm font-bold text-white outline-none focus:border-[#D8B4FE]" aria-label="Backdated proof note" />
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button type="button" disabled={uploadBackdatedProof.isPending || submitNayBackdatedProof.isPending} onClick={() => backdatedProofInputRef.current?.click()} className="motion-press border border-[#D8B4FE] bg-[#9B59B6] px-4 py-3 text-[10px] font-black uppercase tracking-[0.16em] text-white disabled:opacity-60">{uploadBackdatedProof.isPending || submitNayBackdatedProof.isPending ? "Saving proof" : "Choose proof media"}</button>
+              <span className="self-center text-[10px] font-black uppercase tracking-[0.14em] text-[#A78ABE]">Image or video accepted</span>
+            </div>
+            <input ref={backdatedProofInputRef} type="file" accept="image/png,image/jpeg,image/webp,video/mp4,video/quicktime,video/webm" className="sr-only" onChange={event => { handleBackdatedProofFile(event.target.files?.[0]); event.currentTarget.value = ""; }} />
+          </div>
+        )}
         <div className="min-w-0 max-w-full overflow-hidden border border-[#2A2A2A] bg-[#101010] p-4 sm:p-5">
           <div className="grid min-w-0 gap-5 md:grid-cols-[minmax(0,1fr)_minmax(0,320px)]">
             <div>
@@ -1223,13 +1288,17 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
             </label>
           </RuleCard>
 
-          <RuleCard title="Clean eating" label="Rule 02" icon={Utensils} complete={form.cleanEating} active={openRule === "cleanEating"} onToggle={() => setOpenRule(openRule === "cleanEating" ? "exercise" : "cleanEating")}>
+          <RuleCard title="Clean eating" label="Rule 02" icon={Utensils} complete={rules[1].done} active={openRule === "cleanEating"} onToggle={() => setOpenRule(openRule === "cleanEating" ? "exercise" : "cleanEating")}>
             <div className="space-y-3">
-              <label className="flex items-center justify-between gap-4 border border-[#2A2A2A] bg-[#0D0D0D] p-4">
-                <span className="text-sm font-black uppercase tracking-[0.12em] text-white">Food stayed on standard</span>
-                <input type="checkbox" checked={form.cleanEating} onChange={event => markChecklistItem("cleanEating", event.target.checked)} className="h-6 w-6 accent-[#2ECC71]" />
+              <div className="border border-[#C8A96E]/45 bg-[#16130B] p-3 text-[10px] font-black uppercase leading-5 tracking-[0.14em] text-[#F4D58D]">
+                End-of-day rule. Do not tick this in the morning — confirm it only after the food has actually happened.
+              </div>
+              <Field label="Food evidence required"><TextInput value={form.cleanEatingNote} onChange={event => setForm({ ...form, cleanEatingNote: event.target.value, cleanEating: form.cleanEating && event.target.value.trim().length >= 10 })} placeholder="Example: eggs breakfast, chicken/rice lunch, salmon dinner" /></Field>
+              <label className={classNames("flex items-center justify-between gap-4 border p-4", form.cleanEatingNote.trim().length >= 10 ? "border-[#2ECC71]/45 bg-[#07150D]" : "border-[#5A2C25] bg-[#180C0A]")}>
+                <span className="text-sm font-black uppercase tracking-[0.12em] text-white">I confirm clean eating for the full day</span>
+                <input type="checkbox" checked={form.cleanEating && form.cleanEatingNote.trim().length >= 10} disabled={form.cleanEatingNote.trim().length < 10} onChange={event => markChecklistItem("cleanEating", event.target.checked)} className="h-6 w-6 accent-[#2ECC71] disabled:opacity-40" />
               </label>
-              <Field label="Optional food note"><TextInput value={form.cleanEatingNote} onChange={event => setForm({ ...form, cleanEatingNote: event.target.value })} placeholder="Any context worth recording?" /></Field>
+              {form.cleanEatingNote.trim().length < 10 && <p className="text-[10px] font-black uppercase leading-5 tracking-[0.16em] text-[#C0392B]">Add a real meal note before Clean Eating can count.</p>}
             </div>
           </RuleCard>
 
@@ -1599,7 +1668,7 @@ const COMPLIANCE_RULE_LABELS = [
 function getLogRuleStates(log: any) {
   return [
     { key: "noAlcohol", done: Boolean(log?.noAlcohol) },
-    { key: "cleanEating", done: Boolean(log?.cleanEating) },
+    { key: "cleanEating", done: Boolean(log?.cleanEating) && String(log?.cleanEatingNote ?? "").trim().length >= 10 },
     { key: "exercise", done: Number(log?.exerciseDuration ?? 0) >= 30 && String(log?.exerciseType ?? "").trim().length > 1 },
     { key: "reflection", done: String(log?.reflectionText ?? "").trim().length > 1 },
     { key: "readTeach", done: String(log?.readTeachText ?? "").trim().length > 1 },
@@ -2180,11 +2249,31 @@ export function buildProofWardenInsight(owner: any, log: any, ownerLogs: any[]) 
 }
 
 function ProofFeed({ snapshot }: { snapshot: Snapshot }) {
+  const utils = trpc.useUtils();
+  const [commentDrafts, setCommentDrafts] = useState<Record<number, string>>({});
   const publicLogs = useMemo(() => (snapshot?.logs ?? []).filter((log: any) => parseProofMedia(log.exerciseProofUrl).length > 0 || String(log.readTeachText ?? "").trim().length > 0), [snapshot?.logs]);
   const deepThoughtLogIds = useMemo(() => publicLogs.slice(0, 12).map((log: any) => Number(log.id)).filter(Number.isFinite), [publicLogs]);
   const deepThoughtQuery = trpc.challenge.deepThoughts.useQuery({ logIds: deepThoughtLogIds }, { enabled: deepThoughtLogIds.length > 0, staleTime: 12 * 60 * 60 * 1000, refetchOnWindowFocus: false });
   const latestDay = Math.max(1, ...((snapshot?.logs ?? []).map((log: any) => Number(log.dayNumber ?? 1))));
   const waiting = (snapshot?.participants ?? []).filter((participant: any) => !publicLogs.some((log: any) => log.participantId === participant.id && Number(log.dayNumber ?? 0) === latestDay)).slice(0, 3);
+  const reactToProof = trpc.challenge.reactToProof.useMutation({
+    onSuccess: () => { pulse(10); utils.challenge.snapshot.invalidate(); },
+    onError: error => toast.error(error.message || "Reaction could not be saved."),
+  });
+  const commentOnProof = trpc.challenge.commentOnProof.useMutation({
+    onSuccess: (_data, variables) => {
+      setCommentDrafts(previous => ({ ...previous, [variables.dailyLogId]: "" }));
+      haptics.success();
+      utils.challenge.snapshot.invalidate();
+    },
+    onError: error => toast.error(error.message || "Comment could not be saved."),
+  });
+  const reactions = [
+    { key: "fire", label: "Fire" },
+    { key: "strong", label: "Strong" },
+    { key: "inspired", label: "Inspired" },
+    { key: "accountable", label: "Accountable" },
+  ] as const;
   return (
     <section className="mx-auto flex w-full max-w-[38rem] flex-col border border-[#202020] bg-[#070707] p-3 shadow-[0_0_40px_rgba(0,0,0,0.45)] sm:p-5" data-testid="proof-feed-redesign">
       <MicroLabel tone="green">Proof feed</MicroLabel>
@@ -2226,6 +2315,51 @@ function ProofFeed({ snapshot }: { snapshot: Snapshot }) {
                 </div>
                 <p className="mt-2 break-words text-[12px] font-bold italic leading-5 text-[#F0D58A] sm:text-[13px]">{wardenInsight}</p>
 
+              </div>
+              <div className="mt-3 border border-[#242424] bg-black/45 p-3" data-testid="proof-social-panel">
+                <div className="flex flex-wrap items-center gap-2">
+                  {reactions.map(reaction => {
+                    const social = log.proofReactions ?? { counts: {}, viewerReaction: null, total: 0 };
+                    const active = social.viewerReaction === reaction.key;
+                    const count = Number(social.counts?.[reaction.key] ?? 0);
+                    return (
+                      <button
+                        key={reaction.key}
+                        type="button"
+                        className={classNames("motion-press border px-3 py-2 text-[9px] font-black uppercase tracking-[0.14em] transition disabled:opacity-60", active ? "border-[#2ECC71] bg-[#07160E] text-[#2ECC71]" : "border-[#333] bg-[#0B0B0B] text-[#BDBDBD] hover:border-[#C8A96E] hover:text-[#C8A96E]")}
+                        disabled={reactToProof.isPending}
+                        onClick={() => reactToProof.mutate({ dailyLogId: Number(log.id), reaction: reaction.key })}
+                        aria-pressed={active}
+                        data-testid={`proof-reaction-${reaction.key}`}
+                      >
+                        {reaction.label} {count > 0 ? count : ""}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="mt-3 space-y-2" data-testid="proof-comments">
+                  {(log.proofComments ?? []).slice(0, 4).map((comment: any) => (
+                    <div key={comment.id} className="flex gap-2 border border-[#202020] bg-[#080808] p-2">
+                      <div className="grid h-7 w-7 shrink-0 place-items-center border border-[#333] bg-[#111] text-[9px] font-black uppercase text-[#C8A96E]">{comment.participantInitials ?? "6+"}</div>
+                      <div className="min-w-0">
+                        <p className="text-[9px] font-black uppercase tracking-[0.14em] text-[#888]">{comment.participantName ?? "Participant"}</p>
+                        <p className="mt-1 break-words text-xs font-bold leading-5 text-[#E8E8E8]">{comment.comment}</p>
+                      </div>
+                    </div>
+                  ))}
+                  {(log.proofComments ?? []).length === 0 && <p className="text-[10px] font-black uppercase tracking-[0.14em] text-[#666]">No comments yet. Call out the effort or keep someone accountable.</p>}
+                </div>
+                <form className="mt-3 flex gap-2" onSubmit={event => { event.preventDefault(); const comment = String(commentDrafts[log.id] ?? "").trim(); if (comment.length < 2) { toast.error("Write at least two characters before posting."); return; } commentOnProof.mutate({ dailyLogId: Number(log.id), comment }); }}>
+                  <input
+                    value={commentDrafts[log.id] ?? ""}
+                    onChange={event => setCommentDrafts(previous => ({ ...previous, [log.id]: event.target.value }))}
+                    maxLength={500}
+                    placeholder="React with words…"
+                    className="min-w-0 flex-1 border border-[#2A2A2A] bg-[#080808] px-3 py-2 text-xs font-bold text-white outline-none placeholder:text-[#555] focus:border-[#C8A96E]"
+                    data-testid="proof-comment-input"
+                  />
+                  <button type="submit" disabled={commentOnProof.isPending} className="motion-press border border-[#C8A96E] bg-[#17120A] px-3 py-2 text-[9px] font-black uppercase tracking-[0.14em] text-[#F4D58D] disabled:opacity-60">Post</button>
+                </form>
               </div>
             </article>
           );

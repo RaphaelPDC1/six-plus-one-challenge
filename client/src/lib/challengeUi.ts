@@ -4,6 +4,7 @@ export const DAILY_RULE_COUNT = 6;
 export type DailyLogRuleInput = {
   noAlcohol: boolean;
   cleanEating: boolean;
+  cleanEatingNote?: string;
   exerciseDuration: number;
   exerciseType: string;
   reflectionText: string;
@@ -30,9 +31,10 @@ export function getLivesTone(lives: number | null | undefined): "critical" | "da
 }
 
 export function getDailyLogRuleStates(form: DailyLogRuleInput): DailyLogRuleState[] {
+  const cleanEatingConfirmed = form.cleanEating && String(form.cleanEatingNote ?? "").trim().length >= 10;
   return [
     { key: "noAlcohol", done: form.noAlcohol },
-    { key: "cleanEating", done: form.cleanEating },
+    { key: "cleanEating", done: cleanEatingConfirmed },
     { key: "exercise", done: form.exerciseDuration >= 30 && form.exerciseType.trim().length > 1 },
     { key: "reflection", done: form.reflectionText.trim().length > 1 },
     { key: "readTeach", done: form.readTeachText.trim().length > 1 },

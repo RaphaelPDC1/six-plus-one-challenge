@@ -90,6 +90,24 @@ export const dailyLogs = mysqlTable("daily_logs", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 
+export const proofReactions = mysqlTable("proof_reactions", {
+  id: int("id").autoincrement().primaryKey(),
+  dailyLogId: int("dailyLogId").notNull(),
+  participantId: int("participantId").notNull(),
+  reaction: mysqlEnum("reaction", ["fire", "strong", "inspired", "accountable"]).default("fire").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export const proofComments = mysqlTable("proof_comments", {
+  id: int("id").autoincrement().primaryKey(),
+  dailyLogId: int("dailyLogId").notNull(),
+  participantId: int("participantId").notNull(),
+  comment: text("comment").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
 export const paymentEvents = mysqlTable("payment_events", {
   id: int("id").autoincrement().primaryKey(),
   participantId: int("participantId").notNull(),
@@ -163,6 +181,8 @@ export type InsertUser = typeof users.$inferInsert;
 export type SignupRequest = typeof signupRequests.$inferSelect;
 export type Participant = typeof participants.$inferSelect;
 export type DailyLog = typeof dailyLogs.$inferSelect;
+export type ProofReaction = typeof proofReactions.$inferSelect;
+export type ProofComment = typeof proofComments.$inferSelect;
 export type PaymentEvent = typeof paymentEvents.$inferSelect;
 export type RewardCatalogueItem = typeof rewardCatalogue.$inferSelect;
 export type RedemptionRequest = typeof redemptionRequests.$inferSelect;

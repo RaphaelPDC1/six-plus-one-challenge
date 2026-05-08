@@ -1,0 +1,8 @@
+{
+  "query": "SELECT id, display_name, whatsapp_name, email, lives_remaining, current_streak, longest_streak, total_points, days_complete, ghost_life_used, updated_at FROM participants WHERE LOWER(CONCAT(COALESCE(display_name,''),' ',COALESCE(whatsapp_name,''),' ',COALESCE(email,''))) LIKE '%nay%';\nSELECT p.id AS participant_id, p.display_name, dl.day_number, dl.day_complete, dl.points_awarded, dl.submitted_at, dl.created_at, dl.updated_at FROM participants p JOIN daily_logs dl ON dl.participant_id = p.id WHERE LOWER(CONCAT(COALESCE(p.display_name,''),' ',COALESCE(p.whatsapp_name,''),' ',COALESCE(p.email,''))) LIKE '%nay%' ORDER BY dl.day_number;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2P9ir9M7b3E7Qkh.8b2c854ea8b3 --database HPubf4auNvt8KXvgrLad5c --execute SELECT id, display_name, whatsapp_name, email, lives_remaining, current_streak, longest_streak, total_points, days_complete, ghost_life_used, updated_at FROM participants WHERE LOWER(CONCAT(COALESCE(display_name,''),' ',COALESCE(whatsapp_name,''),' ',COALESCE(email,''))) LIKE '%nay%';\nSELECT p.id AS participant_id, p.display_name, dl.day_number, dl.day_complete, dl.points_awarded, dl.submitted_at, dl.created_at, dl.updated_at FROM participants p JOIN daily_logs dl ON dl.participant_id = p.id WHERE LOWER(CONCAT(COALESCE(p.display_name,''),' ',COALESCE(p.whatsapp_name,''),' ',COALESCE(p.email,''))) LIKE '%nay%' ORDER BY dl.day_number;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 1: Unknown column 'display_name' in 'where clause'"
+  ]
+}

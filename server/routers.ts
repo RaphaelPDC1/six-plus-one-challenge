@@ -6,6 +6,7 @@ import { sdk } from "./_core/sdk";
 import { systemRouter } from "./_core/systemRouter";
 import { adminProcedure, protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import {
+  addProofComment,
   approveSignupRequest,
   awardBoostWin,
   calculateAndAwardBoostsForDay,
@@ -25,7 +26,9 @@ import {
   markPaymentReceived,
   markRedemptionFulfilled,
   rejectSignupRequest,
+  recordNayBackdatedTechnicalProof,
   submitDailyLog,
+  toggleProofReaction,
   triggerLifeLoss,
   tryApplyGhostLife,
   updateParticipantProfile,
@@ -176,6 +179,52 @@ export const appRouter = router({
         const safeName = input.fileName.replace(/[^a-z0-9._-]/gi, "-").slice(0, 80) || "exercise-proof";
         const stored = await storagePut(`exercise-proof/participant-${participant.id}/${Date.now()}-${safeName}.${extension}`, bytes, input.mimeType);
         return { success: true, url: stored.url, key: stored.key, mediaType: input.mimeType.startsWith("video/") ? "video" as const : "image" as const, mimeType: input.mimeType, fileName: safeName } as const;
+      }),
+
+    submitNayBackdatedTechnicalProof: protectedProcedure
+      .input(z.object({
+        dayNumber: z.number().int().min(1).max(50).default(2),
+        proofMedia: z.string().trim().min(2).max(12000),
+        note: z.string().trim().max(1000).optional().default("Backdated proof accepted after the Day 2 upload technical issue."),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const participant = await getParticipantByUserId(ctx.user.id);
+        if (!participant) throw new TRPCError({ code: "NOT_FOUND", message: "Participant profile not found" });
+        try {
+          return await recordNayBackdatedTechnicalProof(participant.id, input);
+        } catch (error) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: error instanceof Error ? error.message : "Could not save the backdated proof." });
+        }
+      }),
+
+    reactToProof: protectedProcedure
+      .input(z.object({
+        dailyLogId: z.number().int().positive(),
+        reaction: z.enum(["fire", "strong", "inspired", "accountable"]),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const participant = await getParticipantByUserId(ctx.user.id);
+        if (!participant) throw new TRPCError({ code: "NOT_FOUND", message: "Participant profile not found" });
+        try {
+          return await toggleProofReaction(participant.id, input);
+        } catch (error) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: error instanceof Error ? error.message : "Could not save reaction." });
+        }
+      }),
+
+    commentOnProof: protectedProcedure
+      .input(z.object({
+        dailyLogId: z.number().int().positive(),
+        comment: z.string().trim().min(2).max(500),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const participant = await getParticipantByUserId(ctx.user.id);
+        if (!participant) throw new TRPCError({ code: "NOT_FOUND", message: "Participant profile not found" });
+        try {
+          return await addProofComment(participant.id, input);
+        } catch (error) {
+          throw new TRPCError({ code: "BAD_REQUEST", message: error instanceof Error ? error.message : "Could not save comment." });
+        }
       }),
 
     loseLife: protectedProcedure
