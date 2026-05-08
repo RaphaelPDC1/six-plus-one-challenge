@@ -2064,7 +2064,9 @@ export function buildProofWardenInsight(owner: any, log: any, ownerLogs: any[]) 
 }
 
 function ProofFeed({ snapshot }: { snapshot: Snapshot }) {
-  const publicLogs = (snapshot?.logs ?? []).filter((log: any) => parseProofMedia(log.exerciseProofUrl).length > 0 || String(log.readTeachText ?? "").trim().length > 0);
+  const publicLogs = useMemo(() => (snapshot?.logs ?? []).filter((log: any) => parseProofMedia(log.exerciseProofUrl).length > 0 || String(log.readTeachText ?? "").trim().length > 0), [snapshot?.logs]);
+  const deepThoughtLogIds = useMemo(() => publicLogs.slice(0, 12).map((log: any) => Number(log.id)).filter(Number.isFinite), [publicLogs]);
+  const deepThoughtQuery = trpc.challenge.deepThoughts.useQuery({ logIds: deepThoughtLogIds }, { enabled: deepThoughtLogIds.length > 0, staleTime: 12 * 60 * 60 * 1000, refetchOnWindowFocus: false });
   const latestDay = Math.max(1, ...((snapshot?.logs ?? []).map((log: any) => Number(log.dayNumber ?? 1))));
   const waiting = (snapshot?.participants ?? []).filter((participant: any) => !publicLogs.some((log: any) => log.participantId === participant.id && Number(log.dayNumber ?? 0) === latestDay)).slice(0, 3);
   return (
@@ -2084,7 +2086,8 @@ function ProofFeed({ snapshot }: { snapshot: Snapshot }) {
       <div className="mt-4 grid gap-3">
         {publicLogs.map((log: any) => {
           const owner = snapshot?.participants.find((p: any) => p.id === log.participantId);
-          const wardenInsight = buildProofWardenInsight(owner, log, snapshot?.logs ?? []);
+          const aiDeepThought = deepThoughtQuery.data?.[String(log.id)]?.insight;
+          const wardenInsight = aiDeepThought ?? (deepThoughtQuery.isLoading ? "Reading the quote, proof, and recent pattern before speaking…" : buildProofWardenInsight(owner, log, snapshot?.logs ?? []));
           const quote = String(log.readTeachText ?? "").trim();
           return (
             <article key={log.id} className="motion-card min-w-0 overflow-hidden border border-[#1D1D1D] bg-[#101010] p-3 shadow-[0_0_24px_rgba(0,0,0,0.28)]" data-testid="proof-readable-card">
@@ -2103,7 +2106,7 @@ function ProofFeed({ snapshot }: { snapshot: Snapshot }) {
               <div className="mt-3 border border-[#C8A96E]/45 bg-[#140E05] p-3 shadow-[inset_3px_0_0_#C8A96E]" data-testid="proof-deep-thought">
                 <div className="flex items-center justify-between gap-3">
                   <MicroLabel tone="gold">Deep thought</MicroLabel>
-                  <span className="text-[8px] font-black uppercase tracking-[0.16em] text-[#6F5A2E]">Day {log.dayNumber}</span>
+                  <span className="text-[8px] font-black uppercase tracking-[0.16em] text-[#6F5A2E]">{aiDeepThought ? "Context read" : `Day ${log.dayNumber}`}</span>
                 </div>
                 <p className="mt-2 break-words text-[12px] font-bold italic leading-5 text-[#F0D58A] sm:text-[13px]">{wardenInsight}</p>
 

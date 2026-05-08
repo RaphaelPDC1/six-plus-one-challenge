@@ -1011,3 +1011,14 @@ User priority: the Warden should read the room, find tensions between words and 
 ## Refinement Pass (v4.7) — Proof Feed Deep Thought and Day Rollover Fixes
 - [x] Fix Proof Feed Deep Thought so factual Read & Teach posts such as CTM’s Spanish chafe-cream note do not get treated as motivational teaching quotes
 - [x] Refresh authenticated challenge snapshot at the Europe/London day rollover so Today’s Log resets without requiring a manual page reload
+
+## Deep Thought Rebuild — Contextual AI Reasoning Sequence
+- [x] Audit the current Proof Feed Deep Thought implementation and identify where deterministic or generic copy is still being produced.
+- [x] Design a backend Deep Thought sequence that gathers the participant’s proof text, quote/read-teach entry, public-safe profile context, recent challenge pattern, proof media metadata, and rule completion signals.
+- [x] Use AI-backed reasoning to generate a unique short insight per participant that feels surprising, direct, and clearly connected to what they posted in Proof.
+- [x] Keep private reflections private by using only high-level non-quoting signals unless content is already public-safe.
+- [x] Cache or key generated insights so answers are stable for the same post but update when the underlying proof/quote/context changes.
+- [x] Add deterministic fallback copy for AI failure that still uses the submitted proof and quote context rather than generic motivation.
+- [x] Update the Proof Feed UI to show the final Deep Thought only, without exposing internal reasoning steps.
+- [x] Add regression coverage for unique per-person output, proof/quote alignment, privacy protection, cache stability, and fallback behavior.
+- [x] Validate with focused tests, full tests/typecheck/build as practical, project health check, and save a checkpoint before delivery.

@@ -22,6 +22,10 @@ const mockState = vi.hoisted(() => ({
     mutateAsync: vi.fn(),
     isPending: false,
   },
+  deepThoughtsQuery: {
+    data: {},
+    isLoading: false,
+  },
 }));
 
 vi.mock("wouter", () => ({
@@ -66,6 +70,9 @@ vi.mock("@/lib/trpc", () => ({
       uploadProof: {
         useMutation: () => mockState.mutation,
       },
+      deepThoughts: {
+        useQuery: () => mockState.deepThoughtsQuery,
+      },
       applyGhostLife: {
         useMutation: () => mockState.mutation,
       },
@@ -103,6 +110,8 @@ describe("Home onboarding shell", () => {
     mockState.snapshotQuery.refetch.mockClear();
     mockState.mutation.mutate.mockClear();
     mockState.mutation.mutateAsync.mockClear();
+    mockState.deepThoughtsQuery.data = {};
+    mockState.deepThoughtsQuery.isLoading = false;
     if (typeof window !== "undefined") {
       window.sessionStorage.setItem("sixone-entry-seen", "true");
     }
@@ -378,11 +387,14 @@ describe("Home onboarding shell", () => {
     expect(homeSource).not.toContain("lives/4");
     expect(homeSource).toContain("data-testid=\"proof-deep-thought\"");
     expect(homeSource).toContain("Deep thought</MicroLabel>");
-    expect(homeSource).toContain("What the day says once the noise is stripped away.");
+    expect(homeSource).toContain("trpc.challenge.deepThoughts.useQuery");
+    expect(homeSource).toContain("Reading the quote, proof, and recent pattern before speaking");
+    expect(homeSource).toContain("Context read");
     expect(homeSource).not.toContain("Generated from proof presence + exercise log + challenge context. No fake image reading.");
     expect(homeSource).not.toContain("No fake image reading");
     expect(homeSource).not.toMatch(/Ren[eé]e/);
-    expect(homeSource).toContain("const wardenInsight = buildProofWardenInsight(owner, log, snapshot?.logs ?? []);");
+    expect(homeSource).toContain("deepThoughtQuery.data?.[String(log.id)]?.insight");
+    expect(homeSource).toContain("buildProofWardenInsight(owner, log, snapshot?.logs ?? [])");
   });
 
   it("falls back to proof and exercise context when Deep Thought sees factual notes rather than motivational teaching", () => {

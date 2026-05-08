@@ -31,6 +31,7 @@ import {
   updateParticipantProfile,
 } from "./db";
 import { generateWardenCommentary } from "./warden";
+import { generateDeepThoughtsForSnapshot } from "./deepThought";
 import { wardenRouter } from "./warden/wardenRouters";
 import { storagePut } from "./storage";
 import { notifyOwner } from "./_core/notification";
@@ -113,6 +114,13 @@ export const appRouter = router({
     snapshot: protectedProcedure.query(async ({ ctx }) => {
       return getAppSnapshot(ctx.user.id, ctx.user.role, ctx.user.email);
     }),
+
+    deepThoughts: protectedProcedure
+      .input(z.object({ logIds: z.array(z.number().int()).max(12).optional().default([]) }).optional())
+      .query(async ({ ctx, input }) => {
+        const snapshot = await getAppSnapshot(ctx.user.id, ctx.user.role, ctx.user.email);
+        return generateDeepThoughtsForSnapshot(snapshot, input?.logIds ?? []);
+      }),
 
     updateProfile: protectedProcedure
       .input(z.object({
