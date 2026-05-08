@@ -1086,3 +1086,7 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Add polished transitions for tap-to-reveal sections and card state changes.
 - [x] Add or update tests for the Overview helper wording/state logic.
 - [x] Validate with typecheck/build/tests and save a corrected checkpoint. Tests, typecheck, build, health check, and corrected checkpoint completed.
+
+## Non-Build Design Handoff
+- [x] Prepare non-build Overview page design handoff pack with one long screenshot and written explanation for Claude redesign guidance.
+
