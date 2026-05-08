@@ -1,0 +1,27 @@
+{
+  "query": "SELECT id, userId, displayName, avatarInitials, livesRemaining, currentStreak, totalPoints, daysComplete, updatedAt FROM participants WHERE LOWER(displayName) LIKE '%nay%' OR LOWER(whatsappName) LIKE '%nay%';\nSELECT dl.id, dl.participantId, p.displayName, dl.dayNumber, dl.logDate, dl.noAlcohol, dl.cleanEating, dl.exerciseDone, dl.exerciseDuration, dl.exerciseType, dl.exerciseProofUrl, dl.reflectionDone, dl.readTeachDone, dl.trackedEverything, dl.dayComplete, dl.pointsAwarded, dl.submittedAt, dl.updatedAt FROM daily_logs dl JOIN participants p ON p.id = dl.participantId WHERE LOWER(p.displayName) LIKE '%nay%' OR LOWER(p.whatsappName) LIKE '%nay%' ORDER BY dl.logDate DESC, dl.updatedAt DESC LIMIT 10;\nSELECT pe.id, pe.participantId, p.displayName, pe.dailyLogId, pe.amountPence, pe.reason, pe.status, pe.createdAt FROM payment_events pe JOIN participants p ON p.id = pe.participantId WHERE LOWER(p.displayName) LIKE '%nay%' OR LOWER(p.whatsappName) LIKE '%nay%' ORDER BY pe.createdAt DESC LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2P9ir9M7b3E7Qkh.8b2c854ea8b3 --database HPubf4auNvt8KXvgrLad5c --execute SELECT id, userId, displayName, avatarInitials, livesRemaining, currentStreak, totalPoints, daysComplete, updatedAt FROM participants WHERE LOWER(displayName) LIKE '%nay%' OR LOWER(whatsappName) LIKE '%nay%';\nSELECT dl.id, dl.participantId, p.displayName, dl.dayNumber, dl.logDate, dl.noAlcohol, dl.cleanEating, dl.exerciseDone, dl.exerciseDuration, dl.exerciseType, dl.exerciseProofUrl, dl.reflectionDone, dl.readTeachDone, dl.trackedEverything, dl.dayComplete, dl.pointsAwarded, dl.submittedAt, dl.updatedAt FROM daily_logs dl JOIN participants p ON p.id = dl.participantId WHERE LOWER(p.displayName) LIKE '%nay%' OR LOWER(p.whatsappName) LIKE '%nay%' ORDER BY dl.logDate DESC, dl.updatedAt DESC LIMIT 10;\nSELECT pe.id, pe.participantId, p.displayName, pe.dailyLogId, pe.amountPence, pe.reason, pe.status, pe.createdAt FROM payment_events pe JOIN participants p ON p.id = pe.participantId WHERE LOWER(p.displayName) LIKE '%nay%' OR LOWER(p.whatsappName) LIKE '%nay%' ORDER BY pe.createdAt DESC LIMIT 10;",
+  "rows": [
+    {
+      "id": "60011",
+      "userId": "151404",
+      "displayName": "Nay",
+      "avatarInitials": "N",
+      "livesRemaining": "3",
+      "currentStreak": "0",
+      "totalPoints": "10",
+      "daysComplete": "1",
+      "updatedAt": "2026-05-08 10:22:20"
+    }
+  ],
+  "messages": [
+    "id\tparticipantId\tdisplayName\tdayNumber\tlogDate\tnoAlcohol\tcleanEating\texerciseDone\texerciseDuration\texerciseType\texerciseProofUrl\treflectionDone\treadTeachDone\ttrackedEverything\tdayComplete\tpointsAwarded\tsubmittedAt\tupdatedAt",
+    "300002\t60011\tNay\t2\t2026-05-06\t0\t0\t0\t0\t\t\t0\t0\t0\t0\t0\t2026-05-07 23:00:00\t2026-05-08 10:22:20",
+    "6\t60011\tNay\t1\t2026-05-06\t1\t1\t1\t60\tWalking and stretching \t\t1\t1\t1\t1\t10\t2026-05-06 22:31:18\t2026-05-06 22:31:28",
+    "id\tparticipantId\tdisplayName\tdailyLogId\tamountPence\treason\tstatus\tcreatedAt",
+    "30001\t60011\tNay\t300002\t2500\tDeadline passed for day 2. Missed rule(s): No Alcohol, Clean Eating, 30m Exercise, Daily Reflection, Read & Teach, Track Everything\tpending\t2026-05-08 10:22:20"
+  ],
+  "stdout": "id\tuserId\tdisplayName\tavatarInitials\tlivesRemaining\tcurrentStreak\ttotalPoints\tdaysComplete\tupdatedAt\n60011\t151404\tNay\tN\t3\t0\t10\t1\t2026-05-08 10:22:20\nid\tparticipantId\tdisplayName\tdayNumber\tlogDate\tnoAlcohol\tcleanEating\texerciseDone\texerciseDuration\texerciseType\texerciseProofUrl\treflectionDone\treadTeachDone\ttrackedEverything\tdayComplete\tpointsAwarded\tsubmittedAt\tupdatedAt\n300002\t60011\tNay\t2\t2026-05-06\t0\t0\t0\t0\t\t\t0\t0\t0\t0\t0\t2026-05-07 23:00:00\t2026-05-08 10:22:20\n6\t60011\tNay\t1\t2026-05-06\t1\t1\t1\t60\tWalking and stretching \t\t1\t1\t1\t1\t10\t2026-05-06 22:31:18\t2026-05-06 22:31:28\nid\tparticipantId\tdisplayName\tdailyLogId\tamountPence\treason\tstatus\tcreatedAt\n30001\t60011\tNay\t300002\t2500\tDeadline passed for day 2. Missed rule(s): No Alcohol, Clean Eating, 30m Exercise, Daily Reflection, Read & Teach, Track Everything\tpending\t2026-05-08 10:22:20\n",
+  "stderr": "",
+  "execution_time_ms": 302
+}

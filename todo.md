@@ -1035,4 +1035,13 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Add a tap or click interaction on Board boost cards that explains what each boost does and how it affects the challenge.
 - [x] Fix the Proof page content layout so the proof feed/content is centred and aligned across desktop and mobile.
 - [x] Add or update regression coverage for Board boost claimant/detail display and Proof page centering where practical.
-- [ ] Validate with focused tests, full tests/typecheck/build as practical, project health check, and save a checkpoint before delivery. Tests and typecheck passed; checkpoint pending.
+- [x] Validate with focused tests, full tests/typecheck/build as practical, project health check, and save a checkpoint before delivery. Tests, typecheck, project health check, and checkpoint completed.
+
+## Bug Report — Nay Proof Upload and Life-Loss Visibility
+- [x] Identify Nay’s participant record and inspect today/recent daily logs, proof media fields, lives, and life-loss/payment records.
+- [x] Diagnose why Nay believes she lost a life after proof upload trouble while Board and Overview do not show the life loss.
+- [x] Verify whether proof upload failures can lead to an incomplete day or missed proof without a clear recovery path.
+- [x] Ensure life-loss state is consistently reflected on Today, Board, Overview, and relevant participant detail views when a life is actually lost.
+- [x] Add or fix group-facing life-loss feedback, including a pop-up/toast and animation where the product expects everyone to see a life-loss event.
+- [x] Add or update regression coverage for proof upload failure handling, life-loss persistence, Board/Overview sync, and life-loss feedback.
+- [ ] Validate with tests, typecheck/build as practical, project health check, checkpoint, and explain the root cause clearly. Tests, typecheck, and project health check passed; checkpoint pending.

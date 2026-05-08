@@ -490,6 +490,57 @@ function WardenPresence({ snapshot }: { snapshot: Snapshot }) {
   );
 }
 
+function LifeLossAlert({ snapshot }: { snapshot: Snapshot | undefined }) {
+  const [visibleEvent, setVisibleEvent] = useState<any>(null);
+  const payments = snapshot?.payments ?? [];
+  const participants = snapshot?.participants ?? [];
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !payments.length) return;
+    const latest = [...payments]
+      .filter((payment: any) => Number(payment.amountPence ?? 0) >= 2500)
+      .sort((a: any, b: any) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime())[0];
+    if (!latest?.id) return;
+    const storageKey = `sixone-life-loss-alert-seen-${latest.id}`;
+    if (window.localStorage.getItem(storageKey) === "true") return;
+    const participant = participants.find((item: any) => String(item.id) === String(latest.participantId));
+    const event = { ...latest, participant };
+    window.localStorage.setItem(storageKey, "true");
+    setVisibleEvent(event);
+    toast.error(`${participant?.displayName ?? "Someone"} lost a life`, { description: latest.reason ?? "A £25 life-loss payment is now pending." });
+    pulse([34, 48, 34]);
+    const timer = window.setTimeout(() => setVisibleEvent(null), 7200);
+    return () => window.clearTimeout(timer);
+  }, [payments, participants]);
+
+  if (!visibleEvent) return null;
+  const participant = visibleEvent.participant;
+  const livesAfter = clampLives(participant?.livesRemaining ?? 4);
+  const alert = (
+    <div className="pointer-events-none fixed inset-0 z-[120] grid place-items-center bg-black/42 px-4 backdrop-blur-[2px]" role="status" aria-live="polite" data-testid="life-loss-alert-overlay">
+      <section className="pointer-events-auto w-full max-w-md overflow-hidden rounded-[1.6rem] border border-[#C0392B]/70 bg-[#120706] p-5 text-white shadow-[0_0_80px_rgba(192,57,43,0.34)]">
+        <div className="relative overflow-hidden rounded-[1.25rem] border border-[#C0392B]/45 bg-black p-4">
+          <div className="absolute -right-10 -top-14 h-36 w-36 animate-pulse rounded-full bg-[#C0392B]/25 blur-3xl" aria-hidden="true" />
+          <MicroLabel tone="red">Life lost · group alert</MicroLabel>
+          <div className="relative mt-4 flex items-center gap-3">
+            <ProfilePhoto participant={participant ?? { displayName: "Participant", avatarInitials: "?" }} className="h-14 w-14 rounded-full" />
+            <div className="min-w-0">
+              <h2 className="break-words text-3xl font-black uppercase leading-none tracking-[-0.08em] text-white">{participant?.displayName ?? "Participant"} lost a life.</h2>
+              <p className="mt-2 text-xs font-black uppercase leading-5 tracking-[0.14em] text-[#FFB3A8]">Now on {livesAfter}/4 lives · £{(Number(visibleEvent.amountPence ?? 2500) / 100).toFixed(0)} pending</p>
+            </div>
+          </div>
+          <p className="relative mt-4 text-sm font-bold leading-6 text-[#D8D8D8]">{visibleEvent.reason ?? "A challenge rule was missed before the deadline."}</p>
+          <div className="relative mt-4 grid grid-cols-4 gap-1 bg-[#2A2A2A] p-[2px]" aria-label={`${livesAfter} lives remaining`}>
+            {Array.from({ length: 4 }).map((_, index) => <span key={index} className={classNames("h-7 transition-all duration-700", index < livesAfter ? "bg-[#C0392B]" : "animate-danger-drain bg-[#171717]")} />)}
+          </div>
+          <button type="button" onClick={() => setVisibleEvent(null)} className="relative mt-4 w-full rounded-full border border-[#C0392B]/60 bg-[#190B0A] px-4 py-3 text-[10px] font-black uppercase tracking-[0.18em] text-[#FFB3A8] hover:bg-[#240D0B]">Close alert</button>
+        </div>
+      </section>
+    </div>
+  );
+  return typeof document === "undefined" ? alert : createPortal(alert, document.body);
+}
+
 
 export function LogoMark({ compact = false }: { compact?: boolean }) {
   return (
@@ -2426,7 +2477,13 @@ export default function Home() {
   const [loginEntryVisible, setLoginEntryVisible] = useState(false);
   const previousAuthRef = useRef(isAuthenticated);
   const utils = trpc.useUtils();
-  const snapshotQuery = trpc.challenge.snapshot.useQuery(undefined, { enabled: isAuthenticated });
+  const snapshotQuery = trpc.challenge.snapshot.useQuery(undefined, {
+    enabled: isAuthenticated,
+    refetchInterval: 30000,
+    refetchIntervalInBackground: true,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+  });
   const snapshot = snapshotQuery.data;
 
   useEffect(() => {
@@ -2524,6 +2581,7 @@ export default function Home() {
         )}
       </section>
 
+      <LifeLossAlert snapshot={snapshot} />
       <MobileBottomNav mobileTabs={mobileTabs} activeTab={activeTab} activeMobileIndex={activeMobileIndex} onSelect={setActiveTab} />
     </main>
   );

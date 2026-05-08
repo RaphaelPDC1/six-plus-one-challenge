@@ -691,6 +691,24 @@ export async function finalizePreviousDayIfNeeded(participantId: number, now = n
   return { finalized: true as const, dayNumber: dayToFinalize, missedRules };
 }
 
+export async function finalizeAllParticipantsPreviousDayIfNeeded(now = new Date()) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  const currentDay = getCurrentChallengeDay(now);
+  const dayToFinalize = currentDay - 1;
+  if (dayToFinalize < 1 || now.getTime() <= getChallengeDeadlineForDay(dayToFinalize).getTime()) {
+    return { finalizedCount: 0, results: [] as Array<{ participantId: number; result: Awaited<ReturnType<typeof finalizePreviousDayIfNeeded>> }> };
+  }
+
+  const allParticipants = await db.select().from(participants);
+  const results = [] as Array<{ participantId: number; result: Awaited<ReturnType<typeof finalizePreviousDayIfNeeded>> }>;
+  for (const participant of allParticipants) {
+    const result = await finalizePreviousDayIfNeeded(participant.id, now);
+    results.push({ participantId: participant.id, result });
+  }
+  return { finalizedCount: results.filter(item => item.result.finalized).length, results };
+}
+
 export async function tryApplyGhostLife(participantId: number, exerciseDuration: number, insightCount: number) {
   const db = await getDb();
   if (!db) throw new Error("Database unavailable");
@@ -789,7 +807,7 @@ export async function getAppSnapshot(userId: number, role: "admin" | "user" = "u
     };
   }
   const participant = role === "admin" ? null : await getOrCreateParticipant({ id: userId, name: null, email });
-  if (participant) await finalizePreviousDayIfNeeded(participant.id);
+  await finalizeAllParticipantsPreviousDayIfNeeded().catch(error => console.warn("[LifeLoss] Snapshot-wide overdue finalization skipped", error));
   await seedRewardsIfEmpty();
   const currentDay = getCurrentChallengeDay();
   if (currentDay > 1) {
