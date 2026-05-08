@@ -475,18 +475,18 @@ describe("Home onboarding shell", () => {
 
     expect(homeSource).toContain('data-testid="overview-metrics-dashboard"');
     expect(homeSource).toContain('data-testid="overview-red-alert-pace-card"');
-    expect(homeSource).toContain("Overview · quick read");
+    expect(homeSource).toContain("Challenge state");
     expect(homeSource).toContain("Days left");
     expect(homeSource).toContain("tap for wins");
     expect(homeSource).toContain('data-testid="overview-intelligence-grid"');
     expect(homeSource).toContain('data-testid="personal-rivalry-cards"');
     expect(homeSource).toContain("The gap above. The threat below.");
     expect(homeSource).toContain('data-testid="overview-compare-list"');
-    expect(homeSource).toContain("Live bank");
+    expect(homeSource).toContain("Banked today");
     expect(homeSource).toContain('data-testid="pace-bar"');
     expect(homeSource).toContain("Board / Bosses");
     expect(homeSource).toContain('data-testid="boost-key-slots"');
-    expect(homeSource).toContain("Tap to learn what this boost does");
+    expect(homeSource).toContain("Tap one. See how to win it.");
     expect(homeSource).toContain('data-testid="overview-active-boosts"');
     expect(homeSource).toContain('data-testid="warden-mood-card"');
     expect(homeSource).toContain("+5 bonus available");
@@ -646,8 +646,8 @@ describe("Home onboarding shell", () => {
     expect(homeSource).toContain("data-testid=\"participant-profile-overlay\"");
     expect(homeSource).toContain("max-h-[min(92svh,46rem)] w-full max-w-xl flex-col overflow-hidden");
     expect(homeSource).toContain("createPortal(sheet, document.body)");
-    expect(homeSource).toContain("Back to Board");
-    expect(homeSource).toContain('aria-label="Back to Board list"');
+    expect(homeSource).toContain("Back to Overview");
+    expect(homeSource).toContain('aria-label="Back to Overview list"');
     expect(homeSource).toContain('aria-label="Close participant details"');
     expect(homeSource).toContain("role=\"dialog\" aria-modal=\"true\"");
     expect(homeSource).toContain("min-[380px]:grid-cols-3");

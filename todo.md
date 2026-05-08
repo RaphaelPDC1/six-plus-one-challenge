@@ -1095,3 +1095,12 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Replace the Overview handoff screenshot with a mobile-view long screenshot for Claude design review.
 - [x] Update the Overview handoff document so it references the mobile screenshot rather than the desktop screenshot.
 
+
+## Claude Mobile Overview Redesign
+- [x] Extract Claude’s redesign brief from the attached PDF without re-opening the attached images.
+- [x] Convert Claude’s recommendations into concrete mobile Overview UI and copy requirements.
+- [x] Redesign the Overview page around phone-first hierarchy, clearer rank/points/lives/day context, boost status, rival pressure, and pressure list usability.
+- [x] Preserve existing challenge data, participant detail interactions, boost logic, lives logic, and current navigation.
+- [x] Add or update regression coverage for the Overview helper logic and redesigned states.
+- [x] Validate with tests, typecheck/build as practical, project health check, checkpoint, and report the completed redesign clearly. Tests, build, and project health check passed; checkpoint pending.
+
