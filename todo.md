@@ -1029,3 +1029,10 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Refine Deep Thought so it interprets and adds meaning to the submitted quote/proof instead of repeating or paraphrasing the quote.
 - [x] Strengthen regression coverage for multiple proof media visibility, swipe/pagination cues, and Deep Thought outputs that do not echo the source quote.
 - [x] Validate with focused tests, full tests/typecheck/build where practical, project health check, and save a checkpoint before delivery.
+
+## Board Boost Claims and Proof Layout Fix
+- [x] Show the claimant name and avatar or initials on every claimed boost on the Board page instead of only saying claimed.
+- [x] Add a tap or click interaction on Board boost cards that explains what each boost does and how it affects the challenge.
+- [x] Fix the Proof page content layout so the proof feed/content is centred and aligned across desktop and mobile.
+- [x] Add or update regression coverage for Board boost claimant/detail display and Proof page centering where practical.
+- [ ] Validate with focused tests, full tests/typecheck/build as practical, project health check, and save a checkpoint before delivery. Tests and typecheck passed; checkpoint pending.

@@ -1800,6 +1800,7 @@ function PodiumCard({ participant, index, onSelect, className }: { participant: 
 function Leaderboard({ snapshot }: { snapshot: Snapshot }) {
   const [selected, setSelected] = useState<any>(null);
   const [expandedParticipantId, setExpandedParticipantId] = useState<string | number | null>(null);
+  const [expandedBoostSlotId, setExpandedBoostSlotId] = useState<string | number | null>(null);
   const logs = snapshot?.logs ?? [];
   const participants = snapshot?.participants ?? [];
   const currentDay = snapshot?.challenge?.currentDay ?? 1;
@@ -1812,7 +1813,22 @@ function Leaderboard({ snapshot }: { snapshot: Snapshot }) {
   const boostSlots = activeBoosts.map((boost: any, index: number) => {
     const win = todayBoostWins.find((item: any) => item.boostId === boost.id);
     const owner = win ? participants.find((participant: any) => String(participant.id) === String(win.userId)) : null;
-    return { ...boost, state: win ? "Claimed" : "Open", title: owner?.displayName ?? boost.name, value: win ? `+${win.pointsAwarded} additive` : "+5 bonus available", detail: win?.wardenNote ?? boost.antiGaming ?? boost.shortRule, slot: boost.slot ?? index + 1 };
+    const claimantName = owner?.displayName ?? (win ? "Unknown challenger" : "Unclaimed");
+    return {
+      ...boost,
+      win,
+      owner,
+      claimantName,
+      claimed: Boolean(win),
+      state: win ? "Claimed" : "Open",
+      title: boost.name,
+      value: win ? `Won by ${claimantName}` : "+5 bonus available",
+      pointsLine: win ? `+${win.pointsAwarded} boost points banked` : "+5 boost still available",
+      detail: boost.shortRule ?? boost.antiGaming ?? "A rotating +5 bonus window for the strongest eligible challenger.",
+      antiGaming: boost.antiGaming ?? "Only clean, eligible logs count. The boost cannot be gamed after the fact.",
+      resultNote: win?.wardenNote ?? null,
+      slot: boost.slot ?? index + 1,
+    };
   });
   return (
     <section className="motion-page space-y-4 overflow-hidden border border-[#2A2A2A] bg-[#101010] p-3 sm:p-5" data-testid="bosses-board-section">
@@ -1833,15 +1849,45 @@ function Leaderboard({ snapshot }: { snapshot: Snapshot }) {
         <div className="mt-4 grid gap-2 sm:grid-cols-3">
           {boostSlots.map((slot: any, index: number) => {
             const toneClass = getBoostToneClass(slot.tone);
+            const isBoostExpanded = String(expandedBoostSlotId) === String(slot.id ?? slot.slot ?? index);
+            const detailId = `boost-slot-${slot.id ?? slot.slot ?? index}-detail`;
             return (
-              <article key={slot.title} className={classNames("min-w-0 rounded-[1rem] border p-3", toneClass)} data-boost-slot={index + 1}>
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-[9px] font-black uppercase tracking-[0.16em]">{slot.icon} · Slot {slot.slot ?? index + 1}</span>
-                  <span className="rounded-full border border-current/40 bg-black/40 px-2 py-1 text-[8px] font-black uppercase tracking-[0.14em]">{slot.state}</span>
-                </div>
-                <p className="mt-3 truncate text-sm font-black uppercase tracking-[-0.03em] text-white">{slot.title}</p>
-                <p className="mt-1 text-[10px] font-black uppercase tracking-[0.13em]">{slot.value}</p>
-                <p className="mt-3 text-[10px] font-black uppercase leading-5 tracking-[0.12em] text-[#BDBDBD]">{slot.detail}</p>
+              <article key={slot.id ?? `${slot.title}-${index}`} className={classNames("min-w-0 overflow-hidden rounded-[1rem] border", toneClass)} data-boost-slot={index + 1} data-testid="boost-slot-card">
+                <button
+                  type="button"
+                  className="motion-press w-full p-3 text-left"
+                  aria-expanded={isBoostExpanded}
+                  aria-controls={detailId}
+                  aria-label={`Show ${slot.title} boost details`}
+                  onClick={() => { pulse(12); setExpandedBoostSlotId(isBoostExpanded ? null : (slot.id ?? slot.slot ?? index)); }}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[9px] font-black uppercase tracking-[0.16em]">{slot.icon} · Slot {slot.slot ?? index + 1}</span>
+                    <span className="rounded-full border border-current/40 bg-black/40 px-2 py-1 text-[8px] font-black uppercase tracking-[0.14em]">{slot.state}</span>
+                  </div>
+                  <p className="mt-3 truncate text-sm font-black uppercase tracking-[-0.03em] text-white">{slot.title}</p>
+                  {slot.claimed ? (
+                    <div className="mt-3 flex min-w-0 items-center gap-2 border border-current/25 bg-black/35 p-2" data-testid="boost-claimant">
+                      <ProfilePhoto participant={slot.owner} className="h-9 w-9 shrink-0" />
+                      <span className="min-w-0">
+                        <span className="block text-[8px] font-black uppercase tracking-[0.16em] opacity-75">Won by</span>
+                        <span className="block truncate text-xs font-black uppercase tracking-[0.06em] text-white">{slot.claimantName}</span>
+                      </span>
+                    </div>
+                  ) : (
+                    <p className="mt-3 text-[10px] font-black uppercase tracking-[0.13em]">Unclaimed today</p>
+                  )}
+                  <p className="mt-2 text-[10px] font-black uppercase tracking-[0.13em]">{slot.pointsLine}</p>
+                  <p className="mt-3 text-[9px] font-black uppercase tracking-[0.16em] opacity-80" data-testid="boost-tap-hint">Tap to learn what this boost does</p>
+                </button>
+                {isBoostExpanded && (
+                  <div id={detailId} className="border-t border-current/25 bg-black/35 p-3" data-testid="boost-detail-panel">
+                    <MicroLabel tone={slot.tone === "green" ? "green" : slot.tone === "red" ? "red" : slot.tone === "purple" ? "purple" : "gold"}>What it does</MicroLabel>
+                    <p className="mt-2 text-[11px] font-black uppercase leading-5 tracking-[0.11em] text-white">{slot.detail}</p>
+                    <p className="mt-3 text-[10px] font-bold uppercase leading-5 tracking-[0.12em] text-[#BDBDBD]">How it is won: {slot.antiGaming}</p>
+                    {slot.resultNote && <p className="mt-3 border-l-2 border-current pl-3 text-[10px] font-bold uppercase leading-5 tracking-[0.12em] text-[#D8D8D8]">Why {slot.claimantName} got it: {slot.resultNote}</p>}
+                  </div>
+                )}
               </article>
             );
           })}
@@ -2089,7 +2135,7 @@ function ProofFeed({ snapshot }: { snapshot: Snapshot }) {
   const latestDay = Math.max(1, ...((snapshot?.logs ?? []).map((log: any) => Number(log.dayNumber ?? 1))));
   const waiting = (snapshot?.participants ?? []).filter((participant: any) => !publicLogs.some((log: any) => log.participantId === participant.id && Number(log.dayNumber ?? 0) === latestDay)).slice(0, 3);
   return (
-    <section className="mx-auto max-w-[34rem] border border-[#202020] bg-[#070707] p-3 shadow-[0_0_40px_rgba(0,0,0,0.45)] sm:p-5" data-testid="proof-feed-redesign">
+    <section className="mx-auto flex w-full max-w-[38rem] flex-col border border-[#202020] bg-[#070707] p-3 shadow-[0_0_40px_rgba(0,0,0,0.45)] sm:p-5" data-testid="proof-feed-redesign">
       <MicroLabel tone="green">Proof feed</MicroLabel>
       <h2 className="mt-2 break-words text-[2rem] font-black uppercase leading-[0.82] tracking-[-0.08em] text-white sm:text-5xl">Receipts.<br />Insights.<br />Momentum.</h2>
       <p className="mt-3 max-w-sm text-[10px] font-black uppercase leading-4 tracking-[0.12em] text-[#858585]">What the day says once the noise is stripped away.</p>
@@ -2469,7 +2515,7 @@ export default function Home() {
               {activeTab === "myday" && <MyDay snapshot={snapshot} refetch={snapshotQuery.refetch} />}
               {activeTab === "overview" && <Overview snapshot={snapshot} />}
               {activeTab === "leaderboard" && <Leaderboard snapshot={snapshot} />}
-              {activeTab === "proof" && <ProofFeed snapshot={snapshot} />}
+              {activeTab === "proof" && <div className="flex w-full justify-center" data-testid="proof-page-centered-shell"><ProofFeed snapshot={snapshot} /></div>}
               {activeTab === "rewards" && <Rewards snapshot={snapshot} refetch={snapshotQuery.refetch} />}
               {activeTab === "calendar" && <CalendarView />}
               {activeTab === "admin" && (user?.role === "admin" ? <AdminPanel snapshot={snapshot} refetch={snapshotQuery.refetch} /> : <div className="border border-[#2A2A2A] bg-[#101010] p-8"><MicroLabel tone="red">Restricted</MicroLabel><p className="mt-3 text-xl font-black uppercase text-white">Founder dashboard is restricted to admin users.</p></div>)}
