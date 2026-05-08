@@ -1085,4 +1085,4 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Reduce wordiness across the Overview page by using short labels, visual state, and tap-to-review details.
 - [x] Add polished transitions for tap-to-reveal sections and card state changes.
 - [x] Add or update tests for the Overview helper wording/state logic.
-- [ ] Validate with typecheck/build/tests and save a corrected checkpoint. Tests, typecheck, build, and health check passed; checkpoint pending.
+- [x] Validate with typecheck/build/tests and save a corrected checkpoint. Tests, typecheck, build, health check, and corrected checkpoint completed.
