@@ -1090,3 +1090,8 @@ User priority: the Warden should read the room, find tensions between words and 
 ## Non-Build Design Handoff
 - [x] Prepare non-build Overview page design handoff pack with one long screenshot and written explanation for Claude redesign guidance.
 
+
+## Mobile Screenshot Handoff Update
+- [x] Replace the Overview handoff screenshot with a mobile-view long screenshot for Claude design review.
+- [x] Update the Overview handoff document so it references the mobile screenshot rather than the desktop screenshot.
+

@@ -4,7 +4,7 @@
 **Project:** 6+1 Four Lives Challenge  
 **Purpose:** This is a **non-build handoff**. It explains the current Overview page so it can be taken into Claude for better design, wording, usability, and intuitive function suggestions. No app code was changed for this handoff.
 
-![Current Overview page long screenshot](./overview-page-long-screenshot-auto.png)
+![Current Overview page mobile long screenshot](./overview-page-mobile-long-screenshot.png)
 
 ## Executive Summary
 
@@ -105,7 +105,7 @@ Some current wording is punchy and on-brand, but it can be sharpened for clarity
 
 ## Recommended Claude Prompt
 
-Use this prompt with the attached screenshot when asking Claude for design and usability help:
+Use this prompt with the attached **mobile-view long screenshot** when asking Claude for design and usability help:
 
 > I’m redesigning the Overview page for a dark, high-pressure challenge app called **6+1 Four Lives Challenge**. The page is not the daily logging screen and not just a leaderboard. It should act as a participant’s challenge intelligence dashboard. It currently shows a quick challenge read, days left, points banked today, boost leader, Warden coaching read, today’s boost opportunities, rival above/below, and a pressure list with pace/risk/lives.
 >
@@ -115,4 +115,4 @@ Use this prompt with the attached screenshot when asking Claude for design and u
 
 ## Final Notes
 
-This handoff deliberately avoids building anything. The goal is to help Claude critique the current Overview page and produce a better design direction. The attached long screenshot is the main visual reference. The explanation above should give enough context for Claude to understand what each section is meant to do, how users interact with it, and where the page can become more intuitive.
+This handoff deliberately avoids building anything. The goal is to help Claude critique the current Overview page and produce a better design direction. The attached mobile-view long screenshot is the main visual reference, so Claude should judge the page primarily as a phone experience rather than a desktop dashboard. The explanation above should give enough context for Claude to understand what each section is meant to do, how users interact with it, and where the page can become more intuitive.
