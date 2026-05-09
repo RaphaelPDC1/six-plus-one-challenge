@@ -1149,7 +1149,7 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Separate new-player join/onboarding notifications from life-loss penalty notifications so Lando, Lord, and other new joiners are not announced as losing lives.
 - [x] Investigate why Nae's old life-loss pop-up keeps reappearing after it should have been shown once and dismissed.
 - [x] Add durable client-side or server-side acknowledgement logic so life-loss pop-ups do not repeat indefinitely for the same event.
-- [ ] Review Warden/onboarding message source events so join events, approval events, deadline penalties, and technical corrections use distinct schemes and copy.
+- [x] Review Warden/onboarding message source events so join events, approval events, deadline penalties, and technical corrections use distinct schemes and copy.
 - [x] Add regression coverage for new-player join notifications not triggering life-loss copy and for one-time life-loss pop-up dismissal.
 
 ## Bug Fix — Join Events Versus Life-Loss Alerts

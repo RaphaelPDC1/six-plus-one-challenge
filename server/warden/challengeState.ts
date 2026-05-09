@@ -182,6 +182,20 @@ function participantNameById(
   return allParticipants.find((p) => p.id === participantId)?.displayName || "Unknown";
 }
 
+const JOIN_OR_ONBOARDING_REASON_PATTERN = /\b(join|joined|joining|new player|onboard|onboarding|registration|registered|signup|sign-up|approved|profile)\b/i;
+const LIFE_LOSS_REASON_PATTERN = /\b(life|lost|loss|missed|deadline|rule|penalty|forfeit|failed|failure)\b/i;
+
+export function isWardenLifeLossPaymentEvent(
+  payment: Pick<typeof paymentEvents.$inferSelect, "participantId" | "dailyLogId" | "amountPence" | "reason" | "status">,
+  allParticipants: Array<Pick<typeof participants.$inferSelect, "id">>
+): boolean {
+  if (!payment || payment.status === "waived" || payment.amountPence !== 2500) return false;
+  if (!allParticipants.some((participant) => participant.id === payment.participantId)) return false;
+  const reason = payment.reason ?? "";
+  if (JOIN_OR_ONBOARDING_REASON_PATTERN.test(reason)) return false;
+  return payment.dailyLogId !== null || LIFE_LOSS_REASON_PATTERN.test(reason);
+}
+
 const THEME_STOP_WORDS = new Set([
   "about",
   "after",
@@ -315,10 +329,12 @@ export async function getChallengeState(): Promise<ChallengeState> {
         (totalParticipants * 7 * 6)
       : 0;
 
-  const livesLostToday = todayPayments.map((payment: typeof paymentEvents.$inferSelect) => ({
-    participant_name: participantNameById(allParticipants, payment.participantId),
-    timestamp: payment.createdAt.toISOString(),
-  }));
+  const livesLostToday = todayPayments
+    .filter((payment: typeof paymentEvents.$inferSelect) => isWardenLifeLossPaymentEvent(payment, allParticipants))
+    .map((payment: typeof paymentEvents.$inferSelect) => ({
+      participant_name: participantNameById(allParticipants, payment.participantId),
+      timestamp: payment.createdAt.toISOString(),
+    }));
 
   const milestonesToday: ChallengeState["milestones_hit_today"] = [];
   participantSnapshots.forEach((p) => {

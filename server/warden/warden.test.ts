@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { generateWardenMessage, shouldSendMessage } from "./messageGenerator";
 import { logWardenMessage, getMessagesCountToday, hasHitDailyLimit } from "./messageLogger";
 import type { ChallengeState } from "./challengeState";
+import { isWardenLifeLossPaymentEvent } from "./challengeState";
 
 // Mock the database
 vi.mock("../db", () => ({
@@ -279,6 +280,38 @@ describe("Warden Message Logging", () => {
   it("should check daily limit correctly with a supplied dynamic limit", async () => {
     const hasHitLimit = await hasHitDailyLimit(4);
     expect(typeof hasHitLimit).toBe("boolean");
+  });
+});
+
+describe("Warden payment event scheme separation", () => {
+  const participants = [{ id: 1 }, { id: 2 }, { id: 3 }];
+
+  it("excludes join/onboarding payments from life-loss context", () => {
+    expect(isWardenLifeLossPaymentEvent({
+      participantId: 2,
+      dailyLogId: null,
+      amountPence: 2500,
+      reason: "Lando joined the platform and completed onboarding",
+      status: "pending",
+    }, participants)).toBe(false);
+
+    expect(isWardenLifeLossPaymentEvent({
+      participantId: 3,
+      dailyLogId: null,
+      amountPence: 2500,
+      reason: "Lord registration approved",
+      status: "pending",
+    }, participants)).toBe(false);
+  });
+
+  it("keeps genuine missed-rule penalty payments in life-loss context", () => {
+    expect(isWardenLifeLossPaymentEvent({
+      participantId: 1,
+      dailyLogId: 44,
+      amountPence: 2500,
+      reason: "Deadline passed for day 4. Missed rule(s): Exercise",
+      status: "pending",
+    }, participants)).toBe(true);
   });
 });
 
