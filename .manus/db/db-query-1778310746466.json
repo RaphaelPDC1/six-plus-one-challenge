@@ -1,0 +1,37 @@
+{
+  "query": "SELECT challenge_id, user_id, day, boost_id, COUNT(*) AS duplicate_count, SUM(points_awarded) AS total_points FROM boost_wins GROUP BY challenge_id, user_id, day, boost_id HAVING COUNT(*) > 1 ORDER BY duplicate_count DESC, day DESC; SELECT COUNT(*) AS total_boost_win_rows FROM boost_wins; SELECT day, boost_id, COUNT(*) AS winner_rows FROM boost_wins GROUP BY day, boost_id ORDER BY day DESC, boost_id ASC LIMIT 30;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2P9ir9M7b3E7Qkh.8b2c854ea8b3 --database HPubf4auNvt8KXvgrLad5c --execute SELECT challenge_id, user_id, day, boost_id, COUNT(*) AS duplicate_count, SUM(points_awarded) AS total_points FROM boost_wins GROUP BY challenge_id, user_id, day, boost_id HAVING COUNT(*) > 1 ORDER BY duplicate_count DESC, day DESC; SELECT COUNT(*) AS total_boost_win_rows FROM boost_wins; SELECT day, boost_id, COUNT(*) AS winner_rows FROM boost_wins GROUP BY day, boost_id ORDER BY day DESC, boost_id ASC LIMIT 30;",
+  "rows": [
+    {
+      "challenge_id": "1",
+      "user_id": "90002",
+      "day": "3",
+      "boost_id": "early_bird",
+      "duplicate_count": "2",
+      "total_points": "10"
+    },
+    {
+      "challenge_id": "1",
+      "user_id": "90002",
+      "day": "3",
+      "boost_id": "ghost_hunter",
+      "duplicate_count": "2",
+      "total_points": "10"
+    }
+  ],
+  "messages": [
+    "total_boost_win_rows",
+    "9",
+    "day\tboost_id\twinner_rows",
+    "3\tearly_bird\t2",
+    "3\tghost_hunter\t2",
+    "2\tdepth\t1",
+    "2\tmover\t1",
+    "1\tfirst_up\t1",
+    "1\thardest_day\t1",
+    "1\tstreak_king\t1"
+  ],
+  "stdout": "challenge_id\tuser_id\tday\tboost_id\tduplicate_count\ttotal_points\n1\t90002\t3\tearly_bird\t2\t10\n1\t90002\t3\tghost_hunter\t2\t10\ntotal_boost_win_rows\n9\nday\tboost_id\twinner_rows\n3\tearly_bird\t2\n3\tghost_hunter\t2\n2\tdepth\t1\n2\tmover\t1\n1\tfirst_up\t1\n1\thardest_day\t1\n1\tstreak_king\t1\n",
+  "stderr": "",
+  "execution_time_ms": 329
+}

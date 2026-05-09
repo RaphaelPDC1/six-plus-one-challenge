@@ -1104,3 +1104,54 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Add or update regression coverage for the Overview helper logic and redesigned states.
 - [x] Validate with tests, typecheck/build as practical, project health check, checkpoint, and report the completed redesign clearly. Tests, build, project health check, and checkpoint completed.
 
+
+## Non-Build Boost System Redesign Discussion
+- [ ] Analyze the proposed 5/6 = 8 points, 6/6 = 10 points, and +3 to +10 boost economy without changing application code.
+- [ ] Evaluate the proposed seven boost rules for fairness, clarity, repeatability, and detection practicality.
+- [ ] Recommend which boosts should be kept, adjusted, renamed, capped, or delayed before any build work begins.
+- [ ] Produce a clear decision-ready boost system proposal for review.
+
+
+## Bonus Leader Section and Bonus Point Review
+- [ ] Investigate the broken three-bonus leader section before any boost-system build work.
+- [ ] Identify why bonus leader responses or displayed entries are duplicating.
+- [ ] Review every current and proposed bonus/boost rule for usefulness, clarity, fairness, and scoring impact.
+- [ ] Prepare recommended bonus-point tweaks for owner review without changing application behaviour.
+- [ ] Wait for explicit approval before implementing any bonus-system edits.
+
+
+## Bonus System Integration Impact Review
+- [ ] Trace every app surface that depends on bonus wins, boost totals, daily points, leaderboard ranking, participant insights, and Overview cards before implementing edits.
+- [ ] Identify downstream fixes needed so bonus changes integrate cleanly across backend scoring, database constraints, UI summaries, leaderboard displays, and tests.
+- [ ] Confirm which related sections should be changed together so the app does not show conflicting bonus or point information.
+- [ ] Prepare a full dependency-aware implementation list for owner approval before changing app behaviour.
+
+
+## Approved Integrated Bonus-System Implementation
+
+- [ ] Clean duplicate bonus win rows while preserving one legitimate win per participant/day/boost.
+- [ ] Add database-level duplicate prevention for boost wins by challenge, participant, day, and boost ID.
+- [ ] Make boost-award creation idempotent under repeated or simultaneous snapshot calculations.
+- [ ] Implement canonical scoring so approved boost points count consistently for leaderboard rank, point gaps, and rewards.
+- [ ] Replace the rotating three-bonus model with automatic boosts: Clean Sweep, Morning Proof, Bounce Back, Deep Work, Pressure Player, Streak Lock, and Mover.
+- [ ] Apply a +10 named-boost daily cap per participant, excluding checkpoint bonuses.
+- [ ] Remove weak or confusing point bonuses including Night Owl, Dead Heat, and Ghost Hunter from scoring.
+- [ ] Update Overview bonus leader, available boosts, recent wins, and explanation copy for the new integrated model.
+- [ ] Update Board podium, full leaderboard rows, boost labels, and rival point gaps to use the same score definition.
+- [ ] Align My Day live point previews with backend scoring rules.
+- [ ] Update Rewards eligibility and copy to use canonical scoring.
+- [ ] Update Warden context and message copy for the new boost vocabulary and deduplicated totals.
+- [ ] Add regression tests for duplicate prevention, boost caps, canonical totals, Overview display, and scoring consistency.
+- [ ] Run validation, review TODO completion, save a checkpoint, and report the completed work.
+
+## Urgent Notification Event Bugs
+
+- [x] Separate new-player join/onboarding notifications from life-loss penalty notifications so Lando, Lord, and other new joiners are not announced as losing lives.
+- [x] Investigate why Nae's old life-loss pop-up keeps reappearing after it should have been shown once and dismissed.
+- [x] Add durable client-side or server-side acknowledgement logic so life-loss pop-ups do not repeat indefinitely for the same event.
+- [ ] Review Warden/onboarding message source events so join events, approval events, deadline penalties, and technical corrections use distinct schemes and copy.
+- [x] Add regression coverage for new-player join notifications not triggering life-loss copy and for one-time life-loss pop-up dismissal.
+
+## Bug Fix — Join Events Versus Life-Loss Alerts
+- [x] Separate new-player join/onboarding events from life-loss payment alerts so Lando/Lord-style joins never show as lost lives.
+- [x] Make life-loss pop-ups persistently one-time per genuine life-loss event so Nae’s alert can be closed and does not keep returning.

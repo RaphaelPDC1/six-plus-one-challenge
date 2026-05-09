@@ -4,6 +4,8 @@ import {
   boostWins,
   dailyLogs,
   type DailyLog,
+  type Participant,
+  type BoostWin,
   InsertUser,
   type InsertBoostWin,
   participants,
@@ -895,6 +897,44 @@ export async function getBoostWinsForParticipant(challengeId: number, userId: nu
   return db.select().from(boostWins).where(and(eq(boostWins.challengeId, challengeId), eq(boostWins.userId, userId))).orderBy(desc(boostWins.awardedAt));
 }
 
+type BoostWinScoreRow = Pick<BoostWin, "challengeId" | "userId" | "day" | "boostId" | "pointsAwarded">;
+type ParticipantScoreRow = Participant & { baseTotalPoints?: number; boostPoints?: number; canonicalTotalPoints?: number };
+
+export function buildBoostPointTotals(boostRows: BoostWinScoreRow[], challengeId = BOOST_CHALLENGE_ID) {
+  const totals = new Map<number, number>();
+  const seen = new Set<string>();
+  for (const win of boostRows ?? []) {
+    if (Number(win.challengeId ?? challengeId) !== Number(challengeId)) continue;
+    const participantId = Number(win.userId);
+    if (!Number.isFinite(participantId)) continue;
+    const key = `${Number(win.challengeId ?? challengeId)}:${participantId}:${Number(win.day ?? 0)}:${String(win.boostId ?? "")}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    totals.set(participantId, (totals.get(participantId) ?? 0) + Number(win.pointsAwarded ?? 0));
+  }
+  return totals;
+}
+
+export function applyCanonicalParticipantScores<T extends Participant>(participantRows: T[], boostRows: BoostWinScoreRow[], challengeId = BOOST_CHALLENGE_ID): Array<T & ParticipantScoreRow> {
+  const boostTotals = buildBoostPointTotals(boostRows, challengeId);
+  return participantRows.map(participantRow => {
+    const baseTotalPoints = Number(participantRow.totalPoints ?? 0);
+    const boostPoints = boostTotals.get(Number(participantRow.id)) ?? 0;
+    return {
+      ...participantRow,
+      baseTotalPoints,
+      boostPoints,
+      canonicalTotalPoints: baseTotalPoints + boostPoints,
+      totalPoints: baseTotalPoints + boostPoints,
+    };
+  });
+}
+
+function isDuplicateBoostInsertError(error: unknown) {
+  const candidate = error as { code?: string; errno?: number; message?: string };
+  return candidate?.code === "ER_DUP_ENTRY" || candidate?.errno === 1062 || String(candidate?.message ?? "").toLowerCase().includes("duplicate");
+}
+
 export async function awardBoostWin(input: InsertBoostWin) {
   const db = await getDb();
   if (!db) throw new Error("Database unavailable");
@@ -908,14 +948,18 @@ export async function awardBoostWin(input: InsertBoostWin) {
     eq(boostWins.boostId, String(input.boostId)),
   )).limit(1);
   if (existing[0]) return { created: false as const, boostWin: existing[0] };
-  await db.insert(boostWins).values({ ...input, challengeId, day, pointsAwarded });
+  try {
+    await db.insert(boostWins).values({ ...input, challengeId, day, pointsAwarded });
+  } catch (error) {
+    if (!isDuplicateBoostInsertError(error)) throw error;
+  }
   const created = await db.select().from(boostWins).where(and(
     eq(boostWins.challengeId, challengeId),
     eq(boostWins.userId, Number(input.userId)),
     eq(boostWins.day, day),
     eq(boostWins.boostId, String(input.boostId)),
   )).orderBy(desc(boostWins.awardedAt)).limit(1);
-  return { created: true as const, boostWin: created[0] };
+  return { created: !existing[0] && Boolean(created[0]), boostWin: created[0] };
 }
 
 export async function calculateAndAwardBoostsForDay(day: number, challengeId = BOOST_CHALLENGE_ID) {
@@ -987,7 +1031,8 @@ export async function getAppSnapshot(userId: number, role: "admin" | "user" = "u
     db.select().from(boostWins).where(eq(boostWins.challengeId, BOOST_CHALLENGE_ID)).orderBy(desc(boostWins.awardedAt)).limit(250),
   ]);
   const adminUserIds = new Set(allUsers.filter(user => user.role === "admin").map(user => user.id));
-  const allParticipants = rawParticipants.filter(participantRow => !adminUserIds.has(participantRow.userId));
+  const baseParticipants = rawParticipants.filter(participantRow => !adminUserIds.has(participantRow.userId));
+  const allParticipants = applyCanonicalParticipantScores(baseParticipants, rawBoostWins, BOOST_CHALLENGE_ID);
   const participantIds = new Set(allParticipants.map(participantRow => participantRow.id));
   const allLogs = rawLogs.filter(log => participantIds.has(log.participantId));
   const payments = rawPayments.filter(payment => participantIds.has(payment.participantId));
@@ -1046,9 +1091,11 @@ export async function createRedemption(participantId: number, input: { rewardId:
   if (!participant) throw new Error("Participant not found");
   const reward = (await db.select().from(rewardCatalogue).where(and(eq(rewardCatalogue.id, input.rewardId), eq(rewardCatalogue.active, true))).limit(1))[0];
   if (!reward) throw new Error("Reward not found");
-  if ((participant.totalPoints ?? 0) < reward.pointsCost) throw new Error(`You need ${reward.pointsCost} points to redeem ${reward.name}.`);
+  const participantBoostWins = await db.select().from(boostWins).where(and(eq(boostWins.challengeId, BOOST_CHALLENGE_ID), eq(boostWins.userId, participantId)));
+  const canonicalParticipant = applyCanonicalParticipantScores([participant], participantBoostWins, BOOST_CHALLENGE_ID)[0];
+  if ((canonicalParticipant.totalPoints ?? 0) < reward.pointsCost) throw new Error(`You need ${reward.pointsCost} points to redeem ${reward.name}.`);
   await db.insert(redemptionRequests).values({ participantId, ...input, status: "pending" });
-  return { success: true as const, reward, participant };
+  return { success: true as const, reward, participant: canonicalParticipant };
 }
 
 export async function markPaymentReceived(paymentId: number, founderUserId: number) {

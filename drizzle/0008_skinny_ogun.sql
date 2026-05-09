@@ -1,0 +1,1 @@
+ALTER TABLE `boost_wins` ADD CONSTRAINT `boost_wins_unique_award_idx` UNIQUE(`challenge_id`,`user_id`,`day`,`boost_id`);

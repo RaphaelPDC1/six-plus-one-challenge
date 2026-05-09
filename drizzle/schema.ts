@@ -6,6 +6,7 @@ import {
   mysqlTable,
   text,
   timestamp,
+  uniqueIndex,
   varchar,
 } from "drizzle-orm/mysql-core";
 
@@ -174,7 +175,9 @@ export const boostWins = mysqlTable("boost_wins", {
   pointsAwarded: int("points_awarded").notNull().default(5),
   awardedAt: timestamp("awarded_at").defaultNow().notNull(),
   wardenNote: text("warden_note"),
-});
+}, table => ({
+  uniqueBoostWin: uniqueIndex("boost_wins_unique_award_idx").on(table.challengeId, table.userId, table.day, table.boostId),
+}));
 
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;

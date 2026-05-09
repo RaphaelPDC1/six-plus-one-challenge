@@ -1,0 +1,118 @@
+{
+  "query": "SELECT bw.id, bw.challenge_id, bw.user_id, p.displayName AS participant_name, bw.day, bw.boost_id, bw.boost_name, bw.points_awarded, bw.awarded_at, LEFT(COALESCE(bw.warden_note, ''), 180) AS note_preview FROM boost_wins bw LEFT JOIN participants p ON p.id = bw.user_id ORDER BY bw.day DESC, bw.boost_id ASC, bw.user_id ASC, bw.awarded_at ASC;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2P9ir9M7b3E7Qkh.8b2c854ea8b3 --database HPubf4auNvt8KXvgrLad5c --execute SELECT bw.id, bw.challenge_id, bw.user_id, p.displayName AS participant_name, bw.day, bw.boost_id, bw.boost_name, bw.points_awarded, bw.awarded_at, LEFT(COALESCE(bw.warden_note, ''), 180) AS note_preview FROM boost_wins bw LEFT JOIN participants p ON p.id = bw.user_id ORDER BY bw.day DESC, bw.boost_id ASC, bw.user_id ASC, bw.awarded_at ASC;",
+  "rows": [
+    {
+      "id": "60003",
+      "challenge_id": "1",
+      "user_id": "90002",
+      "participant_name": "G LODGE",
+      "day": "3",
+      "boost_id": "early_bird",
+      "boost_name": "EARLY BIRD",
+      "points_awarded": "5",
+      "awarded_at": "2026-05-08 23:00:01",
+      "note_preview": "EARLY BIRD: first valid pass before 08:00."
+    },
+    {
+      "id": "60004",
+      "challenge_id": "1",
+      "user_id": "90002",
+      "participant_name": "G LODGE",
+      "day": "3",
+      "boost_id": "early_bird",
+      "boost_name": "EARLY BIRD",
+      "points_awarded": "5",
+      "awarded_at": "2026-05-08 23:00:01",
+      "note_preview": "EARLY BIRD: first valid pass before 08:00."
+    },
+    {
+      "id": "60001",
+      "challenge_id": "1",
+      "user_id": "90002",
+      "participant_name": "G LODGE",
+      "day": "3",
+      "boost_id": "ghost_hunter",
+      "boost_name": "GHOST HUNTER",
+      "points_awarded": "5",
+      "awarded_at": "2026-05-08 23:00:01",
+      "note_preview": "GHOST HUNTER: best day from the no-Ghost-Life bracket."
+    },
+    {
+      "id": "60002",
+      "challenge_id": "1",
+      "user_id": "90002",
+      "participant_name": "G LODGE",
+      "day": "3",
+      "boost_id": "ghost_hunter",
+      "boost_name": "GHOST HUNTER",
+      "points_awarded": "5",
+      "awarded_at": "2026-05-08 23:00:01",
+      "note_preview": "GHOST HUNTER: best day from the no-Ghost-Life bracket."
+    },
+    {
+      "id": "30002",
+      "challenge_id": "1",
+      "user_id": "90004",
+      "participant_name": "wiwi",
+      "day": "2",
+      "boost_id": "depth",
+      "boost_name": "DEPTH",
+      "points_awarded": "5",
+      "awarded_at": "2026-05-07 23:08:09",
+      "note_preview": "DEPTH: 605 characters of honest reflection and Read & Teach depth."
+    },
+    {
+      "id": "30001",
+      "challenge_id": "1",
+      "user_id": "90008",
+      "participant_name": "Chess",
+      "day": "2",
+      "boost_id": "mover",
+      "boost_name": "MOVER",
+      "points_awarded": "5",
+      "awarded_at": "2026-05-07 23:08:09",
+      "note_preview": "MOVER: biggest seven-day rank climb outside the top three."
+    },
+    {
+      "id": "1",
+      "challenge_id": "1",
+      "user_id": "90002",
+      "participant_name": "G LODGE",
+      "day": "1",
+      "boost_id": "first_up",
+      "boost_name": "FIRST UP",
+      "points_awarded": "5",
+      "awarded_at": "2026-05-07 13:44:49",
+      "note_preview": "FIRST UP: first passing log through the gate without a consecutive-day repeat."
+    },
+    {
+      "id": "3",
+      "challenge_id": "1",
+      "user_id": "60011",
+      "participant_name": "Nay",
+      "day": "1",
+      "boost_id": "hardest_day",
+      "boost_name": "HARDEST DAY",
+      "points_awarded": "5",
+      "awarded_at": "2026-05-07 13:44:49",
+      "note_preview": "HARDEST DAY: 60 minutes logged for the hardest verified training day."
+    },
+    {
+      "id": "2",
+      "challenge_id": "1",
+      "user_id": "60011",
+      "participant_name": "Nay",
+      "day": "1",
+      "boost_id": "streak_king",
+      "boost_name": "STREAK KING",
+      "points_awarded": "5",
+      "awarded_at": "2026-05-07 13:44:49",
+      "note_preview": "STREAK KING: Nay owns the longest non-leader streak."
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tchallenge_id\tuser_id\tparticipant_name\tday\tboost_id\tboost_name\tpoints_awarded\tawarded_at\tnote_preview\n60003\t1\t90002\tG LODGE\t3\tearly_bird\tEARLY BIRD\t5\t2026-05-08 23:00:01\tEARLY BIRD: first valid pass before 08:00.\n60004\t1\t90002\tG LODGE\t3\tearly_bird\tEARLY BIRD\t5\t2026-05-08 23:00:01\tEARLY BIRD: first valid pass before 08:00.\n60001\t1\t90002\tG LODGE\t3\tghost_hunter\tGHOST HUNTER\t5\t2026-05-08 23:00:01\tGHOST HUNTER: best day from the no-Ghost-Life bracket.\n60002\t1\t90002\tG LODGE\t3\tghost_hunter\tGHOST HUNTER\t5\t2026-05-08 23:00:01\tGHOST HUNTER: best day from the no-Ghost-Life bracket.\n30002\t1\t90004\twiwi\t2\tdepth\tDEPTH\t5\t2026-05-07 23:08:09\tDEPTH: 605 characters of honest reflection and Read & Teach depth.\n30001\t1\t90008\tChess\t2\tmover\tMOVER\t5\t2026-05-07 23:08:09\tMOVER: biggest seven-day rank climb outside the top three.\n1\t1\t90002\tG LODGE\t1\tfirst_up\tFIRST UP\t5\t2026-05-07 13:44:49\tFIRST UP: first passing log through the gate without a consecutive-day repeat.\n3\t1\t60011\tNay\t1\thardest_day\tHARDEST DAY\t5\t2026-05-07 13:44:49\tHARDEST DAY: 60 minutes logged for the hardest verified training day.\n2\t1\t60011\tNay\t1\tstreak_king\tSTREAK KING\t5\t2026-05-07 13:44:49\tSTREAK KING: Nay owns the longest non-leader streak.\n",
+  "stderr": "",
+  "execution_time_ms": 262
+}

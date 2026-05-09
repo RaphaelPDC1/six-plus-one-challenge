@@ -1,6 +1,7 @@
 export const BOOST_CHALLENGE_ID = 1;
 export const BOOST_POINTS = 5;
-export const BOOST_SLOT_COUNT = 3;
+export const BOOST_SLOT_COUNT = 7;
+export const DAILY_NAMED_BOOST_CAP = 10;
 
 export type BoostTone = "green" | "gold" | "red" | "purple" | "white";
 
@@ -29,30 +30,66 @@ export type ActiveBoostSlot = BoostDefinition & {
 };
 
 export const BOOST_SEQUENCE: BoostDefinition[] = [
-  { id: "first_up", name: "FIRST UP", icon: "↑", shortRule: "First passing submission of the day", antiGaming: "Cannot win on consecutive days.", tone: "green" },
-  { id: "streak_king", name: "STREAK KING", icon: "♚", shortRule: "Longest current streak outside first place", antiGaming: "Overall points leader is excluded.", tone: "gold" },
-  { id: "hardest_day", name: "HARDEST DAY", icon: "◆", shortRule: "Longest exercise duration today", antiGaming: "Cannot win on consecutive days.", tone: "red" },
-  { id: "survivor", name: "SURVIVOR", icon: "◈", shortRule: "Best daily score while on two lives or fewer", antiGaming: "Safe players cannot win this slot.", tone: "red" },
-  { id: "mover", name: "MOVER", icon: "⇧", shortRule: "Biggest seven-day rank climb outside the top three", antiGaming: "Current top three excluded; requires a real climb.", tone: "purple" },
-  { id: "depth", name: "DEPTH", icon: "✎", shortRule: "Longest reflection plus Read & Teach depth", antiGaming: "Needs at least 100 characters and a three-day cooldown.", tone: "gold" },
-  { id: "clean_sweep", name: "CLEAN SWEEP", icon: "✓", shortRule: "Exactly one player completes all six rules", antiGaming: "If multiple people go 6/6, nobody wins.", tone: "green" },
-  { id: "ghost_hunter", name: "GHOST HUNTER", icon: "◇", shortRule: "Best daily score among players who have not used Ghost Life", antiGaming: "Ghost Life users are excluded.", tone: "white" },
-  { id: "early_bird", name: "EARLY BIRD", icon: "☀", shortRule: "First passing submission before 08:00", antiGaming: "Time locked before 08:00.", tone: "gold" },
-  { id: "comeback_kid", name: "COMEBACK KID", icon: "↻", shortRule: "Strongest response from someone who has lost a life", antiGaming: "Requires at least one lost life.", tone: "red" },
-  { id: "proof_machine", name: "PROOF MACHINE", icon: "◉", shortRule: "Highest proof rate across completed days", antiGaming: "Perfect proof with fewer than three logs is excluded.", tone: "green" },
-  { id: "wardens_pick", name: "WARDEN'S PICK", icon: "W", shortRule: "Best reflection quality for the day", antiGaming: "Uses depth fallback unless AI confidence is high enough.", tone: "purple" },
-  { id: "iron_week", name: "IRON WEEK", icon: "7", shortRule: "First day a player hits exactly seven greens in a row", antiGaming: "One award per streak run.", tone: "green" },
-  { id: "night_owl", name: "NIGHT OWL", icon: "◐", shortRule: "Last passing submission between 20:00 and 23:59", antiGaming: "Cannot also be the same-day First Up winner.", tone: "purple" },
-  { id: "dead_heat", name: "DEAD HEAT", icon: "=", shortRule: "Top tied total points at end of day", antiGaming: "Requires at least two players tied for first.", tone: "white" },
+  {
+    id: "clean_sweep",
+    name: "CLEAN SWEEP",
+    icon: "✓",
+    shortRule: "Every third consecutive perfect 6/6 day",
+    antiGaming: "Requires all six rules complete and only pays on streak days 3, 6, 9, 12 and so on.",
+    tone: "green",
+  },
+  {
+    id: "morning_proof",
+    name: "MORNING PROOF",
+    icon: "☀",
+    shortRule: "Exercise proof uploaded before 09:00",
+    antiGaming: "Requires an actual exercise proof upload timestamped before 09:00, not just a text exercise log.",
+    tone: "gold",
+  },
+  {
+    id: "bounce_back",
+    name: "BOUNCE BACK",
+    icon: "↻",
+    shortRule: "Complete the day after a missed or incomplete day",
+    antiGaming: "Requires yesterday to be incomplete or missed, and today must be complete.",
+    tone: "red",
+  },
+  {
+    id: "deep_work",
+    name: "DEEP WORK",
+    icon: "✎",
+    shortRule: "Meaningful reflection plus Read & Teach depth",
+    antiGaming: "Requires at least 250 combined characters across reflection and Read & Teach fields.",
+    tone: "purple",
+  },
+  {
+    id: "pressure_player",
+    name: "PRESSURE PLAYER",
+    icon: "◈",
+    shortRule: "Complete a day while on two lives or fewer",
+    antiGaming: "Only players in the danger-life bracket can trigger it.",
+    tone: "red",
+  },
+  {
+    id: "streak_lock",
+    name: "STREAK LOCK",
+    icon: "7",
+    shortRule: "Lock in each seven-day streak milestone",
+    antiGaming: "Pays on streak days 7, 14, 21 and so on; duplicate awards for the same day are blocked.",
+    tone: "green",
+  },
+  {
+    id: "mover",
+    name: "MOVER",
+    icon: "⇧",
+    shortRule: "Biggest seven-day rank climb outside the top three",
+    antiGaming: "Current top three excluded; requires a real climb over the previous seven-day view.",
+    tone: "gold",
+  },
 ];
 
-export function getActiveBoostsForDay(day: number): ActiveBoostSlot[] {
-  const safeDay = Math.max(1, Math.floor(Number(day) || 1));
-  const startIndex = ((safeDay - 1) * BOOST_SLOT_COUNT) % BOOST_SEQUENCE.length;
-  return Array.from({ length: BOOST_SLOT_COUNT }, (_, index) => ({
-    ...BOOST_SEQUENCE[(startIndex + index) % BOOST_SEQUENCE.length],
-    slot: index + 1,
-  }));
+export function getActiveBoostsForDay(_day: number): ActiveBoostSlot[] {
+  return BOOST_SEQUENCE.map((boost, index) => ({ ...boost, slot: index + 1 }));
 }
 
 export function isPassingBoostLog(log: BoostLog | null | undefined): boolean {
@@ -76,13 +113,13 @@ export function getBoostWinnerIdsForDay(boostWins: BoostWinLike[], day: number):
   return new Set((boostWins ?? []).filter(win => Number(win.day ?? 0) === Number(day)).map(win => String(win.userId)));
 }
 
-function submittedAtTime(log: BoostLog): number {
-  const submitted = log.submittedAt ? new Date(log.submittedAt).getTime() : 0;
+function submittedAtTime(log: BoostLog | null | undefined): number {
+  const submitted = log?.submittedAt ? new Date(log.submittedAt).getTime() : 0;
   return Number.isFinite(submitted) ? submitted : 0;
 }
 
-function submittedHour(log: BoostLog): number {
-  const submitted = log.submittedAt ? new Date(log.submittedAt) : null;
+function submittedHour(log: BoostLog | null | undefined): number {
+  const submitted = log?.submittedAt ? new Date(log.submittedAt) : null;
   return submitted && Number.isFinite(submitted.getTime()) ? submitted.getHours() : -1;
 }
 
@@ -90,16 +127,47 @@ function participantForLog(log: BoostLog, participants: BoostParticipant[]): Boo
   return participants.find(participant => String(participant.id) === String(log.participantId));
 }
 
-function hasRecentBoostWin(boostWins: BoostWinLike[], participantId: unknown, boostId: string, day: number, lookbackDays: number): boolean {
-  return (boostWins ?? []).some(win => String(win.userId) === String(participantId) && String(win.boostId) === boostId && Number(win.day ?? 0) >= day - lookbackDays && Number(win.day ?? 0) < day);
+function logForParticipant(dayLogs: BoostLog[], participantId: unknown): BoostLog | undefined {
+  return dayLogs.find(log => String(log.participantId) === String(participantId));
 }
 
-function rankParticipantsByPoints(participants: BoostParticipant[]): BoostParticipant[] {
-  return [...participants].sort((a, b) => Number(b.totalPoints ?? 0) - Number(a.totalPoints ?? 0) || String(a.displayName ?? "").localeCompare(String(b.displayName ?? "")));
+function hasBoostWinForDay(boostWins: BoostWinLike[], participantId: unknown, boostId: string, day: number): boolean {
+  return (boostWins ?? []).some(win =>
+    String(win.userId) === String(participantId)
+    && String(win.boostId) === boostId
+    && Number(win.day ?? 0) === day,
+  );
 }
 
-function makeAward(boost: BoostDefinition, participant: BoostParticipant, reason: string): BoostEvaluationAward {
-  return { boost, participant, pointsAwarded: BOOST_POINTS, wardenNote: `${boost.name}: ${reason}` };
+function rankParticipantsByPoints(participants: BoostParticipant[], boostWins: BoostWinLike[] = []): BoostParticipant[] {
+  const boostTotals = new Map<string, number>();
+  for (const win of boostWins) {
+    const userId = String(win.userId ?? "");
+    boostTotals.set(userId, (boostTotals.get(userId) ?? 0) + Number(win.pointsAwarded ?? 0));
+  }
+  return [...participants].sort((a, b) =>
+    (Number(b.totalPoints ?? 0) + (boostTotals.get(String(b.id)) ?? 0))
+    - (Number(a.totalPoints ?? 0) + (boostTotals.get(String(a.id)) ?? 0))
+    || String(a.displayName ?? "").localeCompare(String(b.displayName ?? "")),
+  );
+}
+
+function makeAward(boost: BoostDefinition, participant: BoostParticipant, reason: string, pointsAwarded = BOOST_POINTS): BoostEvaluationAward {
+  return { boost, participant, pointsAwarded, wardenNote: `${boost.name}: ${reason}` };
+}
+
+function priorDayWasMissed(day: number, logs: BoostLog[], participantId: unknown): boolean {
+  if (day <= 1) return false;
+  const previous = logs.find(log => Number(log.dayNumber ?? 0) === day - 1 && String(log.participantId) === String(participantId));
+  return !previous || !isPassingBoostLog(previous) || !Boolean(previous.dayComplete ?? previous.completed);
+}
+
+function proofBeforeNine(log: BoostLog): boolean {
+  return String(log.exerciseProofUrl ?? "").trim().length > 4 && submittedAtTime(log) > 0 && submittedHour(log) >= 0 && submittedHour(log) < 9;
+}
+
+function combinedDepth(log: BoostLog): number {
+  return String(log.reflectionText ?? "").trim().length + String(log.readTeachText ?? "").trim().length;
 }
 
 export function evaluateBoostWinners(params: {
@@ -114,132 +182,98 @@ export function evaluateBoostWinners(params: {
   const logs = params.logs ?? [];
   const boostWins = params.boostWins ?? [];
   const activeBoosts = params.activeBoosts ?? getActiveBoostsForDay(day);
+  const boostById = new Map(activeBoosts.map(boost => [boost.id, boost]));
   const dayLogs = logs.filter(log => Number(log.dayNumber ?? 0) === day);
   const passingLogs = dayLogs.filter(isPassingBoostLog);
-  const rankedNow = rankParticipantsByPoints(participants);
+  const rankedNow = rankParticipantsByPoints(participants, boostWins);
   const topThreeIds = new Set(rankedNow.slice(0, 3).map(participant => String(participant.id)));
-  const firstUpParticipantId = (() => {
-    const first = [...passingLogs].filter(log => submittedAtTime(log) > 0).sort((a, b) => submittedAtTime(a) - submittedAtTime(b))[0];
-    return first ? String(first.participantId) : "";
-  })();
-
   const awards: BoostEvaluationAward[] = [];
 
-  for (const boost of activeBoosts) {
-    if ((boostWins ?? []).some(win => Number(win.day ?? 0) === day && String(win.boostId) === boost.id)) continue;
+  for (const participant of participants) {
+    const log = logForParticipant(dayLogs, participant.id);
+    if (!log || !isPassingBoostLog(log)) continue;
+    const completedRules = getCompletedRuleCount(log);
+    const currentStreak = Number(participant.currentStreak ?? 0);
 
-    if (boost.id === "first_up") {
-      const first = [...passingLogs].filter(log => submittedAtTime(log) > 0).sort((a, b) => submittedAtTime(a) - submittedAtTime(b))[0];
-      const participant = first ? participantForLog(first, participants) : undefined;
-      if (participant && !hasRecentBoostWin(boostWins, participant.id, boost.id, day, 1)) awards.push(makeAward(boost, participant, "first passing log through the gate without a consecutive-day repeat."));
+    const cleanSweep = boostById.get("clean_sweep");
+    if (cleanSweep && completedRules >= 6 && currentStreak > 0 && currentStreak % 3 === 0) {
+      awards.push(makeAward(cleanSweep, participant, `perfect 6/6 streak milestone reached on day ${currentStreak}.`));
     }
 
-    if (boost.id === "streak_king") {
-      const leaderId = String(rankedNow[0]?.id ?? "");
-      const winner = [...participants].filter(p => String(p.id) !== leaderId && Number(p.currentStreak ?? 0) > 0).sort((a, b) => Number(b.currentStreak ?? 0) - Number(a.currentStreak ?? 0) || Number(b.totalPoints ?? 0) - Number(a.totalPoints ?? 0))[0];
-      if (winner) awards.push(makeAward(boost, winner, `${winner.displayName} owns the longest non-leader streak.`));
+    const morningProof = boostById.get("morning_proof");
+    if (morningProof && proofBeforeNine(log)) {
+      awards.push(makeAward(morningProof, participant, "exercise proof was uploaded before 09:00."));
     }
 
-    if (boost.id === "hardest_day") {
-      const log = [...dayLogs].filter(log => Number(log.exerciseDuration ?? 0) > 0).sort((a, b) => Number(b.exerciseDuration ?? 0) - Number(a.exerciseDuration ?? 0))[0];
-      const participant = log ? participantForLog(log, participants) : undefined;
-      if (participant && !hasRecentBoostWin(boostWins, participant.id, boost.id, day, 1)) awards.push(makeAward(boost, participant, `${log.exerciseDuration} minutes logged for the hardest verified training day.`));
+    const bounceBack = boostById.get("bounce_back");
+    if (bounceBack && priorDayWasMissed(day, logs, participant.id)) {
+      awards.push(makeAward(bounceBack, participant, "completed today after a missed or incomplete previous day."));
     }
 
-    if (boost.id === "survivor") {
-      const candidate = [...passingLogs]
-        .map(log => ({ log, participant: participantForLog(log, participants) }))
-        .filter(item => item.participant && Number(item.participant.livesRemaining ?? 4) <= 2)
-        .sort((a, b) => Number(b.log.pointsAwarded ?? 0) - Number(a.log.pointsAwarded ?? 0) || getCompletedRuleCount(b.log) - getCompletedRuleCount(a.log))[0];
-      if (candidate?.participant) awards.push(makeAward(boost, candidate.participant, "best daily output from the danger-life bracket."));
+    const deepWork = boostById.get("deep_work");
+    const depth = combinedDepth(log);
+    if (deepWork && depth >= 250) {
+      awards.push(makeAward(deepWork, participant, `${depth} characters of reflection and Read & Teach depth.`));
     }
 
-    if (boost.id === "mover") {
-      const sevenDaysAgoLogs = logs.filter(log => Number(log.dayNumber ?? 0) <= Math.max(1, day - 7));
-      const pastPoints = new Map<string, number>();
-      for (const log of sevenDaysAgoLogs) pastPoints.set(String(log.participantId), (pastPoints.get(String(log.participantId)) ?? 0) + Number(log.pointsAwarded ?? 0));
-      const pastRank = [...participants].sort((a, b) => (pastPoints.get(String(b.id)) ?? 0) - (pastPoints.get(String(a.id)) ?? 0));
-      const winner = rankedNow
-        .filter(p => !topThreeIds.has(String(p.id)))
-        .map(p => ({ participant: p, climb: (pastRank.findIndex(x => String(x.id) === String(p.id)) + 1 || rankedNow.length) - (rankedNow.findIndex(x => String(x.id) === String(p.id)) + 1) }))
-        .filter(item => item.climb > 0)
-        .sort((a, b) => b.climb - a.climb || Number(b.participant.totalPoints ?? 0) - Number(a.participant.totalPoints ?? 0))[0]?.participant;
-      if (winner) awards.push(makeAward(boost, winner, "biggest seven-day rank climb outside the top three."));
+    const pressurePlayer = boostById.get("pressure_player");
+    if (pressurePlayer && Number(participant.livesRemaining ?? 4) <= 2) {
+      awards.push(makeAward(pressurePlayer, participant, "completed the day while carrying two lives or fewer."));
     }
 
-    if (boost.id === "depth" || boost.id === "wardens_pick") {
-      const candidate = [...dayLogs]
-        .map(log => ({ log, participant: participantForLog(log, participants), depth: String(log.reflectionText ?? "").trim().length + String(log.readTeachText ?? "").trim().length }))
-        .filter(item => item.participant && item.depth >= 100 && (boost.id === "wardens_pick" || !hasRecentBoostWin(boostWins, item.participant?.id, boost.id, day, 3)))
-        .sort((a, b) => b.depth - a.depth || Number(b.log.pointsAwarded ?? 0) - Number(a.log.pointsAwarded ?? 0))[0];
-      if (candidate?.participant) awards.push(makeAward(boost, candidate.participant, boost.id === "wardens_pick" ? "strongest Warden-readable reflection depth today." : `${candidate.depth} characters of honest reflection and Read & Teach depth.`));
-    }
-
-    if (boost.id === "clean_sweep") {
-      const sixes = dayLogs.filter(log => getCompletedRuleCount(log) >= 6);
-      const participant = sixes.length === 1 ? participantForLog(sixes[0], participants) : undefined;
-      if (participant) awards.push(makeAward(boost, participant, "the only 6/6 clean sweep on the board."));
-    }
-
-    if (boost.id === "ghost_hunter") {
-      const candidate = [...passingLogs]
-        .map(log => ({ log, participant: participantForLog(log, participants) }))
-        .filter(item => item.participant && !item.participant.ghostLifeUsed)
-        .sort((a, b) => Number(b.log.pointsAwarded ?? 0) - Number(a.log.pointsAwarded ?? 0) || getCompletedRuleCount(b.log) - getCompletedRuleCount(a.log))[0];
-      if (candidate?.participant) awards.push(makeAward(boost, candidate.participant, "best day from the no-Ghost-Life bracket."));
-    }
-
-    if (boost.id === "early_bird") {
-      const early = [...passingLogs].filter(log => submittedAtTime(log) > 0 && submittedHour(log) >= 0 && submittedHour(log) < 8).sort((a, b) => submittedAtTime(a) - submittedAtTime(b))[0];
-      const participant = early ? participantForLog(early, participants) : undefined;
-      if (participant) awards.push(makeAward(boost, participant, "first valid pass before 08:00."));
-    }
-
-    if (boost.id === "comeback_kid") {
-      const candidate = [...passingLogs]
-        .map(log => ({ log, participant: participantForLog(log, participants) }))
-        .filter(item => item.participant && Number(item.participant.livesRemaining ?? 4) < 4)
-        .sort((a, b) => Number(b.log.pointsAwarded ?? 0) - Number(a.log.pointsAwarded ?? 0) || Number(a.participant?.livesRemaining ?? 4) - Number(b.participant?.livesRemaining ?? 4))[0];
-      if (candidate?.participant) awards.push(makeAward(boost, candidate.participant, "best response from a player carrying life-loss pressure."));
-    }
-
-    if (boost.id === "proof_machine") {
-      const proofRows = participants.map(participant => {
-        const owned = logs.filter(log => String(log.participantId) === String(participant.id) && Number(log.dayNumber ?? 0) <= day && isPassingBoostLog(log));
-        const proofs = owned.filter(log => String(log.exerciseProofUrl ?? "").trim().length > 4).length;
-        return { participant, ownedCount: owned.length, rate: owned.length ? proofs / owned.length : 0 };
-      }).filter(row => row.ownedCount >= 3 || row.rate < 1);
-      const winner = proofRows.sort((a, b) => b.rate - a.rate || b.ownedCount - a.ownedCount)[0];
-      if (winner?.participant && winner.rate > 0) awards.push(makeAward(boost, winner.participant, `${Math.round(winner.rate * 100)}% proof rate across completed days.`));
-    }
-
-    if (boost.id === "iron_week") {
-      const winner = participants.find(participant => Number(participant.currentStreak ?? 0) === 7 && !hasRecentBoostWin(boostWins, participant.id, boost.id, day, 6));
-      if (winner) awards.push(makeAward(boost, winner, "exactly seven green days in a row, with no duplicate award for the streak run."));
-    }
-
-    if (boost.id === "night_owl") {
-      const late = [...passingLogs]
-        .filter(log => submittedAtTime(log) > 0 && submittedHour(log) >= 20 && submittedHour(log) <= 23 && String(log.participantId) !== firstUpParticipantId)
-        .sort((a, b) => submittedAtTime(b) - submittedAtTime(a))[0];
-      const participant = late ? participantForLog(late, participants) : undefined;
-      if (participant) awards.push(makeAward(boost, participant, "last valid pass in the 20:00-23:59 window without doubling as First Up."));
-    }
-
-    if (boost.id === "dead_heat") {
-      const top = Number(rankedNow[0]?.totalPoints ?? 0);
-      const tied = rankedNow.filter(participant => Number(participant.totalPoints ?? 0) === top && top > 0);
-      if (tied.length >= 2) {
-        for (const participant of tied) awards.push(makeAward(boost, participant, "shares the top points total at the close of the day."));
-      }
+    const streakLock = boostById.get("streak_lock");
+    if (streakLock && currentStreak > 0 && currentStreak % 7 === 0) {
+      awards.push(makeAward(streakLock, participant, `locked a ${currentStreak}-day streak milestone.`));
     }
   }
 
-  const seen = new Set<string>();
-  return awards.filter(award => {
-    const key = `${award.boost.id}:${award.participant.id}`;
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
+  const mover = boostById.get("mover");
+  if (mover) {
+    const pastPoints = new Map<string, number>();
+    for (const log of logs.filter(log => Number(log.dayNumber ?? 0) <= Math.max(1, day - 7))) {
+      pastPoints.set(String(log.participantId), (pastPoints.get(String(log.participantId)) ?? 0) + Number(log.pointsAwarded ?? 0));
+    }
+    const pastRank = [...participants].sort((a, b) =>
+      (pastPoints.get(String(b.id)) ?? 0) - (pastPoints.get(String(a.id)) ?? 0)
+      || String(a.displayName ?? "").localeCompare(String(b.displayName ?? "")),
+    );
+    const moverWinner = rankedNow
+      .filter(participant => !topThreeIds.has(String(participant.id)) && logForParticipant(passingLogs, participant.id))
+      .map(participant => {
+        const pastPosition = pastRank.findIndex(candidate => String(candidate.id) === String(participant.id));
+        const nowPosition = rankedNow.findIndex(candidate => String(candidate.id) === String(participant.id));
+        return { participant, climb: (pastPosition >= 0 ? pastPosition + 1 : rankedNow.length) - (nowPosition + 1) };
+      })
+      .filter(item => item.climb > 0)
+      .sort((a, b) => b.climb - a.climb || String(a.participant.displayName ?? "").localeCompare(String(b.participant.displayName ?? "")))[0];
+    if (moverWinner?.participant) {
+      awards.push(makeAward(mover, moverWinner.participant, `climbed ${moverWinner.climb} leaderboard place${moverWinner.climb === 1 ? "" : "s"} over the seven-day view.`));
+    }
+  }
+
+  const alreadyAwarded = new Set(boostWins
+    .filter(win => Number(win.day ?? 0) === day)
+    .map(win => `${win.boostId}:${win.userId}`));
+  const pointsAlreadyAwardedToday = new Map<string, number>();
+  for (const win of boostWins.filter(win => Number(win.day ?? 0) === day)) {
+    const participantId = String(win.userId ?? "");
+    pointsAlreadyAwardedToday.set(participantId, (pointsAlreadyAwardedToday.get(participantId) ?? 0) + Number(win.pointsAwarded ?? 0));
+  }
+
+  const emitted = new Set<string>();
+  const cappedAwards: BoostEvaluationAward[] = [];
+  for (const award of awards) {
+    const participantId = String(award.participant.id);
+    const key = `${award.boost.id}:${participantId}`;
+    if (emitted.has(key) || alreadyAwarded.has(key) || hasBoostWinForDay(boostWins, participantId, award.boost.id, day)) continue;
+    const currentDailyBoostPoints = pointsAlreadyAwardedToday.get(participantId) ?? 0;
+    const remaining = DAILY_NAMED_BOOST_CAP - currentDailyBoostPoints;
+    if (remaining <= 0) continue;
+    const cappedPoints = Math.min(award.pointsAwarded, remaining);
+    cappedAwards.push({ ...award, pointsAwarded: cappedPoints });
+    pointsAlreadyAwardedToday.set(participantId, currentDailyBoostPoints + cappedPoints);
+    emitted.add(key);
+  }
+
+  return cappedAwards;
 }

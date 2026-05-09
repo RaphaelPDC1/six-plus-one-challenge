@@ -44,6 +44,60 @@ import {
 
 type Snapshot = any;
 
+const LIFE_LOSS_ALERT_BASELINE_KEY = "sixone-life-loss-alert-baseline-v2";
+const LIFE_LOSS_ALERT_SEEN_PREFIX = "sixone-life-loss-alert-seen-v2";
+
+function getLifeLossAlertId(payment: any) {
+  return payment?.id === undefined || payment?.id === null ? "" : String(payment.id);
+}
+
+export function isLifeLossPaymentEvent(payment: any, participants: any[] = []) {
+  const id = getLifeLossAlertId(payment);
+  if (!id) return false;
+  const amountPence = Number(payment?.amountPence ?? 0);
+  if (!Number.isFinite(amountPence) || amountPence < 2500) return false;
+  if (!["pending", "received"].includes(String(payment?.status ?? "pending"))) return false;
+  const participantExists = participants.some((item: any) => String(item.id) === String(payment?.participantId));
+  if (!participantExists) return false;
+  const reason = String(payment?.reason ?? "").toLowerCase();
+  if (/\b(join|joined|new player|onboard|onboarding|register|registration|signup|sign-up)\b/.test(reason)) return false;
+  return true;
+}
+
+export function selectNewLifeLossAlertEvent(payments: any[] = [], participants: any[] = [], seenIds: Iterable<string> = []) {
+  const seen = new Set(Array.from(seenIds).map(String));
+  return [...payments]
+    .filter((payment: any) => isLifeLossPaymentEvent(payment, participants))
+    .filter((payment: any) => !seen.has(getLifeLossAlertId(payment)))
+    .sort((a: any, b: any) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime())[0] ?? null;
+}
+
+function readLifeLossAlertBaseline() {
+  if (typeof window === "undefined") return new Set<string>();
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(LIFE_LOSS_ALERT_BASELINE_KEY) ?? "[]");
+    return new Set(Array.isArray(parsed) ? parsed.map(String) : []);
+  } catch {
+    return new Set<string>();
+  }
+}
+
+function writeLifeLossAlertBaseline(ids: Iterable<string>) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem(LIFE_LOSS_ALERT_BASELINE_KEY, JSON.stringify(Array.from(new Set(Array.from(ids).filter(Boolean))).sort()));
+}
+
+function hasDismissedLifeLossAlert(id: string) {
+  if (typeof window === "undefined" || !id) return true;
+  return window.localStorage.getItem(`${LIFE_LOSS_ALERT_SEEN_PREFIX}-${id}`) === "true" || window.localStorage.getItem(`sixone-life-loss-alert-seen-${id}`) === "true";
+}
+
+function persistLifeLossAlertDismissal(id: string) {
+  if (typeof window === "undefined" || !id) return;
+  window.localStorage.setItem(`${LIFE_LOSS_ALERT_SEEN_PREFIX}-${id}`, "true");
+  window.localStorage.setItem(`sixone-life-loss-alert-seen-${id}`, "true");
+}
+
 type ProofMediaItem = {
   url: string;
   type: "image" | "video" | "link";
@@ -494,24 +548,34 @@ function LifeLossAlert({ snapshot }: { snapshot: Snapshot | undefined }) {
   const [visibleEvent, setVisibleEvent] = useState<any>(null);
   const payments = snapshot?.payments ?? [];
   const participants = snapshot?.participants ?? [];
+  const candidateIds = useMemo(() => payments.filter((payment: any) => isLifeLossPaymentEvent(payment, participants)).map(getLifeLossAlertId).filter(Boolean), [payments, participants]);
 
   useEffect(() => {
-    if (typeof window === "undefined" || !payments.length) return;
-    const latest = [...payments]
-      .filter((payment: any) => Number(payment.amountPence ?? 0) >= 2500)
-      .sort((a: any, b: any) => new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime())[0];
-    if (!latest?.id) return;
-    const storageKey = `sixone-life-loss-alert-seen-${latest.id}`;
-    if (window.localStorage.getItem(storageKey) === "true") return;
+    if (typeof window === "undefined") return;
+    const hasBaseline = window.localStorage.getItem(LIFE_LOSS_ALERT_BASELINE_KEY) !== null;
+    const baseline = readLifeLossAlertBaseline();
+    if (!hasBaseline) {
+      writeLifeLossAlertBaseline(candidateIds);
+      return;
+    }
+    if (!candidateIds.length) return;
+    const seenIds = new Set([...Array.from(baseline), ...candidateIds.filter(hasDismissedLifeLossAlert)]);
+    const latest = selectNewLifeLossAlertEvent(payments, participants, seenIds);
+    if (!latest) {
+      writeLifeLossAlertBaseline([...Array.from(baseline), ...candidateIds]);
+      return;
+    }
+    const latestId = getLifeLossAlertId(latest);
     const participant = participants.find((item: any) => String(item.id) === String(latest.participantId));
     const event = { ...latest, participant };
-    window.localStorage.setItem(storageKey, "true");
+    persistLifeLossAlertDismissal(latestId);
+    writeLifeLossAlertBaseline([...Array.from(baseline), ...candidateIds, latestId]);
     setVisibleEvent(event);
     toast.error(`${participant?.displayName ?? "Someone"} lost a life`, { description: latest.reason ?? "A £25 life-loss payment is now pending." });
     pulse([34, 48, 34]);
     const timer = window.setTimeout(() => setVisibleEvent(null), 7200);
     return () => window.clearTimeout(timer);
-  }, [payments, participants]);
+  }, [candidateIds, payments, participants]);
 
   if (!visibleEvent) return null;
   const participant = visibleEvent.participant;
@@ -533,7 +597,7 @@ function LifeLossAlert({ snapshot }: { snapshot: Snapshot | undefined }) {
           <div className="relative mt-4 grid grid-cols-4 gap-1 bg-[#2A2A2A] p-[2px]" aria-label={`${livesAfter} lives remaining`}>
             {Array.from({ length: 4 }).map((_, index) => <span key={index} className={classNames("h-7 transition-all duration-700", index < livesAfter ? "bg-[#C0392B]" : "animate-danger-drain bg-[#171717]")} />)}
           </div>
-          <button type="button" onClick={() => setVisibleEvent(null)} className="relative mt-4 w-full rounded-full border border-[#C0392B]/60 bg-[#190B0A] px-4 py-3 text-[10px] font-black uppercase tracking-[0.18em] text-[#FFB3A8] hover:bg-[#240D0B]">Close alert</button>
+          <button type="button" onClick={() => { persistLifeLossAlertDismissal(getLifeLossAlertId(visibleEvent)); setVisibleEvent(null); }} className="relative mt-4 w-full rounded-full border border-[#C0392B]/60 bg-[#190B0A] px-4 py-3 text-[10px] font-black uppercase tracking-[0.18em] text-[#FFB3A8] hover:bg-[#240D0B]">Close alert</button>
         </div>
       </section>
     </div>

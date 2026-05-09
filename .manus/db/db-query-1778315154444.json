@@ -1,0 +1,80 @@
+{
+  "query": "SELECT p.id AS participant_id, p.displayName AS participant_name, p.totalPoints AS participant_total_points, COALESCE(SUM(bw.points_awarded), 0) AS stored_boost_points, COUNT(bw.id) AS stored_boost_rows FROM participants p LEFT JOIN boost_wins bw ON bw.user_id = p.id GROUP BY p.id, p.displayName, p.totalPoints ORDER BY stored_boost_points DESC, p.totalPoints DESC;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2P9ir9M7b3E7Qkh.8b2c854ea8b3 --database HPubf4auNvt8KXvgrLad5c --execute SELECT p.id AS participant_id, p.displayName AS participant_name, p.totalPoints AS participant_total_points, COALESCE(SUM(bw.points_awarded), 0) AS stored_boost_points, COUNT(bw.id) AS stored_boost_rows FROM participants p LEFT JOIN boost_wins bw ON bw.user_id = p.id GROUP BY p.id, p.displayName, p.totalPoints ORDER BY stored_boost_points DESC, p.totalPoints DESC;",
+  "rows": [
+    {
+      "participant_id": "90002",
+      "participant_name": "G LODGE",
+      "participant_total_points": "40",
+      "stored_boost_points": "25",
+      "stored_boost_rows": "5"
+    },
+    {
+      "participant_id": "60011",
+      "participant_name": "Nay",
+      "participant_total_points": "38",
+      "stored_boost_points": "10",
+      "stored_boost_rows": "2"
+    },
+    {
+      "participant_id": "90004",
+      "participant_name": "wiwi",
+      "participant_total_points": "38",
+      "stored_boost_points": "5",
+      "stored_boost_rows": "1"
+    },
+    {
+      "participant_id": "90008",
+      "participant_name": "Chess",
+      "participant_total_points": "38",
+      "stored_boost_points": "5",
+      "stored_boost_rows": "1"
+    },
+    {
+      "participant_id": "90001",
+      "participant_name": "Senyo",
+      "participant_total_points": "38",
+      "stored_boost_points": "0",
+      "stored_boost_rows": "0"
+    },
+    {
+      "participant_id": "90007",
+      "participant_name": "Nat",
+      "participant_total_points": "38",
+      "stored_boost_points": "0",
+      "stored_boost_rows": "0"
+    },
+    {
+      "participant_id": "60012",
+      "participant_name": "Kwabs",
+      "participant_total_points": "38",
+      "stored_boost_points": "0",
+      "stored_boost_rows": "0"
+    },
+    {
+      "participant_id": "90005",
+      "participant_name": "CTM",
+      "participant_total_points": "38",
+      "stored_boost_points": "0",
+      "stored_boost_rows": "0"
+    },
+    {
+      "participant_id": "90003",
+      "participant_name": "Chernice",
+      "participant_total_points": "35",
+      "stored_boost_points": "0",
+      "stored_boost_rows": "0"
+    },
+    {
+      "participant_id": "90006",
+      "participant_name": "Billie bob",
+      "participant_total_points": "35",
+      "stored_boost_points": "0",
+      "stored_boost_rows": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "participant_id\tparticipant_name\tparticipant_total_points\tstored_boost_points\tstored_boost_rows\n90002\tG LODGE\t40\t25\t5\n60011\tNay\t38\t10\t2\n90004\twiwi\t38\t5\t1\n90008\tChess\t38\t5\t1\n90001\tSenyo\t38\t0\t0\n90007\tNat\t38\t0\t0\n60012\tKwabs\t38\t0\t0\n90005\tCTM\t38\t0\t0\n90003\tChernice\t35\t0\t0\n90006\tBillie bob\t35\t0\t0\n",
+  "stderr": "",
+  "execution_time_ms": 273
+}

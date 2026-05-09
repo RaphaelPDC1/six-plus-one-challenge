@@ -1,0 +1,9 @@
+{
+  "query": "DELETE bw FROM boost_wins bw INNER JOIN (SELECT challenge_id, user_id, day, boost_id, MIN(id) AS keep_id FROM boost_wins GROUP BY challenge_id, user_id, day, boost_id HAVING COUNT(*) > 1) duplicates ON bw.challenge_id = duplicates.challenge_id AND bw.user_id = duplicates.user_id AND bw.day = duplicates.day AND bw.boost_id = duplicates.boost_id WHERE bw.id <> duplicates.keep_id;\nALTER TABLE `boost_wins` ADD CONSTRAINT `boost_wins_unique_award_idx` UNIQUE(`challenge_id`,`user_id`,`day`,`boost_id`);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2P9ir9M7b3E7Qkh.8b2c854ea8b3 --database HPubf4auNvt8KXvgrLad5c --execute DELETE bw FROM boost_wins bw INNER JOIN (SELECT challenge_id, user_id, day, boost_id, MIN(id) AS keep_id FROM boost_wins GROUP BY challenge_id, user_id, day, boost_id HAVING COUNT(*) > 1) duplicates ON bw.challenge_id = duplicates.challenge_id AND bw.user_id = duplicates.user_id AND bw.day = duplicates.day AND bw.boost_id = duplicates.boost_id WHERE bw.id <> duplicates.keep_id;\nALTER TABLE `boost_wins` ADD CONSTRAINT `boost_wins_unique_award_idx` UNIQUE(`challenge_id`,`user_id`,`day`,`boost_id`);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 751
+}
