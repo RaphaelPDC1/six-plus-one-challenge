@@ -1,0 +1,22 @@
+{
+  "query": "SELECT u.id AS userId, u.name, u.email, u.createdAt AS userCreatedAt, u.updatedAt AS userUpdatedAt, u.lastSignedIn, p.id AS participantId, p.displayName, p.createdAt AS participantCreatedAt, p.updatedAt AS participantUpdatedAt FROM users u LEFT JOIN participants p ON p.userId = u.id WHERE u.id = 151404 OR p.id = 60011;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2P9ir9M7b3E7Qkh.8b2c854ea8b3 --database HPubf4auNvt8KXvgrLad5c --execute SELECT u.id AS userId, u.name, u.email, u.createdAt AS userCreatedAt, u.updatedAt AS userUpdatedAt, u.lastSignedIn, p.id AS participantId, p.displayName, p.createdAt AS participantCreatedAt, p.updatedAt AS participantUpdatedAt FROM users u LEFT JOIN participants p ON p.userId = u.id WHERE u.id = 151404 OR p.id = 60011;",
+  "rows": [
+    {
+      "userId": "151404",
+      "name": "Nay",
+      "email": "janay30.10@gmail.com",
+      "userCreatedAt": "2026-05-06 13:35:53",
+      "userUpdatedAt": "2026-05-10 08:33:07",
+      "lastSignedIn": "2026-05-10 08:33:08",
+      "participantId": "60011",
+      "displayName": "Nay",
+      "participantCreatedAt": "2026-05-06 13:35:53",
+      "participantUpdatedAt": "2026-05-09 23:59:53"
+    }
+  ],
+  "messages": [],
+  "stdout": "userId\tname\temail\tuserCreatedAt\tuserUpdatedAt\tlastSignedIn\tparticipantId\tdisplayName\tparticipantCreatedAt\tparticipantUpdatedAt\n151404\tNay\tjanay30.10@gmail.com\t2026-05-06 13:35:53\t2026-05-10 08:33:07\t2026-05-10 08:33:08\t60011\tNay\t2026-05-06 13:35:53\t2026-05-09 23:59:53\n",
+  "stderr": "",
+  "execution_time_ms": 262
+}

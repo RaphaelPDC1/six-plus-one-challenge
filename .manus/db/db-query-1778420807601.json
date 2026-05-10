@@ -1,0 +1,65 @@
+{
+  "query": "SELECT id, participantId, dayNumber, logDate, exerciseProofUrl, dayComplete, submittedAt, createdAt, updatedAt FROM daily_logs WHERE participantId = 60011 ORDER BY dayNumber;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2P9ir9M7b3E7Qkh.8b2c854ea8b3 --database HPubf4auNvt8KXvgrLad5c --execute SELECT id, participantId, dayNumber, logDate, exerciseProofUrl, dayComplete, submittedAt, createdAt, updatedAt FROM daily_logs WHERE participantId = 60011 ORDER BY dayNumber;",
+  "rows": [
+    {
+      "id": "6",
+      "participantId": "60011",
+      "dayNumber": "1",
+      "logDate": "2026-05-06",
+      "exerciseProofUrl": "",
+      "dayComplete": "1",
+      "submittedAt": "2026-05-06 22:31:18",
+      "createdAt": "2026-05-06 13:37:26",
+      "updatedAt": "2026-05-06 22:31:28"
+    },
+    {
+      "id": "300002",
+      "participantId": "60011",
+      "dayNumber": "2",
+      "logDate": "2026-05-06",
+      "exerciseProofUrl": "Backdated technical proof accepted by exception.",
+      "dayComplete": "1",
+      "submittedAt": "2026-05-07 23:00:00",
+      "createdAt": "2026-05-08 10:22:20",
+      "updatedAt": "2026-05-08 10:58:35"
+    },
+    {
+      "id": "360001",
+      "participantId": "60011",
+      "dayNumber": "3",
+      "logDate": "2026-05-07",
+      "exerciseProofUrl": "[{\"url\":\"/manus-storage/exercise-proof/participant-60011/1778257285841-image.jpg_649e0615.jpg\",\"type\":\"image\",\"mimeType\":\"image/jpeg\",\"name\":\"image.jpg\"}]",
+      "dayComplete": "1",
+      "submittedAt": "2026-05-08 18:05:33",
+      "createdAt": "2026-05-08 16:29:50",
+      "updatedAt": "2026-05-08 18:05:32"
+    },
+    {
+      "id": "600001",
+      "participantId": "60011",
+      "dayNumber": "4",
+      "logDate": "2026-05-08",
+      "exerciseProofUrl": "",
+      "dayComplete": "0",
+      "submittedAt": "2026-05-09 23:00:00",
+      "createdAt": "2026-05-09 23:59:53",
+      "updatedAt": "2026-05-09 23:59:53"
+    },
+    {
+      "id": "600003",
+      "participantId": "60011",
+      "dayNumber": "5",
+      "logDate": "2026-05-09",
+      "exerciseProofUrl": "",
+      "dayComplete": "0",
+      "submittedAt": "NULL",
+      "createdAt": "2026-05-10 00:01:52",
+      "updatedAt": "2026-05-10 00:01:52"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tparticipantId\tdayNumber\tlogDate\texerciseProofUrl\tdayComplete\tsubmittedAt\tcreatedAt\tupdatedAt\n6\t60011\t1\t2026-05-06\t\t1\t2026-05-06 22:31:18\t2026-05-06 13:37:26\t2026-05-06 22:31:28\n300002\t60011\t2\t2026-05-06\tBackdated technical proof accepted by exception.\t1\t2026-05-07 23:00:00\t2026-05-08 10:22:20\t2026-05-08 10:58:35\n360001\t60011\t3\t2026-05-07\t[{\"url\":\"/manus-storage/exercise-proof/participant-60011/1778257285841-image.jpg_649e0615.jpg\",\"type\":\"image\",\"mimeType\":\"image/jpeg\",\"name\":\"image.jpg\"}]\t1\t2026-05-08 18:05:33\t2026-05-08 16:29:50\t2026-05-08 18:05:32\n600001\t60011\t4\t2026-05-08\t\t0\t2026-05-09 23:00:00\t2026-05-09 23:59:53\t2026-05-09 23:59:53\n600003\t60011\t5\t2026-05-09\t\t0\tNULL\t2026-05-10 00:01:52\t2026-05-10 00:01:52\n",
+  "stderr": "",
+  "execution_time_ms": 262
+}

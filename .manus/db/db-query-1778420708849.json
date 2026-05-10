@@ -1,0 +1,19 @@
+{
+  "query": "SELECT id, userId, displayName, whatsappName, avatarInitials, createdAt, updatedAt FROM participants WHERE LOWER(COALESCE(displayName,'')) LIKE '%nay%' OR LOWER(COALESCE(whatsappName,'')) LIKE '%nay%' OR LOWER(COALESCE(avatarInitials,'')) LIKE '%nay%' ORDER BY id;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2P9ir9M7b3E7Qkh.8b2c854ea8b3 --database HPubf4auNvt8KXvgrLad5c --execute SELECT id, userId, displayName, whatsappName, avatarInitials, createdAt, updatedAt FROM participants WHERE LOWER(COALESCE(displayName,'')) LIKE '%nay%' OR LOWER(COALESCE(whatsappName,'')) LIKE '%nay%' OR LOWER(COALESCE(avatarInitials,'')) LIKE '%nay%' ORDER BY id;",
+  "rows": [
+    {
+      "id": "60011",
+      "userId": "151404",
+      "displayName": "Nay",
+      "whatsappName": "NULL",
+      "avatarInitials": "N",
+      "createdAt": "2026-05-06 13:35:53",
+      "updatedAt": "2026-05-09 23:59:53"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tuserId\tdisplayName\twhatsappName\tavatarInitials\tcreatedAt\tupdatedAt\n60011\t151404\tNay\tNULL\tN\t2026-05-06 13:35:53\t2026-05-09 23:59:53\n",
+  "stderr": "",
+  "execution_time_ms": 369
+}
