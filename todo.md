@@ -1208,3 +1208,10 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Add swipe navigation between pages with advanced animations and transitions.
 - [x] Tuck boost tokens into a well-designed tappable/collapsible section.
 - [x] Redesign the mobile top-three podium as a horizontal podium with varying heights and position-appropriate motion/transitions.
+
+- [x] Explore how the provided 3D gallery component concept could inform a future Proof section redesign without implementing changes yet.
+
+- [x] Ensure Community Care notes appear as an acknowledgement popup that users must acknowledge.
+- [x] Audit recent user-made edits and uncommunicated changes so they can be surfaced clearly to users.
+
+- [x] Publish a catch-up Community Care acknowledgement popup covering recent user-visible edits that were not communicated.
