@@ -2029,7 +2029,7 @@ function getLogRuleStates(log: any) {
     { key: "noAlcohol", done: Boolean(log?.noAlcohol) },
     { key: "cleanEating", done: Boolean(log?.cleanEating) && String(log?.cleanEatingNote ?? "").trim().length >= 10 },
     { key: "exercise", done: Number(log?.exerciseDuration ?? 0) >= 30 && String(log?.exerciseType ?? "").trim().length > 1 },
-    { key: "reflection", done: String(log?.reflectionText ?? "").trim().length > 1 },
+    { key: "reflection", done: Boolean(log?.privateReflectionLogged) || String(log?.reflectionText ?? "").trim().length > 1 },
     { key: "readTeach", done: String(log?.readTeachText ?? "").trim().length > 1 },
     { key: "trackedEverything", done: Boolean(log?.trackedEverything) },
   ];
@@ -2171,7 +2171,7 @@ function ParticipantSheet({ participant, onClose }: { participant: any; onClose:
                       return <div key={label.key} className={classNames("flex items-center justify-between gap-3 border px-3 py-2 text-[9px] font-black uppercase leading-4 tracking-[0.11em]", state?.done ? "border-[#2ECC71]/45 bg-[#07150D] text-[#2ECC71]" : "border-[#C0392B]/45 bg-[#190B0A] text-[#FFB3A8]")}><span>{label.label}</span><span>{state?.done ? "Done" : "Open"}</span></div>;
                     })}
                   </div>
-                  {(selectedHistoryLog.reflectionPreview || selectedHistoryLog.reflectionText) && <p className="mt-4 whitespace-pre-wrap border-l-4 border-[#C8A96E] bg-[#151108] p-3 text-sm font-bold leading-6 text-[#D8D8D8]">{selectedHistoryLog.reflectionPreview || selectedHistoryLog.reflectionText}</p>}
+                  {selectedHistoryLog.privateReflectionLogged && <p className="mt-4 border-l-4 border-[#C8A96E] bg-[#151108] p-3 text-[10px] font-black uppercase leading-5 tracking-[0.14em] text-[#C8A96E]">Reflection logged privately. The content is hidden on participant cards.</p>}
                   {(selectedHistoryLog.readTeachPreview || selectedHistoryLog.readTeachText) && <p className="mt-3 whitespace-pre-wrap border-l-4 border-[#9B59B6] bg-[#120D16] p-3 text-sm font-bold leading-6 text-[#D8D8D8]">Read/teach: {selectedHistoryLog.readTeachPreview || selectedHistoryLog.readTeachText}</p>}
                   <ProofMediaStrip items={parseProofMedia(selectedHistoryLog.exerciseProofUrl)} />
                 </div>

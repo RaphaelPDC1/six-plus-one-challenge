@@ -1056,6 +1056,17 @@ export async function createCommunityCareReleaseNote(input: { title: string; sum
   return created[0];
 }
 
+export function sanitizeSharedDailyLog<T extends Record<string, any>>(log: T) {
+  const privateReflectionLogged = String(log.reflectionText ?? "").trim().length > 1;
+  return {
+    ...log,
+    reflectionText: "",
+    reflectionPreview: "",
+    privateReflectionLogged,
+    reflectionShared: false,
+  };
+}
+
 export async function getParticipantHistory(participantId: number, viewerParticipantId: number | null = null) {
   const db = await getDb();
   if (!db) throw new Error("Database unavailable");
@@ -1065,11 +1076,10 @@ export async function getParticipantHistory(participantId: number, viewerPartici
   const proofSocial = await getProofSocialForLogs(logs.filter(log => String(log.exerciseProofUrl ?? "").trim() || String(log.readTeachText ?? "").trim()).map(log => log.id), viewerParticipantId);
   return {
     participant,
-    logs: logs.map(log => ({
+    logs: logs.map(log => sanitizeSharedDailyLog({
       ...log,
       proofReactions: proofSocial.reactionsByLog[log.id] ?? { counts: { fire: 0, strong: 0, inspired: 0, accountable: 0 }, viewerReaction: null, total: 0 },
       proofComments: proofSocial.commentsByLog[log.id] ?? [],
-      reflectionPreview: String(log.reflectionText ?? "").slice(0, 240),
       readTeachPreview: String(log.readTeachText ?? "").slice(0, 240),
     })),
   };
@@ -1125,7 +1135,7 @@ export async function getAppSnapshot(userId: number, role: "admin" | "user" = "u
   const redemptions = rawRedemptions.filter(redemption => participantIds.has(redemption.participantId));
   const myLog = participant ? await getTodayLog(participant.id) : null;
   const proofSocial = await getProofSocialForLogs(allLogs.filter(log => String(log.exerciseProofUrl ?? "").trim() || String(log.readTeachText ?? "").trim()).map(log => log.id), participant?.id ?? null);
-  const logsWithProofSocial = allLogs.map(log => ({
+  const logsWithProofSocial = allLogs.map(log => sanitizeSharedDailyLog({
     ...log,
     proofReactions: proofSocial.reactionsByLog[log.id] ?? { counts: { fire: 0, strong: 0, inspired: 0, accountable: 0 }, viewerReaction: null, total: 0 },
     proofComments: proofSocial.commentsByLog[log.id] ?? [],
