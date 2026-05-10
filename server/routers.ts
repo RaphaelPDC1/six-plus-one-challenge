@@ -10,7 +10,9 @@ import {
   approveSignupRequest,
   awardBoostWin,
   calculateAndAwardBoostsForDay,
+  acknowledgeReleaseNoteForUser,
   captureWhatsAppMessage,
+  createCommunityCareReleaseNote,
   createSiteNativeUser,
   createRedemption,
   completeOnboarding,
@@ -21,6 +23,8 @@ import {
   getCurrentChallengeDay,
   getOrCreateParticipant,
   getParticipantByUserId,
+  getParticipantHistory,
+  getLatestUnacknowledgedReleaseNote,
   normalizeSignupEmail,
   logWardenMessage,
   markPaymentReceived,
@@ -227,6 +231,20 @@ export const appRouter = router({
         }
       }),
 
+    participantHistory: protectedProcedure
+      .input(z.object({ participantId: z.number().int().positive() }))
+      .query(async ({ ctx, input }) => {
+        const viewer = await getParticipantByUserId(ctx.user.id);
+        return getParticipantHistory(input.participantId, viewer?.id ?? null);
+      }),
+
+    latestReleaseNote: protectedProcedure
+      .query(({ ctx }) => getLatestUnacknowledgedReleaseNote(ctx.user.id)),
+
+    acknowledgeReleaseNote: protectedProcedure
+      .input(z.object({ releaseNoteId: z.number().int().positive() }))
+      .mutation(({ ctx, input }) => acknowledgeReleaseNoteForUser(input.releaseNoteId, ctx.user.id)),
+
     loseLife: protectedProcedure
       .input(z.object({ reason: z.string().min(2).max(500), dailyLogId: z.number().int().optional() }))
       .mutation(async ({ ctx, input }) => {
@@ -344,6 +362,17 @@ export const appRouter = router({
     runWarden: adminProcedure
       .input(z.object({ mode: z.enum(["surveillance", "commentary", "on_ramp"]) }))
       .mutation(async ({ ctx, input }) => generateWardenCommentary(ctx.user.id, input.mode)),
+
+    createReleaseNote: adminProcedure
+      .input(z.object({
+        title: z.string().trim().min(3).max(180),
+        summary: z.string().trim().min(3).max(1000),
+        body: z.string().trim().min(3).max(4000),
+        versionLabel: z.string().trim().min(1).max(80),
+        category: z.enum(["community_care", "rules", "rewards", "technical"]).default("community_care"),
+        active: z.boolean().default(true),
+      }))
+      .mutation(({ ctx, input }) => createCommunityCareReleaseNote(input, ctx.user.id)),
   }),
 
   whatsapp: router({

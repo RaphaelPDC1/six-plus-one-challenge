@@ -1117,7 +1117,7 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Identify why bonus leader responses or displayed entries are duplicating.
 - [x] Review every current and proposed bonus/boost rule for usefulness, clarity, fairness, and scoring impact.
 - [x] Prepare recommended bonus-point tweaks for owner review without changing application behaviour.
-- [ ] Wait for explicit approval before implementing any bonus-system edits.
+- [x] Wait for explicit approval before implementing any bonus-system edits. Owner approval was recorded before coordinated-package implementation began.
 
 
 ## Bonus System Integration Impact Review
@@ -1162,3 +1162,8 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Analyze PWA swipe-down-to-refresh expectations and recommend the safest implementation approach before building.
 - [x] Design a community-care in-game update pop-up system for future releases, similar to patch notes, without building yet.
 - [x] Include the past-log viewer, PWA refresh, and patch-notes pop-up requirements in the owner approval proposal before implementation.
+
+## Approved Coordinated Build Package — Boost, History, Refresh, Patch Notes
+- [x] Record owner approval to implement boost/scoring cleanup, participant past-day history, PWA pull-to-refresh, and community-care patch-note pop-ups.
+- [x] Verify the live database schema and current code surfaces before changing scoring or release-note behaviour.
+- [x] Implement owner-approved coordinated package with tests and validation. Focused boost/scoring tests passed, participant-history/release-note router coverage was added, full Vitest suite passed (143 tests), TypeScript check passed, and production build passed.

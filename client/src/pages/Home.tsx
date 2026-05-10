@@ -1915,12 +1915,14 @@ function ParticipantSheet({ participant, onClose }: { participant: any; onClose:
   const [visibleParticipant, setVisibleParticipant] = useState<any>(participant);
   const [photoExpanded, setPhotoExpanded] = useState(false);
   const [closing, setClosing] = useState(false);
+  const [selectedHistoryDay, setSelectedHistoryDay] = useState<number | null>(null);
 
   useEffect(() => {
     if (participant) {
       setVisibleParticipant(participant);
       setPhotoExpanded(false);
       setClosing(false);
+      setSelectedHistoryDay(null);
       return;
     }
 
@@ -1941,8 +1943,14 @@ function ParticipantSheet({ participant, onClose }: { participant: any; onClose:
   }, [participant, visibleParticipant]);
 
   if (!visibleParticipant) return null;
-  const sheetLogs = [...(visibleParticipant.ownedLogs ?? [])].sort((a: any, b: any) => Number(b.dayNumber ?? 0) - Number(a.dayNumber ?? 0));
+  const historyQuery = trpc.challenge.participantHistory.useQuery(
+    { participantId: Number(visibleParticipant.id) },
+    { enabled: Boolean(visibleParticipant?.id) }
+  );
+  const sheetLogs = [...(historyQuery.data?.logs ?? visibleParticipant.ownedLogs ?? [])].sort((a: any, b: any) => Number(b.dayNumber ?? 0) - Number(a.dayNumber ?? 0));
   const latestLog = sheetLogs[0];
+  const selectedHistoryLog = sheetLogs.find((log: any) => Number(log.dayNumber) === Number(selectedHistoryDay)) ?? latestLog;
+  const selectedHistoryRules = selectedHistoryLog ? getLogRuleStates(selectedHistoryLog) : [];
   const latestRules = latestLog ? getLogRuleStates(latestLog) : [];
   const latestCompletedRules = latestLog ? latestRules.filter(rule => rule.done).length : 0;
   const recentLogs = sheetLogs.slice(0, 7);
@@ -1991,6 +1999,56 @@ function ParticipantSheet({ participant, onClose }: { participant: any; onClose:
             </div>
           ) : (
             <p className="mt-4 border border-[#2A2A2A] bg-[#0D0D0D] p-4 text-xs font-black uppercase tracking-[0.14em] text-[#777]">No submitted standards yet for this participant.</p>
+          )}
+        </section>
+        <section className="mt-5 border border-[#2A2A2A] bg-black/35 p-3 sm:p-4" data-testid="participant-history-panel">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <MicroLabel tone="gold">Past-day logbook</MicroLabel>
+              <h4 className="mt-2 text-2xl font-black uppercase tracking-[-0.06em] text-white">Review previous entries.</h4>
+              <p className="mt-2 text-xs font-bold leading-5 text-[#999]">Scroll the day chips to inspect what this participant logged on earlier days.</p>
+            </div>
+            <span className="border border-[#2A2A2A] px-3 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-[#777]">{historyQuery.isLoading ? "Loading" : `${sheetLogs.length} logs`}</span>
+          </div>
+          {sheetLogs.length > 0 ? (
+            <>
+              <div className="mt-4 overflow-x-auto">
+                <div className="flex gap-2 pb-1">
+                  {sheetLogs.map((log: any) => {
+                    const active = Number(selectedHistoryLog?.dayNumber) === Number(log.dayNumber);
+                    const completeCount = getLogCompletedRuleCount(log);
+                    return (
+                      <button key={log.id} type="button" onClick={() => setSelectedHistoryDay(Number(log.dayNumber))} className={classNames("min-w-[5.5rem] border px-3 py-2 text-left text-[9px] font-black uppercase tracking-[0.12em] transition", active ? "border-[#C8A96E] bg-[#1A1408] text-[#F4D58D]" : "border-[#2A2A2A] bg-[#0D0D0D] text-[#777] hover:border-[#C8A96E]/60 hover:text-white")} aria-pressed={active}>
+                        <span className="block text-sm text-white">Day {log.dayNumber}</span>
+                        <span className="mt-1 block">{completeCount}/{DAILY_RULE_COUNT}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              {selectedHistoryLog && (
+                <div className="mt-4 border border-[#2A2A2A] bg-[#0D0D0D] p-4" data-testid="participant-history-selected-log">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <MicroLabel tone={getLogCompletedRuleCount(selectedHistoryLog) >= DAILY_PASS_THRESHOLD ? "green" : "red"}>Day {selectedHistoryLog.dayNumber}</MicroLabel>
+                      <h5 className="mt-2 text-xl font-black uppercase tracking-[-0.05em] text-white">{getLogCompletedRuleCount(selectedHistoryLog)}/{DAILY_RULE_COUNT} standards logged.</h5>
+                    </div>
+                    <span className={classNames("border px-3 py-2 text-[9px] font-black uppercase tracking-[0.14em]", selectedHistoryLog.completed || getLogCompletedRuleCount(selectedHistoryLog) >= DAILY_PASS_THRESHOLD ? "border-[#2ECC71] text-[#2ECC71]" : "border-[#C0392B] text-[#FFB3A8]")}>{selectedHistoryLog.completed || getLogCompletedRuleCount(selectedHistoryLog) >= DAILY_PASS_THRESHOLD ? "Pass" : "At risk"}</span>
+                  </div>
+                  <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                    {COMPLIANCE_RULE_LABELS.map(label => {
+                      const state = selectedHistoryRules.find(rule => rule.key === label.key);
+                      return <div key={label.key} className={classNames("flex items-center justify-between gap-3 border px-3 py-2 text-[9px] font-black uppercase leading-4 tracking-[0.11em]", state?.done ? "border-[#2ECC71]/45 bg-[#07150D] text-[#2ECC71]" : "border-[#C0392B]/45 bg-[#190B0A] text-[#FFB3A8]")}><span>{label.label}</span><span>{state?.done ? "Done" : "Open"}</span></div>;
+                    })}
+                  </div>
+                  {(selectedHistoryLog.reflectionPreview || selectedHistoryLog.reflectionText) && <p className="mt-4 whitespace-pre-wrap border-l-4 border-[#C8A96E] bg-[#151108] p-3 text-sm font-bold leading-6 text-[#D8D8D8]">{selectedHistoryLog.reflectionPreview || selectedHistoryLog.reflectionText}</p>}
+                  {(selectedHistoryLog.readTeachPreview || selectedHistoryLog.readTeachText) && <p className="mt-3 whitespace-pre-wrap border-l-4 border-[#9B59B6] bg-[#120D16] p-3 text-sm font-bold leading-6 text-[#D8D8D8]">Read/teach: {selectedHistoryLog.readTeachPreview || selectedHistoryLog.readTeachText}</p>}
+                  <ProofMediaStrip items={parseProofMedia(selectedHistoryLog.exerciseProofUrl)} />
+                </div>
+              )}
+            </>
+          ) : (
+            <p className="mt-4 border border-[#2A2A2A] bg-[#0D0D0D] p-4 text-xs font-black uppercase tracking-[0.14em] text-[#777]">No historical logs found for this participant yet.</p>
           )}
         </section>
         {photoExpanded && normaliseProfilePhotoUrl(visibleParticipant.profilePhotoUrl) && (
@@ -2691,12 +2749,35 @@ function OnboardingGate({ user, refetch }: { user: any; refetch: () => void }) {
 }
 
 function AdminPanel({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void }) {
+  const [releaseNoteForm, setReleaseNoteForm] = useState({ title: "", versionLabel: "", summary: "", body: "", category: "community_care" as "community_care" | "rules" | "rewards" | "technical" });
   const confirmPayment = trpc.admin.confirmPayment.useMutation({ onSuccess: () => { haptics.success(); toast("Payment marked received."); refetch(); } });
   const fulfill = trpc.admin.fulfillRedemption.useMutation({ onSuccess: () => { haptics.success(); toast("Redemption marked fulfilled."); refetch(); } });
   const approveSignup = trpc.admin.approveSignup.useMutation({ onSuccess: () => { haptics.success(); toast("Access request approved."); refetch(); } });
   const rejectSignup = trpc.admin.rejectSignup.useMutation({ onSuccess: () => { haptics.warning(); toast("Access request rejected."); refetch(); } });
+  const createReleaseNote = trpc.admin.createReleaseNote.useMutation({
+    onSuccess: () => {
+      haptics.success();
+      toast("Community-care update published.");
+      setReleaseNoteForm({ title: "", versionLabel: "", summary: "", body: "", category: "community_care" });
+      refetch();
+    },
+    onError: error => toast(error.message || "Could not publish the update."),
+  });
   return (
     <div className="grid gap-5 xl:grid-cols-2">
+      <section className="border border-[#2A2A2A] bg-[#101010] p-5 xl:col-span-2" data-testid="release-note-admin-panel">
+        <MicroLabel tone="green">Community care updates</MicroLabel>
+        <h2 className="mt-2 text-3xl font-black uppercase tracking-[-0.06em] text-white">Patch notes in the game.</h2>
+        <p className="mt-3 max-w-2xl text-sm font-bold leading-6 text-[#999]">Publish a short update after changes. Each participant sees it once as an in-game community-care pop-up and can acknowledge it.</p>
+        <div className="mt-5 grid gap-3 md:grid-cols-2">
+          <Field label="Update title"><TextInput value={releaseNoteForm.title} onChange={event => setReleaseNoteForm(current => ({ ...current, title: event.target.value }))} placeholder="What changed?" /></Field>
+          <Field label="Version label"><TextInput value={releaseNoteForm.versionLabel} onChange={event => setReleaseNoteForm(current => ({ ...current, versionLabel: event.target.value }))} placeholder="May 10 care note" /></Field>
+          <Field label="Summary"><TextInput value={releaseNoteForm.summary} onChange={event => setReleaseNoteForm(current => ({ ...current, summary: event.target.value }))} placeholder="One-line player-facing summary" /></Field>
+          <Field label="Category"><select value={releaseNoteForm.category} onChange={event => setReleaseNoteForm(current => ({ ...current, category: event.target.value as any }))} className="min-h-12 w-full border border-[#2A2A2A] bg-black px-3 py-3 text-sm font-bold text-white outline-none focus:border-[#C8A96E]"><option value="community_care">Community care</option><option value="rules">Rules</option><option value="rewards">Rewards</option><option value="technical">Technical</option></select></Field>
+          <div className="md:col-span-2"><Field label="Update body"><textarea value={releaseNoteForm.body} onChange={event => setReleaseNoteForm(current => ({ ...current, body: event.target.value }))} placeholder="Explain the update in clear, kind, in-game language." className="min-h-28 w-full border border-[#2A2A2A] bg-black px-3 py-3 text-sm font-bold leading-6 text-white outline-none focus:border-[#C8A96E]" /></Field></div>
+        </div>
+        <SharpButton className="mt-4 min-h-11 px-5 py-3" disabled={createReleaseNote.isPending || !releaseNoteForm.title.trim() || !releaseNoteForm.versionLabel.trim() || !releaseNoteForm.summary.trim() || !releaseNoteForm.body.trim()} onClick={() => createReleaseNote.mutate({ ...releaseNoteForm, active: true })}>{createReleaseNote.isPending ? "Publishing..." : "Publish update pop-up"}</SharpButton>
+      </section>
       <section className="border border-[#2A2A2A] bg-[#101010] p-5">
         <MicroLabel tone="red">Monzo obligations</MicroLabel>
         <h2 className="mt-2 text-3xl font-black uppercase tracking-[-0.06em] text-white">Offline confirmation.</h2>
@@ -2789,6 +2870,33 @@ function AdminPanel({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => 
   );
 }
 
+function CommunityCareReleaseNotePopup({ note, isPending, onAcknowledge }: { note: any; isPending: boolean; onAcknowledge: (id: number) => void }) {
+  if (!note) return null;
+  const popup = (
+    <div className="fixed inset-0 z-[95] flex items-center justify-center bg-black/78 p-4" role="dialog" aria-modal="true" aria-label="Community-care update" data-testid="community-care-release-note-popup">
+      <div className="motion-sheet-panel w-full max-w-lg border-2 border-[#2ECC71] bg-[#0D0D0D] p-5 shadow-[0_28px_90px_rgba(0,0,0,0.82)]">
+        <MicroLabel tone="green">Community care · {note.versionLabel}</MicroLabel>
+        <h2 className="mt-3 text-3xl font-black uppercase leading-none tracking-[-0.07em] text-white">{note.title}</h2>
+        <p className="mt-4 border-l-4 border-[#2ECC71] bg-[#07150D] p-3 text-sm font-black leading-6 text-[#CFF6DA]">{note.summary}</p>
+        <p className="mt-4 whitespace-pre-wrap text-sm font-bold leading-6 text-[#D8D8D8]">{note.body}</p>
+        <button type="button" disabled={isPending} onClick={() => onAcknowledge(Number(note.id))} className="motion-press mt-5 min-h-12 w-full bg-[#2ECC71] px-5 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-black transition hover:bg-[#79F0A0] disabled:opacity-50">{isPending ? "Saving..." : "I understand the update"}</button>
+      </div>
+    </div>
+  );
+  return typeof document === "undefined" ? popup : createPortal(popup, document.body);
+}
+
+function PullToRefreshIndicator({ distance, refreshing }: { distance: number; refreshing: boolean }) {
+  if (!refreshing && distance < 12) return null;
+  return (
+    <div className="fixed inset-x-0 top-3 z-[92] pointer-events-none flex justify-center px-4" data-testid="pull-to-refresh-indicator">
+      <div className="border border-[#C8A96E]/70 bg-black/90 px-4 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-[#F4D58D] shadow-[0_12px_38px_rgba(0,0,0,0.55)]">
+        {refreshing ? "Refreshing challenge..." : distance > 72 ? "Release to refresh" : "Pull down to refresh"}
+      </div>
+    </div>
+  );
+}
+
 const tabs: Array<{ key: TabKey; label: string; icon: any }> = [
   { key: "myday", label: "My Day", icon: Lock },
   { key: "overview", label: "Overview", icon: Activity },
@@ -2840,6 +2948,9 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState<TabKey>("myday");
   const [entryVisible, setEntryVisible] = useState(() => typeof window !== "undefined" && window.sessionStorage.getItem("sixone-entry-seen") !== "true");
   const [loginEntryVisible, setLoginEntryVisible] = useState(false);
+  const [pullDistance, setPullDistance] = useState(0);
+  const [pullRefreshing, setPullRefreshing] = useState(false);
+  const pullStartYRef = useRef<number | null>(null);
   const previousAuthRef = useRef(isAuthenticated);
   const utils = trpc.useUtils();
   const snapshotQuery = trpc.challenge.snapshot.useQuery(undefined, {
@@ -2850,6 +2961,15 @@ export default function Home() {
     refetchOnReconnect: true,
   });
   const snapshot = snapshotQuery.data;
+  const releaseNoteQuery = trpc.challenge.latestReleaseNote.useQuery(undefined, { enabled: isAuthenticated });
+  const acknowledgeReleaseNote = trpc.challenge.acknowledgeReleaseNote.useMutation({
+    onSuccess: () => {
+      haptics.success();
+      toast("Community-care update noted.");
+      void releaseNoteQuery.refetch();
+    },
+    onError: error => toast(error.message || "Could not acknowledge the update."),
+  });
 
   useEffect(() => {
     if (!isAuthenticated || typeof window === "undefined") return;
@@ -2891,6 +3011,33 @@ export default function Home() {
     return () => window.clearTimeout(timer);
   }, [isAuthenticated, loading]);
 
+  const handleTouchStart = (event: React.TouchEvent<HTMLElement>) => {
+    if (typeof window === "undefined" || window.scrollY > 0 || snapshotQuery.isFetching || pullRefreshing) {
+      pullStartYRef.current = null;
+      return;
+    }
+    pullStartYRef.current = event.touches[0]?.clientY ?? null;
+  };
+
+  const handleTouchMove = (event: React.TouchEvent<HTMLElement>) => {
+    if (pullStartYRef.current === null) return;
+    const currentY = event.touches[0]?.clientY ?? pullStartYRef.current;
+    const delta = Math.max(0, currentY - pullStartYRef.current);
+    if (delta > 8) setPullDistance(Math.min(112, delta));
+  };
+
+  const handleTouchEnd = () => {
+    const shouldRefresh = pullDistance > 72;
+    pullStartYRef.current = null;
+    setPullDistance(0);
+    if (!shouldRefresh || pullRefreshing) return;
+    setPullRefreshing(true);
+    Promise.all([snapshotQuery.refetch(), releaseNoteQuery.refetch()]).finally(() => {
+      setPullRefreshing(false);
+      toast("Challenge data refreshed.");
+    });
+  };
+
   if (loading || entryVisible || loginEntryVisible) return <AnimatedLoadPage label={loading ? "Authenticating" : loginEntryVisible ? "Opening your challenge" : "Entering the log"} />;
   if (!isAuthenticated) return <Landing />;
   if (snapshot?.accessState?.status === "questionnaire_required") return <OnboardingGate user={user} refetch={snapshotQuery.refetch} />;
@@ -2899,7 +3046,7 @@ export default function Home() {
   const mobileTabs = visibleTabs.filter(tab => tab.key !== "admin");
   const activeMobileIndex = Math.max(0, mobileTabs.findIndex(tab => tab.key === activeTab));
   return (
-    <main className="poster-grid motion-page min-h-screen bg-[#0D0D0D] pb-32 text-white md:pb-0" data-motion-system="site-wide-v1">
+    <main className="poster-grid motion-page min-h-screen bg-[#0D0D0D] pb-32 text-white md:pb-0" data-motion-system="site-wide-v1" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
       <header className="sticky top-0 z-40 border-b border-[#2A2A2A] bg-[#0D0D0D]/95 backdrop-blur">
         <div className="container flex items-center justify-between gap-3 py-3 sm:gap-4 sm:py-4">
           <button onClick={() => setActiveTab("myday")} className="flex min-w-0 items-center gap-3 text-left">
@@ -2946,7 +3093,9 @@ export default function Home() {
         )}
       </section>
 
+      <PullToRefreshIndicator distance={pullDistance} refreshing={pullRefreshing} />
       <LifeLossAlert snapshot={snapshot} />
+      <CommunityCareReleaseNotePopup note={releaseNoteQuery.data} isPending={acknowledgeReleaseNote.isPending} onAcknowledge={releaseNoteId => acknowledgeReleaseNote.mutate({ releaseNoteId })} />
       <MobileBottomNav mobileTabs={mobileTabs} activeTab={activeTab} activeMobileIndex={activeMobileIndex} onSelect={setActiveTab} />
     </main>
   );

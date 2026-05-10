@@ -13,6 +13,8 @@ import {
   proofComments,
   proofReactions,
   redemptionRequests,
+  releaseNoteAcknowledgements,
+  releaseNotes,
   rewardCatalogue,
   signupRequests,
   users,
@@ -987,6 +989,87 @@ export async function calculateAndAwardBoostsForDay(day: number, challengeId = B
     results.push(result);
   }
   return { day, activeBoosts, awards: results, createdCount: results.filter(result => result.created).length };
+}
+
+const DEFAULT_COMMUNITY_CARE_RELEASE_NOTE = {
+  title: "Community care update",
+  summary: "Boost scoring, participant history, refresh behaviour, and update notes are now easier to understand.",
+  body: "We have separated base daily points from named boosts, added a safer path for viewing participant history, prepared pull-to-refresh for the PWA, and introduced this community-care update space so future changes are explained in-game.",
+  versionLabel: "Community Care 1",
+  category: "community_care" as const,
+};
+
+export async function seedReleaseNotesIfEmpty() {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  const existing = await db.select().from(releaseNotes).limit(1);
+  if (existing[0]) return existing[0];
+  await db.insert(releaseNotes).values(DEFAULT_COMMUNITY_CARE_RELEASE_NOTE);
+  const created = await db.select().from(releaseNotes).orderBy(desc(releaseNotes.publishedAt)).limit(1);
+  return created[0] ?? null;
+}
+
+export async function getLatestUnacknowledgedReleaseNote(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  await seedReleaseNotesIfEmpty();
+  const [notes, acknowledgements] = await Promise.all([
+    db.select().from(releaseNotes).where(eq(releaseNotes.active, true)).orderBy(desc(releaseNotes.publishedAt)).limit(10),
+    db.select().from(releaseNoteAcknowledgements).where(eq(releaseNoteAcknowledgements.userId, userId)),
+  ]);
+  const acknowledgedIds = new Set(acknowledgements.map(row => row.releaseNoteId));
+  return notes.find(note => !acknowledgedIds.has(note.id)) ?? null;
+}
+
+export async function acknowledgeReleaseNoteForUser(releaseNoteId: number, userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  const note = (await db.select().from(releaseNotes).where(eq(releaseNotes.id, releaseNoteId)).limit(1))[0];
+  if (!note) throw new Error("Release note not found");
+  const existing = await db.select().from(releaseNoteAcknowledgements).where(and(
+    eq(releaseNoteAcknowledgements.releaseNoteId, releaseNoteId),
+    eq(releaseNoteAcknowledgements.userId, userId),
+  )).limit(1);
+  if (!existing[0]) {
+    await db.insert(releaseNoteAcknowledgements).values({ releaseNoteId, userId });
+  }
+  return { success: true as const };
+}
+
+export async function createCommunityCareReleaseNote(input: { title: string; summary: string; body: string; versionLabel: string; category?: "community_care" | "rules" | "rewards" | "technical"; active?: boolean }, createdByUserId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  const values = {
+    title: input.title.trim(),
+    summary: input.summary.trim(),
+    body: input.body.trim(),
+    versionLabel: input.versionLabel.trim(),
+    category: input.category ?? "community_care",
+    active: input.active ?? true,
+    createdByUserId,
+  };
+  await db.insert(releaseNotes).values(values);
+  const created = await db.select().from(releaseNotes).orderBy(desc(releaseNotes.createdAt)).limit(1);
+  return created[0];
+}
+
+export async function getParticipantHistory(participantId: number, viewerParticipantId: number | null = null) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  const participant = (await db.select().from(participants).where(eq(participants.id, participantId)).limit(1))[0];
+  if (!participant) throw new Error("Participant not found");
+  const logs = await db.select().from(dailyLogs).where(eq(dailyLogs.participantId, participantId)).orderBy(desc(dailyLogs.dayNumber)).limit(80);
+  const proofSocial = await getProofSocialForLogs(logs.filter(log => String(log.exerciseProofUrl ?? "").trim() || String(log.readTeachText ?? "").trim()).map(log => log.id), viewerParticipantId);
+  return {
+    participant,
+    logs: logs.map(log => ({
+      ...log,
+      proofReactions: proofSocial.reactionsByLog[log.id] ?? { counts: { fire: 0, strong: 0, inspired: 0, accountable: 0 }, viewerReaction: null, total: 0 },
+      proofComments: proofSocial.commentsByLog[log.id] ?? [],
+      reflectionPreview: String(log.reflectionText ?? "").slice(0, 240),
+      readTeachPreview: String(log.readTeachText ?? "").slice(0, 240),
+    })),
+  };
 }
 
 export async function getAppSnapshot(userId: number, role: "admin" | "user" = "user", email: string | null = null) {

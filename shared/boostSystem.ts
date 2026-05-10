@@ -12,6 +12,7 @@ export type BoostDefinition = {
   shortRule: string;
   antiGaming: string;
   tone: BoostTone;
+  pointsAwarded: number;
 };
 
 export type BoostParticipant = Record<string, any>;
@@ -37,6 +38,7 @@ export const BOOST_SEQUENCE: BoostDefinition[] = [
     shortRule: "Every third consecutive perfect 6/6 day",
     antiGaming: "Requires all six rules complete and only pays on streak days 3, 6, 9, 12 and so on.",
     tone: "green",
+    pointsAwarded: 5,
   },
   {
     id: "morning_proof",
@@ -45,14 +47,16 @@ export const BOOST_SEQUENCE: BoostDefinition[] = [
     shortRule: "Exercise proof uploaded before 09:00",
     antiGaming: "Requires an actual exercise proof upload timestamped before 09:00, not just a text exercise log.",
     tone: "gold",
+    pointsAwarded: 3,
   },
   {
     id: "bounce_back",
     name: "BOUNCE BACK",
     icon: "↻",
     shortRule: "Complete the day after a missed or incomplete day",
-    antiGaming: "Requires yesterday to be incomplete or missed, and today must be complete.",
+    antiGaming: "Requires an actual previous-day log that was incomplete; new-player onboarding gaps do not count.",
     tone: "red",
+    pointsAwarded: 4,
   },
   {
     id: "deep_work",
@@ -61,14 +65,16 @@ export const BOOST_SEQUENCE: BoostDefinition[] = [
     shortRule: "Meaningful reflection plus Read & Teach depth",
     antiGaming: "Requires at least 250 combined characters across reflection and Read & Teach fields.",
     tone: "purple",
+    pointsAwarded: 4,
   },
   {
     id: "pressure_player",
     name: "PRESSURE PLAYER",
     icon: "◈",
     shortRule: "Complete a day while on two lives or fewer",
-    antiGaming: "Only players in the danger-life bracket can trigger it.",
+    antiGaming: "Only players in the danger-life bracket can trigger it; copy frames this as a comeback badge.",
     tone: "red",
+    pointsAwarded: 6,
   },
   {
     id: "streak_lock",
@@ -77,6 +83,7 @@ export const BOOST_SEQUENCE: BoostDefinition[] = [
     shortRule: "Lock in each seven-day streak milestone",
     antiGaming: "Pays on streak days 7, 14, 21 and so on; duplicate awards for the same day are blocked.",
     tone: "green",
+    pointsAwarded: 7,
   },
   {
     id: "mover",
@@ -85,6 +92,7 @@ export const BOOST_SEQUENCE: BoostDefinition[] = [
     shortRule: "Biggest seven-day rank climb outside the top three",
     antiGaming: "Current top three excluded; requires a real climb over the previous seven-day view.",
     tone: "gold",
+    pointsAwarded: 5,
   },
 ];
 
@@ -152,14 +160,15 @@ function rankParticipantsByPoints(participants: BoostParticipant[], boostWins: B
   );
 }
 
-function makeAward(boost: BoostDefinition, participant: BoostParticipant, reason: string, pointsAwarded = BOOST_POINTS): BoostEvaluationAward {
+function makeAward(boost: BoostDefinition, participant: BoostParticipant, reason: string, pointsAwarded = boost.pointsAwarded ?? BOOST_POINTS): BoostEvaluationAward {
   return { boost, participant, pointsAwarded, wardenNote: `${boost.name}: ${reason}` };
 }
 
 function priorDayWasMissed(day: number, logs: BoostLog[], participantId: unknown): boolean {
   if (day <= 1) return false;
   const previous = logs.find(log => Number(log.dayNumber ?? 0) === day - 1 && String(log.participantId) === String(participantId));
-  return !previous || !isPassingBoostLog(previous) || !Boolean(previous.dayComplete ?? previous.completed);
+  if (!previous) return false;
+  return !isPassingBoostLog(previous) || !Boolean(previous.dayComplete ?? previous.completed);
 }
 
 function proofBeforeNine(log: BoostLog): boolean {

@@ -26,6 +26,16 @@ const mockState = vi.hoisted(() => ({
     data: {},
     isLoading: false,
   },
+  releaseNoteQuery: {
+    data: null,
+    isLoading: false,
+    refetch: vi.fn(),
+  },
+  participantHistoryQuery: {
+    data: [],
+    isLoading: false,
+    refetch: vi.fn(),
+  },
 }));
 
 vi.mock("wouter", () => ({
@@ -45,7 +55,11 @@ vi.mock("@/lib/trpc", () => ({
   trpc: {
     useUtils: () => ({
       auth: { me: { invalidate: vi.fn(), setData: vi.fn() } },
-      challenge: { snapshot: { invalidate: vi.fn() } },
+      challenge: {
+        snapshot: { invalidate: vi.fn() },
+        latestReleaseNote: { invalidate: vi.fn() },
+        participantHistory: { invalidate: vi.fn() },
+      },
     }),
     auth: {
       siteLogin: {
@@ -72,6 +86,18 @@ vi.mock("@/lib/trpc", () => ({
       },
       deepThoughts: {
         useQuery: () => mockState.deepThoughtsQuery,
+      },
+      participantHistory: {
+        useQuery: () => mockState.participantHistoryQuery,
+      },
+      latestReleaseNote: {
+        useQuery: () => mockState.releaseNoteQuery,
+      },
+      acknowledgeReleaseNote: {
+        useMutation: () => mockState.mutation,
+      },
+      createReleaseNote: {
+        useMutation: () => mockState.mutation,
       },
       applyGhostLife: {
         useMutation: () => mockState.mutation,
@@ -112,6 +138,12 @@ describe("Home onboarding shell", () => {
     mockState.mutation.mutateAsync.mockClear();
     mockState.deepThoughtsQuery.data = {};
     mockState.deepThoughtsQuery.isLoading = false;
+    mockState.releaseNoteQuery.data = null;
+    mockState.releaseNoteQuery.isLoading = false;
+    mockState.releaseNoteQuery.refetch.mockClear();
+    mockState.participantHistoryQuery.data = [];
+    mockState.participantHistoryQuery.isLoading = false;
+    mockState.participantHistoryQuery.refetch.mockClear();
     if (typeof window !== "undefined") {
       window.sessionStorage.setItem("sixone-entry-seen", "true");
     }

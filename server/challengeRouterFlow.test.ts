@@ -11,6 +11,10 @@ const dbMocks = vi.hoisted(() => ({
   getCurrentChallengeDay: vi.fn(() => 1),
   getOrCreateParticipant: vi.fn(),
   getParticipantByUserId: vi.fn(),
+  getParticipantHistory: vi.fn(),
+  getLatestUnacknowledgedReleaseNote: vi.fn(),
+  acknowledgeReleaseNoteForUser: vi.fn(),
+  createCommunityCareReleaseNote: vi.fn(),
   logWardenMessage: vi.fn(),
   markPaymentReceived: vi.fn(),
   markRedemptionFulfilled: vi.fn(),
@@ -163,6 +167,56 @@ describe("challenge router flow", () => {
       profilePhotoDataUrl: "data:text/plain;base64,aGVsbG8=",
     })).rejects.toThrow();
     expect(dbMocks.completeOnboarding).not.toHaveBeenCalled();
+  });
+
+  it("routes participant history through the viewer-aware helper", async () => {
+    dbMocks.getParticipantByUserId.mockResolvedValue({ id: 7, displayName: "Marcus" });
+    dbMocks.getParticipantHistory.mockResolvedValue([{ dayNumber: 3, noAlcohol: true, dayComplete: true }]);
+
+    const caller = appRouter.createCaller(createParticipantContext());
+    const result = await caller.challenge.participantHistory({ participantId: 12 });
+
+    expect(result).toEqual([{ dayNumber: 3, noAlcohol: true, dayComplete: true }]);
+    expect(dbMocks.getParticipantHistory).toHaveBeenCalledWith(12, 7);
+  });
+
+  it("routes community-care release-note queries and acknowledgements through user-scoped helpers", async () => {
+    dbMocks.getLatestUnacknowledgedReleaseNote.mockResolvedValue({ id: 5, title: "Community Care Update" });
+    dbMocks.acknowledgeReleaseNoteForUser.mockResolvedValue({ success: true });
+
+    const caller = appRouter.createCaller(createParticipantContext());
+    await expect(caller.challenge.latestReleaseNote()).resolves.toEqual({ id: 5, title: "Community Care Update" });
+    await expect(caller.challenge.acknowledgeReleaseNote({ releaseNoteId: 5 })).resolves.toEqual({ success: true });
+
+    expect(dbMocks.getLatestUnacknowledgedReleaseNote).toHaveBeenCalledWith(42);
+    expect(dbMocks.acknowledgeReleaseNoteForUser).toHaveBeenCalledWith(5, 42);
+  });
+
+  it("allows only founder admins to publish community-care release notes", async () => {
+    dbMocks.createCommunityCareReleaseNote.mockResolvedValue({ id: 9, title: "New Care Note", active: true });
+
+    const adminCaller = appRouter.createCaller(createAdminContext());
+    const result = await adminCaller.admin.createReleaseNote({
+      title: "New Care Note",
+      versionLabel: "Care 2",
+      summary: "A clear summary for players.",
+      body: "A longer body explaining the change kindly.",
+      category: "community_care",
+      active: true,
+    });
+
+    expect(result).toEqual({ id: 9, title: "New Care Note", active: true });
+    expect(dbMocks.createCommunityCareReleaseNote).toHaveBeenCalledWith(expect.objectContaining({ title: "New Care Note", active: true }), 42);
+
+    const participantCaller = appRouter.createCaller(createParticipantContext());
+    await expect(participantCaller.admin.createReleaseNote({
+      title: "Blocked Note",
+      versionLabel: "Care 3",
+      summary: "Should not publish.",
+      body: "Participants cannot publish update notes.",
+      category: "community_care",
+      active: true,
+    })).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
 
   it("routes founder signup approval and rejection through admin helpers", async () => {

@@ -50,7 +50,8 @@ describe("access control", () => {
 
     expect(dbSource).toContain('role === "admin" ? null : await getOrCreateParticipant');
     expect(dbSource).toContain('const adminUserIds = new Set(allUsers.filter(user => user.role === "admin").map(user => user.id));');
-    expect(dbSource).toContain('const allParticipants = rawParticipants.filter(participantRow => !adminUserIds.has(participantRow.userId));');
+    expect(dbSource).toContain('const baseParticipants = rawParticipants.filter(participantRow => !adminUserIds.has(participantRow.userId));');
+    expect(dbSource).toContain('const allParticipants = applyCanonicalParticipantScores(baseParticipants, rawBoostWins, BOOST_CHALLENGE_ID);');
     expect(dbSource).toContain('const payments = rawPayments.filter(payment => participantIds.has(payment.participantId));');
     expect(dbSource).toContain('const redemptions = rawRedemptions.filter(redemption => participantIds.has(redemption.participantId));');
   });

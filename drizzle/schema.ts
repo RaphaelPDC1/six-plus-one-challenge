@@ -179,6 +179,29 @@ export const boostWins = mysqlTable("boost_wins", {
   uniqueBoostWin: uniqueIndex("boost_wins_unique_award_idx").on(table.challengeId, table.userId, table.day, table.boostId),
 }));
 
+export const releaseNotes = mysqlTable("release_notes", {
+  id: int("id").autoincrement().primaryKey(),
+  title: varchar("title", { length: 180 }).notNull(),
+  summary: text("summary").notNull(),
+  body: text("body").notNull(),
+  versionLabel: varchar("versionLabel", { length: 80 }).notNull(),
+  category: mysqlEnum("category", ["community_care", "rules", "rewards", "technical"]).default("community_care").notNull(),
+  active: boolean("active").default(true).notNull(),
+  publishedAt: timestamp("publishedAt").defaultNow().notNull(),
+  createdByUserId: int("createdByUserId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export const releaseNoteAcknowledgements = mysqlTable("release_note_acknowledgements", {
+  id: int("id").autoincrement().primaryKey(),
+  releaseNoteId: int("releaseNoteId").notNull(),
+  userId: int("userId").notNull(),
+  acknowledgedAt: timestamp("acknowledgedAt").defaultNow().notNull(),
+}, table => ({
+  uniqueReleaseNoteAcknowledgement: uniqueIndex("release_note_ack_unique_idx").on(table.releaseNoteId, table.userId),
+}));
+
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 export type SignupRequest = typeof signupRequests.$inferSelect;
@@ -193,3 +216,5 @@ export type WhatsappChatMessage = typeof whatsappChatHistory.$inferSelect;
 export type WardenMessage = typeof wardenMessages.$inferSelect;
 export type BoostWin = typeof boostWins.$inferSelect;
 export type InsertBoostWin = typeof boostWins.$inferInsert;
+export type ReleaseNote = typeof releaseNotes.$inferSelect;
+export type ReleaseNoteAcknowledgement = typeof releaseNoteAcknowledgements.$inferSelect;
