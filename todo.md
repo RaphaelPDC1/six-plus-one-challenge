@@ -1106,25 +1106,25 @@ User priority: the Warden should read the room, find tensions between words and 
 
 
 ## Non-Build Boost System Redesign Discussion
-- [ ] Analyze the proposed 5/6 = 8 points, 6/6 = 10 points, and +3 to +10 boost economy without changing application code.
-- [ ] Evaluate the proposed seven boost rules for fairness, clarity, repeatability, and detection practicality.
-- [ ] Recommend which boosts should be kept, adjusted, renamed, capped, or delayed before any build work begins.
-- [ ] Produce a clear decision-ready boost system proposal for review.
+- [x] Analyze the proposed 5/6 = 8 points, 6/6 = 10 points, and +3 to +10 boost economy without changing application code.
+- [x] Evaluate the proposed seven boost rules for fairness, clarity, repeatability, and detection practicality.
+- [x] Recommend which boosts should be kept, adjusted, renamed, capped, or delayed before any build work begins.
+- [x] Produce a clear decision-ready boost system proposal for review.
 
 
 ## Bonus Leader Section and Bonus Point Review
-- [ ] Investigate the broken three-bonus leader section before any boost-system build work.
-- [ ] Identify why bonus leader responses or displayed entries are duplicating.
-- [ ] Review every current and proposed bonus/boost rule for usefulness, clarity, fairness, and scoring impact.
-- [ ] Prepare recommended bonus-point tweaks for owner review without changing application behaviour.
+- [x] Investigate the broken three-bonus leader section before any boost-system build work.
+- [x] Identify why bonus leader responses or displayed entries are duplicating.
+- [x] Review every current and proposed bonus/boost rule for usefulness, clarity, fairness, and scoring impact.
+- [x] Prepare recommended bonus-point tweaks for owner review without changing application behaviour.
 - [ ] Wait for explicit approval before implementing any bonus-system edits.
 
 
 ## Bonus System Integration Impact Review
-- [ ] Trace every app surface that depends on bonus wins, boost totals, daily points, leaderboard ranking, participant insights, and Overview cards before implementing edits.
-- [ ] Identify downstream fixes needed so bonus changes integrate cleanly across backend scoring, database constraints, UI summaries, leaderboard displays, and tests.
-- [ ] Confirm which related sections should be changed together so the app does not show conflicting bonus or point information.
-- [ ] Prepare a full dependency-aware implementation list for owner approval before changing app behaviour.
+- [x] Trace every app surface that depends on bonus wins, boost totals, daily points, leaderboard ranking, participant insights, and Overview cards before implementing edits.
+- [x] Identify downstream fixes needed so bonus changes integrate cleanly across backend scoring, database constraints, UI summaries, leaderboard displays, and tests.
+- [x] Confirm which related sections should be changed together so the app does not show conflicting bonus or point information.
+- [x] Prepare a full dependency-aware implementation list for owner approval before changing app behaviour.
 
 
 ## Approved Integrated Bonus-System Implementation
@@ -1155,3 +1155,10 @@ User priority: the Warden should read the room, find tensions between words and 
 ## Bug Fix — Join Events Versus Life-Loss Alerts
 - [x] Separate new-player join/onboarding events from life-loss payment alerts so Lando/Lord-style joins never show as lost lives.
 - [x] Make life-loss pop-ups persistently one-time per genuine life-loss event so Nae’s alert can be closed and does not keep returning.
+
+## Planning Request — Future UX and Release Communication Updates
+- [x] Analyze the participant history requirement so users can go back and view what each participant logged on past days, without building yet.
+- [x] Define the data, permission, and navigation implications for participant past-day log viewing before implementation.
+- [x] Analyze PWA swipe-down-to-refresh expectations and recommend the safest implementation approach before building.
+- [x] Design a community-care in-game update pop-up system for future releases, similar to patch notes, without building yet.
+- [x] Include the past-log viewer, PWA refresh, and patch-notes pop-up requirements in the owner approval proposal before implementation.
