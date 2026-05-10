@@ -180,41 +180,41 @@ describe("challenge router flow", () => {
     expect(dbMocks.getParticipantHistory).toHaveBeenCalledWith(12, 7);
   });
 
-  it("routes community-care release-note queries and acknowledgements through user-scoped helpers", async () => {
-    dbMocks.getLatestUnacknowledgedReleaseNote.mockResolvedValue({ id: 5, title: "Community Care Update" });
+  it("routes release-note queries and acknowledgements through user-scoped helpers", async () => {
+    dbMocks.getLatestUnacknowledgedReleaseNote.mockResolvedValue({ id: 5, title: "Edit Update", category: "edit" });
     dbMocks.acknowledgeReleaseNoteForUser.mockResolvedValue({ success: true });
 
     const caller = appRouter.createCaller(createParticipantContext());
-    await expect(caller.challenge.latestReleaseNote()).resolves.toEqual({ id: 5, title: "Community Care Update" });
+    await expect(caller.challenge.latestReleaseNote()).resolves.toEqual({ id: 5, title: "Edit Update", category: "edit" });
     await expect(caller.challenge.acknowledgeReleaseNote({ releaseNoteId: 5 })).resolves.toEqual({ success: true });
 
     expect(dbMocks.getLatestUnacknowledgedReleaseNote).toHaveBeenCalledWith(42);
     expect(dbMocks.acknowledgeReleaseNoteForUser).toHaveBeenCalledWith(5, 42);
   });
 
-  it("allows only founder admins to publish community-care release notes", async () => {
-    dbMocks.createCommunityCareReleaseNote.mockResolvedValue({ id: 9, title: "New Care Note", active: true });
+  it("allows only founder admins to publish edit release notes", async () => {
+    dbMocks.createCommunityCareReleaseNote.mockResolvedValue({ id: 9, title: "New Edit Note", active: true, category: "edit" });
 
     const adminCaller = appRouter.createCaller(createAdminContext());
     const result = await adminCaller.admin.createReleaseNote({
-      title: "New Care Note",
-      versionLabel: "Care 2",
+      title: "New Edit Note",
+      versionLabel: "Edit 2",
       summary: "A clear summary for players.",
       body: "A longer body explaining the change kindly.",
-      category: "community_care",
+      category: "edit",
       active: true,
     });
 
-    expect(result).toEqual({ id: 9, title: "New Care Note", active: true });
-    expect(dbMocks.createCommunityCareReleaseNote).toHaveBeenCalledWith(expect.objectContaining({ title: "New Care Note", active: true }), 42);
+    expect(result).toEqual({ id: 9, title: "New Edit Note", active: true, category: "edit" });
+    expect(dbMocks.createCommunityCareReleaseNote).toHaveBeenCalledWith(expect.objectContaining({ title: "New Edit Note", category: "edit", active: true }), 42);
 
     const participantCaller = appRouter.createCaller(createParticipantContext());
     await expect(participantCaller.admin.createReleaseNote({
       title: "Blocked Note",
-      versionLabel: "Care 3",
+      versionLabel: "Edit 3",
       summary: "Should not publish.",
       body: "Participants cannot publish update notes.",
-      category: "community_care",
+      category: "edit",
       active: true,
     })).rejects.toMatchObject({ code: "FORBIDDEN" });
   });

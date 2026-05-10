@@ -1,0 +1,40 @@
+{
+  "query": "SELECT dl.id, dl.participantId, p.displayName, dl.dayNumber, dl.logDate, dl.exerciseDone, dl.exerciseDuration, dl.exerciseType, CASE WHEN dl.exerciseProofUrl IS NULL OR dl.exerciseProofUrl = '' THEN 'NO_PROOF_URL' ELSE LEFT(dl.exerciseProofUrl, 240) END AS proofSnippet, dl.dayComplete, dl.submittedAt, dl.createdAt, dl.updatedAt\nFROM daily_logs dl\nJOIN participants p ON p.id = dl.participantId\nWHERE (dl.participantId = 60011 OR LOWER(p.displayName) LIKE '%nay%')\n  AND (DATE(dl.createdAt) BETWEEN '2026-05-09' AND '2026-05-10' OR DATE(dl.updatedAt) BETWEEN '2026-05-09' AND '2026-05-10' OR dl.logDate BETWEEN '2026-05-08' AND '2026-05-09')\nORDER BY dl.createdAt DESC, dl.id DESC;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2P9ir9M7b3E7Qkh.8b2c854ea8b3 --database HPubf4auNvt8KXvgrLad5c --execute SELECT dl.id, dl.participantId, p.displayName, dl.dayNumber, dl.logDate, dl.exerciseDone, dl.exerciseDuration, dl.exerciseType, CASE WHEN dl.exerciseProofUrl IS NULL OR dl.exerciseProofUrl = '' THEN 'NO_PROOF_URL' ELSE LEFT(dl.exerciseProofUrl, 240) END AS proofSnippet, dl.dayComplete, dl.submittedAt, dl.createdAt, dl.updatedAt\nFROM daily_logs dl\nJOIN participants p ON p.id = dl.participantId\nWHERE (dl.participantId = 60011 OR LOWER(p.displayName) LIKE '%nay%')\n  AND (DATE(dl.createdAt) BETWEEN '2026-05-09' AND '2026-05-10' OR DATE(dl.updatedAt) BETWEEN '2026-05-09' AND '2026-05-10' OR dl.logDate BETWEEN '2026-05-08' AND '2026-05-09')\nORDER BY dl.createdAt DESC, dl.id DESC;",
+  "rows": [
+    {
+      "id": "600003",
+      "participantId": "60011",
+      "displayName": "Nay",
+      "dayNumber": "5",
+      "logDate": "2026-05-09",
+      "exerciseDone": "0",
+      "exerciseDuration": "0",
+      "exerciseType": "",
+      "proofSnippet": "NO_PROOF_URL",
+      "dayComplete": "0",
+      "submittedAt": "NULL",
+      "createdAt": "2026-05-10 00:01:52",
+      "updatedAt": "2026-05-10 00:01:52"
+    },
+    {
+      "id": "600001",
+      "participantId": "60011",
+      "displayName": "Nay",
+      "dayNumber": "4",
+      "logDate": "2026-05-08",
+      "exerciseDone": "0",
+      "exerciseDuration": "0",
+      "exerciseType": "",
+      "proofSnippet": "NO_PROOF_URL",
+      "dayComplete": "0",
+      "submittedAt": "2026-05-09 23:00:00",
+      "createdAt": "2026-05-09 23:59:53",
+      "updatedAt": "2026-05-09 23:59:53"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tparticipantId\tdisplayName\tdayNumber\tlogDate\texerciseDone\texerciseDuration\texerciseType\tproofSnippet\tdayComplete\tsubmittedAt\tcreatedAt\tupdatedAt\n600003\t60011\tNay\t5\t2026-05-09\t0\t0\t\tNO_PROOF_URL\t0\tNULL\t2026-05-10 00:01:52\t2026-05-10 00:01:52\n600001\t60011\tNay\t4\t2026-05-08\t0\t0\t\tNO_PROOF_URL\t0\t2026-05-09 23:00:00\t2026-05-09 23:59:53\t2026-05-09 23:59:53\n",
+  "stderr": "",
+  "execution_time_ms": 264
+}

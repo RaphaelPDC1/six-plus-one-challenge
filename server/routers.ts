@@ -448,7 +448,7 @@ export const appRouter = router({
         summary: z.string().trim().min(3).max(1000),
         body: z.string().trim().min(3).max(4000),
         versionLabel: z.string().trim().min(1).max(80),
-        category: z.enum(["community_care", "rules", "rewards", "technical"]).default("community_care"),
+        category: z.enum(["edit", "community_care", "rules", "rewards", "technical"]).default("edit"),
         active: z.boolean().default(true),
       }))
       .mutation(({ ctx, input }) => createCommunityCareReleaseNote(input, ctx.user.id)),

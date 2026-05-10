@@ -185,7 +185,7 @@ export const releaseNotes = mysqlTable("release_notes", {
   summary: text("summary").notNull(),
   body: text("body").notNull(),
   versionLabel: varchar("versionLabel", { length: 80 }).notNull(),
-  category: mysqlEnum("category", ["community_care", "rules", "rewards", "technical"]).default("community_care").notNull(),
+  category: mysqlEnum("category", ["edit", "community_care", "rules", "rewards", "technical"]).default("edit").notNull(),
   active: boolean("active").default(true).notNull(),
   publishedAt: timestamp("publishedAt").defaultNow().notNull(),
   createdByUserId: int("createdByUserId"),

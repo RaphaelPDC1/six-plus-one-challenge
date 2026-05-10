@@ -995,11 +995,11 @@ export async function calculateAndAwardBoostsForDay(day: number, challengeId = B
 }
 
 const DEFAULT_COMMUNITY_CARE_RELEASE_NOTE = {
-  title: "Community care update",
+  title: "Edit update",
   summary: "Boost scoring, participant history, refresh behaviour, and update notes are now easier to understand.",
-  body: "We have separated base daily points from named boosts, added a safer path for viewing participant history, prepared pull-to-refresh for the PWA, and introduced this community-care update space so future changes are explained in-game.",
-  versionLabel: "Community Care 1",
-  category: "community_care" as const,
+  body: "We have separated base daily points from named boosts, added a safer path for viewing participant history, prepared pull-to-refresh for the PWA, and introduced this edit update space so future changes are explained in-game.",
+  versionLabel: "Edit 1",
+  category: "edit" as const,
 };
 
 export async function seedReleaseNotesIfEmpty() {
@@ -1039,7 +1039,7 @@ export async function acknowledgeReleaseNoteForUser(releaseNoteId: number, userI
   return { success: true as const };
 }
 
-export async function createCommunityCareReleaseNote(input: { title: string; summary: string; body: string; versionLabel: string; category?: "community_care" | "rules" | "rewards" | "technical"; active?: boolean }, createdByUserId: number) {
+export async function createCommunityCareReleaseNote(input: { title: string; summary: string; body: string; versionLabel: string; category?: "edit" | "community_care" | "rules" | "rewards" | "technical"; active?: boolean }, createdByUserId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database unavailable");
   const values = {
@@ -1047,7 +1047,7 @@ export async function createCommunityCareReleaseNote(input: { title: string; sum
     summary: input.summary.trim(),
     body: input.body.trim(),
     versionLabel: input.versionLabel.trim(),
-    category: input.category ?? "community_care",
+    category: input.category ?? "edit",
     active: input.active ?? true,
     createdByUserId,
   };

@@ -1,0 +1,25 @@
+{
+  "query": "SELECT p.id, p.userId, p.displayName, p.whatsappName, p.avatarInitials, p.livesRemaining, p.currentStreak, p.daysComplete, p.totalPoints, p.createdAt, p.updatedAt, u.email, u.name AS userName\nFROM participants p\nLEFT JOIN users u ON u.id = p.userId\nWHERE LOWER(p.displayName) LIKE '%nay%'\n   OR LOWER(COALESCE(p.whatsappName, '')) LIKE '%nay%'\n   OR LOWER(COALESCE(u.email, '')) LIKE '%nay%'\n   OR LOWER(COALESCE(u.name, '')) LIKE '%nay%'\nORDER BY p.updatedAt DESC;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2P9ir9M7b3E7Qkh.8b2c854ea8b3 --database HPubf4auNvt8KXvgrLad5c --execute SELECT p.id, p.userId, p.displayName, p.whatsappName, p.avatarInitials, p.livesRemaining, p.currentStreak, p.daysComplete, p.totalPoints, p.createdAt, p.updatedAt, u.email, u.name AS userName\nFROM participants p\nLEFT JOIN users u ON u.id = p.userId\nWHERE LOWER(p.displayName) LIKE '%nay%'\n   OR LOWER(COALESCE(p.whatsappName, '')) LIKE '%nay%'\n   OR LOWER(COALESCE(u.email, '')) LIKE '%nay%'\n   OR LOWER(COALESCE(u.name, '')) LIKE '%nay%'\nORDER BY p.updatedAt DESC;",
+  "rows": [
+    {
+      "id": "60011",
+      "userId": "151404",
+      "displayName": "Nay",
+      "whatsappName": "NULL",
+      "avatarInitials": "N",
+      "livesRemaining": "3",
+      "currentStreak": "0",
+      "daysComplete": "3",
+      "totalPoints": "38",
+      "createdAt": "2026-05-06 13:35:53",
+      "updatedAt": "2026-05-09 23:59:53",
+      "email": "janay30.10@gmail.com",
+      "userName": "Nay"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tuserId\tdisplayName\twhatsappName\tavatarInitials\tlivesRemaining\tcurrentStreak\tdaysComplete\ttotalPoints\tcreatedAt\tupdatedAt\temail\tuserName\n60011\t151404\tNay\tNULL\tN\t3\t0\t3\t38\t2026-05-06 13:35:53\t2026-05-09 23:59:53\tjanay30.10@gmail.com\tNay\n",
+  "stderr": "",
+  "execution_time_ms": 262
+}
