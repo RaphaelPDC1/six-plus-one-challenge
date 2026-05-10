@@ -51,8 +51,9 @@ describe("PWA and mobile layout refinements", () => {
     expect(source).toContain("z-[70]");
     expect(source).toContain("saveProgressScale");
     expect(source).toContain("data-save-progress-scale");
-    expect(source).toContain('className="tab-stage tab-stage-stable"');
-    expect(source).not.toContain("key={activeTab}");
+    expect(source).toContain('className="tab-stage tab-stage-stable overflow-hidden"');
+    expect(source).toContain('data-swipe-transition="spring-slide-blur"');
+    expect(source).toContain("key={activeTab}");
     expect(source).not.toContain('data-testid="pwa-install-guide"');
     expect(source).not.toContain("Browsers control installation, so the app cannot force auto-save");
     expect(css).toContain(".tab-stage-stable");

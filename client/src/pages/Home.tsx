@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Link } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { CalendarView } from "./Calendar";
@@ -122,6 +123,33 @@ type MyDayForm = {
 
 type TabKey = "myday" | "overview" | "leaderboard" | "proof" | "rewards" | "calendar" | "admin";
 
+type SwipeDirection = -1 | 0 | 1;
+
+const pageSwipeVariants = {
+  enter: (direction: SwipeDirection) => ({
+    opacity: 0,
+    x: direction >= 0 ? 72 : -72,
+    scale: 0.982,
+    filter: "blur(7px)",
+  }),
+  center: {
+    opacity: 1,
+    x: 0,
+    scale: 1,
+    filter: "blur(0px)",
+  },
+  exit: (direction: SwipeDirection) => ({
+    opacity: 0,
+    x: direction >= 0 ? -72 : 72,
+    scale: 0.982,
+    filter: "blur(7px)",
+  }),
+};
+
+const boostCollapseVariants = {
+  closed: { opacity: 0, height: 0, y: -8, filter: "blur(3px)" },
+  open: { opacity: 1, height: "auto", y: 0, filter: "blur(0px)" },
+};
 
 type RuleKey = keyof MyDayForm | "exercise" | "reflection" | "readTeach";
 
@@ -2302,32 +2330,32 @@ function LifeDots({ lives, compact = false }: { lives: number; compact?: boolean
 function PodiumCard({ participant, index, onSelect, className }: { participant: any; index: number; onSelect: () => void; className?: string }) {
   const rank = index + 1;
   const styles = rank === 1
-    ? { label: "1st", border: "border-[#C8A96E]", bg: "bg-[#181207]", text: "text-[#C8A96E]", ring: "shadow-[0_0_56px_rgba(200,169,110,0.32)]", height: "min-h-[15rem] sm:min-h-[18rem]", crown: "STANDARD SETTER" }
+    ? { label: "1st", border: "border-[#C8A96E]", bg: "bg-[#181207]", text: "text-[#C8A96E]", ring: "shadow-[0_0_56px_rgba(200,169,110,0.32)]", height: "min-h-[13rem] sm:min-h-[18rem]", crown: "STANDARD SETTER", motion: "gold-champion" }
     : rank === 2
-      ? { label: "2nd", border: "border-[#BFC7D5]", bg: "bg-[#10131A]", text: "text-[#BFC7D5]", ring: "shadow-[0_0_32px_rgba(191,199,213,0.14)]", height: "min-h-[13rem] sm:min-h-[15.5rem]", crown: "NEAREST THREAT" }
-      : { label: "3rd", border: "border-[#B87333]", bg: "bg-[#1A1009]", text: "text-[#D58A45]", ring: "shadow-[0_0_32px_rgba(184,115,51,0.16)]", height: "min-h-[12rem] sm:min-h-[14rem]", crown: "PODIUM POSITION" };
+      ? { label: "2nd", border: "border-[#BFC7D5]", bg: "bg-[#10131A]", text: "text-[#BFC7D5]", ring: "shadow-[0_0_32px_rgba(191,199,213,0.14)]", height: "min-h-[11.5rem] sm:min-h-[15.5rem]", crown: "NEAREST THREAT", motion: "silver-lift" }
+      : { label: "3rd", border: "border-[#B87333]", bg: "bg-[#1A1009]", text: "text-[#D58A45]", ring: "shadow-[0_0_32px_rgba(184,115,51,0.16)]", height: "min-h-[10.5rem] sm:min-h-[14rem]", crown: "PODIUM POSITION", motion: "bronze-rise" };
   return (
-    <button type="button" onClick={onSelect} className={classNames("motion-card motion-press relative isolate overflow-hidden border-2 p-4 text-left transition hover:-translate-y-1", styles.border, styles.bg, styles.ring, styles.height, className)} data-podium-rank={rank} data-testid="stepped-podium-card">
-      <div className={classNames("pointer-events-none absolute inset-x-6 -top-10 h-28 rounded-full blur-3xl", rank === 1 ? "bg-[#C8A96E]/25" : "bg-white/5")} />
-      <div className="relative flex items-start justify-between gap-3">
-        <div>
-          <span className={classNames("block text-6xl font-black uppercase leading-none tracking-[-0.12em]", styles.text)}>{styles.label}</span>
-          <span className="mt-2 inline-flex border border-white/10 bg-black/35 px-2.5 py-1 text-[8px] font-black uppercase tracking-[0.16em] text-[#BDBDBD]">{styles.crown}</span>
+    <button type="button" onClick={onSelect} className={classNames("motion-card motion-press relative isolate flex min-w-0 flex-col justify-between overflow-hidden border-2 p-2 text-left transition hover:-translate-y-1 min-[380px]:p-3 sm:p-4", styles.border, styles.bg, styles.ring, styles.height, className)} data-podium-rank={rank} data-podium-motion={styles.motion} data-testid="stepped-podium-card">
+      <div className={classNames("pointer-events-none absolute inset-x-2 -top-10 h-24 rounded-full blur-3xl sm:inset-x-6 sm:h-28", rank === 1 ? "bg-[#C8A96E]/25" : "bg-white/5")} />
+      <div className="relative flex items-start justify-between gap-1.5 sm:gap-3">
+        <div className="min-w-0">
+          <span className={classNames("block text-3xl font-black uppercase leading-none tracking-[-0.12em] min-[380px]:text-4xl sm:text-6xl", styles.text)}>{styles.label}</span>
+          <span className="mt-2 hidden border border-white/10 bg-black/35 px-2.5 py-1 text-[8px] font-black uppercase tracking-[0.16em] text-[#BDBDBD] min-[390px]:inline-flex">{styles.crown}</span>
         </div>
-        <ProfilePhoto participant={participant} className={classNames("shrink-0", rank === 1 ? "h-16 w-16" : "h-14 w-14")} />
+        <ProfilePhoto participant={participant} className={classNames("shrink-0", rank === 1 ? "h-11 w-11 sm:h-16 sm:w-16" : "h-9 w-9 sm:h-14 sm:w-14")} />
       </div>
-      <h3 className="relative mt-5 break-words text-2xl font-black uppercase leading-none tracking-[-0.07em] text-white">{participant?.displayName ?? "—"}</h3>
-      <div className="relative mt-4 flex items-end justify-between gap-3">
+      <h3 className="relative mt-3 break-words text-xs font-black uppercase leading-tight tracking-[-0.04em] text-white min-[380px]:text-sm sm:mt-5 sm:text-2xl sm:leading-none sm:tracking-[-0.07em]">{participant?.displayName ?? "—"}</h3>
+      <div className="relative mt-3 grid gap-2 sm:mt-4 sm:flex sm:items-end sm:justify-between sm:gap-3">
         <div>
-          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#777]">Points</p>
-          <p className={classNames("mt-1 text-4xl font-black leading-none tabular-nums", styles.text)}>{participant?.totalPoints ?? 0}</p>
+          <p className="text-[8px] font-black uppercase tracking-[0.14em] text-[#777] sm:text-[10px] sm:tracking-[0.16em]">Points</p>
+          <p className={classNames("mt-1 text-2xl font-black leading-none tabular-nums sm:text-4xl", styles.text)}>{participant?.totalPoints ?? 0}</p>
         </div>
-        <div className="text-right">
-          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#777]">Lives</p>
-          <span className="mt-2 flex justify-end"><LifeDots lives={participant?.livesRemaining ?? 4} /></span>
+        <div className="text-left sm:text-right">
+          <p className="text-[8px] font-black uppercase tracking-[0.14em] text-[#777] sm:text-[10px] sm:tracking-[0.16em]">Lives</p>
+          <span className="mt-1 flex justify-start sm:mt-2 sm:justify-end"><LifeDots lives={participant?.livesRemaining ?? 4} compact /></span>
         </div>
       </div>
-      <p className="relative mt-4 text-[10px] font-black uppercase leading-5 tracking-[0.14em] text-[#BDBDBD]">{participant?.statusLine ?? participant?.boostReasons?.[0] ?? "Keep banking green days to hold the podium"}</p>
+      <p className="relative mt-3 hidden text-[10px] font-black uppercase leading-5 tracking-[0.14em] text-[#BDBDBD] sm:mt-4 sm:block">{participant?.statusLine ?? participant?.boostReasons?.[0] ?? "Keep banking green days to hold the podium"}</p>
     </button>
   );
 }
@@ -2335,6 +2363,7 @@ function PodiumCard({ participant, index, onSelect, className }: { participant: 
 function Leaderboard({ snapshot }: { snapshot: Snapshot }) {
   const [selected, setSelected] = useState<any>(null);
   const [expandedParticipantId, setExpandedParticipantId] = useState<string | number | null>(null);
+  const [boostKeyOpen, setBoostKeyOpen] = useState(false);
   const [expandedBoostSlotId, setExpandedBoostSlotId] = useState<string | number | null>(null);
   const logs = snapshot?.logs ?? [];
   const participants = snapshot?.participants ?? [];
@@ -2365,6 +2394,8 @@ function Leaderboard({ snapshot }: { snapshot: Snapshot }) {
       slot: boost.slot ?? index + 1,
     };
   });
+  const claimedBoostCount = boostSlots.filter((slot: any) => slot.claimed).length;
+  const openBoostCount = Math.max(0, boostSlots.length - claimedBoostCount);
   return (
     <section className="motion-page space-y-4 overflow-hidden border border-[#2A2A2A] bg-[#101010] p-3 sm:p-5" data-testid="bosses-board-section">
       <div className="rounded-[1.4rem] border border-[#2A2A2A] bg-[#0D0D0D] p-4 sm:p-5" data-testid="board-mobile-redesign-shell">
@@ -2373,15 +2404,39 @@ function Leaderboard({ snapshot }: { snapshot: Snapshot }) {
         <p className="mt-3 max-w-xl text-xs font-bold uppercase leading-5 tracking-[0.12em] text-[#8D8D8D]">Claude-inspired mobile board: boost key first, stepped podium next, then every challenger with lives, Warden status, delta gaps, and risk callouts.</p>
       </div>
 
-      <section className="rounded-[1.4rem] border border-[#2ECC71]/30 bg-[#07150D] p-4" data-testid="boost-key-slots">
-        <div className="flex items-end justify-between gap-3">
-          <div>
+      <section className="overflow-hidden rounded-[1.4rem] border border-[#2ECC71]/30 bg-[#07150D]" data-testid="boost-key-slots" data-boost-collapsible-state={boostKeyOpen ? "open" : "closed"}>
+        <button
+          type="button"
+          className="motion-press flex w-full items-center justify-between gap-3 p-4 text-left"
+          aria-expanded={boostKeyOpen}
+          aria-controls="boost-key-collapsible-panel"
+          data-testid="boost-key-summary-toggle"
+          onClick={() => { pulse(12); setBoostKeyOpen(value => !value); }}
+        >
+          <span className="min-w-0">
             <MicroLabel tone="green">Boost Key</MicroLabel>
-            <h3 className="mt-2 text-2xl font-black uppercase leading-none tracking-[-0.07em] text-white">Rotating slots. Earned, not gamed.</h3>
-          </div>
-          <span className="shrink-0 rounded-full border border-[#2ECC71]/55 bg-black/45 px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.16em] text-[#2ECC71]">Day {currentDay}</span>
-        </div>
-        <div className="mt-4 grid gap-2 sm:grid-cols-3">
+            <span className="mt-2 block text-2xl font-black uppercase leading-none tracking-[-0.07em] text-white">Boost tokens tucked away.</span>
+            <span className="mt-2 block text-[10px] font-black uppercase leading-5 tracking-[0.14em] text-[#A9EFC0]">{openBoostCount} open · {claimedBoostCount} claimed · tap to {boostKeyOpen ? "hide" : "reveal"} the slots</span>
+          </span>
+          <span className="flex shrink-0 flex-col items-end gap-2">
+            <span className="rounded-full border border-[#2ECC71]/55 bg-black/45 px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.16em] text-[#2ECC71]">Day {currentDay}</span>
+            <ChevronDown className={classNames("h-5 w-5 text-[#2ECC71] transition-transform duration-300", boostKeyOpen ? "rotate-180" : "rotate-0")} aria-hidden="true" />
+          </span>
+        </button>
+        <AnimatePresence initial={false}>
+          {boostKeyOpen && (
+            <motion.div
+              id="boost-key-collapsible-panel"
+              key="boost-key-collapsible-panel"
+              initial="closed"
+              animate="open"
+              exit="closed"
+              variants={boostCollapseVariants}
+              transition={{ duration: 0.34, ease: [0.16, 1, 0.3, 1] }}
+              className="overflow-hidden border-t border-[#2ECC71]/25"
+              data-testid="boost-key-collapsible-panel"
+            >
+        <div className="grid gap-2 p-4 sm:grid-cols-3">
           {boostSlots.map((slot: any, index: number) => {
             const toneClass = getBoostToneClass(slot.tone);
             const isBoostExpanded = String(expandedBoostSlotId) === String(slot.id ?? slot.slot ?? index);
@@ -2427,12 +2482,15 @@ function Leaderboard({ snapshot }: { snapshot: Snapshot }) {
             );
           })}
         </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </section>
 
-      <div className="grid gap-3 lg:grid-cols-[0.95fr_1.1fr_0.95fr] lg:items-end" data-testid="top-three-podium" aria-label="Top three ordered first, second, third on mobile">
-        {podium[0] && <PodiumCard participant={podium[0]} index={0} className="lg:order-2" onSelect={() => { pulse([12, 24, 12]); setSelected(podium[0]); }} />}
-        {podium[1] && <PodiumCard participant={podium[1]} index={1} className="lg:order-1 lg:translate-y-5" onSelect={() => { pulse(14); setSelected(podium[1]); }} />}
-        {podium[2] && <PodiumCard participant={podium[2]} index={2} className="lg:order-3 lg:translate-y-9" onSelect={() => { pulse(14); setSelected(podium[2]); }} />}
+      <div className="grid grid-cols-3 items-end gap-1.5 sm:gap-3 lg:grid-cols-[0.95fr_1.1fr_0.95fr] lg:items-end" data-testid="top-three-podium" data-mobile-podium-layout="horizontal-stepped" aria-label="Top three arranged as a horizontal mobile podium: second, first, third">
+        {podium[0] && <PodiumCard participant={podium[0]} index={0} className="order-2" onSelect={() => { pulse([12, 24, 12]); setSelected(podium[0]); }} />}
+        {podium[1] && <PodiumCard participant={podium[1]} index={1} className="order-1 translate-y-3 sm:translate-y-5" onSelect={() => { pulse(14); setSelected(podium[1]); }} />}
+        {podium[2] && <PodiumCard participant={podium[2]} index={2} className="order-3 translate-y-5 sm:translate-y-9" onSelect={() => { pulse(14); setSelected(podium[2]); }} />}
       </div>
 
       <div className="space-y-2" data-testid="full-board-compare-list">
@@ -3073,13 +3131,19 @@ function MobileBottomNav({ mobileTabs, activeTab, activeMobileIndex, onSelect }:
 
 export default function Home() {
   const { user, loading, isAuthenticated, logout } = useAuth();
+  const reduceMotion = useReducedMotion();
   const [activeTab, setActiveTab] = useState<TabKey>("myday");
+  const [transitionDirection, setTransitionDirection] = useState<SwipeDirection>(1);
   const [entryVisible, setEntryVisible] = useState(() => typeof window !== "undefined" && window.sessionStorage.getItem("sixone-entry-seen") !== "true");
   const [loginEntryVisible, setLoginEntryVisible] = useState(false);
   const [pullDistance, setPullDistance] = useState(0);
   const [pullRefreshing, setPullRefreshing] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const pullStartYRef = useRef<number | null>(null);
+  const touchStartXRef = useRef<number | null>(null);
+  const touchStartYRef = useRef<number | null>(null);
+  const touchDeltaXRef = useRef(0);
+  const touchDeltaYRef = useRef(0);
   const previousAuthRef = useRef(isAuthenticated);
   const utils = trpc.useUtils();
   const snapshotQuery = trpc.challenge.snapshot.useQuery(undefined, {
@@ -3090,6 +3154,11 @@ export default function Home() {
     refetchOnReconnect: true,
   });
   const snapshot = snapshotQuery.data;
+  const visibleTabs = tabs.filter(tab => tab.key !== "admin" || user?.role === "admin");
+  const mobileTabs = visibleTabs.filter(tab => tab.key !== "admin");
+  const swipeTabs = mobileTabs.length > 0 ? mobileTabs : visibleTabs;
+  const activeSwipeIndex = Math.max(0, swipeTabs.findIndex(tab => tab.key === activeTab));
+  const activeMobileIndex = Math.max(0, mobileTabs.findIndex(tab => tab.key === activeTab));
   const releaseNoteQuery = trpc.challenge.latestReleaseNote.useQuery(undefined, { enabled: isAuthenticated });
   const acknowledgeReleaseNote = trpc.challenge.acknowledgeReleaseNote.useMutation({
     onSuccess: () => {
@@ -3140,22 +3209,59 @@ export default function Home() {
     return () => window.clearTimeout(timer);
   }, [isAuthenticated, loading]);
 
+  const changeActiveTab = (nextTab: TabKey, direction?: SwipeDirection) => {
+    if (nextTab === activeTab) return;
+    const currentIndex = Math.max(0, swipeTabs.findIndex(tab => tab.key === activeTab));
+    const nextIndex = Math.max(0, swipeTabs.findIndex(tab => tab.key === nextTab));
+    setTransitionDirection(direction ?? (nextIndex >= currentIndex ? 1 : -1));
+    setActiveTab(nextTab);
+  };
+
   const handleTouchStart = (event: React.TouchEvent<HTMLElement>) => {
+    const touch = event.touches[0];
+    touchStartXRef.current = touch?.clientX ?? null;
+    touchStartYRef.current = touch?.clientY ?? null;
+    touchDeltaXRef.current = 0;
+    touchDeltaYRef.current = 0;
     if (typeof window === "undefined" || window.scrollY > 0 || snapshotQuery.isFetching || pullRefreshing) {
       pullStartYRef.current = null;
       return;
     }
-    pullStartYRef.current = event.touches[0]?.clientY ?? null;
+    pullStartYRef.current = touch?.clientY ?? null;
   };
 
   const handleTouchMove = (event: React.TouchEvent<HTMLElement>) => {
+    const touch = event.touches[0];
+    if (touchStartXRef.current !== null && touchStartYRef.current !== null && touch) {
+      touchDeltaXRef.current = touch.clientX - touchStartXRef.current;
+      touchDeltaYRef.current = touch.clientY - touchStartYRef.current;
+    }
     if (pullStartYRef.current === null) return;
-    const currentY = event.touches[0]?.clientY ?? pullStartYRef.current;
+    const currentY = touch?.clientY ?? pullStartYRef.current;
     const delta = Math.max(0, currentY - pullStartYRef.current);
-    if (delta > 8) setPullDistance(Math.min(112, delta));
+    const horizontalIntent = Math.abs(touchDeltaXRef.current) > Math.abs(touchDeltaYRef.current) * 1.15;
+    if (!horizontalIntent && delta > 8) setPullDistance(Math.min(112, delta));
   };
 
   const handleTouchEnd = () => {
+    const deltaX = touchDeltaXRef.current;
+    const deltaY = touchDeltaYRef.current;
+    const isHorizontalSwipe = Math.abs(deltaX) > 72 && Math.abs(deltaX) > Math.abs(deltaY) * 1.25;
+    touchStartXRef.current = null;
+    touchStartYRef.current = null;
+    touchDeltaXRef.current = 0;
+    touchDeltaYRef.current = 0;
+    if (isHorizontalSwipe && swipeTabs.length > 1) {
+      setPullDistance(0);
+      pullStartYRef.current = null;
+      const direction: SwipeDirection = deltaX < 0 ? 1 : -1;
+      const nextIndex = Math.min(Math.max(activeSwipeIndex + direction, 0), swipeTabs.length - 1);
+      if (nextIndex !== activeSwipeIndex) {
+        pulse(10);
+        changeActiveTab(swipeTabs[nextIndex].key, direction);
+      }
+      return;
+    }
     const shouldRefresh = pullDistance > 72;
     pullStartYRef.current = null;
     setPullDistance(0);
@@ -3171,14 +3277,11 @@ export default function Home() {
   if (!isAuthenticated) return <Landing />;
   if (snapshot?.accessState?.status === "questionnaire_required") return <OnboardingGate user={user} refetch={snapshotQuery.refetch} />;
 
-  const visibleTabs = tabs.filter(tab => tab.key !== "admin" || user?.role === "admin");
-  const mobileTabs = visibleTabs.filter(tab => tab.key !== "admin");
-  const activeMobileIndex = Math.max(0, mobileTabs.findIndex(tab => tab.key === activeTab));
   return (
     <main className="poster-grid motion-page min-h-screen bg-[#0D0D0D] pb-32 text-white md:pb-0" data-motion-system="site-wide-v1" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
       <header className="sticky top-0 z-40 border-b border-[#2A2A2A] bg-[#0D0D0D]/95 backdrop-blur">
         <div className="container flex items-center justify-between gap-3 py-3 sm:gap-4 sm:py-4">
-          <button onClick={() => setActiveTab("myday")} className="flex min-w-0 items-center gap-3 text-left">
+          <button onClick={() => changeActiveTab("myday", -1)} className="flex min-w-0 items-center gap-3 text-left">
             <LogoMark compact />
             <div className="min-w-0">
               <MicroLabel tone="gold">Four Lives Challenge</MicroLabel>
@@ -3203,21 +3306,35 @@ export default function Home() {
                 const Icon = tab.icon;
                 const active = activeTab === tab.key;
                 return (
-                  <button key={tab.key} onClick={() => { pulse(10); setActiveTab(tab.key); }} className={classNames("motion-tab motion-press flex items-center justify-center gap-2 bg-[#101010] px-4 py-4 text-[10px] font-black uppercase tracking-[0.2em] transition", active ? "motion-tab-active text-[#C8A96E]" : "text-[#777] hover:text-white")}>
+                  <button key={tab.key} onClick={() => { pulse(10); changeActiveTab(tab.key); }} className={classNames("motion-tab motion-press flex items-center justify-center gap-2 bg-[#101010] px-4 py-4 text-[10px] font-black uppercase tracking-[0.2em] transition", active ? "motion-tab-active text-[#C8A96E]" : "text-[#777] hover:text-white")}>
                     <Icon className="h-4 w-4" /> {tab.label}
                   </button>
                 );
               })}
             </div>
 
-            <div className="tab-stage tab-stage-stable">
-              {activeTab === "myday" && <MyDay snapshot={snapshot} refetch={snapshotQuery.refetch} />}
-              {activeTab === "overview" && <Overview snapshot={snapshot} />}
-              {activeTab === "leaderboard" && <Leaderboard snapshot={snapshot} />}
-              {activeTab === "proof" && <div className="flex w-full justify-center" data-testid="proof-page-centered-shell"><ProofFeed snapshot={snapshot} /></div>}
-              {activeTab === "rewards" && <Rewards snapshot={snapshot} refetch={snapshotQuery.refetch} />}
-              {activeTab === "calendar" && <CalendarView />}
-              {activeTab === "admin" && (user?.role === "admin" ? <AdminPanel snapshot={snapshot} refetch={snapshotQuery.refetch} /> : <div className="border border-[#2A2A2A] bg-[#101010] p-8"><MicroLabel tone="red">Restricted</MicroLabel><p className="mt-3 text-xl font-black uppercase text-white">Founder dashboard is restricted to admin users.</p></div>)}
+            <div className="tab-stage tab-stage-stable overflow-hidden" data-testid="swipe-page-stage" data-swipe-transition="spring-slide-blur" data-swipe-direction={transitionDirection}>
+              <AnimatePresence mode="wait" initial={false} custom={transitionDirection}>
+                <motion.div
+                  key={activeTab}
+                  custom={transitionDirection}
+                  variants={pageSwipeVariants}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  transition={reduceMotion ? { duration: 0.01 } : { type: "spring", stiffness: 260, damping: 28, mass: 0.86 }}
+                  className="min-w-0"
+                  data-testid={`swipe-page-${activeTab}`}
+                >
+                  {activeTab === "myday" && <MyDay snapshot={snapshot} refetch={snapshotQuery.refetch} />}
+                  {activeTab === "overview" && <Overview snapshot={snapshot} />}
+                  {activeTab === "leaderboard" && <Leaderboard snapshot={snapshot} />}
+                  {activeTab === "proof" && <div className="flex w-full justify-center" data-testid="proof-page-centered-shell"><ProofFeed snapshot={snapshot} /></div>}
+                  {activeTab === "rewards" && <Rewards snapshot={snapshot} refetch={snapshotQuery.refetch} />}
+                  {activeTab === "calendar" && <CalendarView />}
+                  {activeTab === "admin" && (user?.role === "admin" ? <AdminPanel snapshot={snapshot} refetch={snapshotQuery.refetch} /> : <div className="border border-[#2A2A2A] bg-[#101010] p-8"><MicroLabel tone="red">Restricted</MicroLabel><p className="mt-3 text-xl font-black uppercase text-white">Founder dashboard is restricted to admin users.</p></div>)}
+                </motion.div>
+              </AnimatePresence>
             </div>
           </>
         )}
@@ -3227,7 +3344,7 @@ export default function Home() {
       <PullToRefreshIndicator distance={pullDistance} refreshing={pullRefreshing} />
       <LifeLossAlert snapshot={snapshot} />
       <CommunityCareReleaseNotePopup note={releaseNoteQuery.data} isPending={acknowledgeReleaseNote.isPending} onAcknowledge={releaseNoteId => acknowledgeReleaseNote.mutate({ releaseNoteId })} />
-      <MobileBottomNav mobileTabs={mobileTabs} activeTab={activeTab} activeMobileIndex={activeMobileIndex} onSelect={setActiveTab} />
+      <MobileBottomNav mobileTabs={mobileTabs} activeTab={activeTab} activeMobileIndex={activeMobileIndex} onSelect={changeActiveTab} />
     </main>
   );
 }

@@ -530,7 +530,9 @@ describe("Home onboarding shell", () => {
     expect(homeSource).toContain('data-testid="pace-bar"');
     expect(homeSource).toContain("Board / Bosses");
     expect(homeSource).toContain('data-testid="boost-key-slots"');
-    expect(homeSource).toContain("Tap one. See how to win it.");
+    expect(homeSource).toContain('data-testid="boost-key-summary-toggle"');
+    expect(homeSource).toContain('data-testid="boost-key-collapsible-panel"');
+    expect(homeSource).toContain("Boost tokens tucked away.");
     expect(homeSource).toContain('data-testid="overview-active-boosts"');
     expect(homeSource).toContain('data-testid="warden-mood-card"');
     expect(homeSource).toContain("+5 bonus available");
@@ -681,12 +683,14 @@ describe("Home onboarding shell", () => {
     expect(homeSource).toContain("Detail view · {p.comparisonLine}");
     expect(homeSource).toContain("{p.comparisonStats.map((stat: any) => <InsightPill key={stat.label} label={stat.label} value={stat.value} tone={stat.tone} />)}");
     expect(homeSource).toContain("<ParticipantSheet participant={selected} onClose={() => setSelected(null)} />");
-    expect(homeSource).toContain('aria-label="Top three ordered first, second, third on mobile"');
+    expect(homeSource).toContain('data-mobile-podium-layout="horizontal-stepped"');
+    expect(homeSource).toContain('aria-label="Top three arranged as a horizontal mobile podium: second, first, third"');
     expect(homeSource.indexOf("{podium[0] && <PodiumCard")).toBeLessThan(homeSource.indexOf("{podium[1] && <PodiumCard"));
     expect(homeSource.indexOf("{podium[1] && <PodiumCard")).toBeLessThan(homeSource.indexOf("{podium[2] && <PodiumCard"));
-    expect(homeSource).toContain('className="lg:order-2"');
-    expect(homeSource).toContain('className="lg:order-1 lg:translate-y-5"');
-    expect(homeSource).toContain('className="lg:order-3 lg:translate-y-9"');
+    expect(homeSource).toContain('className="order-2"');
+    expect(homeSource).toContain('className="order-1 translate-y-3 sm:translate-y-5"');
+    expect(homeSource).toContain('className="order-3 translate-y-5 sm:translate-y-9"');
+    expect(homeSource).toContain('data-podium-motion={styles.motion}');
     expect(homeSource).toContain("data-testid=\"participant-profile-overlay\"");
     expect(homeSource).toContain("max-h-[min(92svh,46rem)] w-full max-w-xl flex-col overflow-hidden");
     expect(homeSource).toContain("createPortal(sheet, document.body)");
@@ -698,6 +702,30 @@ describe("Home onboarding shell", () => {
     expect(homeSource).toContain("const [photoExpanded, setPhotoExpanded] = useState(false);");
     expect(homeSource).toContain("enlargeable onOpen={() => setPhotoExpanded(true)}");
     expect(homeSource).toContain("Close enlarged display picture");
+  });
+
+  it("documents swipe page transitions, the collapsible boost drawer, and rank-specific podium motion", () => {
+    const homeSource = readFileSync(new URL("./Home.tsx", import.meta.url), "utf8");
+    const cssSource = readFileSync(new URL("../index.css", import.meta.url), "utf8");
+
+    expect(homeSource).toContain('import { AnimatePresence, motion, useReducedMotion } from "framer-motion";');
+    expect(homeSource).toContain("const pageSwipeVariants");
+    expect(homeSource).toContain("const [transitionDirection, setTransitionDirection] = useState<SwipeDirection>(1);");
+    expect(homeSource).toContain("touchStartXRef");
+    expect(homeSource).toContain("const isHorizontalSwipe = Math.abs(deltaX) > 72 && Math.abs(deltaX) > Math.abs(deltaY) * 1.25;");
+    expect(homeSource).toContain('data-testid="swipe-page-stage"');
+    expect(homeSource).toContain('data-swipe-transition="spring-slide-blur"');
+    expect(homeSource).toContain('data-testid={`swipe-page-${activeTab}`}');
+    expect(homeSource).toContain("<AnimatePresence mode=\"wait\" initial={false} custom={transitionDirection}>");
+    expect(homeSource).toContain("const [boostKeyOpen, setBoostKeyOpen] = useState(false);");
+    expect(homeSource).toContain('data-boost-collapsible-state={boostKeyOpen ? "open" : "closed"}');
+    expect(homeSource).toContain("boostCollapseVariants");
+    expect(homeSource).toContain('aria-controls="boost-key-collapsible-panel"');
+    expect(homeSource).toContain('data-mobile-podium-layout="horizontal-stepped"');
+    expect(homeSource).toContain('data-podium-motion={styles.motion}');
+    expect(cssSource).toContain("@keyframes podium-gold-champion");
+    expect(cssSource).toContain('[data-podium-motion="silver-lift"]');
+    expect(cssSource).toContain('[data-podium-motion="bronze-rise"]');
   });
 
   it("generates Warden-style Board status lines while keeping analytical metrics for expanded rows", () => {

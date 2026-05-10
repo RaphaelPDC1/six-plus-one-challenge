@@ -1204,3 +1204,7 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Investigate Nay’s report that she tried to upload for yesterday and it did not go through; confirmed the persisted database has no submitted proof/log for Nay for yesterday and retained logs do not show an uploadProof request for her.
 - [x] Verify whether Nay opened the app around the reported failed upload date by checking retained activity evidence without changing participant data. Found a confirmed sign-in on 2026-05-10 at 08:33:08, but no retained evidence of a May 9 app-open/upload tied to Nay; daily-log rows for the reported date remain incomplete with no proof URL.
 - [x] Fix privacy bug where personal reflections intended to be private are visible on the personal cards view; shared snapshot/history responses now redact reflection text, preserve only a private completion signal, and the personal cards detail shows a private logged indicator instead of the reflection content. Added regression coverage and validated with TypeScript, full Vitest, and production build checks.
+
+- [x] Add swipe navigation between pages with advanced animations and transitions.
+- [x] Tuck boost tokens into a well-designed tappable/collapsible section.
+- [x] Redesign the mobile top-three podium as a horizontal podium with varying heights and position-appropriate motion/transitions.

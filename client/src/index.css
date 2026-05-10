@@ -863,24 +863,37 @@ html.haptic-visual-feedback .motion-card {
 }
 
 
-@keyframes podium-breathe {
-  0%, 100% { transform: translateY(0) scale(1); filter: saturate(1); }
-  50% { transform: translateY(-3px) scale(1.008); filter: saturate(1.08); }
+@keyframes podium-gold-champion {
+  0%, 100% { filter: saturate(1) drop-shadow(0 0 0 rgba(200,169,110,0)); }
+  42% { filter: saturate(1.15) drop-shadow(0 0 18px rgba(200,169,110,0.18)); }
 }
 
-[data-podium-rank="1"] {
-  animation: podium-breathe 4.8s ease-in-out infinite;
+@keyframes podium-silver-lift {
+  0%, 100% { filter: saturate(1) brightness(1); }
+  50% { filter: saturate(1.08) brightness(1.06); }
 }
 
-[data-podium-rank="2"],
-[data-podium-rank="3"] {
-  animation: podium-breathe 6.2s ease-in-out infinite;
+@keyframes podium-bronze-rise {
+  0%, 100% { filter: saturate(1) brightness(1); }
+  55% { filter: saturate(1.1) brightness(1.04); }
+}
+
+[data-podium-motion="gold-champion"] {
+  animation: podium-gold-champion 4.8s ease-in-out infinite;
+}
+
+[data-podium-motion="silver-lift"] {
+  animation: podium-silver-lift 5.8s ease-in-out infinite;
+}
+
+[data-podium-motion="bronze-rise"] {
+  animation: podium-bronze-rise 6.4s ease-in-out infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  [data-podium-rank="1"],
-  [data-podium-rank="2"],
-  [data-podium-rank="3"] {
+  [data-podium-motion="gold-champion"],
+  [data-podium-motion="silver-lift"],
+  [data-podium-motion="bronze-rise"] {
     animation: none;
   }
 }
