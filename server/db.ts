@@ -11,7 +11,10 @@ import {
   participants,
   paymentEvents,
   proofComments,
+  participantNotifications,
   proofReactions,
+  pushSubscriptions,
+  notificationPreferences,
   redemptionRequests,
   releaseNoteAcknowledgements,
   releaseNotes,
@@ -1219,4 +1222,131 @@ export async function logWardenMessage(input: { mode: "surveillance" | "commenta
   }
   await db.insert(wardenMessages).values({ ...input, sourceEvent: input.sourceEvent || null, postedToWhatsapp: input.postedToWhatsapp ?? false });
   return { created: true as const };
+}
+
+export type NotificationPreferencePatch = Partial<{
+  pushEnabled: boolean;
+  inAppEnabled: boolean;
+  morningIntent: boolean;
+  afternoonProof: boolean;
+  eveningDeadline: boolean;
+  lifeRisk: boolean;
+  streakRewards: boolean;
+  wardenUpdates: boolean;
+  quietHoursEnabled: boolean;
+  quietHoursStart: string;
+  quietHoursEnd: string;
+  timezone: string;
+}>;
+
+export async function getNotificationPreferences(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  const existing = await db.select().from(notificationPreferences).where(eq(notificationPreferences.userId, userId)).limit(1);
+  if (existing[0]) return existing[0];
+  const participant = await getParticipantByUserId(userId);
+  await db.insert(notificationPreferences).values({ userId, participantId: participant?.id ?? null });
+  const created = await db.select().from(notificationPreferences).where(eq(notificationPreferences.userId, userId)).limit(1);
+  return created[0];
+}
+
+export async function updateNotificationPreferences(userId: number, patch: NotificationPreferencePatch) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  await getNotificationPreferences(userId);
+  await db.update(notificationPreferences).set(patch).where(eq(notificationPreferences.userId, userId));
+  return getNotificationPreferences(userId);
+}
+
+export async function upsertPushSubscription(input: { userId: number; participantId?: number | null; endpoint: string; endpointHash: string; p256dh: string; auth: string; userAgent?: string | null }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  await db.insert(pushSubscriptions).values({
+    userId: input.userId,
+    participantId: input.participantId ?? null,
+    endpoint: input.endpoint,
+    endpointHash: input.endpointHash,
+    p256dh: input.p256dh,
+    auth: input.auth,
+    userAgent: input.userAgent ?? null,
+    enabled: true,
+    lastSeenAt: new Date(),
+  }).onDuplicateKeyUpdate({ set: {
+    userId: input.userId,
+    participantId: input.participantId ?? null,
+    endpoint: input.endpoint,
+    p256dh: input.p256dh,
+    auth: input.auth,
+    userAgent: input.userAgent ?? null,
+    enabled: true,
+    lastSeenAt: new Date(),
+  } });
+  await updateNotificationPreferences(input.userId, { pushEnabled: true });
+  const rows = await db.select().from(pushSubscriptions).where(eq(pushSubscriptions.endpointHash, input.endpointHash)).limit(1);
+  return rows[0];
+}
+
+export async function disablePushSubscription(userId: number, endpointHash: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  await db.update(pushSubscriptions).set({ enabled: false }).where(and(eq(pushSubscriptions.userId, userId), eq(pushSubscriptions.endpointHash, endpointHash)));
+  const active = await db.select().from(pushSubscriptions).where(and(eq(pushSubscriptions.userId, userId), eq(pushSubscriptions.enabled, true))).limit(1);
+  if (!active[0]) await updateNotificationPreferences(userId, { pushEnabled: false });
+  return { success: true as const };
+}
+
+export async function listUserNotifications(userId: number, limit = 30) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  return db.select().from(participantNotifications).where(eq(participantNotifications.userId, userId)).orderBy(desc(participantNotifications.createdAt)).limit(limit);
+}
+
+export async function markUserNotificationsRead(userId: number, notificationIds?: number[]) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  const where = notificationIds?.length
+    ? and(eq(participantNotifications.userId, userId), inArray(participantNotifications.id, notificationIds))
+    : eq(participantNotifications.userId, userId);
+  await db.update(participantNotifications).set({ readAt: new Date() }).where(where);
+  return { success: true as const };
+}
+
+export async function createParticipantNotification(input: { userId: number; participantId?: number | null; type: "morning_intent" | "afternoon_proof" | "evening_deadline" | "life_risk" | "streak_reward" | "warden_update" | "system"; title: string; body: string; actionUrl?: string | null; pushStatus?: "not_attempted" | "sent" | "failed" | "skipped"; lastPushError?: string | null }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  const values = {
+    userId: input.userId,
+    participantId: input.participantId ?? null,
+    type: input.type,
+    title: input.title,
+    body: input.body,
+    actionUrl: input.actionUrl ?? "/",
+    pushStatus: input.pushStatus ?? "not_attempted",
+    lastPushError: input.lastPushError ?? null,
+  } as const;
+  await db.insert(participantNotifications).values(values);
+  const rows = await db.select().from(participantNotifications).where(eq(participantNotifications.userId, input.userId)).orderBy(desc(participantNotifications.createdAt)).limit(1);
+  return rows[0];
+}
+
+export async function updateNotificationPushResult(notificationId: number, result: { status: "sent" | "failed" | "skipped"; error?: string | null }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  await db.update(participantNotifications).set({
+    pushStatus: result.status,
+    lastPushError: result.error ?? null,
+    pushAttempts: sql`${participantNotifications.pushAttempts} + 1`,
+  }).where(eq(participantNotifications.id, notificationId));
+}
+
+export async function getEnabledPushSubscriptionsForUser(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  return db.select().from(pushSubscriptions).where(and(eq(pushSubscriptions.userId, userId), eq(pushSubscriptions.enabled, true)));
+}
+
+export async function disablePushSubscriptionById(subscriptionId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database unavailable");
+  await db.update(pushSubscriptions).set({ enabled: false }).where(eq(pushSubscriptions.id, subscriptionId));
 }

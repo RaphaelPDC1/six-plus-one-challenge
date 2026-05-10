@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE IF NOT EXISTS `push_subscriptions` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`userId` int NOT NULL,\n\t`participantId` int,\n\t`endpoint` text NOT NULL,\n\t`endpointHash` varchar(64) NOT NULL,\n\t`p256dh` text NOT NULL,\n\t`auth` text NOT NULL,\n\t`userAgent` text,\n\t`enabled` boolean NOT NULL DEFAULT true,\n\t`lastSeenAt` timestamp NOT NULL DEFAULT (now()),\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\t`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n\tCONSTRAINT `push_subscriptions_id` PRIMARY KEY(`id`),\n\tCONSTRAINT `push_subscriptions_endpoint_hash_idx` UNIQUE(`endpointHash`)\n);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2P9ir9M7b3E7Qkh.8b2c854ea8b3 --database HPubf4auNvt8KXvgrLad5c --execute CREATE TABLE IF NOT EXISTS `push_subscriptions` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`userId` int NOT NULL,\n\t`participantId` int,\n\t`endpoint` text NOT NULL,\n\t`endpointHash` varchar(64) NOT NULL,\n\t`p256dh` text NOT NULL,\n\t`auth` text NOT NULL,\n\t`userAgent` text,\n\t`enabled` boolean NOT NULL DEFAULT true,\n\t`lastSeenAt` timestamp NOT NULL DEFAULT (now()),\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\t`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,\n\tCONSTRAINT `push_subscriptions_id` PRIMARY KEY(`id`),\n\tCONSTRAINT `push_subscriptions_endpoint_hash_idx` UNIQUE(`endpointHash`)\n);",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 332
+}

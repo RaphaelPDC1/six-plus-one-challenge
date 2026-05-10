@@ -8,6 +8,7 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import { DAILY_PASS_THRESHOLD, DAILY_RULE_COUNT, clampLives, getDailyLogProgress } from "@/lib/challengeUi";
 import { buildFocusedChartData, buildParticipantInsights, calculateLiveTaskPoints, logHasInsight, logHasProof, rankForPodium } from "@/lib/challengeInsights";
 import { haptics } from "@/lib/haptics";
+import { getBrowserPushSupport, getExistingChallengePushSubscription, serializePushSubscription, subscribeToChallengePush } from "@/lib/pwaPush";
 import { toast } from "sonner";
 import {
   Activity,
@@ -31,6 +32,7 @@ import {
   Utensils,
   X,
   Calendar,
+  Bell,
 } from "lucide-react";
 import {
   CartesianGrid,
@@ -467,6 +469,132 @@ function MicroLabel({ children, tone = "muted" }: { children: React.ReactNode; t
     purple: "text-[#9B59B6]",
   };
   return <p className={classNames("poster-label", tones[tone])}>{children}</p>;
+}
+
+function PwaNotificationPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const utils = trpc.useUtils();
+  const support = useMemo(() => getBrowserPushSupport(), []);
+  const pushConfig = trpc.notifications.pushConfig.useQuery(undefined, { enabled: open });
+  const preferences = trpc.notifications.preferences.useQuery(undefined, { enabled: open });
+  const notifications = trpc.notifications.list.useQuery(undefined, { enabled: open });
+  const [working, setWorking] = useState(false);
+  const updatePreferences = trpc.notifications.updatePreferences.useMutation({
+    onSuccess: () => {
+      void preferences.refetch();
+      toast("Notification preferences saved.");
+    },
+    onError: error => toast.error(error.message || "Could not save notification preferences."),
+  });
+  const registerPush = trpc.notifications.registerPush.useMutation({
+    onSuccess: () => {
+      void preferences.refetch();
+      void notifications.refetch();
+      toast("PWA notifications are on.");
+    },
+    onError: error => toast.error(error.message || "Could not register this device for push notifications."),
+  });
+  const unregisterPush = trpc.notifications.unregisterPush.useMutation({
+    onSuccess: () => {
+      void preferences.refetch();
+      toast("PWA notifications are paused on this device.");
+    },
+    onError: error => toast.error(error.message || "Could not pause push notifications."),
+  });
+  const markRead = trpc.notifications.markRead.useMutation({
+    onSuccess: () => {
+      void notifications.refetch();
+      void utils.notifications.list.invalidate();
+    },
+  });
+  const sendTest = trpc.notifications.sendTest.useMutation({
+    onSuccess: result => toast((result.push?.sentCount ?? 0) > 0 ? "Test notification sent to this device." : "Test saved in the in-app inbox. Push delivery needs permission and VAPID keys."),
+    onError: error => toast.error(error.message || "Could not send a test notification."),
+  });
+
+  if (!open) return null;
+  const pref = preferences.data;
+  const unread = (notifications.data ?? []).filter((item: any) => !item.readAt);
+  const enabled = Boolean(pref?.pushEnabled);
+  const configured = Boolean(pushConfig.data?.enabled && pushConfig.data?.publicKey);
+
+  const enablePush = async () => {
+    setWorking(true);
+    try {
+      if (!support.supported) throw new Error(support.reason);
+      if (!configured) throw new Error("Push keys are not configured yet. In-app alerts are still available.");
+      const subscription = await subscribeToChallengePush(pushConfig.data?.publicKey ?? "");
+      await registerPush.mutateAsync(serializePushSubscription(subscription));
+      await updatePreferences.mutateAsync({ pushEnabled: true, inAppEnabled: true, timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "Europe/London" });
+    } catch (error: any) {
+      toast.error(error?.message || "Could not enable PWA notifications.");
+    } finally {
+      setWorking(false);
+    }
+  };
+
+  const pausePush = async () => {
+    setWorking(true);
+    try {
+      const subscription = await getExistingChallengePushSubscription();
+      if (subscription) {
+        await unregisterPush.mutateAsync({ endpoint: subscription.endpoint });
+        await subscription.unsubscribe().catch(() => false);
+      }
+      await updatePreferences.mutateAsync({ pushEnabled: false });
+    } finally {
+      setWorking(false);
+    }
+  };
+
+  const toggle = (key: "morningIntent" | "afternoonProof" | "eveningDeadline" | "lifeRisk" | "streakRewards" | "wardenUpdates") => {
+    updatePreferences.mutate({ [key]: !Boolean((pref as any)?.[key]) });
+  };
+
+  const reminderToggles: Array<["morningIntent" | "afternoonProof" | "eveningDeadline" | "lifeRisk" | "streakRewards" | "wardenUpdates", string, string]> = [
+    ["morningIntent", "Morning intent", "Start the day with the six rules front-of-mind."],
+    ["afternoonProof", "Proof prompt", "Nudge training proof before the day slips away."],
+    ["eveningDeadline", "Deadline warning", "Protect the log before midnight."],
+    ["lifeRisk", "Life-risk alert", "Warn when a missed log could cost a life."],
+    ["streakRewards", "Streak and reward wins", "Celebrate saved streaks and reward eligibility."],
+    ["wardenUpdates", "Warden updates", "Allow challenge-drama and accountability nudges."],
+  ];
+
+  const panel = (
+    <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/72 p-3 backdrop-blur-sm sm:items-center" role="dialog" aria-modal="true" aria-label="PWA notification settings" data-testid="pwa-notification-panel" onClick={onClose}>
+      <div className="max-h-[88svh] w-full max-w-xl overflow-y-auto border-2 border-[#C8A96E] bg-[#0D0D0D] p-5 shadow-[0_24px_90px_rgba(0,0,0,0.82)]" onClick={event => event.stopPropagation()}>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <MicroLabel tone="gold">Training Advantage</MicroLabel>
+            <h2 className="mt-2 text-2xl font-black uppercase tracking-[-0.04em] text-white">PWA Notifications</h2>
+            <p className="mt-2 text-sm font-bold leading-relaxed text-[#BDB8AC]">Enable installed-app reminders for proof, deadline pressure, life risk and Warden updates. In-app alerts stay available as the fallback.</p>
+          </div>
+          <button onClick={onClose} className="border border-[#2A2A2A] p-2 text-[#777] hover:border-[#C8A96E] hover:text-[#C8A96E]" aria-label="Close notification settings"><X className="h-4 w-4" /></button>
+        </div>
+        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+          <div className="border border-[#2A2A2A] bg-[#101010] p-4"><MicroLabel tone={configured ? "green" : "red"}>{configured ? "Ready" : "Setup needed"}</MicroLabel><p className="mt-2 text-sm font-black uppercase text-white">{enabled ? "Push enabled" : "Push paused"}</p><p className="mt-2 text-xs font-bold leading-relaxed text-[#8F8A80]">{support.supported ? "This installed app can request device notification permission." : support.reason}</p></div>
+          <div className="border border-[#2A2A2A] bg-[#101010] p-4"><MicroLabel tone="gold">Inbox</MicroLabel><p className="mt-2 text-sm font-black uppercase text-white">{unread.length} unread</p><p className="mt-2 text-xs font-bold leading-relaxed text-[#8F8A80]">Important reminders also appear here when push delivery is unavailable.</p></div>
+        </div>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <SharpButton type="button" disabled={working || registerPush.isPending || updatePreferences.isPending || !support.supported || !configured} onClick={enablePush}>{enabled ? "Refresh device" : "Enable push"}</SharpButton>
+          <button type="button" disabled={working || !enabled} onClick={pausePush} className="border border-[#2A2A2A] px-4 py-3 text-[10px] font-black uppercase tracking-[0.18em] text-[#BDB8AC] hover:border-[#E56B6F] hover:text-[#E56B6F] disabled:opacity-40">Pause push</button>
+          <button type="button" disabled={sendTest.isPending} onClick={() => sendTest.mutate()} className="border border-[#2A2A2A] px-4 py-3 text-[10px] font-black uppercase tracking-[0.18em] text-[#BDB8AC] hover:border-[#C8A96E] hover:text-[#C8A96E] disabled:opacity-40">Send test</button>
+        </div>
+        <div className="mt-5 grid gap-2">
+          {reminderToggles.map(([key, label, copy]) => (
+            <button key={key} type="button" onClick={() => toggle(key)} className="flex items-center justify-between gap-3 border border-[#2A2A2A] bg-[#101010] p-3 text-left hover:border-[#C8A96E]"><span><span className="block text-xs font-black uppercase tracking-[0.16em] text-white">{label}</span><span className="mt-1 block text-[11px] font-bold leading-relaxed text-[#8F8A80]">{copy}</span></span><span className={classNames("shrink-0 border px-2 py-1 text-[9px] font-black uppercase tracking-[0.16em]", (pref as any)?.[key] !== false ? "border-[#4ADE80] text-[#4ADE80]" : "border-[#555] text-[#777]")}>{(pref as any)?.[key] !== false ? "On" : "Off"}</span></button>
+          ))}
+        </div>
+        <div className="mt-5 border border-[#2A2A2A] bg-black/25 p-4">
+          <div className="flex items-center justify-between gap-3"><MicroLabel tone="muted">Recent alerts</MicroLabel>{unread.length > 0 && <button type="button" onClick={() => markRead.mutate({})} className="text-[9px] font-black uppercase tracking-[0.18em] text-[#C8A96E]">Mark all read</button>}</div>
+          <div className="mt-3 space-y-2">
+            {(notifications.data ?? []).slice(0, 5).map((item: any) => <div key={item.id} className="border border-[#242424] p-3"><p className="text-xs font-black uppercase text-white">{item.title}</p><p className="mt-1 text-[11px] font-bold leading-relaxed text-[#8F8A80]">{item.body}</p></div>)}
+            {(notifications.data ?? []).length === 0 && <p className="text-xs font-bold text-[#777]">No reminders yet. Send a test after enabling push.</p>}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+  return typeof document === "undefined" ? panel : createPortal(panel, document.body);
 }
 
 function SharpButton({ children, className, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
@@ -2949,6 +3077,7 @@ export default function Home() {
   const [loginEntryVisible, setLoginEntryVisible] = useState(false);
   const [pullDistance, setPullDistance] = useState(0);
   const [pullRefreshing, setPullRefreshing] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const pullStartYRef = useRef<number | null>(null);
   const previousAuthRef = useRef(isAuthenticated);
   const utils = trpc.useUtils();
@@ -3057,6 +3186,7 @@ export default function Home() {
           </button>
           <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             <span className="hidden border border-[#2A2A2A] px-3 py-2 text-[9px] font-black uppercase tracking-[0.22em] text-[#777] sm:inline-block">{user?.role === "admin" ? "Founder" : "Participant"}</span>
+            <button className="border border-[#2A2A2A] px-3 py-2.5 text-[9px] font-black uppercase tracking-[0.16em] text-white hover:border-[#C8A96E] hover:text-[#C8A96E] sm:px-4 sm:py-3 sm:text-[10px] sm:tracking-[0.18em]" onClick={() => setNotificationsOpen(true)} aria-label="Open PWA notification settings"><Bell className="h-4 w-4 sm:hidden" /><span className="hidden sm:inline">Notify</span></button>
             <button className="border border-[#2A2A2A] px-3 py-2.5 text-[9px] font-black uppercase tracking-[0.16em] text-white hover:border-[#C8A96E] hover:text-[#C8A96E] sm:px-4 sm:py-3 sm:text-[10px] sm:tracking-[0.18em]" onClick={() => logout()}>Logout</button>
           </div>
         </div>
@@ -3092,6 +3222,7 @@ export default function Home() {
         )}
       </section>
 
+      {notificationsOpen && <PwaNotificationPanel open={notificationsOpen} onClose={() => setNotificationsOpen(false)} />}
       <PullToRefreshIndicator distance={pullDistance} refreshing={pullRefreshing} />
       <LifeLossAlert snapshot={snapshot} />
       <CommunityCareReleaseNotePopup note={releaseNoteQuery.data} isPending={acknowledgeReleaseNote.isPending} onAcknowledge={releaseNoteId => acknowledgeReleaseNote.mutate({ releaseNoteId })} />

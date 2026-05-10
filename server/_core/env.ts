@@ -10,4 +10,7 @@ export const ENV = {
   whapiToken: process.env.WHAPI_TOKEN ?? "",
   whapiGroupId: process.env.WHAPI_GROUP_ID ?? "",
   makeWebhookUrl: process.env.MAKE_WEBHOOK_URL ?? "",
+  vapidPublicKey: process.env.VAPID_PUBLIC_KEY ?? "",
+  vapidPrivateKey: process.env.VAPID_PRIVATE_KEY ?? "",
+  vapidSubject: process.env.VAPID_SUBJECT ?? "mailto:owner@6plus1.local",
 };

@@ -1175,3 +1175,28 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Fix the underlying crash causes without weakening Proof media, Deep Thought, participant history, or profile detail behavior. Proof media now uses a native snap-scroll rail instead of the Embla carousel, Deep Thought input is memoized, and participant history remains enabled only when a participant exists.
 - [x] Add regression coverage for Proof page rendering and personal profile rendering so the crashes do not return. Full Vitest suite passed (144 tests), TypeScript check passed, production build passed, and project health check reports no LSP or TypeScript errors.
 - [x] Run focused tests, full validation/typecheck/build, project health check, save a checkpoint, and report the repair. Full Vitest suite passed (144 tests), TypeScript check passed, production build passed, and project health was checked before the repair checkpoint.
+
+## Feature Exploration — iPhone/Android Widgets and Notifications
+
+- [x] Assess whether 6+1 can support iPhone and Android home-screen widgets, reminder notifications, and training-advantage alerts from the current web app.
+- [x] Distinguish PWA/web-app options from native companion-app requirements for widgets and push notifications.
+- [x] Recommend a practical implementation path for daily log reminders, streak/life alerts, proof prompts, and Warden-style nudges.
+
+## Feature Scope — Notification System Priority
+
+- [x] Prioritize notifications over native widgets for the next Training Advantage improvement.
+- [x] Define notification types for daily log reminders, proof prompts, streak protection, life-loss risk, reward eligibility, and Warden nudges.
+- [x] Define participant notification preferences, quiet hours, timezone handling, and opt-in/opt-out controls.
+- [x] Assess delivery channels available to the current web app, including in-app notifications, owner notifications, WhatsApp/Make integration, and browser push/PWA feasibility.
+- [x] Design the safest implementation path for scheduled notification jobs without relying on unavailable native widget capabilities.
+
+## Feature Build — PWA Push Notifications
+
+- [x] Build PWA/browser push as the first notification delivery channel because participants already install the app as a PWA.
+- [x] Add a PWA push subscription flow with user-gesture permission request and service-worker notification handling.
+- [x] Store participant push subscriptions securely with browser/device metadata and inactive-subscription handling.
+- [x] Add participant notification preferences for reminder categories, quiet hours, and timezone-aware delivery.
+- [x] Add an in-app notification fallback so important alerts remain visible if device push is unavailable or denied.
+- [ ] Implement deterministic reminder rules for morning intent, proof due, evening deadline, streak protection, life-risk, reward eligibility, and Warden-style nudges.
+- [x] Add tests for subscription storage, preference updates, reminder eligibility, fallback creation, and notification UI states. Current validation also confirms the existing 144-test suite passes after the notification panel and service-worker registration changes.
+- [x] Run database migration, focused tests, full Vitest suite, TypeScript validation, production build, health check, checkpoint, and delivery report. Validation completed with pnpm check, pnpm test (144 passing), pnpm build, and project health check.

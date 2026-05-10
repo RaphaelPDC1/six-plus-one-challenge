@@ -202,6 +202,61 @@ export const releaseNoteAcknowledgements = mysqlTable("release_note_acknowledgem
   uniqueReleaseNoteAcknowledgement: uniqueIndex("release_note_ack_unique_idx").on(table.releaseNoteId, table.userId),
 }));
 
+export const pushSubscriptions = mysqlTable("push_subscriptions", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  participantId: int("participantId"),
+  endpoint: text("endpoint").notNull(),
+  endpointHash: varchar("endpointHash", { length: 64 }).notNull(),
+  p256dh: text("p256dh").notNull(),
+  auth: text("auth").notNull(),
+  userAgent: text("userAgent"),
+  enabled: boolean("enabled").default(true).notNull(),
+  lastSeenAt: timestamp("lastSeenAt").defaultNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, table => ({
+  uniquePushEndpointHash: uniqueIndex("push_subscriptions_endpoint_hash_idx").on(table.endpointHash),
+}));
+
+export const notificationPreferences = mysqlTable("notification_preferences", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  participantId: int("participantId"),
+  pushEnabled: boolean("pushEnabled").default(false).notNull(),
+  inAppEnabled: boolean("inAppEnabled").default(true).notNull(),
+  morningIntent: boolean("morningIntent").default(true).notNull(),
+  afternoonProof: boolean("afternoonProof").default(true).notNull(),
+  eveningDeadline: boolean("eveningDeadline").default(true).notNull(),
+  lifeRisk: boolean("lifeRisk").default(true).notNull(),
+  streakRewards: boolean("streakRewards").default(true).notNull(),
+  wardenUpdates: boolean("wardenUpdates").default(true).notNull(),
+  quietHoursEnabled: boolean("quietHoursEnabled").default(true).notNull(),
+  quietHoursStart: varchar("quietHoursStart", { length: 5 }).default("22:00").notNull(),
+  quietHoursEnd: varchar("quietHoursEnd", { length: 5 }).default("07:00").notNull(),
+  timezone: varchar("timezone", { length: 80 }).default("Europe/London").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, table => ({
+  uniqueNotificationPreferenceUser: uniqueIndex("notification_preferences_user_idx").on(table.userId),
+}));
+
+export const participantNotifications = mysqlTable("participant_notifications", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  participantId: int("participantId"),
+  type: mysqlEnum("type", ["morning_intent", "afternoon_proof", "evening_deadline", "life_risk", "streak_reward", "warden_update", "system"]).default("system").notNull(),
+  title: varchar("title", { length: 180 }).notNull(),
+  body: text("body").notNull(),
+  actionUrl: text("actionUrl"),
+  readAt: timestamp("readAt"),
+  pushStatus: mysqlEnum("pushStatus", ["not_attempted", "sent", "failed", "skipped"]).default("not_attempted").notNull(),
+  pushAttempts: int("pushAttempts").default(0).notNull(),
+  lastPushError: text("lastPushError"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 export type SignupRequest = typeof signupRequests.$inferSelect;
@@ -218,3 +273,6 @@ export type BoostWin = typeof boostWins.$inferSelect;
 export type InsertBoostWin = typeof boostWins.$inferInsert;
 export type ReleaseNote = typeof releaseNotes.$inferSelect;
 export type ReleaseNoteAcknowledgement = typeof releaseNoteAcknowledgements.$inferSelect;
+export type PushSubscription = typeof pushSubscriptions.$inferSelect;
+export type NotificationPreference = typeof notificationPreferences.$inferSelect;
+export type ParticipantNotification = typeof participantNotifications.$inferSelect;

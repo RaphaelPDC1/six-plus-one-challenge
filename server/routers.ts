@@ -36,12 +36,19 @@ import {
   triggerLifeLoss,
   tryApplyGhostLife,
   updateParticipantProfile,
+  getNotificationPreferences,
+  updateNotificationPreferences,
+  upsertPushSubscription,
+  disablePushSubscription,
+  listUserNotifications,
+  markUserNotificationsRead,
 } from "./db";
 import { generateWardenCommentary } from "./warden";
 import { generateDeepThoughtsForSnapshot } from "./deepThought";
 import { wardenRouter } from "./warden/wardenRouters";
 import { storagePut } from "./storage";
 import { notifyOwner } from "./_core/notification";
+import { getPushConfig, hashPushEndpoint, notifyUserWithPush } from "./pushNotifications";
 import { BOOST_CHALLENGE_ID, BOOST_POINTS, BOOST_SEQUENCE, getActiveBoostsForDay } from "../shared/boostSystem";
 
 const signupRequestInput = z.object({
@@ -77,6 +84,29 @@ const dayLogInput = z.object({
   reflectionShared: z.boolean().default(false),
   readTeachText: z.string().max(4000).default(""),
   trackedEverything: z.boolean().default(false),
+});
+
+const pushSubscriptionInput = z.object({
+  endpoint: z.string().url().max(4096),
+  keys: z.object({
+    p256dh: z.string().min(16).max(512),
+    auth: z.string().min(8).max(256),
+  }),
+});
+
+const notificationPreferenceInput = z.object({
+  pushEnabled: z.boolean().optional(),
+  inAppEnabled: z.boolean().optional(),
+  morningIntent: z.boolean().optional(),
+  afternoonProof: z.boolean().optional(),
+  eveningDeadline: z.boolean().optional(),
+  lifeRisk: z.boolean().optional(),
+  streakRewards: z.boolean().optional(),
+  wardenUpdates: z.boolean().optional(),
+  quietHoursEnabled: z.boolean().optional(),
+  quietHoursStart: z.string().regex(/^([01]\\d|2[0-3]):[0-5]\\d$/).optional(),
+  quietHoursEnd: z.string().regex(/^([01]\\d|2[0-3]):[0-5]\\d$/).optional(),
+  timezone: z.string().min(2).max(80).optional(),
 });
 
 export const appRouter = router({
@@ -288,6 +318,55 @@ export const appRouter = router({
         }
         return { success: true, reward: redemption.reward } as const;
       }),
+  }),
+
+  notifications: router({
+    pushConfig: protectedProcedure.query(() => getPushConfig()),
+
+    preferences: protectedProcedure.query(({ ctx }) => getNotificationPreferences(ctx.user.id)),
+
+    updatePreferences: protectedProcedure
+      .input(notificationPreferenceInput)
+      .mutation(({ ctx, input }) => updateNotificationPreferences(ctx.user.id, input)),
+
+    registerPush: protectedProcedure
+      .input(pushSubscriptionInput)
+      .mutation(async ({ ctx, input }) => {
+        const participant = await getParticipantByUserId(ctx.user.id);
+        const endpointHash = hashPushEndpoint(input.endpoint);
+        const subscription = await upsertPushSubscription({
+          userId: ctx.user.id,
+          participantId: participant?.id ?? null,
+          endpoint: input.endpoint,
+          endpointHash,
+          p256dh: input.keys.p256dh,
+          auth: input.keys.auth,
+          userAgent: ctx.req.headers["user-agent"] ?? null,
+        });
+        return { success: true, endpointHash, subscriptionId: subscription?.id ?? null } as const;
+      }),
+
+    unregisterPush: protectedProcedure
+      .input(z.object({ endpoint: z.string().url().max(4096) }))
+      .mutation(({ ctx, input }) => disablePushSubscription(ctx.user.id, hashPushEndpoint(input.endpoint))),
+
+    list: protectedProcedure.query(({ ctx }) => listUserNotifications(ctx.user.id)),
+
+    markRead: protectedProcedure
+      .input(z.object({ notificationIds: z.array(z.number().int().positive()).max(100).optional() }).optional())
+      .mutation(({ ctx, input }) => markUserNotificationsRead(ctx.user.id, input?.notificationIds)),
+
+    sendTest: protectedProcedure.mutation(async ({ ctx }) => {
+      const participant = await getParticipantByUserId(ctx.user.id);
+      return notifyUserWithPush({
+        userId: ctx.user.id,
+        participantId: participant?.id ?? null,
+        type: "system",
+        title: "6+1 notifications are ready",
+        body: "This is a test push from your installed 6+1 challenge app.",
+        actionUrl: "/",
+      });
+    }),
   }),
 
   boost: router({
