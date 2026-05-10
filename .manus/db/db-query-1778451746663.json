@@ -1,0 +1,30 @@
+{
+  "query": "SELECT rn.id, rn.title, rn.summary, rn.body, rn.versionLabel, rn.category, rn.active, COUNT(rna.id) AS acknowledgement_count FROM release_notes rn LEFT JOIN release_note_acknowledgements rna ON rna.releaseNoteId = rn.id WHERE rn.id IN (30001, 30002) GROUP BY rn.id, rn.title, rn.summary, rn.body, rn.versionLabel, rn.category, rn.active ORDER BY rn.id ASC;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2P9ir9M7b3E7Qkh.8b2c854ea8b3 --database HPubf4auNvt8KXvgrLad5c --execute SELECT rn.id, rn.title, rn.summary, rn.body, rn.versionLabel, rn.category, rn.active, COUNT(rna.id) AS acknowledgement_count FROM release_notes rn LEFT JOIN release_note_acknowledgements rna ON rna.releaseNoteId = rn.id WHERE rn.id IN (30001, 30002) GROUP BY rn.id, rn.title, rn.summary, rn.body, rn.versionLabel, rn.category, rn.active ORDER BY rn.id ASC;",
+  "rows": [
+    {
+      "id": "30001",
+      "title": "App polish",
+      "summary": "Swipe navigation and a cleaner Board are live.",
+      "body": "Swipe between sections, open boost tokens only when needed, and read the mobile top three more easily. Please tap to acknowledge.",
+      "versionLabel": "Care polish 2026-05-10",
+      "category": "community_care",
+      "active": "1",
+      "acknowledgement_count": "0"
+    },
+    {
+      "id": "30002",
+      "title": "Proof update",
+      "summary": "Proof is easier to browse and respond to.",
+      "body": "Proof posts are easier to browse, reactions and comments are live, and Deep Thought now shows the right interpretation. Please tap to acknowledge.",
+      "versionLabel": "Proof edits 2026-05-10",
+      "category": "community_care",
+      "active": "1",
+      "acknowledgement_count": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitle\tsummary\tbody\tversionLabel\tcategory\tactive\tacknowledgement_count\n30001\tApp polish\tSwipe navigation and a cleaner Board are live.\tSwipe between sections, open boost tokens only when needed, and read the mobile top three more easily. Please tap to acknowledge.\tCare polish 2026-05-10\tcommunity_care\t1\t0\n30002\tProof update\tProof is easier to browse and respond to.\tProof posts are easier to browse, reactions and comments are live, and Deep Thought now shows the right interpretation. Please tap to acknowledge.\tProof edits 2026-05-10\tcommunity_care\t1\t0\n",
+  "stderr": "",
+  "execution_time_ms": 260
+}

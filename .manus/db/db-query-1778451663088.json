@@ -1,0 +1,26 @@
+{
+  "query": "SELECT rn.id, rn.title, rn.summary, rn.body, rn.versionLabel, rn.category, rn.active, rn.publishedAt, rn.createdAt, COUNT(rna.id) AS acknowledgement_count FROM release_notes rn LEFT JOIN release_note_acknowledgements rna ON rna.releaseNoteId = rn.id GROUP BY rn.id, rn.title, rn.summary, rn.body, rn.versionLabel, rn.category, rn.active, rn.publishedAt, rn.createdAt ORDER BY rn.createdAt DESC LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2P9ir9M7b3E7Qkh.8b2c854ea8b3 --database HPubf4auNvt8KXvgrLad5c --execute SELECT rn.id, rn.title, rn.summary, rn.body, rn.versionLabel, rn.category, rn.active, rn.publishedAt, rn.createdAt, COUNT(rna.id) AS acknowledgement_count FROM release_notes rn LEFT JOIN release_note_acknowledgements rna ON rna.releaseNoteId = rn.id GROUP BY rn.id, rn.title, rn.summary, rn.body, rn.versionLabel, rn.category, rn.active, rn.publishedAt, rn.createdAt ORDER BY rn.createdAt DESC LIMIT 10;",
+  "rows": [
+    {
+      "id": "1",
+      "title": "Edit update",
+      "summary": "Boost scoring, participant history, refresh behaviour, and update notes are now easier to understand.",
+      "body": "We have separated base daily points from named boosts, added a safer path for viewing participant history, prepared pull-to-refresh for the PWA, and introduced this edit update space so future changes are explained in-game.",
+      "versionLabel": "Edit 1",
+      "category": "edit",
+      "active": "1",
+      "publishedAt": "2026-05-10 09:09:58",
+      "createdAt": "2026-05-10 09:09:58",
+      "acknowledgement_count": "12"
+    }
+  ],
+  "messages": [
+    "30001\tCommunity Care catch-up: recent app changes\tA catch-up note for recent edits that should have been communicated as an in-game acknowledgement popup.\tCommunity Care note: a few visible improvements were made before they were properly explained here. That was a communication miss, so this catch-up popup now records them clearly.",
+    "What changed: mobile navigation now supports swipe movement between sections with smoother transitions; boost tokens on the Board are tucked into a tappable drawer so the leaderboard is easier to read; the mobile top-three podium was redesigned as a horizontal stepped podium with rank-specific motion; and the Proof section design direction was reviewed so future proof posts can keep person, media, teaching, and deep thought together instead of losing context.",
+    "What you need to do: nothing is required except acknowledging this note. Going forward, visible edits should be posted through this Community Care / patch-note popup so participants know what changed and why.\tCare catch-up 2026-05-10\tcommunity_care\t1\t2026-05-10 22:18:37\t2026-05-10 22:18:37\t0"
+  ],
+  "stdout": "id\ttitle\tsummary\tbody\tversionLabel\tcategory\tactive\tpublishedAt\tcreatedAt\tacknowledgement_count\n30001\tCommunity Care catch-up: recent app changes\tA catch-up note for recent edits that should have been communicated as an in-game acknowledgement popup.\tCommunity Care note: a few visible improvements were made before they were properly explained here. That was a communication miss, so this catch-up popup now records them clearly.\n\nWhat changed: mobile navigation now supports swipe movement between sections with smoother transitions; boost tokens on the Board are tucked into a tappable drawer so the leaderboard is easier to read; the mobile top-three podium was redesigned as a horizontal stepped podium with rank-specific motion; and the Proof section design direction was reviewed so future proof posts can keep person, media, teaching, and deep thought together instead of losing context.\n\nWhat you need to do: nothing is required except acknowledging this note. Going forward, visible edits should be posted through this Community Care / patch-note popup so participants know what changed and why.\tCare catch-up 2026-05-10\tcommunity_care\t1\t2026-05-10 22:18:37\t2026-05-10 22:18:37\t0\n1\tEdit update\tBoost scoring, participant history, refresh behaviour, and update notes are now easier to understand.\tWe have separated base daily points from named boosts, added a safer path for viewing participant history, prepared pull-to-refresh for the PWA, and introduced this edit update space so future changes are explained in-game.\tEdit 1\tedit\t1\t2026-05-10 09:09:58\t2026-05-10 09:09:58\t12\n",
+  "stderr": "",
+  "execution_time_ms": 263
+}

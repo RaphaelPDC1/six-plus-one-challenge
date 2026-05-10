@@ -1215,3 +1215,7 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Audit recent user-made edits and uncommunicated changes so they can be surfaced clearly to users.
 
 - [x] Publish a catch-up Community Care acknowledgement popup covering recent user-visible edits that were not communicated.
+
+- [x] Fix the oversized or broken Community Care catch-up note so participants are not shown a confusing acknowledgement popup.
+- [x] Communicate Proof page edits separately from the general catch-up note so proof-specific changes are not missed.
+- [x] Verify the corrected Community Care notes are concise, active only where intended, and still require acknowledgement.

@@ -1,0 +1,25 @@
+{
+  "query": "SHOW COLUMNS FROM release_notes; SHOW COLUMNS FROM release_note_acknowledgements; SELECT id, title, body, status, audience, published_at, created_at FROM release_notes ORDER BY created_at DESC LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2P9ir9M7b3E7Qkh.8b2c854ea8b3 --database HPubf4auNvt8KXvgrLad5c --execute SHOW COLUMNS FROM release_notes; SHOW COLUMNS FROM release_note_acknowledgements; SELECT id, title, body, status, audience, published_at, created_at FROM release_notes ORDER BY created_at DESC LIMIT 10;",
+  "returncode": 1,
+  "logs": [
+    "Field\tType\tNull\tKey\tDefault\tExtra",
+    "id\tint\tNO\tPRI\tNULL\tauto_increment",
+    "title\tvarchar(180)\tNO\t\tNULL\t",
+    "summary\ttext\tNO\t\tNULL\t",
+    "body\ttext\tNO\t\tNULL\t",
+    "versionLabel\tvarchar(80)\tNO\t\tNULL\t",
+    "category\tenum('edit','community_care','rules','rewards','technical')\tNO\t\tedit\t",
+    "active\ttinyint(1)\tNO\t\t1\t",
+    "publishedAt\ttimestamp\tNO\t\tCURRENT_TIMESTAMP\t",
+    "createdByUserId\tint\tYES\t\tNULL\t",
+    "createdAt\ttimestamp\tNO\t\tCURRENT_TIMESTAMP\t",
+    "updatedAt\ttimestamp\tNO\t\tCURRENT_TIMESTAMP\tDEFAULT_GENERATED on update CURRENT_TIMESTAMP",
+    "Field\tType\tNull\tKey\tDefault\tExtra",
+    "id\tint\tNO\tPRI\tNULL\tauto_increment",
+    "releaseNoteId\tint\tNO\tMUL\tNULL\t",
+    "userId\tint\tNO\t\tNULL\t",
+    "acknowledgedAt\ttimestamp\tNO\t\tCURRENT_TIMESTAMP",
+    "ERROR 1054 (42S22) at line 1: Unknown column 'status' in 'field list'"
+  ]
+}

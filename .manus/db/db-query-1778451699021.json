@@ -1,0 +1,36 @@
+{
+  "query": "SELECT rn.id, rn.title, rn.summary, rn.body, rn.versionLabel, rn.category, rn.active, rn.publishedAt, rn.createdAt, rn.updatedAt, COUNT(rna.id) AS acknowledgement_count FROM release_notes rn LEFT JOIN release_note_acknowledgements rna ON rna.releaseNoteId = rn.id WHERE rn.id = 30001 OR rn.versionLabel = 'Proof edits 2026-05-10' GROUP BY rn.id, rn.title, rn.summary, rn.body, rn.versionLabel, rn.category, rn.active, rn.publishedAt, rn.createdAt, rn.updatedAt ORDER BY rn.createdAt ASC;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2P9ir9M7b3E7Qkh.8b2c854ea8b3 --database HPubf4auNvt8KXvgrLad5c --execute SELECT rn.id, rn.title, rn.summary, rn.body, rn.versionLabel, rn.category, rn.active, rn.publishedAt, rn.createdAt, rn.updatedAt, COUNT(rna.id) AS acknowledgement_count FROM release_notes rn LEFT JOIN release_note_acknowledgements rna ON rna.releaseNoteId = rn.id WHERE rn.id = 30001 OR rn.versionLabel = 'Proof edits 2026-05-10' GROUP BY rn.id, rn.title, rn.summary, rn.body, rn.versionLabel, rn.category, rn.active, rn.publishedAt, rn.createdAt, rn.updatedAt ORDER BY rn.createdAt ASC;",
+  "rows": [
+    {
+      "id": "30001",
+      "title": "Community Care: app polish",
+      "summary": "A short acknowledgement for the latest navigation and leaderboard polish.",
+      "body": "Small app polish is live: you can now swipe between sections, boost tokens are tucked away until tapped, and the mobile top three is easier to read. Tap below so everyone knows this update was seen.",
+      "versionLabel": "Care polish 2026-05-10",
+      "category": "community_care",
+      "active": "1",
+      "publishedAt": "2026-05-10 22:18:37",
+      "createdAt": "2026-05-10 22:18:37",
+      "updatedAt": "2026-05-10 22:21:27",
+      "acknowledgement_count": "1"
+    },
+    {
+      "id": "30002",
+      "title": "Community Care: Proof page edits",
+      "summary": "A separate acknowledgement for the Proof page changes.",
+      "body": "Proof has been cleaned up: media is easier to browse, reactions and comments are live, and Deep Thought now shows the right interpretation. Tap below to confirm you have seen the Proof update.",
+      "versionLabel": "Proof edits 2026-05-10",
+      "category": "community_care",
+      "active": "1",
+      "publishedAt": "2026-05-10 22:21:27",
+      "createdAt": "2026-05-10 22:21:27",
+      "updatedAt": "2026-05-10 22:21:27",
+      "acknowledgement_count": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitle\tsummary\tbody\tversionLabel\tcategory\tactive\tpublishedAt\tcreatedAt\tupdatedAt\tacknowledgement_count\n30001\tCommunity Care: app polish\tA short acknowledgement for the latest navigation and leaderboard polish.\tSmall app polish is live: you can now swipe between sections, boost tokens are tucked away until tapped, and the mobile top three is easier to read. Tap below so everyone knows this update was seen.\tCare polish 2026-05-10\tcommunity_care\t1\t2026-05-10 22:18:37\t2026-05-10 22:18:37\t2026-05-10 22:21:27\t1\n30002\tCommunity Care: Proof page edits\tA separate acknowledgement for the Proof page changes.\tProof has been cleaned up: media is easier to browse, reactions and comments are live, and Deep Thought now shows the right interpretation. Tap below to confirm you have seen the Proof update.\tProof edits 2026-05-10\tcommunity_care\t1\t2026-05-10 22:21:27\t2026-05-10 22:21:27\t2026-05-10 22:21:27\t0\n",
+  "stderr": "",
+  "execution_time_ms": 258
+}
