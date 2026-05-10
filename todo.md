@@ -1129,20 +1129,20 @@ User priority: the Warden should read the room, find tensions between words and 
 
 ## Approved Integrated Bonus-System Implementation
 
-- [ ] Clean duplicate bonus win rows while preserving one legitimate win per participant/day/boost.
-- [ ] Add database-level duplicate prevention for boost wins by challenge, participant, day, and boost ID.
-- [ ] Make boost-award creation idempotent under repeated or simultaneous snapshot calculations.
-- [ ] Implement canonical scoring so approved boost points count consistently for leaderboard rank, point gaps, and rewards.
-- [ ] Replace the rotating three-bonus model with automatic boosts: Clean Sweep, Morning Proof, Bounce Back, Deep Work, Pressure Player, Streak Lock, and Mover.
-- [ ] Apply a +10 named-boost daily cap per participant, excluding checkpoint bonuses.
-- [ ] Remove weak or confusing point bonuses including Night Owl, Dead Heat, and Ghost Hunter from scoring.
-- [ ] Update Overview bonus leader, available boosts, recent wins, and explanation copy for the new integrated model.
-- [ ] Update Board podium, full leaderboard rows, boost labels, and rival point gaps to use the same score definition.
-- [ ] Align My Day live point previews with backend scoring rules.
-- [ ] Update Rewards eligibility and copy to use canonical scoring.
-- [ ] Update Warden context and message copy for the new boost vocabulary and deduplicated totals.
-- [ ] Add regression tests for duplicate prevention, boost caps, canonical totals, Overview display, and scoring consistency.
-- [ ] Run validation, review TODO completion, save a checkpoint, and report the completed work.
+- [x] Clean duplicate bonus win rows while preserving one legitimate win per participant/day/boost. Live duplicate check returned zero duplicate boost-win groups.
+- [x] Add database-level duplicate prevention for boost wins by challenge, participant, day, and boost ID.
+- [x] Make boost-award creation idempotent under repeated or simultaneous snapshot calculations.
+- [x] Implement canonical scoring so approved boost points count consistently for leaderboard rank, point gaps, and rewards.
+- [x] Replace the rotating three-bonus model with automatic boosts: Clean Sweep, Morning Proof, Bounce Back, Deep Work, Pressure Player, Streak Lock, and Mover.
+- [x] Apply a +10 named-boost daily cap per participant, excluding checkpoint bonuses.
+- [x] Remove weak or confusing point bonuses including Night Owl, Dead Heat, and Ghost Hunter from scoring.
+- [x] Update Overview bonus leader, available boosts, recent wins, and explanation copy for the new integrated model.
+- [x] Update Board podium, full leaderboard rows, boost labels, and rival point gaps to use the same score definition.
+- [x] Align My Day live point previews with backend scoring rules.
+- [x] Update Rewards eligibility and copy to use canonical scoring.
+- [x] Update Warden context and message copy for the new boost vocabulary and deduplicated totals.
+- [x] Add regression tests for duplicate prevention, boost caps, canonical totals, Overview display, and scoring consistency.
+- [x] Run validation, review TODO completion, save a checkpoint, and report the completed work. Final full Vitest suite passed (143 tests), TypeScript check passed, production build passed, and a delivery checkpoint was saved.
 
 ## Urgent Notification Event Bugs
 

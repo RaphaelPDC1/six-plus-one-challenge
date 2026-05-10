@@ -1,0 +1,9 @@
+{
+  "query": "SELECT challenge_id, user_id, day, boost_id, COUNT(*) AS duplicate_count FROM boost_wins GROUP BY challenge_id, user_id, day, boost_id HAVING COUNT(*) > 1;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2P9ir9M7b3E7Qkh.8b2c854ea8b3 --database HPubf4auNvt8KXvgrLad5c --execute SELECT challenge_id, user_id, day, boost_id, COUNT(*) AS duplicate_count FROM boost_wins GROUP BY challenge_id, user_id, day, boost_id HAVING COUNT(*) > 1;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 263
+}
