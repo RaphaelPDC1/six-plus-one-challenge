@@ -1,0 +1,20 @@
+{
+  "query": "SELECT participantId, dayNumber, COUNT(*) AS rowCount, SUM(CASE WHEN dayComplete = 1 THEN 1 ELSE 0 END) AS completeRows, SUM(pointsAwarded) AS totalPointsInRows, MIN(id) AS minId, MAX(id) AS maxId, MAX(updatedAt) AS latestUpdatedAt FROM daily_logs GROUP BY participantId, dayNumber HAVING COUNT(*) > 1 ORDER BY latestUpdatedAt DESC LIMIT 50;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2P9ir9M7b3E7Qkh.8b2c854ea8b3 --database HPubf4auNvt8KXvgrLad5c --execute SELECT participantId, dayNumber, COUNT(*) AS rowCount, SUM(CASE WHEN dayComplete = 1 THEN 1 ELSE 0 END) AS completeRows, SUM(pointsAwarded) AS totalPointsInRows, MIN(id) AS minId, MAX(id) AS maxId, MAX(updatedAt) AS latestUpdatedAt FROM daily_logs GROUP BY participantId, dayNumber HAVING COUNT(*) > 1 ORDER BY latestUpdatedAt DESC LIMIT 50;",
+  "rows": [
+    {
+      "participantId": "120001",
+      "dayNumber": "5",
+      "rowCount": "2",
+      "completeRows": "0",
+      "totalPointsInRows": "0",
+      "minId": "840004",
+      "maxId": "840005",
+      "latestUpdatedAt": "2026-05-10 23:00:02"
+    }
+  ],
+  "messages": [],
+  "stdout": "participantId\tdayNumber\trowCount\tcompleteRows\ttotalPointsInRows\tminId\tmaxId\tlatestUpdatedAt\n120001\t5\t2\t0\t0\t840004\t840005\t2026-05-10 23:00:02\n",
+  "stderr": "",
+  "execution_time_ms": 265
+}

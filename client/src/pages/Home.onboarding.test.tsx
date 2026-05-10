@@ -215,9 +215,13 @@ describe("Home onboarding shell", () => {
     expect(getMillisecondsUntilNextLondonDay(new Date("2026-12-06T23:59:30.000Z"))).toBe(30_000);
   });
 
-  it("patches a submitted same-day proof log into the shared snapshot cache", () => {
+  it("patches a submitted same-day proof log and leaderboard points into the shared snapshot cache", () => {
     const staleSnapshot = {
-      participant: { id: 42, displayName: "Taylor" },
+      participant: { id: 42, displayName: "Taylor", totalPoints: 20, daysComplete: 2 },
+      participants: [
+        { id: 42, displayName: "Taylor", totalPoints: 25, baseTotalPoints: 20, boostPoints: 5, canonicalTotalPoints: 25, daysComplete: 2 },
+        { id: 18, displayName: "Riley", totalPoints: 31, baseTotalPoints: 31, boostPoints: 0, canonicalTotalPoints: 31, daysComplete: 3 },
+      ],
       myLog: { id: 7, participantId: 42, dayNumber: 9, exerciseProofUrl: "" },
       logs: [
         { id: 7, participantId: 42, dayNumber: 9, exerciseProofUrl: "", exerciseDuration: 30 },
@@ -225,10 +229,18 @@ describe("Home onboarding shell", () => {
       ],
     };
     const updatedLog = { id: 7, participantId: 42, dayNumber: 9, exerciseProofUrl: "/manus-storage/new-proof.webp", exerciseDuration: 45 };
+    const updatedParticipant = { id: 42, displayName: "Taylor", totalPoints: 30, daysComplete: 3 };
 
-    const patched = patchDailyLogIntoSnapshot(staleSnapshot, updatedLog) as typeof staleSnapshot;
+    const patched = patchDailyLogIntoSnapshot(staleSnapshot, updatedLog, updatedParticipant) as typeof staleSnapshot;
 
     expect(patched.myLog?.exerciseProofUrl).toBe("/manus-storage/new-proof.webp");
+    expect(patched.participant?.totalPoints).toBe(30);
+    expect(patched.participant?.daysComplete).toBe(3);
+    expect(patched.participants[0].baseTotalPoints).toBe(30);
+    expect(patched.participants[0].boostPoints).toBe(5);
+    expect(patched.participants[0].canonicalTotalPoints).toBe(35);
+    expect(patched.participants[0].totalPoints).toBe(35);
+    expect(patched.participants[1].totalPoints).toBe(31);
     expect(patched.logs).toHaveLength(2);
     expect(patched.logs[0].exerciseProofUrl).toBe("/manus-storage/new-proof.webp");
     expect(patched.logs[0].exerciseDuration).toBe(45);

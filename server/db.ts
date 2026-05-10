@@ -466,7 +466,10 @@ export async function updateParticipantProfile(userId: number, input: { displayN
 export async function getTodayLog(participantId: number, dayNumber = getCurrentChallengeDay()) {
   const db = await getDb();
   if (!db) throw new Error("Database unavailable");
-  const rows = await db.select().from(dailyLogs).where(and(eq(dailyLogs.participantId, participantId), eq(dailyLogs.dayNumber, dayNumber))).limit(1);
+  const rows = await db.select().from(dailyLogs)
+    .where(and(eq(dailyLogs.participantId, participantId), eq(dailyLogs.dayNumber, dayNumber)))
+    .orderBy(desc(dailyLogs.dayComplete), desc(dailyLogs.updatedAt), desc(dailyLogs.id))
+    .limit(1);
   return rows[0];
 }
 
@@ -705,7 +708,9 @@ export async function submitDailyLog(participantId: number, input: SubmitDailyLo
     trackedEverything: protectedInput.trackedEverything,
   });
 
-  return { complete: awardState.dayComplete, pointsAwarded: awardState.pointsAwarded, missedRules, deadlinePassed, draftSaved: awardState.draftSaved, log: await getTodayLog(participantId, protectedInput.dayNumber) };
+  const updatedParticipant = (await db.select().from(participants).where(eq(participants.id, participantId)).limit(1))[0] ?? currentParticipant;
+
+  return { complete: awardState.dayComplete, pointsAwarded: awardState.pointsAwarded, missedRules, deadlinePassed, draftSaved: awardState.draftSaved, log: await getTodayLog(participantId, protectedInput.dayNumber), participant: updatedParticipant };
 }
 
 export async function recordNayBackdatedTechnicalProof(participantId: number, input: { dayNumber?: number; proofMedia: string; note?: string }) {
@@ -935,9 +940,12 @@ export function applyCanonicalParticipantScores<T extends Participant>(participa
   });
 }
 
-function isDuplicateBoostInsertError(error: unknown) {
-  const candidate = error as { code?: string; errno?: number; message?: string };
-  return candidate?.code === "ER_DUP_ENTRY" || candidate?.errno === 1062 || String(candidate?.message ?? "").toLowerCase().includes("duplicate");
+function isDuplicateBoostInsertError(error: unknown): boolean {
+  const candidate = error as { code?: string; errno?: number; message?: string; cause?: unknown };
+  return candidate?.code === "ER_DUP_ENTRY"
+    || candidate?.errno === 1062
+    || String(candidate?.message ?? "").toLowerCase().includes("duplicate")
+    || (candidate?.cause ? isDuplicateBoostInsertError(candidate.cause) : false);
 }
 
 export async function awardBoostWin(input: InsertBoostWin) {

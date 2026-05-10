@@ -385,7 +385,7 @@ export function mergeTodayFormWithoutWipingSavedWork(saved: MyDayForm, draft: My
   };
 }
 
-export function patchDailyLogIntoSnapshot(snapshot: Snapshot | undefined, updatedLog: any): Snapshot | undefined {
+export function patchDailyLogIntoSnapshot(snapshot: Snapshot | undefined, updatedLog: any, updatedParticipant?: any): Snapshot | undefined {
   if (!snapshot || !updatedLog) return snapshot;
   const logs = Array.isArray(snapshot.logs) ? snapshot.logs : [];
   const matchesUpdatedLog = (log: any) => {
@@ -396,9 +396,30 @@ export function patchDailyLogIntoSnapshot(snapshot: Snapshot | undefined, update
   const hasExistingLog = logs.some(matchesUpdatedLog);
   const nextLogs = hasExistingLog ? logs.map((log: any) => matchesUpdatedLog(log) ? { ...log, ...updatedLog } : log) : [updatedLog, ...logs];
   const shouldPatchMyLog = Boolean(snapshot.myLog && matchesUpdatedLog(snapshot.myLog)) || String(snapshot?.participant?.id ?? "") === String(updatedLog.participantId ?? "");
+  const updatedParticipantId = updatedParticipant?.id ?? updatedLog.participantId;
+  const shouldPatchParticipant = updatedParticipant && String(snapshot?.participant?.id ?? "") === String(updatedParticipantId ?? "");
+  const nextParticipant = shouldPatchParticipant ? { ...(snapshot.participant ?? {}), ...updatedParticipant } : snapshot.participant;
+  const nextParticipants = updatedParticipant && Array.isArray(snapshot.participants)
+    ? snapshot.participants.map((participantRow: any) => {
+      if (String(participantRow?.id ?? "") !== String(updatedParticipantId ?? "")) return participantRow;
+      const baseTotalPoints = Number(updatedParticipant.totalPoints ?? participantRow.baseTotalPoints ?? participantRow.totalPoints ?? 0);
+      const boostPoints = Number(participantRow.boostPoints ?? 0);
+      const canonicalTotalPoints = baseTotalPoints + boostPoints;
+      return {
+        ...participantRow,
+        ...updatedParticipant,
+        baseTotalPoints,
+        boostPoints,
+        canonicalTotalPoints,
+        totalPoints: canonicalTotalPoints,
+      };
+    })
+    : snapshot.participants;
 
   return {
     ...snapshot,
+    participant: nextParticipant,
+    participants: nextParticipants,
     myLog: shouldPatchMyLog ? { ...(snapshot.myLog ?? {}), ...updatedLog } : snapshot.myLog,
     logs: nextLogs,
   };
@@ -1345,7 +1366,7 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
         window.localStorage.removeItem(draftStorageKey);
       }
       window.setTimeout(() => setSaveNotice(null), 2200);
-      utils.challenge.snapshot.setData(undefined, previous => patchDailyLogIntoSnapshot(previous, data.log));
+      utils.challenge.snapshot.setData(undefined, previous => patchDailyLogIntoSnapshot(previous, data.log, data.participant));
       void utils.challenge.snapshot.invalidate();
       refetch();
     },
