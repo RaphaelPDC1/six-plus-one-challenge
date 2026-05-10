@@ -1219,3 +1219,12 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Fix the oversized or broken Community Care catch-up note so participants are not shown a confusing acknowledgement popup.
 - [x] Communicate Proof page edits separately from the general catch-up note so proof-specific changes are not missed.
 - [x] Verify the corrected Community Care notes are concise, active only where intended, and still require acknowledgement.
+
+- [x] Clarify which Proof-related component references were only explored, which Proof page edits are already live, and what would require explicit approval before build.
+
+- [x] Build Proof page v2 using the dropped component direction as a stronger visual redesign while preserving proof media, reactions, comments, and Deep Thought.
+- [x] Keep the Proof page stable on mobile with a readable grid or feed layout, avoiding broken carousel-only behaviour.
+- [x] Add or update tests that verify Proof page v2 still exposes media, Deep Thought, reactions, and comments.
+- [x] Verify Proof page v2 project health and save a checkpoint after implementation.
+
+- [x] Keep the normal Proof feed below the new Proof v2 top component section instead of replacing the existing feed.

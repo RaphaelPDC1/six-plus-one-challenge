@@ -15,9 +15,13 @@ describe("Board boost and Proof page UI regressions", () => {
     expect(homeSource).toContain('aria-expanded={isBoostExpanded}');
   });
 
-  it("keeps the Proof tab content centred in a full-width shell", () => {
+  it("keeps the Proof tab content centred with the v2 layer above the normal feed", () => {
     expect(homeSource).toContain('data-testid="proof-page-centered-shell"');
     expect(homeSource).toContain('className="flex w-full justify-center"');
-    expect(homeSource).toContain('className="mx-auto flex w-full max-w-[38rem] flex-col');
+    expect(homeSource).toContain('data-testid="proof-page-v2-with-normal-feed"');
+    expect(homeSource).toContain('className="mx-auto flex w-full max-w-[56rem] flex-col gap-4"');
+    expect(homeSource).toContain('data-testid="proof-v2-top-layer"');
+    expect(homeSource).toContain('data-testid="normal-proof-feed-below-v2"');
+    expect(homeSource.indexOf('data-testid="proof-v2-top-layer"')).toBeLessThan(homeSource.indexOf('data-testid="normal-proof-feed-below-v2"'));
   });
 });

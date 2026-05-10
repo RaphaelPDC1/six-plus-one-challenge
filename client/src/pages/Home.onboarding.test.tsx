@@ -551,6 +551,26 @@ describe("Home onboarding shell", () => {
     expect(hapticsSource).toContain('window.dispatchEvent(new CustomEvent("sixplusone:haptic"');
   });
 
+  it("keeps the Proof v2 feature layer above the preserved normal feed", () => {
+    const homeSource = readFileSync(new URL("./Home.tsx", import.meta.url), "utf8");
+
+    expect(homeSource).toContain("function ProofV2TopLayer");
+    expect(homeSource).toContain('data-testid="proof-page-v2-with-normal-feed"');
+    expect(homeSource).toContain('data-testid="proof-v2-top-layer"');
+    expect(homeSource).toContain('data-testid="proof-v2-command-deck"');
+    expect(homeSource).toContain('data-testid="proof-v2-featured-receipt"');
+    expect(homeSource).toContain('data-testid="proof-v2-latest-grid"');
+    expect(homeSource).toContain('data-testid="proof-v2-pressure-card"');
+    expect(homeSource).toContain('data-testid="normal-proof-feed-below-v2"');
+    expect(homeSource).toContain("Proof wall above. Feed below.");
+    expect(homeSource).toContain("Full proof cards, comments, reactions, and Deep Thought stay here below the v2 layer.");
+    expect(homeSource.indexOf('data-testid="proof-v2-top-layer"')).toBeLessThan(homeSource.indexOf('data-testid="normal-proof-feed-below-v2"'));
+    expect(homeSource.indexOf('data-testid="normal-proof-feed-below-v2"')).toBeLessThan(homeSource.indexOf('data-testid="proof-readable-card"'));
+    expect(homeSource).toContain('data-testid="proof-deep-thought"');
+    expect(homeSource).toContain('data-testid={`proof-reaction-${reaction.key}`}');
+    expect(homeSource).toContain('data-testid="proof-comment-input"');
+  });
+
   it("keeps proof uploads on origin-stable storage URLs for deployed mobile browsers", () => {
     const homeSource = readFileSync(new URL("./Home.tsx", import.meta.url), "utf8");
     const routerSource = readFileSync(new URL("../../../server/routers.ts", import.meta.url), "utf8");
