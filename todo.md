@@ -1167,3 +1167,11 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Record owner approval to implement boost/scoring cleanup, participant past-day history, PWA pull-to-refresh, and community-care patch-note pop-ups.
 - [x] Verify the live database schema and current code surfaces before changing scoring or release-note behaviour.
 - [x] Implement owner-approved coordinated package with tests and validation. Focused boost/scoring tests passed, participant-history/release-note router coverage was added, full Vitest suite passed (143 tests), TypeScript check passed, and production build passed.
+
+## Bug Report — Proof Page and Personal Profile Crashes
+
+- [x] Reproduce and diagnose the Proof page crash using browser/client logs, server logs, and focused tests. Browser logs showed a React DOM removeChild crash during page/component deletion, matching the Proof media carousel lifecycle risk.
+- [x] Reproduce and diagnose personal profile page/modal crashes from participant card/profile navigation flows. Participant profile rendering used a participant-history hook after a conditional return; the hook is now called consistently with stable query input.
+- [x] Fix the underlying crash causes without weakening Proof media, Deep Thought, participant history, or profile detail behavior. Proof media now uses a native snap-scroll rail instead of the Embla carousel, Deep Thought input is memoized, and participant history remains enabled only when a participant exists.
+- [x] Add regression coverage for Proof page rendering and personal profile rendering so the crashes do not return. Full Vitest suite passed (144 tests), TypeScript check passed, production build passed, and project health check reports no LSP or TypeScript errors.
+- [x] Run focused tests, full validation/typecheck/build, project health check, save a checkpoint, and report the repair. Full Vitest suite passed (144 tests), TypeScript check passed, production build passed, and project health was checked before the repair checkpoint.

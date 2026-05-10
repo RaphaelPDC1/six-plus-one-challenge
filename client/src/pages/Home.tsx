@@ -1942,11 +1942,13 @@ function ParticipantSheet({ participant, onClose }: { participant: any; onClose:
     return () => window.clearTimeout(timer);
   }, [participant, visibleParticipant]);
 
-  if (!visibleParticipant) return null;
+  const participantHistoryInput = useMemo(() => ({ participantId: Number(visibleParticipant?.id ?? 0) }), [visibleParticipant?.id]);
   const historyQuery = trpc.challenge.participantHistory.useQuery(
-    { participantId: Number(visibleParticipant.id) },
+    participantHistoryInput,
     { enabled: Boolean(visibleParticipant?.id) }
   );
+
+  if (!visibleParticipant) return null;
   const sheetLogs = [...(historyQuery.data?.logs ?? visibleParticipant.ownedLogs ?? [])].sort((a: any, b: any) => Number(b.dayNumber ?? 0) - Number(a.dayNumber ?? 0));
   const latestLog = sheetLogs[0];
   const selectedHistoryLog = sheetLogs.find((log: any) => Number(log.dayNumber) === Number(selectedHistoryDay)) ?? latestLog;
@@ -2094,19 +2096,19 @@ function ProofCarousel({ items, dayNumber, ownerName }: { items: ProofMediaItem[
         <p className="text-[9px] font-black uppercase tracking-[0.16em] text-[#E0B85A]">{items.length} proof item{items.length === 1 ? "" : "s"} · Day {dayNumber}</p>
         {hasMultiple && <p className="rounded-full border border-[#C8A96E]/40 bg-black/70 px-2 py-1 text-[8px] font-black uppercase tracking-[0.14em] text-[#F4D58D]" data-testid="proof-swipe-prompt">Swipe to view all</p>}
       </div>
-      <Carousel opts={{ align: "start", loop: false }} className="relative" aria-label={`Day ${dayNumber} proof media carousel`}>
-        <CarouselContent className="-ml-2">
+      <div className="overflow-x-auto overscroll-x-contain pb-2" aria-label={`Day ${dayNumber} proof media rail`} data-testid="proof-native-scroll-rail">
+        <div className="flex snap-x snap-mandatory gap-2">
           {items.map((item, index) => {
             const imageSrc = proofImageSrc(item.url);
             const src = proofMediaSrc(item);
             const mediaType = proofMediaType(item);
             const isMedia = mediaType === "video" || Boolean(imageSrc);
             return (
-              <CarouselItem key={`${item.url}-${index}`} className="basis-[88%] pl-2 sm:basis-[72%] md:basis-[54%]">
+              <div key={`${item.url}-${index}`} className="min-w-[88%] snap-start sm:min-w-[72%] md:min-w-[54%]">
                 <div className={classNames("relative overflow-hidden border border-[#C8A96E]/45 bg-[#11100C] shadow-[0_0_22px_rgba(200,169,110,0.12)]", isMedia ? "aspect-[4/3] min-h-[12rem]" : "min-h-[5.5rem]")} data-testid="proof-content-visible">
                   <div className="pointer-events-none absolute inset-0 z-10 bg-[radial-gradient(circle_at_center,transparent_0,rgba(0,0,0,0.02)_42%,rgba(0,0,0,0.34)_100%)]" aria-hidden="true" />
                   {mediaType === "video" ? (
-                    <video src={src} className="h-full w-full bg-black object-cover" muted autoPlay loop playsInline controls preload="auto" data-testid="proof-feed-video-autoplay" aria-label={`Day ${dayNumber} proof video ${index + 1} of ${items.length}`}><source src={src} type={proofVideoMimeType(item.url, item.mimeType)} />Your browser cannot play this proof video.</video>
+                    <video className="h-full w-full bg-black object-cover" muted autoPlay loop playsInline controls preload="metadata" data-testid="proof-feed-video-autoplay" aria-label={`Day ${dayNumber} proof video ${index + 1} of ${items.length}`}><source src={src} type={proofVideoMimeType(item.url, item.mimeType)} />Your browser cannot play this proof video.</video>
                   ) : imageSrc ? (
                     <img src={src} alt={`Day ${dayNumber} proof ${index + 1} of ${items.length}`} className="h-full w-full bg-black object-cover" loading="lazy" decoding="async" />
                   ) : (
@@ -2117,20 +2119,16 @@ function ProofCarousel({ items, dayNumber, ownerName }: { items: ProofMediaItem[
                   <div className="pointer-events-none absolute left-3 top-3 z-20 rounded-full border border-white/20 bg-black/70 px-2 py-1 text-[8px] font-black uppercase tracking-[0.12em] text-white/90">{index + 1}/{items.length}</div>
                   {isMedia && <p className="pointer-events-none absolute inset-x-4 top-1/2 z-20 -translate-y-1/2 text-center text-[9px] font-black uppercase tracking-[0.12em] text-white/80">{label} · {mediaType === "video" ? "training" : "proof"}</p>}
                 </div>
-              </CarouselItem>
+              </div>
             );
           })}
-        </CarouselContent>
-        {hasMultiple && (
-          <>
-            <CarouselPrevious className="left-2 border-[#C8A96E]/50 bg-black/75 text-[#F4D58D] hover:bg-[#1A1408] hover:text-white" />
-            <CarouselNext className="right-2 border-[#C8A96E]/50 bg-black/75 text-[#F4D58D] hover:bg-[#1A1408] hover:text-white" />
-            <div className="mt-2 flex justify-center gap-1.5" aria-hidden="true">
-              {items.map((item, index) => <span key={`${item.url}-dot-${index}`} className="h-1.5 w-1.5 rounded-full bg-[#C8A96E]/55" />)}
-            </div>
-          </>
-        )}
-      </Carousel>
+        </div>
+      </div>
+      {hasMultiple && (
+        <div className="mt-1 flex justify-center gap-1.5" aria-hidden="true">
+          {items.map((item, index) => <span key={`${item.url}-dot-${index}`} className="h-1.5 w-1.5 rounded-full bg-[#C8A96E]/55" />)}
+        </div>
+      )}
     </div>
   );
 }
@@ -2542,7 +2540,8 @@ function ProofFeed({ snapshot }: { snapshot: Snapshot }) {
   const [commentDrafts, setCommentDrafts] = useState<Record<number, string>>({});
   const publicLogs = useMemo(() => (snapshot?.logs ?? []).filter((log: any) => parseProofMedia(log.exerciseProofUrl).length > 0 || String(log.readTeachText ?? "").trim().length > 0), [snapshot?.logs]);
   const deepThoughtLogIds = useMemo(() => publicLogs.slice(0, 12).map((log: any) => Number(log.id)).filter(Number.isFinite), [publicLogs]);
-  const deepThoughtQuery = trpc.challenge.deepThoughts.useQuery({ logIds: deepThoughtLogIds }, { enabled: deepThoughtLogIds.length > 0, staleTime: 12 * 60 * 60 * 1000, refetchOnWindowFocus: false });
+  const deepThoughtInput = useMemo(() => ({ logIds: deepThoughtLogIds }), [deepThoughtLogIds]);
+  const deepThoughtQuery = trpc.challenge.deepThoughts.useQuery(deepThoughtInput, { enabled: deepThoughtLogIds.length > 0, staleTime: 12 * 60 * 60 * 1000, refetchOnWindowFocus: false });
   const latestDay = Math.max(1, ...((snapshot?.logs ?? []).map((log: any) => Number(log.dayNumber ?? 1))));
   const waiting = (snapshot?.participants ?? []).filter((participant: any) => !publicLogs.some((log: any) => log.participantId === participant.id && Number(log.dayNumber ?? 0) === latestDay)).slice(0, 3);
   const reactToProof = trpc.challenge.reactToProof.useMutation({

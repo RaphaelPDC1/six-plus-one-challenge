@@ -346,18 +346,18 @@ describe("Home onboarding shell", () => {
     expect(homeSource).toContain("trpc.challenge.uploadProof.useMutation");
     expect(homeSource).toContain("accept=\"image/png,image/jpeg,image/webp,video/mp4,video/webm,video/quicktime\"");
     expect(homeSource).toContain("function ProofCarousel");
-    expect(homeSource).toContain("CarouselContent");
-    expect(homeSource).toContain("CarouselItem");
+    expect(homeSource).toContain("data-testid=\"proof-native-scroll-rail\"");
+    expect(homeSource).toContain("snap-x snap-mandatory");
     expect(homeSource).toContain("data-testid=\"proof-swipe-prompt\"");
     expect(homeSource).toContain("Swipe to view all");
     expect(homeSource).toContain("{index + 1}/{items.length}");
-    expect(homeSource).toContain("basis-[88%] pl-2");
-    expect(homeSource).toContain("CarouselPrevious");
-    expect(homeSource).toContain("CarouselNext");
+    expect(homeSource).toContain("min-w-[88%] snap-start");
+    expect(homeSource).not.toContain("<Carousel opts=");
+    expect(homeSource).not.toContain("<CarouselContent");
     expect(homeSource).toContain("data-testid=\"proof-upload-video-preview\"");
     expect(homeSource).toContain("data-testid=\"proof-feed-video-autoplay\"");
     expect(homeSource).toContain("muted autoPlay loop playsInline controls");
-    expect(homeSource).toContain("<video src={src} className=\"h-full w-full bg-black object-cover\"");
+    expect(homeSource).toContain("<video className=\"h-full w-full bg-black object-cover\"");
     expect(homeSource).toContain("<source src={src} type={proofVideoMimeType(item.url, item.mimeType)} />");
     expect(homeSource).toContain("function proofVideoMimeType");
     expect(homeSource).toContain("declaredType === \"video\" || isProofVideoUrl(url, mimeType)");
@@ -377,6 +377,18 @@ describe("Home onboarding shell", () => {
     expect(homeSource).toContain("break-words");
     expect(homeSource).toContain("owner?.displayName ?? \"Participant\"");
     expect(homeSource).not.toContain("No public proof yet");
+  });
+
+  it("uses stable Proof and participant-profile query inputs to avoid crash-prone remount loops", () => {
+    const homeSource = readFileSync(new URL("./Home.tsx", import.meta.url), "utf8");
+
+    expect(homeSource).toContain("const participantHistoryInput = useMemo(() => ({ participantId: Number(visibleParticipant?.id ?? 0) }), [visibleParticipant?.id]);");
+    expect(homeSource).toContain("trpc.challenge.participantHistory.useQuery(\n    participantHistoryInput,");
+    expect(homeSource.indexOf("trpc.challenge.participantHistory.useQuery(\n    participantHistoryInput,")).toBeLessThan(homeSource.indexOf("if (!visibleParticipant) return null;"));
+    expect(homeSource).toContain("const deepThoughtInput = useMemo(() => ({ logIds: deepThoughtLogIds }), [deepThoughtLogIds]);");
+    expect(homeSource).toContain("trpc.challenge.deepThoughts.useQuery(deepThoughtInput");
+    expect(homeSource).toContain("data-testid=\"proof-native-scroll-rail\"");
+    expect(homeSource).not.toContain("<Carousel opts=");
   });
 
   it("uses the backend Deep Thought query and does not show visible meta-source copy", () => {
