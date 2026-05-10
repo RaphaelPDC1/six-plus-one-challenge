@@ -1197,6 +1197,6 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Store participant push subscriptions securely with browser/device metadata and inactive-subscription handling.
 - [x] Add participant notification preferences for reminder categories, quiet hours, and timezone-aware delivery.
 - [x] Add an in-app notification fallback so important alerts remain visible if device push is unavailable or denied.
-- [ ] Implement deterministic reminder rules for morning intent, proof due, evening deadline, streak protection, life-risk, reward eligibility, and Warden-style nudges.
-- [x] Add tests for subscription storage, preference updates, reminder eligibility, fallback creation, and notification UI states. Current validation also confirms the existing 144-test suite passes after the notification panel and service-worker registration changes.
-- [x] Run database migration, focused tests, full Vitest suite, TypeScript validation, production build, health check, checkpoint, and delivery report. Validation completed with pnpm check, pnpm test (144 passing), pnpm build, and project health check.
+- [x] Implement deterministic reminder rules for morning intent, proof due, evening deadline, streak protection, life-risk, reward eligibility, and Warden-style nudges. Added deterministic rule planning and dispatch helpers with quiet-hour suppression, category preferences, de-duplication inputs, and focused Vitest coverage.
+- [x] Add tests for subscription storage, preference updates, reminder eligibility, fallback creation, and notification UI states. Current validation confirms the 149-test suite passes after adding deterministic reminder-rule coverage.
+- [x] Run database migration, focused tests, full Vitest suite, TypeScript validation, production build, health check, checkpoint, and delivery report. Validation completed with pnpm check, focused reminder tests, pnpm test (149 passing), pnpm build, and project health check.
