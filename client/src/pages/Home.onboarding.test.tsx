@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import Home, { LogoMark, buildProofWardenInsight, dailyLogToForm, getLeaderboardVisiblePoints, getMillisecondsUntilNextLondonDay, isIntentionalPageSwipe, isPageSwipeExcludedTarget, mergeTodayFormWithoutWipingSavedWork, patchDailyLogIntoSnapshot } from "./Home";
+import Home, { LogoMark, buildProofWardenInsight, dailyLogToForm, getLeaderboardVisiblePoints, getMillisecondsUntilNextLondonDay, isIntentionalPageSwipe, isPageSwipeExcludedTarget, mergeTodayFormWithoutWipingSavedWork, patchDailyLogIntoSnapshot, sortProofLogsNewestFirst } from "./Home";
 import { buildParticipantInsights } from "@/lib/challengeInsights";
 
 const mockState = vi.hoisted(() => ({
@@ -417,6 +417,18 @@ describe("Home onboarding shell", () => {
     expect(homeSource).toContain("trpc.challenge.deepThoughts.useQuery(deepThoughtInput");
     expect(homeSource).toContain("data-testid=\"proof-native-scroll-rail\"");
     expect(homeSource).not.toContain("<Carousel opts=");
+  });
+
+  it("sorts Proof posts newest-first before rendering the v2 layer and normal feed", () => {
+    const unorderedLogs = [
+      { id: 101, dayNumber: 4, createdAt: "2026-05-04T19:00:00.000Z", exerciseProofUrl: "/proof-day-4.webp" },
+      { id: 103, dayNumber: 6, createdAt: "2026-05-06T08:00:00.000Z", exerciseProofUrl: "/proof-day-6-early.webp" },
+      { id: 102, dayNumber: 5, createdAt: "2026-05-05T19:00:00.000Z", exerciseProofUrl: "/proof-day-5.webp" },
+      { id: 104, dayNumber: 6, createdAt: "2026-05-06T21:00:00.000Z", exerciseProofUrl: "/proof-day-6-late.webp" },
+    ];
+
+    expect(sortProofLogsNewestFirst(unorderedLogs).map(log => log.id)).toEqual([104, 103, 102, 101]);
+    expect(unorderedLogs.map(log => log.id)).toEqual([101, 103, 102, 104]);
   });
 
   it("uses the backend Deep Thought query and does not show visible meta-source copy", () => {

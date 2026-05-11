@@ -1246,3 +1246,7 @@ User priority: the Warden should read the room, find tensions between words and 
 
 - [x] Shorten the Points in Play Community Care popup so it is concise and less intrusive on mobile.
 - [x] Verify the updated Community Care note still explains the fix clearly without taking over the screen.
+
+- [x] Fix Proof page ordering so newest proof posts appear at the top.
+- [x] Add or update regression coverage proving Proof posts are sorted newest first.
+- [x] Validate Proof newest-first ordering and save a checkpoint.

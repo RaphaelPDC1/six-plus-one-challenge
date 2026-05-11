@@ -108,6 +108,23 @@ type ProofMediaItem = {
   name?: string;
 };
 
+function proofLogTimestamp(log: any) {
+  const candidates = [log?.submittedAt, log?.createdAt, log?.updatedAt];
+  for (const candidate of candidates) {
+    const timestamp = new Date(candidate ?? 0).getTime();
+    if (Number.isFinite(timestamp) && timestamp > 0) return timestamp;
+  }
+  return Number(log?.id ?? 0);
+}
+
+export function sortProofLogsNewestFirst<T extends any>(logs: T[] = []) {
+  return [...logs].sort((a: any, b: any) => {
+    const dayDelta = Number(b?.dayNumber ?? 0) - Number(a?.dayNumber ?? 0);
+    if (dayDelta !== 0) return dayDelta;
+    return proofLogTimestamp(b) - proofLogTimestamp(a);
+  });
+}
+
 type MyDayForm = {
   noAlcohol: boolean;
   cleanEating: boolean;
@@ -2768,8 +2785,8 @@ export function buildProofWardenInsight(owner: any, log: any, ownerLogs: any[]) 
 
 function ProofV2TopLayer({ publicLogs, snapshot, latestDay, waiting }: { publicLogs: any[]; snapshot: Snapshot; latestDay: number; waiting: any[] }) {
   const participants = snapshot?.participants ?? [];
-  const logsWithMedia = publicLogs.filter((log: any) => parseProofMedia(log.exerciseProofUrl).length > 0);
-  const featuredLog = logsWithMedia[0] ?? publicLogs[0];
+  const logsWithMedia = sortProofLogsNewestFirst(publicLogs.filter((log: any) => parseProofMedia(log.exerciseProofUrl).length > 0));
+  const featuredLog = logsWithMedia[0] ?? sortProofLogsNewestFirst(publicLogs)[0];
   const featuredOwner = featuredLog ? participants.find((p: any) => p.id === featuredLog.participantId) : null;
   const featuredMedia = featuredLog ? parseProofMedia(featuredLog.exerciseProofUrl) : [];
   const latestTiles = logsWithMedia.slice(0, 6);
@@ -2862,7 +2879,7 @@ function ProofV2TopLayer({ publicLogs, snapshot, latestDay, waiting }: { publicL
 function ProofFeed({ snapshot }: { snapshot: Snapshot }) {
   const utils = trpc.useUtils();
   const [commentDrafts, setCommentDrafts] = useState<Record<number, string>>({});
-  const publicLogs = useMemo(() => (snapshot?.logs ?? []).filter((log: any) => parseProofMedia(log.exerciseProofUrl).length > 0 || String(log.readTeachText ?? "").trim().length > 0), [snapshot?.logs]);
+  const publicLogs = useMemo(() => sortProofLogsNewestFirst((snapshot?.logs ?? []).filter((log: any) => parseProofMedia(log.exerciseProofUrl).length > 0 || String(log.readTeachText ?? "").trim().length > 0)), [snapshot?.logs]);
   const deepThoughtLogIds = useMemo(() => publicLogs.slice(0, 12).map((log: any) => Number(log.id)).filter(Number.isFinite), [publicLogs]);
   const deepThoughtInput = useMemo(() => ({ logIds: deepThoughtLogIds }), [deepThoughtLogIds]);
   const deepThoughtQuery = trpc.challenge.deepThoughts.useQuery(deepThoughtInput, { enabled: deepThoughtLogIds.length > 0, staleTime: 12 * 60 * 60 * 1000, refetchOnWindowFocus: false });
