@@ -1237,3 +1237,5 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Tune global page-swipe navigation so Proof page content swipes do not accidentally change tabs.
 - [x] Make intentional page/tab swipe switching feel responsive enough outside excluded content areas.
 - [x] Add regression tests for swipe thresholds and swipe-exclusion zones.
+
+- [x] Fix "Points in Play" display on My Day screen to include boost bonuses so it matches the leaderboard total.

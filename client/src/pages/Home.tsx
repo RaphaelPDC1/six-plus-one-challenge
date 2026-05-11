@@ -1295,7 +1295,11 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
     hasInsight: String(form.reflectionText ?? "").trim().length > 0 || String(form.readTeachText ?? "").trim().length > 0,
     trackedEverything: Boolean(form.trackedEverything),
   });
-  const projectedPoints = Number(participant?.totalPoints ?? 0) + liveTaskPoints.visibleTotal;
+  const boostWins = snapshot?.boostWins ?? [];
+  const currentParticipantId = participant?.id ?? participant?.userId;
+  const ownBoostWins = boostWins.filter((win: any) => String(win.userId) === String(currentParticipantId));
+  const boostPointsEarned = ownBoostWins.reduce((sum: number, win: any) => sum + Number(win.pointsAwarded ?? 5), 0);
+  const projectedPoints = Number(participant?.totalPoints ?? 0) + liveTaskPoints.visibleTotal + boostPointsEarned;
   const pointStripItems = [
     { label: "Ticks", value: `+${liveTaskPoints.rulePoints}`, detail: `${completedRules}/${totalRules}`, tone: "gold" as const },
     { label: "Pass", value: `+${liveTaskPoints.passBonus}`, detail: allAddressed ? "secured" : `${Math.max(0, passThreshold - completedRules)} left`, tone: allAddressed ? "green" as const : "white" as const },
