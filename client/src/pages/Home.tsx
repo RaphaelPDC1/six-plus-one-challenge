@@ -158,6 +158,21 @@ const RED = "#C0392B";
 const GREEN = "#2ECC71";
 const PURPLE = "#9B59B6";
 const chartColors = [GOLD, RED, GREEN, PURPLE, "#4CA3C9", "#E67E22", "#F1C40F", "#ECF0F1"];
+
+export const PAGE_SWIPE_MIN_DISTANCE = 56;
+export const PAGE_SWIPE_AXIS_LOCK_RATIO = 1.2;
+
+export function isPageSwipeExcludedTarget(target: EventTarget | null) {
+  if (typeof Element === "undefined" || !(target instanceof Element)) return false;
+  return Boolean(target.closest('[data-page-swipe-exclusion="true"], input, textarea, select, button, a, video, [role="button"], [role="slider"]'));
+}
+
+export function isIntentionalPageSwipe(deltaX: number, deltaY: number, startedInExcludedContent = false) {
+  if (startedInExcludedContent) return false;
+  const absX = Math.abs(deltaX);
+  const absY = Math.abs(deltaY);
+  return absX >= PAGE_SWIPE_MIN_DISTANCE && absX > absY * PAGE_SWIPE_AXIS_LOCK_RATIO;
+}
 // Use the optimized WebP logo through the same-origin image proxy so mobile browsers avoid the heavy PNG redirect path.
 const BRAND_LOGO_STORAGE_KEY = "six-plus-one-reference-palette-logo-transparent-optimized_2e84b980.webp";
 const BRAND_LOGO_STORAGE_URL = `/manus-storage/${BRAND_LOGO_STORAGE_KEY}`;
@@ -2247,7 +2262,7 @@ function ParticipantSheet({ participant, onClose }: { participant: any; onClose:
 function ProofMediaStrip({ items, onRemove }: { items: ProofMediaItem[]; onRemove?: (index: number) => void }) {
   if (items.length === 0) return <p className="mt-2 text-[10px] font-black uppercase tracking-[0.16em] text-[#777]">No proof attached yet.</p>;
   return (
-    <div className="mt-3 overflow-x-auto">
+    <div className="mt-3 overflow-x-auto touch-pan-x" data-page-swipe-exclusion="true">
       <div className="flex gap-2 pb-1">
         {items.map((item, index) => (
           <div key={`${item.url}-${index}`} className="relative min-w-[8.5rem] max-w-[8.5rem] border border-[#2A2A2A] bg-[#080808] p-2">
@@ -2273,7 +2288,7 @@ function ProofCarousel({ items, dayNumber, ownerName }: { items: ProofMediaItem[
         <p className="text-[9px] font-black uppercase tracking-[0.16em] text-[#E0B85A]">{items.length} proof item{items.length === 1 ? "" : "s"} · Day {dayNumber}</p>
         {hasMultiple && <p className="rounded-full border border-[#C8A96E]/40 bg-black/70 px-2 py-1 text-[8px] font-black uppercase tracking-[0.14em] text-[#F4D58D]" data-testid="proof-swipe-prompt">Swipe to view all</p>}
       </div>
-      <div className="overflow-x-auto overscroll-x-contain pb-2" aria-label={`Day ${dayNumber} proof media rail`} data-testid="proof-native-scroll-rail">
+      <div className="overflow-x-auto overscroll-x-contain touch-pan-x pb-2" aria-label={`Day ${dayNumber} proof media rail`} data-testid="proof-native-scroll-rail" data-page-swipe-exclusion="true">
         <div className="flex snap-x snap-mandatory gap-2">
           {items.map((item, index) => {
             const imageSrc = proofImageSrc(item.url);
@@ -3262,6 +3277,7 @@ export default function Home() {
   const touchStartYRef = useRef<number | null>(null);
   const touchDeltaXRef = useRef(0);
   const touchDeltaYRef = useRef(0);
+  const touchStartedInExcludedContentRef = useRef(false);
   const previousAuthRef = useRef(isAuthenticated);
   const utils = trpc.useUtils();
   const snapshotQuery = trpc.challenge.snapshot.useQuery(undefined, {
@@ -3341,6 +3357,7 @@ export default function Home() {
     touchStartYRef.current = touch?.clientY ?? null;
     touchDeltaXRef.current = 0;
     touchDeltaYRef.current = 0;
+    touchStartedInExcludedContentRef.current = isPageSwipeExcludedTarget(event.target);
     if (typeof window === "undefined" || window.scrollY > 0 || snapshotQuery.isFetching || pullRefreshing) {
       pullStartYRef.current = null;
       return;
@@ -3364,11 +3381,13 @@ export default function Home() {
   const handleTouchEnd = () => {
     const deltaX = touchDeltaXRef.current;
     const deltaY = touchDeltaYRef.current;
-    const isHorizontalSwipe = Math.abs(deltaX) > 72 && Math.abs(deltaX) > Math.abs(deltaY) * 1.25;
+    const startedInExcludedContent = touchStartedInExcludedContentRef.current;
+    const isHorizontalSwipe = isIntentionalPageSwipe(deltaX, deltaY, startedInExcludedContent);
     touchStartXRef.current = null;
     touchStartYRef.current = null;
     touchDeltaXRef.current = 0;
     touchDeltaYRef.current = 0;
+    touchStartedInExcludedContentRef.current = false;
     if (isHorizontalSwipe && swipeTabs.length > 1) {
       setPullDistance(0);
       pullStartYRef.current = null;

@@ -1233,3 +1233,7 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Fix any issue where the leaderboard does not update after a participant submits their daily log. Daily submit now returns the updated participant row and patches leaderboard-visible points immediately, then refreshes the authoritative snapshot.
 - [x] Reconcile or backfill affected participant leaderboard scores if submitted daily logs were saved without updating totals. No backfill was required because the read-only aggregate check found no base-score mismatch.
 - [x] Add regression tests proving daily submission updates leaderboard-visible points accurately.
+
+- [x] Tune global page-swipe navigation so Proof page content swipes do not accidentally change tabs.
+- [x] Make intentional page/tab swipe switching feel responsive enough outside excluded content areas.
+- [x] Add regression tests for swipe thresholds and swipe-exclusion zones.

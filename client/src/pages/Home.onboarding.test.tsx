@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import Home, { LogoMark, buildProofWardenInsight, dailyLogToForm, getMillisecondsUntilNextLondonDay, mergeTodayFormWithoutWipingSavedWork, patchDailyLogIntoSnapshot } from "./Home";
+import Home, { LogoMark, buildProofWardenInsight, dailyLogToForm, getMillisecondsUntilNextLondonDay, isIntentionalPageSwipe, isPageSwipeExcludedTarget, mergeTodayFormWithoutWipingSavedWork, patchDailyLogIntoSnapshot } from "./Home";
 import { buildParticipantInsights } from "@/lib/challengeInsights";
 
 const mockState = vi.hoisted(() => ({
@@ -744,7 +744,9 @@ describe("Home onboarding shell", () => {
     expect(homeSource).toContain("const pageSwipeVariants");
     expect(homeSource).toContain("const [transitionDirection, setTransitionDirection] = useState<SwipeDirection>(1);");
     expect(homeSource).toContain("touchStartXRef");
-    expect(homeSource).toContain("const isHorizontalSwipe = Math.abs(deltaX) > 72 && Math.abs(deltaX) > Math.abs(deltaY) * 1.25;");
+    expect(homeSource).toContain("const isHorizontalSwipe = isIntentionalPageSwipe(deltaX, deltaY, startedInExcludedContent);");
+    expect(homeSource).toContain("PAGE_SWIPE_MIN_DISTANCE = 56");
+    expect(homeSource).toContain('data-page-swipe-exclusion="true"');
     expect(homeSource).toContain('data-testid="swipe-page-stage"');
     expect(homeSource).toContain('data-swipe-transition="spring-slide-blur"');
     expect(homeSource).toContain('data-testid={`swipe-page-${activeTab}`}');
@@ -758,6 +760,28 @@ describe("Home onboarding shell", () => {
     expect(cssSource).toContain("@keyframes podium-gold-champion");
     expect(cssSource).toContain('[data-podium-motion="silver-lift"]');
     expect(cssSource).toContain('[data-podium-motion="bronze-rise"]');
+  });
+
+  it("treats page swipes as intentional only when the horizontal gesture is clear and not inside proof media", () => {
+    expect(isIntentionalPageSwipe(57, 6)).toBe(true);
+    expect(isIntentionalPageSwipe(55, 2)).toBe(false);
+    expect(isIntentionalPageSwipe(90, 86)).toBe(false);
+    expect(isIntentionalPageSwipe(140, 8, true)).toBe(false);
+  });
+
+  it("detects swipe-exclusion zones used by proof media and interactive controls", () => {
+    const originalElement = globalThis.Element;
+    class FakeElement {
+      constructor(private readonly matched: boolean) {}
+      closest() { return this.matched ? this : null; }
+    }
+    vi.stubGlobal("Element", FakeElement);
+
+    expect(isPageSwipeExcludedTarget(new FakeElement(true) as unknown as EventTarget)).toBe(true);
+    expect(isPageSwipeExcludedTarget(new FakeElement(false) as unknown as EventTarget)).toBe(false);
+
+    if (originalElement) vi.stubGlobal("Element", originalElement);
+    else vi.unstubAllGlobals();
   });
 
   it("generates Warden-style Board status lines while keeping analytical metrics for expanded rows", () => {
