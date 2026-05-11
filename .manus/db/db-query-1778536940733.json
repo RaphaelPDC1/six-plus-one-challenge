@@ -1,0 +1,50 @@
+{
+  "query": "SELECT id, title, versionLabel, category, active, summary, LEFT(body, 160) AS bodyPreview, createdAt\nFROM release_notes\nWHERE active = 1\nORDER BY createdAt DESC\nLIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2P9ir9M7b3E7Qkh.8b2c854ea8b3 --database HPubf4auNvt8KXvgrLad5c --execute SELECT id, title, versionLabel, category, active, summary, LEFT(body, 160) AS bodyPreview, createdAt\nFROM release_notes\nWHERE active = 1\nORDER BY createdAt DESC\nLIMIT 5;",
+  "rows": [
+    {
+      "id": "60001",
+      "title": "Points in Play Now Includes All Bonuses",
+      "versionLabel": "2026.05.11",
+      "category": "community_care",
+      "active": "1",
+      "summary": "Points in Play now shows your full leaderboard total, including boost bonuses.",
+      "bodyPreview": "We corrected the My Day points display so it lines up with the leaderboard. No action is needed — your submitted results and bonuses are still counted.",
+      "createdAt": "2026-05-11 21:57:51"
+    },
+    {
+      "id": "30002",
+      "title": "Proof update",
+      "versionLabel": "Proof edits 2026-05-10",
+      "category": "community_care",
+      "active": "1",
+      "summary": "Proof is easier to browse and respond to.",
+      "bodyPreview": "Proof posts are easier to browse, reactions and comments are live, and Deep Thought now shows the right interpretation. Please tap to acknowledge.",
+      "createdAt": "2026-05-10 22:21:27"
+    },
+    {
+      "id": "30001",
+      "title": "App polish",
+      "versionLabel": "Care polish 2026-05-10",
+      "category": "community_care",
+      "active": "1",
+      "summary": "Swipe navigation and a cleaner Board are live.",
+      "bodyPreview": "Swipe between sections, open boost tokens only when needed, and read the mobile top three more easily. Please tap to acknowledge.",
+      "createdAt": "2026-05-10 22:18:37"
+    },
+    {
+      "id": "1",
+      "title": "Edit update",
+      "versionLabel": "Edit 1",
+      "category": "edit",
+      "active": "1",
+      "summary": "Boost scoring, participant history, refresh behaviour, and update notes are now easier to understand.",
+      "bodyPreview": "We have separated base daily points from named boosts, added a safer path for viewing participant history, prepared pull-to-refresh for the PWA, and introduced ",
+      "createdAt": "2026-05-10 09:09:58"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitle\tversionLabel\tcategory\tactive\tsummary\tbodyPreview\tcreatedAt\n60001\tPoints in Play Now Includes All Bonuses\t2026.05.11\tcommunity_care\t1\tPoints in Play now shows your full leaderboard total, including boost bonuses.\tWe corrected the My Day points display so it lines up with the leaderboard. No action is needed — your submitted results and bonuses are still counted.\t2026-05-11 21:57:51\n30002\tProof update\tProof edits 2026-05-10\tcommunity_care\t1\tProof is easier to browse and respond to.\tProof posts are easier to browse, reactions and comments are live, and Deep Thought now shows the right interpretation. Please tap to acknowledge.\t2026-05-10 22:21:27\n30001\tApp polish\tCare polish 2026-05-10\tcommunity_care\t1\tSwipe navigation and a cleaner Board are live.\tSwipe between sections, open boost tokens only when needed, and read the mobile top three more easily. Please tap to acknowledge.\t2026-05-10 22:18:37\n1\tEdit update\tEdit 1\tedit\t1\tBoost scoring, participant history, refresh behaviour, and update notes are now easier to understand.\tWe have separated base daily points from named boosts, added a safer path for viewing participant history, prepared pull-to-refresh for the PWA, and introduced \t2026-05-10 09:09:58\n",
+  "stderr": "",
+  "execution_time_ms": 270
+}

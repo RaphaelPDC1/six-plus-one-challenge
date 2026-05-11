@@ -1137,6 +1137,7 @@ export async function getAppSnapshot(userId: number, role: "admin" | "user" = "u
   const adminUserIds = new Set(allUsers.filter(user => user.role === "admin").map(user => user.id));
   const baseParticipants = rawParticipants.filter(participantRow => !adminUserIds.has(participantRow.userId));
   const allParticipants = applyCanonicalParticipantScores(baseParticipants, rawBoostWins, BOOST_CHALLENGE_ID);
+  const canonicalParticipant = participant ? allParticipants.find(participantRow => participantRow.id === participant.id) ?? applyCanonicalParticipantScores([participant], rawBoostWins, BOOST_CHALLENGE_ID)[0] : null;
   const participantIds = new Set(allParticipants.map(participantRow => participantRow.id));
   const allLogs = rawLogs.filter(log => participantIds.has(log.participantId));
   const payments = rawPayments.filter(payment => participantIds.has(payment.participantId));
@@ -1151,7 +1152,7 @@ export async function getAppSnapshot(userId: number, role: "admin" | "user" = "u
   return {
     accessState: { status: "ready" as const, reason: onboarding.reason },
     challenge: { currentDay, totalDays: 50, startDate: CHALLENGE_START_DATE, calendar: getChallengeCalendar(), monzoPaymentLink: DEFAULT_MONZO_PAYMENT_LINK },
-    participant,
+    participant: canonicalParticipant,
     myLog,
     participants: allParticipants,
     logs: logsWithProofSocial,

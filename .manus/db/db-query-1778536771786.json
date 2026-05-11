@@ -1,0 +1,130 @@
+{
+  "query": "SELECT p.id, p.displayName, p.whatsappName, p.totalPoints AS base_points, COALESCE(SUM(DISTINCT bw.points_awarded), 0) AS distinct_boost_sum_possible_issue, COALESCE(boosts.boost_points, 0) AS boost_points, p.totalPoints + COALESCE(boosts.boost_points, 0) AS canonical_points, COUNT(bw.id) AS raw_boost_rows\nFROM participants p\nLEFT JOIN boost_wins bw ON bw.user_id = p.id\nLEFT JOIN (\n  SELECT user_id, SUM(points_awarded) AS boost_points\n  FROM (\n    SELECT DISTINCT challenge_id, user_id, day, boost_id, points_awarded\n    FROM boost_wins\n  ) deduped\n  GROUP BY user_id\n) boosts ON boosts.user_id = p.id\nGROUP BY p.id, p.displayName, p.whatsappName, p.totalPoints, boosts.boost_points\nORDER BY canonical_points DESC\nLIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2P9ir9M7b3E7Qkh.8b2c854ea8b3 --database HPubf4auNvt8KXvgrLad5c --execute SELECT p.id, p.displayName, p.whatsappName, p.totalPoints AS base_points, COALESCE(SUM(DISTINCT bw.points_awarded), 0) AS distinct_boost_sum_possible_issue, COALESCE(boosts.boost_points, 0) AS boost_points, p.totalPoints + COALESCE(boosts.boost_points, 0) AS canonical_points, COUNT(bw.id) AS raw_boost_rows\nFROM participants p\nLEFT JOIN boost_wins bw ON bw.user_id = p.id\nLEFT JOIN (\n  SELECT user_id, SUM(points_awarded) AS boost_points\n  FROM (\n    SELECT DISTINCT challenge_id, user_id, day, boost_id, points_awarded\n    FROM boost_wins\n  ) deduped\n  GROUP BY user_id\n) boosts ON boosts.user_id = p.id\nGROUP BY p.id, p.displayName, p.whatsappName, p.totalPoints, boosts.boost_points\nORDER BY canonical_points DESC\nLIMIT 20;",
+  "rows": [
+    {
+      "id": "90002",
+      "displayName": "G LODGE",
+      "whatsappName": "NULL",
+      "base_points": "74",
+      "distinct_boost_sum_possible_issue": "9",
+      "boost_points": "29",
+      "canonical_points": "103",
+      "raw_boost_rows": "6"
+    },
+    {
+      "id": "60012",
+      "displayName": "Kwabs",
+      "whatsappName": "NULL",
+      "base_points": "69",
+      "distinct_boost_sum_possible_issue": "5",
+      "boost_points": "30",
+      "canonical_points": "99",
+      "raw_boost_rows": "6"
+    },
+    {
+      "id": "90007",
+      "displayName": "Nat",
+      "whatsappName": "NULL",
+      "base_points": "73",
+      "distinct_boost_sum_possible_issue": "10",
+      "boost_points": "25",
+      "canonical_points": "98",
+      "raw_boost_rows": "6"
+    },
+    {
+      "id": "90004",
+      "displayName": "wiwi",
+      "whatsappName": "NULL",
+      "base_points": "62",
+      "distinct_boost_sum_possible_issue": "9",
+      "boost_points": "29",
+      "canonical_points": "91",
+      "raw_boost_rows": "6"
+    },
+    {
+      "id": "90006",
+      "displayName": "Billie bob",
+      "whatsappName": "NULL",
+      "base_points": "69",
+      "distinct_boost_sum_possible_issue": "9",
+      "boost_points": "19",
+      "canonical_points": "88",
+      "raw_boost_rows": "4"
+    },
+    {
+      "id": "90005",
+      "displayName": "CTM",
+      "whatsappName": "NULL",
+      "base_points": "72",
+      "distinct_boost_sum_possible_issue": "9",
+      "boost_points": "14",
+      "canonical_points": "86",
+      "raw_boost_rows": "3"
+    },
+    {
+      "id": "90008",
+      "displayName": "Chess",
+      "whatsappName": "NULL",
+      "base_points": "62",
+      "distinct_boost_sum_possible_issue": "9",
+      "boost_points": "19",
+      "canonical_points": "81",
+      "raw_boost_rows": "4"
+    },
+    {
+      "id": "90001",
+      "displayName": "Senyo",
+      "whatsappName": "NULL",
+      "base_points": "70",
+      "distinct_boost_sum_possible_issue": "5",
+      "boost_points": "10",
+      "canonical_points": "80",
+      "raw_boost_rows": "2"
+    },
+    {
+      "id": "90003",
+      "displayName": "Chernice",
+      "whatsappName": "NULL",
+      "base_points": "67",
+      "distinct_boost_sum_possible_issue": "9",
+      "boost_points": "9",
+      "canonical_points": "76",
+      "raw_boost_rows": "2"
+    },
+    {
+      "id": "60011",
+      "displayName": "Nay",
+      "whatsappName": "NULL",
+      "base_points": "48",
+      "distinct_boost_sum_possible_issue": "9",
+      "boost_points": "19",
+      "canonical_points": "67",
+      "raw_boost_rows": "4"
+    },
+    {
+      "id": "150001",
+      "displayName": "Laud",
+      "whatsappName": "NULL",
+      "base_points": "58",
+      "distinct_boost_sum_possible_issue": "4",
+      "boost_points": "4",
+      "canonical_points": "62",
+      "raw_boost_rows": "1"
+    },
+    {
+      "id": "120001",
+      "displayName": "lando.",
+      "whatsappName": "NULL",
+      "base_points": "0",
+      "distinct_boost_sum_possible_issue": "0",
+      "boost_points": "0",
+      "canonical_points": "0",
+      "raw_boost_rows": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tdisplayName\twhatsappName\tbase_points\tdistinct_boost_sum_possible_issue\tboost_points\tcanonical_points\traw_boost_rows\n90002\tG LODGE\tNULL\t74\t9\t29\t103\t6\n60012\tKwabs\tNULL\t69\t5\t30\t99\t6\n90007\tNat\tNULL\t73\t10\t25\t98\t6\n90004\twiwi\tNULL\t62\t9\t29\t91\t6\n90006\tBillie bob\tNULL\t69\t9\t19\t88\t4\n90005\tCTM\tNULL\t72\t9\t14\t86\t3\n90008\tChess\tNULL\t62\t9\t19\t81\t4\n90001\tSenyo\tNULL\t70\t5\t10\t80\t2\n90003\tChernice\tNULL\t67\t9\t9\t76\t2\n60011\tNay\tNULL\t48\t9\t19\t67\t4\n150001\tLaud\tNULL\t58\t4\t4\t62\t1\n120001\tlando.\tNULL\t0\t0\t0\t0\t0\n",
+  "stderr": "",
+  "execution_time_ms": 270
+}

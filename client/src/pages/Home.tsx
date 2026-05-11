@@ -400,6 +400,10 @@ export function mergeTodayFormWithoutWipingSavedWork(saved: MyDayForm, draft: My
   };
 }
 
+export function getLeaderboardVisiblePoints(participant: any): number {
+  return Number(participant?.canonicalTotalPoints ?? participant?.totalPoints ?? 0);
+}
+
 export function patchDailyLogIntoSnapshot(snapshot: Snapshot | undefined, updatedLog: any, updatedParticipant?: any): Snapshot | undefined {
   if (!snapshot || !updatedLog) return snapshot;
   const logs = Array.isArray(snapshot.logs) ? snapshot.logs : [];
@@ -413,22 +417,25 @@ export function patchDailyLogIntoSnapshot(snapshot: Snapshot | undefined, update
   const shouldPatchMyLog = Boolean(snapshot.myLog && matchesUpdatedLog(snapshot.myLog)) || String(snapshot?.participant?.id ?? "") === String(updatedLog.participantId ?? "");
   const updatedParticipantId = updatedParticipant?.id ?? updatedLog.participantId;
   const shouldPatchParticipant = updatedParticipant && String(snapshot?.participant?.id ?? "") === String(updatedParticipantId ?? "");
-  const nextParticipant = shouldPatchParticipant ? { ...(snapshot.participant ?? {}), ...updatedParticipant } : snapshot.participant;
+  const matchingParticipantRow = Array.isArray(snapshot.participants)
+    ? snapshot.participants.find((participantRow: any) => String(participantRow?.id ?? "") === String(updatedParticipantId ?? ""))
+    : null;
+  const mergeCanonicalParticipantScore = (participantRow: any) => {
+    const baseTotalPoints = Number(updatedParticipant?.totalPoints ?? participantRow?.baseTotalPoints ?? participantRow?.totalPoints ?? 0);
+    const boostPoints = Number(participantRow?.boostPoints ?? matchingParticipantRow?.boostPoints ?? 0);
+    const canonicalTotalPoints = baseTotalPoints + boostPoints;
+    return {
+      ...participantRow,
+      ...updatedParticipant,
+      baseTotalPoints,
+      boostPoints,
+      canonicalTotalPoints,
+      totalPoints: canonicalTotalPoints,
+    };
+  };
+  const nextParticipant = shouldPatchParticipant ? mergeCanonicalParticipantScore(snapshot.participant ?? matchingParticipantRow ?? {}) : snapshot.participant;
   const nextParticipants = updatedParticipant && Array.isArray(snapshot.participants)
-    ? snapshot.participants.map((participantRow: any) => {
-      if (String(participantRow?.id ?? "") !== String(updatedParticipantId ?? "")) return participantRow;
-      const baseTotalPoints = Number(updatedParticipant.totalPoints ?? participantRow.baseTotalPoints ?? participantRow.totalPoints ?? 0);
-      const boostPoints = Number(participantRow.boostPoints ?? 0);
-      const canonicalTotalPoints = baseTotalPoints + boostPoints;
-      return {
-        ...participantRow,
-        ...updatedParticipant,
-        baseTotalPoints,
-        boostPoints,
-        canonicalTotalPoints,
-        totalPoints: canonicalTotalPoints,
-      };
-    })
+    ? snapshot.participants.map((participantRow: any) => String(participantRow?.id ?? "") === String(updatedParticipantId ?? "") ? mergeCanonicalParticipantScore(participantRow) : participantRow)
     : snapshot.participants;
 
   return {
@@ -1295,16 +1302,13 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
     hasInsight: String(form.reflectionText ?? "").trim().length > 0 || String(form.readTeachText ?? "").trim().length > 0,
     trackedEverything: Boolean(form.trackedEverything),
   });
-  const boostWins = snapshot?.boostWins ?? [];
-  const currentParticipantId = participant?.id ?? participant?.userId;
-  const ownBoostWins = boostWins.filter((win: any) => String(win.userId) === String(currentParticipantId));
-  const boostPointsEarned = ownBoostWins.reduce((sum: number, win: any) => sum + Number(win.pointsAwarded ?? 5), 0);
-  const projectedPoints = Number(participant?.totalPoints ?? 0) + liveTaskPoints.visibleTotal + boostPointsEarned;
+  const todayAlreadyComplete = Boolean(snapshot?.myLog?.dayComplete && Number(snapshot.myLog.dayNumber) === currentDayNumber);
+  const leaderboardVisiblePoints = getLeaderboardVisiblePoints(participant);
   const pointStripItems = [
     { label: "Ticks", value: `+${liveTaskPoints.rulePoints}`, detail: `${completedRules}/${totalRules}`, tone: "gold" as const },
     { label: "Pass", value: `+${liveTaskPoints.passBonus}`, detail: allAddressed ? "secured" : `${Math.max(0, passThreshold - completedRules)} left`, tone: allAddressed ? "green" as const : "white" as const },
     { label: "Proof", value: `+${liveTaskPoints.proofBonus + liveTaskPoints.insightBonus}`, detail: "proof/insight", tone: "purple" as const },
-    { label: "Bank", value: projectedPoints, detail: "projected", tone: "green" as const },
+    { label: "Board", value: leaderboardVisiblePoints, detail: "leaderboard", tone: "green" as const },
   ];
   const ghostLifeLocked = Boolean(participant?.ghostLifeUsed);
   const participantNameForNayCheck = `${participant?.displayName ?? ""} ${participant?.whatsappName ?? ""}`.toLowerCase();
@@ -1602,7 +1606,7 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
         <div className="motion-list grid min-w-0 max-w-full gap-2 overflow-hidden bg-[#2A2A2A] p-[2px] sm:grid-cols-3" data-testid="myday-stats-after-must-do">
           <PosterStat label="Standards logged" value={`${completedRules}/${totalRules}`} tone={allAddressed ? "green" : "gold"} />
           <PosterStat label="Streak held" value={participant?.currentStreak ?? 0} tone="green" />
-          <PosterStat label="Points in play" value={projectedPoints} tone="gold" />
+          <PosterStat label="Points in play" value={leaderboardVisiblePoints} tone="gold" />
         </div>
 
         <div className={classNames("submit-dock motion-submit-dock z-[70] mx-auto w-[min(100%,calc(100vw-2rem))] max-w-full transition-all duration-300 md:static md:w-full", saveProgressDocked ? "static translate-y-0" : "fixed inset-x-4 bottom-[calc(5.85rem+env(safe-area-inset-bottom))]", saveProgressScale < 0.35 ? "max-w-[9.5rem] rounded-full border border-[#C8A96E]/45 bg-[#070707]/94 p-1 shadow-[0_0_24px_rgba(200,169,110,0.18)] backdrop-blur" : saveProgressScale < 0.78 ? "max-w-[15rem] rounded-full border border-[#C8A96E]/55 bg-[#0D0D0D]/95 p-1.5 shadow-[0_0_32px_rgba(200,169,110,0.22)] backdrop-blur" : "max-w-none rounded-none border border-[#2A2A2A] bg-[#0D0D0D]/95 p-3 backdrop-blur md:border-transparent md:bg-transparent md:p-0 md:backdrop-blur-none", submit.isPending && "submit-dock-pending", allAddressed && !submit.isPending && "submit-dock-ready")} data-save-progress-scale={saveProgressScale} data-save-progress-docked={saveProgressDocked ? "true" : "false"} data-mobile-save-progress-mini-to-section="true" data-mobile-save-progress-above-nav="true">
@@ -3196,13 +3200,13 @@ function CommunityCareReleaseNotePopup({ note, isPending, onAcknowledge }: { not
   if (!note) return null;
   const categoryLabel = note.category === "community_care" ? "Community care" : note.category === "rules" ? "Rules" : note.category === "rewards" ? "Rewards" : note.category === "technical" ? "Technical" : "Edit";
   const popup = (
-    <div className="fixed inset-0 z-[95] flex items-center justify-center bg-black/78 p-4" role="dialog" aria-modal="true" aria-label={`${categoryLabel} update`} data-testid="community-care-release-note-popup">
-      <div className="motion-sheet-panel w-full max-w-lg border-2 border-[#2ECC71] bg-[#0D0D0D] p-5 shadow-[0_28px_90px_rgba(0,0,0,0.82)]">
+    <div className="fixed inset-0 z-[95] flex items-end justify-center bg-black/55 p-3 sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-label={`${categoryLabel} update`} data-testid="community-care-release-note-popup">
+      <div className="motion-sheet-panel max-h-[58vh] w-full max-w-sm overflow-y-auto border border-[#2ECC71] bg-[#0D0D0D] p-3 shadow-[0_18px_48px_rgba(0,0,0,0.72)] sm:p-4">
         <MicroLabel tone="green">{categoryLabel} · {note.versionLabel}</MicroLabel>
-        <h2 className="mt-3 text-3xl font-black uppercase leading-none tracking-[-0.07em] text-white">{note.title}</h2>
-        <p className="mt-4 border-l-4 border-[#2ECC71] bg-[#07150D] p-3 text-sm font-black leading-6 text-[#CFF6DA]">{note.summary}</p>
-        <p className="mt-4 whitespace-pre-wrap text-sm font-bold leading-6 text-[#D8D8D8]">{note.body}</p>
-        <button type="button" disabled={isPending} onClick={() => onAcknowledge(Number(note.id))} className="motion-press mt-5 min-h-12 w-full bg-[#2ECC71] px-5 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-black transition hover:bg-[#79F0A0] disabled:opacity-50">{isPending ? "Saving..." : "I understand the update"}</button>
+        <h2 className="mt-2 text-xl font-black uppercase leading-none tracking-[-0.06em] text-white sm:text-2xl">{note.title}</h2>
+        <p className="mt-2 border-l-4 border-[#2ECC71] bg-[#07150D] p-2.5 text-[11px] font-black leading-4 text-[#CFF6DA] sm:text-xs sm:leading-5">{note.summary}</p>
+        <p className="mt-2 whitespace-pre-wrap text-[11px] font-bold leading-4 text-[#D8D8D8] sm:text-xs sm:leading-5">{note.body}</p>
+        <button type="button" disabled={isPending} onClick={() => onAcknowledge(Number(note.id))} className="motion-press mt-3 min-h-10 w-full bg-[#2ECC71] px-4 py-2.5 text-[9px] font-black uppercase tracking-[0.16em] text-black transition hover:bg-[#79F0A0] disabled:opacity-50">{isPending ? "Saving..." : "Got it"}</button>
       </div>
     </div>
   );

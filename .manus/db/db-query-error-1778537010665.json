@@ -1,0 +1,8 @@
+{
+  "query": "SELECT\n  p.id,\n  p.displayName,\n  p.totalPoints AS storedBasePoints,\n  COALESCE(SUM(b.pointsAwarded), 0) AS boostPoints,\n  p.totalPoints + COALESCE(SUM(b.pointsAwarded), 0) AS canonicalLeaderboardTotal\nFROM participants p\nLEFT JOIN boost_wins b ON b.userId = p.userId AND b.challengeId = p.challengeId\nGROUP BY p.id, p.displayName, p.totalPoints\nORDER BY canonicalLeaderboardTotal DESC\nLIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2P9ir9M7b3E7Qkh.8b2c854ea8b3 --database HPubf4auNvt8KXvgrLad5c --execute SELECT\n  p.id,\n  p.displayName,\n  p.totalPoints AS storedBasePoints,\n  COALESCE(SUM(b.pointsAwarded), 0) AS boostPoints,\n  p.totalPoints + COALESCE(SUM(b.pointsAwarded), 0) AS canonicalLeaderboardTotal\nFROM participants p\nLEFT JOIN boost_wins b ON b.userId = p.userId AND b.challengeId = p.challengeId\nGROUP BY p.id, p.displayName, p.totalPoints\nORDER BY canonicalLeaderboardTotal DESC\nLIMIT 10;",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 1: Unknown column 'b.userid' in 'on clause'"
+  ]
+}

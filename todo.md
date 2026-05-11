@@ -1239,3 +1239,10 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Add regression tests for swipe thresholds and swipe-exclusion zones.
 
 - [x] Fix "Points in Play" display on My Day screen to include boost bonuses so it matches the leaderboard total.
+
+- [x] Re-investigate persistent Points in Play versus leaderboard mismatch after the first boost-inclusive display fix.
+- [x] Identify whether the mismatch is caused by deployed stale code, wrong boost aggregation, duplicate release-note/test scripts, or a different live-data path. Root cause was My Day still showing a projected in-progress number instead of the Board’s canonical leaderboard total in some states.
+- [x] Add regression coverage using the exact calculation used by both My Day and Board so the displayed totals cannot diverge again.
+
+- [x] Shorten the Points in Play Community Care popup so it is concise and less intrusive on mobile.
+- [x] Verify the updated Community Care note still explains the fix clearly without taking over the screen.

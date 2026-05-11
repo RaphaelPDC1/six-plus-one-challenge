@@ -1,0 +1,80 @@
+{
+  "query": "SELECT\n  p.id,\n  p.displayName,\n  p.totalPoints AS storedBasePoints,\n  COALESCE(SUM(b.points_awarded), 0) AS boostPoints,\n  p.totalPoints + COALESCE(SUM(b.points_awarded), 0) AS canonicalLeaderboardTotal\nFROM participants p\nLEFT JOIN boost_wins b ON b.user_id = p.userId\nGROUP BY p.id, p.displayName, p.totalPoints\nORDER BY canonicalLeaderboardTotal DESC\nLIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2P9ir9M7b3E7Qkh.8b2c854ea8b3 --database HPubf4auNvt8KXvgrLad5c --execute SELECT\n  p.id,\n  p.displayName,\n  p.totalPoints AS storedBasePoints,\n  COALESCE(SUM(b.points_awarded), 0) AS boostPoints,\n  p.totalPoints + COALESCE(SUM(b.points_awarded), 0) AS canonicalLeaderboardTotal\nFROM participants p\nLEFT JOIN boost_wins b ON b.user_id = p.userId\nGROUP BY p.id, p.displayName, p.totalPoints\nORDER BY canonicalLeaderboardTotal DESC\nLIMIT 10;",
+  "rows": [
+    {
+      "id": "90002",
+      "displayName": "G LODGE",
+      "storedBasePoints": "74",
+      "boostPoints": "0",
+      "canonicalLeaderboardTotal": "74"
+    },
+    {
+      "id": "90007",
+      "displayName": "Nat",
+      "storedBasePoints": "73",
+      "boostPoints": "0",
+      "canonicalLeaderboardTotal": "73"
+    },
+    {
+      "id": "90005",
+      "displayName": "CTM",
+      "storedBasePoints": "72",
+      "boostPoints": "0",
+      "canonicalLeaderboardTotal": "72"
+    },
+    {
+      "id": "90001",
+      "displayName": "Senyo",
+      "storedBasePoints": "70",
+      "boostPoints": "0",
+      "canonicalLeaderboardTotal": "70"
+    },
+    {
+      "id": "90006",
+      "displayName": "Billie bob",
+      "storedBasePoints": "69",
+      "boostPoints": "0",
+      "canonicalLeaderboardTotal": "69"
+    },
+    {
+      "id": "60012",
+      "displayName": "Kwabs",
+      "storedBasePoints": "69",
+      "boostPoints": "0",
+      "canonicalLeaderboardTotal": "69"
+    },
+    {
+      "id": "90003",
+      "displayName": "Chernice",
+      "storedBasePoints": "67",
+      "boostPoints": "0",
+      "canonicalLeaderboardTotal": "67"
+    },
+    {
+      "id": "90008",
+      "displayName": "Chess",
+      "storedBasePoints": "62",
+      "boostPoints": "0",
+      "canonicalLeaderboardTotal": "62"
+    },
+    {
+      "id": "90004",
+      "displayName": "wiwi",
+      "storedBasePoints": "62",
+      "boostPoints": "0",
+      "canonicalLeaderboardTotal": "62"
+    },
+    {
+      "id": "150001",
+      "displayName": "Laud",
+      "storedBasePoints": "58",
+      "boostPoints": "0",
+      "canonicalLeaderboardTotal": "58"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tdisplayName\tstoredBasePoints\tboostPoints\tcanonicalLeaderboardTotal\n90002\tG LODGE\t74\t0\t74\n90007\tNat\t73\t0\t73\n90005\tCTM\t72\t0\t72\n90001\tSenyo\t70\t0\t70\n90006\tBillie bob\t69\t0\t69\n60012\tKwabs\t69\t0\t69\n90003\tChernice\t67\t0\t67\n90008\tChess\t62\t0\t62\n90004\twiwi\t62\t0\t62\n150001\tLaud\t58\t0\t58\n",
+  "stderr": "",
+  "execution_time_ms": 271
+}

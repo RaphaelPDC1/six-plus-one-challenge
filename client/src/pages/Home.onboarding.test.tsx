@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import React from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import Home, { LogoMark, buildProofWardenInsight, dailyLogToForm, getMillisecondsUntilNextLondonDay, isIntentionalPageSwipe, isPageSwipeExcludedTarget, mergeTodayFormWithoutWipingSavedWork, patchDailyLogIntoSnapshot } from "./Home";
+import Home, { LogoMark, buildProofWardenInsight, dailyLogToForm, getLeaderboardVisiblePoints, getMillisecondsUntilNextLondonDay, isIntentionalPageSwipe, isPageSwipeExcludedTarget, mergeTodayFormWithoutWipingSavedWork, patchDailyLogIntoSnapshot } from "./Home";
 import { buildParticipantInsights } from "@/lib/challengeInsights";
 
 const mockState = vi.hoisted(() => ({
@@ -215,6 +215,18 @@ describe("Home onboarding shell", () => {
     expect(getMillisecondsUntilNextLondonDay(new Date("2026-12-06T23:59:30.000Z"))).toBe(30_000);
   });
 
+  it("shows Points in Play as the canonical leaderboard total without adding unsubmitted live-task projections", () => {
+    const participant = { totalPoints: 89, canonicalTotalPoints: 99 };
+
+    expect(getLeaderboardVisiblePoints(participant)).toBe(99);
+  });
+
+  it("falls back to stored total points when a canonical leaderboard total is unavailable", () => {
+    const participant = { totalPoints: 89 };
+
+    expect(getLeaderboardVisiblePoints(participant)).toBe(89);
+  });
+
   it("patches a submitted same-day proof log and leaderboard points into the shared snapshot cache", () => {
     const staleSnapshot = {
       participant: { id: 42, displayName: "Taylor", totalPoints: 20, daysComplete: 2 },
@@ -233,9 +245,13 @@ describe("Home onboarding shell", () => {
 
     const patched = patchDailyLogIntoSnapshot(staleSnapshot, updatedLog, updatedParticipant) as typeof staleSnapshot;
 
+    const patchedParticipant = patched.participant as any;
     expect(patched.myLog?.exerciseProofUrl).toBe("/manus-storage/new-proof.webp");
-    expect(patched.participant?.totalPoints).toBe(30);
-    expect(patched.participant?.daysComplete).toBe(3);
+    expect(patchedParticipant.baseTotalPoints).toBe(30);
+    expect(patchedParticipant.boostPoints).toBe(5);
+    expect(patchedParticipant.canonicalTotalPoints).toBe(35);
+    expect(patchedParticipant.totalPoints).toBe(35);
+    expect(patchedParticipant.daysComplete).toBe(3);
     expect(patched.participants[0].baseTotalPoints).toBe(30);
     expect(patched.participants[0].boostPoints).toBe(5);
     expect(patched.participants[0].canonicalTotalPoints).toBe(35);
