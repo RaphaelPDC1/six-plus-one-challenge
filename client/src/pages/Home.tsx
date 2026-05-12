@@ -1227,7 +1227,7 @@ function RuleCard({
   children: React.ReactNode;
 }) {
   return (
-    <article className={classNames("motion-card rule-card-motion border transition-all duration-300 hover:-translate-y-0.5", complete ? "rule-card-complete border-[#2ECC71] bg-[#0F1E15] shadow-[0_0_0_1px_rgba(46,204,113,0.2)]" : active ? "rule-card-active border-[#C0392B] bg-[#1A0D0A] shadow-[0_18px_55px_rgba(192,57,43,0.14)]" : "border-[#7A241B] bg-[#101010]")}> 
+    <article className={classNames("motion-card rule-card-motion border transition-all duration-300 hover:-translate-y-0.5", complete ? "rule-card-complete border-[#2ECC71] bg-[#0F1E15] shadow-[0_0_0_1px_rgba(46,204,113,0.2)]" : active ? "rule-card-active border-[#C0392B] bg-[#1A0D0A] shadow-[0_18px_55px_rgba(192,57,43,0.14)]" : "border-[#2A2A2A] bg-[#101010]")}> 
       <button className="flex w-full items-center justify-between gap-4 p-4 text-left" onClick={() => { pulse(12); onToggle(); }}>
         <div className="flex min-w-0 items-center gap-4">
           <div className={classNames("grid h-11 w-11 place-items-center border", complete ? "border-[#2ECC71] text-[#2ECC71]" : "border-[#343434] text-[#C8A96E]")}>{complete ? <Check className="h-5 w-5 animate-gold-pop" /> : <Icon className="h-5 w-5" />}</div>
@@ -3242,10 +3242,10 @@ function PullToRefreshIndicator({ distance, refreshing }: { distance: number; re
 }
 
 const tabs: Array<{ key: TabKey; label: string; icon: any }> = [
-  { key: "myday", label: "My Day", icon: Lock },
+  { key: "myday", label: "My Day", icon: Flame },
   { key: "overview", label: "Overview", icon: Activity },
   { key: "leaderboard", label: "Board", icon: Trophy },
-  { key: "proof", label: "Proof", icon: MessageSquare },
+  { key: "proof", label: "Proof", icon: Camera },
   { key: "rewards", label: "Rewards", icon: Gift },
   { key: "calendar", label: "Journey", icon: Calendar },
   { key: "admin", label: "Founder", icon: Crown },
@@ -3463,7 +3463,7 @@ export default function Home() {
           <div className="border border-[#2A2A2A] bg-[#101010] p-10 text-center text-sm font-black uppercase tracking-[0.22em] text-[#777]">Loading challenge data...</div>
         ) : (
           <>
-            <div className="mb-5 hidden grid-cols-6 gap-[2px] bg-[#2A2A2A] p-[2px] md:grid">
+            <div className="mb-5 hidden gap-[2px] bg-[#2A2A2A] p-[2px] md:grid" style={{ gridTemplateColumns: `repeat(${visibleTabs.length}, minmax(0, 1fr))` }}>
               {visibleTabs.map(tab => {
                 const Icon = tab.icon;
                 const active = activeTab === tab.key;
