@@ -327,8 +327,7 @@ describe("Home onboarding shell", () => {
     expect(homeSource).toContain("utils.auth.me.setData(undefined, data.user);");
     expect(homeSource.indexOf("utils.auth.me.setData(undefined, data.user);")).toBeLessThan(homeSource.indexOf("await utils.auth.me.invalidate();"));
     expect(homeSource).toContain("getMillisecondsUntilNextLondonDay(new Date()) + 1500");
-    expect(homeSource).toContain("void snapshotQuery.refetch();");
-    expect(homeSource).toContain("void utils.challenge.snapshot.invalidate();");
+    expect(homeSource).toContain("void snapshotRefetch();");
   });
 
   it("keeps registration on a dedicated route with back-home navigation and universal Warden copy", () => {
@@ -675,7 +674,7 @@ describe("Home onboarding shell", () => {
     expect(homeSource).toContain("rounded-full px-4 py-3 text-[10px]");
     expect(readFileSync(new URL("../index.css", import.meta.url), "utf8")).toContain("overflow-x: hidden;");
     expect(homeSource).not.toContain('data-testid="live-task-points-panel"');
-    expect(homeSource).toContain("Draft only until 5/6 is real. Lives are judged at rollover.");
+    expect(homeSource).toContain("Save keeps your work. Lock In submits the day before midnight.");
     expect(homeSource).toContain("function pulse(pattern: number | number[] = 18)");
     expect(homeSource).toContain("navigator.vibrate(pattern)");
     expect(homeSource).toContain("haptics.tap();");
@@ -685,8 +684,8 @@ describe("Home onboarding shell", () => {
     expect(homeSource).toContain('data-ghost-life-state={ghostLifeLocked ? "locked" : "available"}');
     expect(homeSource).toContain("Ghost Life locked");
     expect(homeSource).toContain("Your Purple Ghost Life has already restored a life. It is now locked for the rest of the challenge.");
-    expect(homeSource).toContain("Draft only until 5/6 is real. Lives are judged at rollover.");
-    expect(homeSource).toContain("window.setTimeout(() => setSaveNotice(null), 2200);");
+    expect(homeSource).toContain("Save keeps your work. Lock In submits the day before midnight.");
+    expect(homeSource).toContain("window.setTimeout(() => setSaveNotice(null), 2200)");;
     expect(homeSource).not.toContain("Progress saved quietly");
     expect(homeSource).not.toContain("No life lost before rollover");
   });

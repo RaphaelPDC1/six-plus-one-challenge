@@ -1258,3 +1258,7 @@ User priority: the Warden should read the room, find tensions between words and 
 
 - [x] Auto-generate and publish a release note (AI-written) on every new deployment so the community popup shows automatically without manual intervention.
 - [x] Release note popup dismisses on click and only shows once per participant per version.
+
+- [ ] Bug: My Day excessive re-fetching causing crashes — stabilise query refs and add caching.
+- [ ] Bug: Layout clash on My Day covering Read & Teach / Track Everything rule cards.
+- [ ] Bug: Restore smart two-step Save Progress + Lock In button (was smart/auto-detecting, now shows wrong "Save Draft" label).

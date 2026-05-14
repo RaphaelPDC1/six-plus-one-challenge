@@ -16,8 +16,8 @@ describe("life-loss sync and alert wiring", () => {
   it("keeps Board and Overview snapshots fresh and shows a participant-facing life-loss overlay", () => {
     const homeSource = readFileSync(resolve(root, "client/src/pages/Home.tsx"), "utf8");
 
-    expect(homeSource).toContain("refetchInterval: 30000");
-    expect(homeSource).toContain("refetchOnWindowFocus: true");
+    expect(homeSource).toContain("refetchInterval: 60000");
+    expect(homeSource).toContain("refetchOnReconnect: true");
     expect(homeSource).toContain("function LifeLossAlert");
     expect(homeSource).toContain('data-testid="life-loss-alert-overlay"');
     expect(homeSource).toContain('toast.error(`${participant?.displayName ?? "Someone"} lost a life`');
