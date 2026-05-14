@@ -1376,7 +1376,12 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
     { label: "Board", value: leaderboardVisiblePoints, detail: "leaderboard", tone: "green" as const },
   ];
   const ghostLifeLocked = Boolean(participant?.ghostLifeUsed);
-
+  // Use a stable string key (id + dayNumber + dayComplete) so the form only
+  // resets when the actual log content changes, not on every 60s snapshot poll
+  // that returns a new object reference.
+  const myLogKey = snapshot?.myLog
+    ? `${snapshot.myLog.id ?? ""}-${snapshot.myLog.dayNumber ?? ""}-${snapshot.myLog.dayComplete ?? ""}`
+    : null;
   useEffect(() => {
     setDraftReady(false);
     setDraftRestored(false);
@@ -1384,7 +1389,6 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
       setForm(emptyDay);
       return;
     }
-
     const savedToday = dailyLogToForm(snapshot?.myLog);
     const storedDraft = readStoredDraft(draftStorageKey);
     if (storedDraft) {
@@ -1394,10 +1398,10 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
       setDraftReady(true);
       return;
     }
-
     setForm(savedToday);
     setDraftReady(true);
-  }, [draftStorageKey, snapshot?.myLog]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draftStorageKey, myLogKey]);
 
   useEffect(() => {
     if (typeof window === "undefined" || !draftReady || !draftStorageKey) return;
@@ -1626,19 +1630,35 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
           </div>
         )}
 
-        <div className={classNames("submit-dock motion-submit-dock z-[70] mx-auto w-[min(100%,calc(100vw-2rem))] max-w-full transition-all duration-300 md:static md:w-full", saveProgressDocked ? "static translate-y-0" : "fixed inset-x-4 bottom-[calc(5.85rem+env(safe-area-inset-bottom))]", saveProgressScale < 0.35 ? "max-w-[9.5rem] rounded-full border border-[#C8A96E]/45 bg-[#070707]/94 p-1 shadow-[0_0_24px_rgba(200,169,110,0.18)] backdrop-blur" : saveProgressScale < 0.78 ? "max-w-[15rem] rounded-full border border-[#C8A96E]/55 bg-[#0D0D0D]/95 p-1.5 shadow-[0_0_32px_rgba(200,169,110,0.22)] backdrop-blur" : "max-w-none rounded-none border border-[#2A2A2A] bg-[#0D0D0D]/95 p-3 backdrop-blur md:border-transparent md:bg-transparent md:p-0 md:backdrop-blur-none", submit.isPending && "submit-dock-pending", allAddressed && !submit.isPending && "submit-dock-ready")} data-save-progress-scale={saveProgressScale} data-save-progress-docked={saveProgressDocked ? "true" : "false"} data-mobile-save-progress-mini-to-section="true" data-mobile-save-progress-above-nav="true">
-          <SharpButton className={classNames("w-full max-w-full overflow-hidden whitespace-normal break-words text-center transition-all duration-300", saveProgressScale < 0.35 ? "rounded-full px-3 py-2 text-[0px] shadow-none before:content-['SAVE'] before:text-[9px] before:font-black before:tracking-[0.18em]" : saveProgressScale < 0.78 ? "rounded-full px-4 py-3 text-[10px]" : "py-5 text-sm", submit.isPending && "submit-button-pending")} disabled={submit.isPending} onClick={() => submit.mutate({ ...form, reflectionShared: false, dayNumber: snapshot?.challenge.currentDay ?? 1 })}>
-            {submit.isPending
-              ? (allAddressed ? "Locking in the day…" : "Saving progress…")
-              : allAddressed
-                ? `Lock In Day ${snapshot?.challenge.currentDay ?? 1} · +${liveTaskPoints.visibleTotal} pts`
-                : `Save Progress · ${completedRules}/${totalRules} done`}
-          </SharpButton>
-          {saveProgressDocked && !allAddressed && <p className="mt-2 text-center text-[10px] font-black uppercase tracking-[0.16em] text-[#C8A96E]/80">Save keeps your work. Lock In submits the day before midnight.</p>}
-          {saveNotice && <div role="status" className={classNames("pointer-events-none absolute -top-3 right-3 rounded-full border bg-black/90 px-2 py-1 text-[9px] font-black uppercase leading-none tracking-[0.16em] shadow-[0_0_18px_rgba(0,0,0,0.45)]", saveNotice.complete ? "border-[#2ECC71]/70 text-[#2ECC71]" : "border-[#C8A96E]/70 text-[#C8A96E]")}>{saveNotice.title}</div>}
-          {draftRestored && <div role="status" className="pointer-events-none absolute -top-3 left-3 rounded-full border border-[#C8A96E]/70 bg-black/90 px-2 py-1 text-[9px] font-black uppercase leading-none tracking-[0.16em] text-[#C8A96E] shadow-[0_0_18px_rgba(0,0,0,0.45)]">Draft recovered</div>}
-          {lastMissed.length > 0 && <div className="mt-3 border-l-4 border-[#C0392B] bg-[#180F0F] p-4 text-sm font-bold text-[#F0B7AE]">Rollover miss: {lastMissed.join(", ")}. Penalty recorded.</div>}
-        </div>
+        {/* When the day is already locked in, show a static locked state — never float over rule cards */}
+        {todayAlreadyComplete ? (
+          <div className="mt-4 border border-[#2ECC71]/40 bg-[#0A1A0A] p-4" data-testid="day-locked-banner">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-[#2ECC71]/70">Day {snapshot?.challenge.currentDay ?? "—"} · Locked in</p>
+                <p className="mt-1 text-base font-black uppercase leading-none tracking-[-0.03em] text-white">+{liveTaskPoints.visibleTotal} pts banked</p>
+              </div>
+              <div className="grid h-8 w-8 shrink-0 place-items-center border border-[#2ECC71]/60 bg-[#2ECC71]/10">
+                <Check className="h-4 w-4 text-[#2ECC71]" />
+              </div>
+            </div>
+            {lastMissed.length > 0 && <div className="mt-3 border-l-4 border-[#C0392B] bg-[#180F0F] p-4 text-sm font-bold text-[#F0B7AE]">Rollover miss: {lastMissed.join(", ")}. Penalty recorded.</div>}
+          </div>
+        ) : (
+          <div className={classNames("submit-dock motion-submit-dock z-[70] mx-auto w-[min(100%,calc(100vw-2rem))] max-w-full transition-all duration-300 md:static md:w-full", saveProgressDocked ? "static translate-y-0" : "fixed inset-x-4 bottom-[calc(5.85rem+env(safe-area-inset-bottom))]", saveProgressScale < 0.35 ? "max-w-[9.5rem] rounded-full border border-[#C8A96E]/45 bg-[#070707]/94 p-1 shadow-[0_0_24px_rgba(200,169,110,0.18)] backdrop-blur" : saveProgressScale < 0.78 ? "max-w-[15rem] rounded-full border border-[#C8A96E]/55 bg-[#0D0D0D]/95 p-1.5 shadow-[0_0_32px_rgba(200,169,110,0.22)] backdrop-blur" : "max-w-none rounded-none border border-[#2A2A2A] bg-[#0D0D0D]/95 p-3 backdrop-blur md:border-transparent md:bg-transparent md:p-0 md:backdrop-blur-none", submit.isPending && "submit-dock-pending", allAddressed && !submit.isPending && "submit-dock-ready")} data-save-progress-scale={saveProgressScale} data-save-progress-docked={saveProgressDocked ? "true" : "false"} data-mobile-save-progress-mini-to-section="true" data-mobile-save-progress-above-nav="true">
+            <SharpButton className={classNames("w-full max-w-full overflow-hidden whitespace-normal break-words text-center transition-all duration-300", saveProgressScale < 0.35 ? "rounded-full px-3 py-2 text-[0px] shadow-none before:content-['SAVE'] before:text-[9px] before:font-black before:tracking-[0.18em]" : saveProgressScale < 0.78 ? "rounded-full px-4 py-3 text-[10px]" : "py-5 text-sm", submit.isPending && "submit-button-pending")} disabled={submit.isPending} onClick={() => submit.mutate({ ...form, reflectionShared: false, dayNumber: snapshot?.challenge.currentDay ?? 1 })}>
+              {submit.isPending
+                ? (allAddressed ? "Locking in the day…" : "Saving progress…")
+                : allAddressed
+                  ? `Lock In Day ${snapshot?.challenge.currentDay ?? 1} · +${liveTaskPoints.visibleTotal} pts`
+                  : `Save Progress · ${completedRules}/${totalRules} done`}
+            </SharpButton>
+            {saveProgressDocked && !allAddressed && <p className="mt-2 text-center text-[10px] font-black uppercase tracking-[0.16em] text-[#C8A96E]/80">Save keeps your work. Lock In submits the day before midnight.</p>}
+            {saveNotice && <div role="status" className={classNames("pointer-events-none absolute -top-3 right-3 rounded-full border bg-black/90 px-2 py-1 text-[9px] font-black uppercase leading-none tracking-[0.16em] shadow-[0_0_18px_rgba(0,0,0,0.45)]", saveNotice.complete ? "border-[#2ECC71]/70 text-[#2ECC71]" : "border-[#C8A96E]/70 text-[#C8A96E]")}>{saveNotice.title}</div>}
+            {draftRestored && <div role="status" className="pointer-events-none absolute -top-3 left-3 rounded-full border border-[#C8A96E]/70 bg-black/90 px-2 py-1 text-[9px] font-black uppercase leading-none tracking-[0.16em] text-[#C8A96E] shadow-[0_0_18px_rgba(0,0,0,0.45)]">Draft recovered</div>}
+            {lastMissed.length > 0 && <div className="mt-3 border-l-4 border-[#C0392B] bg-[#180F0F] p-4 text-sm font-bold text-[#F0B7AE]">Rollover miss: {lastMissed.join(", ")}. Penalty recorded.</div>}
+          </div>
+        )}
       </section>
 
       <aside className="hidden min-w-0 max-w-full space-y-5 overflow-x-hidden xl:block">
