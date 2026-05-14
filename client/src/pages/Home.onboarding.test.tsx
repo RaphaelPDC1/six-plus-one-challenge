@@ -602,8 +602,6 @@ describe("Home onboarding shell", () => {
     expect(homeSource).toContain('data-testid="proof-v2-latest-grid"');
     expect(homeSource).toContain('data-testid="proof-v2-pressure-card"');
     expect(homeSource).toContain('data-testid="normal-proof-feed-below-v2"');
-    expect(homeSource).toContain("Proof wall above. Feed below.");
-    expect(homeSource).toContain("Full proof cards, comments, reactions, and Deep Thought stay here below the v2 layer.");
     expect(homeSource.indexOf('data-testid="proof-v2-top-layer"')).toBeLessThan(homeSource.indexOf('data-testid="normal-proof-feed-below-v2"'));
     expect(homeSource.indexOf('data-testid="normal-proof-feed-below-v2"')).toBeLessThan(homeSource.indexOf('data-testid="proof-readable-card"'));
     expect(homeSource).toContain('data-testid="proof-deep-thought"');

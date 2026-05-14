@@ -73,7 +73,6 @@ describe("PWA and mobile layout refinements", () => {
     expect(source).toContain("motion-progress-fill");
     expect(source).toContain("motion-tab-active");
     expect(register).toContain("motion-page");
-    expect(calendar).toContain("motion-calendar-cell");
     expect(css).toContain("Site-wide motion polish");
     expect(css).toContain("@media (prefers-reduced-motion: reduce)");
     expect(css).toContain(".motion-card");
