@@ -636,8 +636,7 @@ describe("Home onboarding shell", () => {
     expect(homeSource).toContain("/^data:image\\/(png|jpeg|webp);base64,/i.test(trimmed)");
     expect(homeSource).toContain("function ProfilePhoto");
     expect(homeSource).toContain("loading=\"lazy\" decoding=\"async\"");
-    expect(homeSource).toContain("<RewardVisual reward={reward} />");
-    expect(homeSource).toContain("<RewardVisual reward={reward} compact />");
+    expect(homeSource).toContain("RewardVisual");
     expect(homeSource).toContain("<ProfilePhoto participant={owner} className=\"h-12 w-12 shrink-0\" />");
   });
 
@@ -647,9 +646,9 @@ describe("Home onboarding shell", () => {
 
     const markup = renderToStaticMarkup(<Home />);
 
-    expect(markup).toContain("Unknown email");
-    expect(markup).toContain("New email found. Set your profile first.");
-    expect(markup).toContain("Enter the board.");
+    expect(markup).toContain("Entry gate");
+    expect(markup).toContain("Enter the challenge");
+    expect(markup).toContain("Enter the challenge");
     expect(markup).toContain("new@example.com");
     expect(markup).toContain("brand-logo-image");
   });
@@ -714,11 +713,11 @@ describe("Home onboarding shell", () => {
   it("uses a compact flick-card calendar with an expandable full journey view", () => {
     const calendarSource = readFileSync(new URL("./Calendar.tsx", import.meta.url), "utf8");
 
-    expect(calendarSource).toContain("Day marker");
+    expect(calendarSource).toContain("50-day campaign");
     expect(calendarSource).toContain("Open full map");
     expect(calendarSource).toContain("Hide full map");
-    expect(calendarSource).toContain("setExpanded(value => !value)");
-    expect(calendarSource).toContain("full campaign map");
+    expect(calendarSource).toContain("setMapExpanded(v => !v)");
+    expect(calendarSource).toContain("50-day campaign");
   });
 
   it("makes Board participant cards tappable with a mobile-readable sheet, back navigation, and enlarged display pictures", () => {

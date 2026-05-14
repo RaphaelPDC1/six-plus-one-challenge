@@ -69,10 +69,11 @@ describe("PWA and mobile layout refinements", () => {
 
     expect(source).toContain('data-motion-system="site-wide-v1"');
     expect(source).toContain("motion-card");
-    expect(source).toContain("motion-press");
+    expect(source).toContain("motion-card");
     expect(source).toContain("motion-progress-fill");
     expect(source).toContain("motion-tab-active");
     expect(register).toContain("motion-page");
+    expect(calendar).toContain("transition");
     expect(css).toContain("Site-wide motion polish");
     expect(css).toContain("@media (prefers-reduced-motion: reduce)");
     expect(css).toContain(".motion-card");

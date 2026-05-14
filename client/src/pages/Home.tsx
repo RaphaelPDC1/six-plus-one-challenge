@@ -4,6 +4,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Link } from "wouter";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { CalendarView } from "./Calendar";
+import { ScrollTiltedGrid } from "@/components/ScrollTiltedGrid";
 import { trpc } from "@/lib/trpc";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import { DAILY_PASS_THRESHOLD, DAILY_RULE_COUNT, clampLives, getDailyLogProgress } from "@/lib/challengeUi";
@@ -2870,29 +2871,33 @@ function ProofV2TopLayer({ publicLogs, snapshot, latestDay, waiting }: { publicL
       </div>
 
       <div className="grid gap-3 md:grid-cols-[1fr_0.72fr]" data-testid="proof-v2-latest-and-pressure">
-        <div className="border border-[#202020] bg-[#0B0B0B] p-3">
-          <div className="flex items-center justify-between gap-3">
+        <div className="border border-[#202020] bg-[#0B0B0B]" data-testid="proof-v2-latest-grid">
+          <div className="flex items-center justify-between gap-3 p-3">
             <MicroLabel tone="green">Latest receipts</MicroLabel>
-            <span className="text-[8px] font-black uppercase tracking-[0.16em] text-[#666]">Stable grid · newest first</span>
+            <span className="text-[8px] font-black uppercase tracking-[0.16em] text-[#666]">Scroll to reveal</span>
           </div>
-          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3" data-testid="proof-v2-latest-grid">
-            {latestTiles.map((log: any, index: number) => {
-              const owner = participants.find((p: any) => p.id === log.participantId);
-              const media = parseProofMedia(log.exerciseProofUrl)[0];
-              const src = media ? proofMediaSrc(media) : "";
-              const imageSrc = media ? proofImageSrc(media.url) : "";
-              return (
-                <div key={`${log.id}-latest-${index}`} className="relative min-h-[7.5rem] overflow-hidden border border-[#242424] bg-black" data-testid="proof-v2-latest-tile">
-                  {media && proofMediaType(media) === "video" ? <video className="h-full min-h-[7.5rem] w-full object-cover opacity-80" muted autoPlay loop playsInline preload="metadata"><source src={src} type={proofVideoMimeType(media.url, media.mimeType)} /></video> : imageSrc ? <img src={src} alt={`Latest proof from ${owner?.displayName ?? "participant"}`} className="h-full min-h-[7.5rem] w-full object-cover" loading="lazy" decoding="async" /> : <div className="grid min-h-[7.5rem] place-items-center p-3 text-center text-[9px] font-black uppercase tracking-[0.12em] text-[#C8A96E]">Teaching logged</div>}
-                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black via-black/70 to-transparent p-2">
-                    <p className="truncate text-[10px] font-black uppercase tracking-[0.08em] text-white">{owner?.displayName ?? "Participant"}</p>
-                    <p className="text-[8px] font-black uppercase tracking-[0.14em] text-[#E0B85A]">Day {log.dayNumber}{index === 0 ? " · New" : ""}</p>
-                  </div>
-                </div>
-              );
-            })}
-            {latestTiles.length === 0 && <p className="col-span-full border border-[#2A2A2A] bg-[#080808] p-4 text-[10px] font-black uppercase tracking-[0.14em] text-[#666]">No media receipts yet.</p>}
-          </div>
+          {latestTiles.length === 0 ? (
+            <p className="p-4 text-[10px] font-black uppercase tracking-[0.14em] text-[#666]">No media receipts yet.</p>
+          ) : (
+            <ScrollTiltedGrid
+              items={latestTiles.map((log: any, index: number) => {
+                const owner = participants.find((p: any) => p.id === log.participantId);
+                const media = parseProofMedia(log.exerciseProofUrl)[0];
+                const src = media ? proofMediaSrc(media) : "";
+                return {
+                  src,
+                  caption: `${owner?.displayName ?? "Participant"}${index === 0 ? " · New" : ""}`,
+                  dayNumber: log.dayNumber,
+                  ownerName: owner?.displayName,
+                };
+              })}
+              aspectRatio="3/4"
+              maxTilt={55}
+              maxBlur={6}
+              rounded="0"
+              gap={10}
+            />
+          )}
         </div>
         <div className="border border-[#3A1815] bg-[#120707] p-3" data-testid="proof-v2-pressure-card">
           <MicroLabel tone="red">Accountability pressure</MicroLabel>
@@ -3036,33 +3041,162 @@ function ProofFeed({ snapshot }: { snapshot: Snapshot }) {
   );
 }
 
-function Rewards({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void }) {
-  const participantPoints = snapshot?.participant?.totalPoints ?? 0;
-  const redeem = trpc.challenge.redeemReward.useMutation({ onSuccess: () => { pulse([15, 35, 15]); toast("Redemption request sent to the admin."); refetch(); }, onError: e => toast.error(e.message) });
+const REWARD_TIERS = [
+  { label: "Bronze",   min: 0,   max: 99,  color: "#B87333", bg: "#1A1009" },
+  { label: "Silver",   min: 100, max: 199, color: "#BFC7D5", bg: "#10131A" },
+  { label: "Gold",     min: 200, max: 349, color: "#C8A96E", bg: "#16130B" },
+  { label: "Platinum", min: 350, max: Infinity, color: "#E8F4FF", bg: "#0D1220" },
+] as const;
+
+function RewardTierLadder({ points }: { points: number }) {
+  const currentTier = REWARD_TIERS.findLast(t => points >= t.min) ?? REWARD_TIERS[0];
+  const nextTier = REWARD_TIERS.find(t => t.min > points);
+  const pctToNext = nextTier
+    ? Math.round(((points - currentTier.min) / (nextTier.min - currentTier.min)) * 100)
+    : 100;
+
   return (
-    <section className="border border-[#2A2A2A] bg-[#101010] p-5">
-      <div className="flex flex-wrap items-end justify-between gap-4">
+    <div className="border border-[#2A2A2A] bg-[#0D0D0D] p-4">
+      <div className="flex items-end justify-between gap-4">
         <div>
-          <MicroLabel tone="gold">Rewards</MicroLabel>
-          <h2 className="mt-2 text-3xl font-black uppercase tracking-[-0.07em] text-white sm:text-4xl">Tap to redeem.</h2>
+          <MicroLabel tone="gold">Your tier</MicroLabel>
+          <p className="mt-2 text-3xl font-black uppercase leading-none tracking-[-0.06em]" style={{ color: currentTier.color }}>
+            {currentTier.label}
+          </p>
+          <p className="mt-1 text-xs font-bold text-[#777]">
+            {points} pts{nextTier ? ` · ${nextTier.min - points} to ${nextTier.label}` : " · Max tier"}
+          </p>
         </div>
-        <p className="max-w-sm text-xs font-bold uppercase tracking-[0.14em] text-[#777]">Only the three agreed rewards are shown. A tap logs the request and sends an admin notification.</p>
+        <div className="text-right">
+          <p className="text-[9px] font-black uppercase tracking-[0.2em] text-[#777]">Progress</p>
+          <p className="mt-1 text-2xl font-black tabular-nums" style={{ color: currentTier.color }}>{pctToNext}%</p>
+        </div>
       </div>
-      <div className="mt-5 grid gap-3 md:grid-cols-3">
-        {(snapshot?.rewards ?? []).map((reward: any) => {
-          const canRedeem = participantPoints >= reward.pointsCost;
+      {/* Tier progress bar */}
+      <div className="mt-4 h-1.5 bg-[#1A1A1A]">
+        <div
+          className="h-full transition-all duration-700"
+          style={{ width: `${pctToNext}%`, background: currentTier.color }}
+        />
+      </div>
+      {/* Tier steps */}
+      <div className="mt-4 grid grid-cols-4 gap-1">
+        {REWARD_TIERS.map(tier => {
+          const reached = points >= tier.min;
           return (
-            <button key={reward.id} className={classNames("motion-card motion-press border bg-[#101010] p-5 text-left transition hover:border-[#C8A96E] disabled:cursor-not-allowed disabled:opacity-60", canRedeem ? "border-[#2A2A2A]" : "border-[#2A2A2A]/70")} disabled={!canRedeem || redeem.isPending} onClick={() => { pulse(12); redeem.mutate({ rewardId: reward.id }); }}>
-              <RewardVisual reward={reward} />
-              <MicroLabel tone="gold">{reward.pointsCost} points</MicroLabel>
-              <h3 className="mt-3 text-2xl font-black uppercase tracking-[-0.05em] text-white">{reward.name}</h3>
-              <p className="mt-3 text-sm font-bold leading-6 text-[#999]">{reward.description}</p>
-              <span className={classNames("mt-5 inline-flex border px-3 py-2 text-[10px] font-black uppercase tracking-[0.16em]", canRedeem ? "border-[#2ECC71] text-[#2ECC71]" : "border-[#C8A96E] text-[#C8A96E]")}>{canRedeem ? (redeem.isPending ? "Sending" : "Tap to redeem") : `${reward.pointsCost - participantPoints} pts needed`}</span>
-            </button>
+            <div
+              key={tier.label}
+              className="border p-2 text-center"
+              style={{
+                borderColor: reached ? tier.color : "#2A2A2A",
+                background: reached ? tier.bg : "#0B0B0B",
+              }}
+            >
+              <p className="text-[8px] font-black uppercase tracking-[0.16em]" style={{ color: reached ? tier.color : "#444" }}>
+                {tier.label}
+              </p>
+              <p className="mt-0.5 text-[9px] font-black tabular-nums text-[#555]">
+                {tier.min === 0 ? "Start" : `${tier.min}+`}
+              </p>
+              {reached && <div className="mx-auto mt-1 h-px w-4" style={{ background: tier.color }} />}
+            </div>
           );
         })}
       </div>
-    </section>
+    </div>
+  );
+}
+
+function Rewards({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void }) {
+  const participantPoints = snapshot?.participant?.totalPoints ?? 0;
+  const redeem = trpc.challenge.redeemReward.useMutation({
+    onSuccess: () => { pulse([15, 35, 15]); toast("Redemption request sent to the admin."); refetch(); },
+    onError: e => toast.error(e.message),
+  });
+
+  const rewards = snapshot?.rewards ?? [];
+  const affordable = rewards.filter((r: any) => participantPoints >= r.pointsCost);
+  const locked     = rewards.filter((r: any) => participantPoints < r.pointsCost);
+
+  return (
+    <div className="space-y-4">
+      {/* Tier ladder */}
+      <RewardTierLadder points={participantPoints} />
+
+      {/* Header */}
+      <div className="flex flex-wrap items-end justify-between gap-3 px-1">
+        <div>
+          <MicroLabel tone="gold">Pure Sport rewards</MicroLabel>
+          <h2 className="mt-2 text-3xl font-black uppercase leading-none tracking-[-0.07em] text-white">
+            Earn it.<br /><span className="text-[#C8A96E]">Redeem it.</span>
+          </h2>
+        </div>
+        <div className="text-right">
+          <p className="text-[9px] font-black uppercase tracking-[0.18em] text-[#777]">Available now</p>
+          <p className="mt-1 text-2xl font-black text-[#2ECC71]">{affordable.length}<span className="text-sm text-[#555]">/{rewards.length}</span></p>
+        </div>
+      </div>
+
+      {/* Affordable rewards */}
+      {affordable.length > 0 && (
+        <div className="grid gap-3 md:grid-cols-2">
+          {affordable.map((reward: any) => (
+            <button
+              key={reward.id}
+              className="motion-card motion-press border border-[#2ECC71]/40 bg-[#0A1A10] p-4 text-left transition hover:border-[#2ECC71]/80 disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={redeem.isPending}
+              onClick={() => { pulse(12); redeem.mutate({ rewardId: reward.id }); }}
+            >
+              <div className="flex items-start gap-3">
+                <RewardVisual reward={reward} compact />
+                <div className="min-w-0 flex-1">
+                  <MicroLabel tone="green">{reward.pointsCost} pts · unlocked</MicroLabel>
+                  <h3 className="mt-2 text-lg font-black uppercase leading-tight tracking-[-0.04em] text-white">{reward.name}</h3>
+                  <p className="mt-2 text-xs font-bold leading-5 text-[#999]">{reward.description}</p>
+                </div>
+              </div>
+              <div className="mt-4 border border-[#2ECC71]/60 py-2 text-center text-[10px] font-black uppercase tracking-[0.18em] text-[#2ECC71]">
+                {redeem.isPending ? "Sending request…" : "Tap to redeem"}
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Locked rewards */}
+      {locked.length > 0 && (
+        <>
+          <p className="mt-2 text-[9px] font-black uppercase tracking-[0.28em] text-[#777]">Locked — keep banking points</p>
+          <div className="grid gap-2 md:grid-cols-3">
+            {locked.map((reward: any) => {
+              const needed = reward.pointsCost - participantPoints;
+              const pct = Math.min(100, Math.round((participantPoints / reward.pointsCost) * 100));
+              return (
+                <div key={reward.id} className="border border-[#2A2A2A] bg-[#0D0D0D] p-4 opacity-75">
+                  <div className="flex items-center gap-3">
+                    <RewardVisual reward={reward} compact />
+                    <div className="min-w-0 flex-1">
+                      <MicroLabel tone="gold">{reward.pointsCost} pts</MicroLabel>
+                      <h3 className="mt-1.5 text-sm font-black uppercase leading-tight tracking-[-0.03em] text-white">{reward.name}</h3>
+                    </div>
+                  </div>
+                  <div className="mt-3 h-1 bg-[#1A1A1A]">
+                    <div className="h-full bg-[#C8A96E] transition-all duration-700" style={{ width: `${pct}%` }} />
+                  </div>
+                  <p className="mt-2 text-[9px] font-black uppercase tracking-[0.16em] text-[#666]">{needed} pts to unlock · {pct}% there</p>
+                </div>
+              );
+            })}
+          </div>
+        </>
+      )}
+
+      {rewards.length === 0 && (
+        <div className="border border-[#2A2A2A] bg-[#101010] p-8 text-center">
+          <p className="text-sm font-bold text-[#777]">Rewards catalogue loading…</p>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -3087,38 +3221,116 @@ function OnboardingGate({ user, refetch }: { user: any; refetch: () => void }) {
   }
 
   return (
-    <main className="poster-grid min-h-screen bg-[#0D0D0D] text-white">
-      <section className="container py-6 md:py-8">
-        <div className="mb-6 flex items-center gap-3 border-b border-[#2A2A2A] pb-5">
-          <LogoMark />
-          <div>
-            <MicroLabel tone="gold">6+1 entry gate</MicroLabel>
-            <p className="mt-1 text-xs font-black uppercase tracking-[0.18em] text-white">New email found. Set your profile first.</p>
+    <main className="poster-grid motion-page min-h-screen bg-[#0D0D0D] text-white">
+      {/* Header */}
+      <header className="border-b border-[#2A2A2A] bg-[#0D0D0D]/95 backdrop-blur">
+        <div className="container flex items-center gap-4 py-4">
+          <LogoMark compact />
+          <div className="min-w-0">
+            <MicroLabel tone="gold">6+1 Four Lives Challenge</MicroLabel>
+            <p className="mt-1 text-[10px] font-black uppercase tracking-[0.16em] text-[#777]">New challenger intake</p>
           </div>
         </div>
-        <form className="mx-auto max-w-3xl border border-[#2A2A2A] bg-[#101010] p-5 shadow-[0_22px_90px_rgba(0,0,0,0.38)]" onSubmit={event => { event.preventDefault(); haptics.submit(); complete.mutate({ displayName, primaryGoal, biggestObstacle, trainingLevel: trainingLevel as any, motivationStyle: "adaptive", profilePhotoDataUrl }); }}>
-          <MicroLabel tone="red">Unknown email</MicroLabel>
-          <h1 className="mt-3 text-5xl font-black uppercase leading-none tracking-[-0.08em] text-white">Enter the board.</h1>
-          <p className="mt-4 text-sm font-bold leading-6 text-[#999]">{user?.email ?? "This account"} is signed in, but not yet on the 6+1 board. Complete the intake and the app will open with your profile, goal, and photo. The Warden adapts from your work, private reflections, and group-chat signals rather than a chosen style.</p>
-          <div className="mt-6 grid gap-4 md:grid-cols-[160px_1fr]">
-            <label className="grid min-h-40 cursor-pointer place-items-center border border-dashed border-[#C8A96E]/70 bg-black/40 p-4 text-center text-[#C8A96E] transition hover:bg-[#17120A]">
-              {profilePhotoDataUrl ? <img src={profilePhotoDataUrl} alt="Profile preview" className="h-28 w-28 object-cover" /> : <span className="flex flex-col items-center gap-2 text-[10px] font-black uppercase tracking-[0.16em]"><Camera className="h-6 w-6" />Upload photo</span>}
+      </header>
+
+      <section className="container py-8 md:py-12">
+        {/* Hero */}
+        <div className="mb-8 max-w-lg">
+          <MicroLabel tone="red">Entry gate</MicroLabel>
+          <h1 className="mt-3 text-6xl font-black uppercase leading-[0.86] tracking-[-0.1em] text-white sm:text-7xl">
+            Enter<br />
+            <span className="text-[#C8A96E]">the board.</span>
+          </h1>
+          <div className="mt-4 h-[2px] w-16 bg-[#C8A96E]" />
+          <p className="mt-5 max-w-md text-sm font-bold leading-6 text-[#999]">
+            {user?.email ?? "This account"} is signed in but not yet on the 6+1 board. Set your profile and the Warden will adapt to your work — no preset styles needed.
+          </p>
+        </div>
+
+        <form
+          className="mx-auto max-w-2xl space-y-4"
+          onSubmit={event => {
+            event.preventDefault();
+            haptics.submit();
+            complete.mutate({ displayName, primaryGoal, biggestObstacle, trainingLevel: trainingLevel as any, motivationStyle: "adaptive", profilePhotoDataUrl });
+          }}
+        >
+          {/* Photo + name row */}
+          <div className="grid gap-4 sm:grid-cols-[140px_1fr]">
+            <label className="group flex min-h-[140px] cursor-pointer flex-col items-center justify-center border border-dashed border-[#C8A96E]/50 bg-[#0A0A0A] text-center transition hover:border-[#C8A96E] hover:bg-[#17120A]">
+              {profilePhotoDataUrl ? (
+                <img src={profilePhotoDataUrl} alt="Profile preview" className="h-full w-full object-cover" style={{ minHeight: 140 }} />
+              ) : (
+                <span className="flex flex-col items-center gap-2 p-4 text-[#C8A96E]">
+                  <Camera className="h-7 w-7" />
+                  <span className="text-[9px] font-black uppercase tracking-[0.2em]">Photo</span>
+                  <span className="text-[8px] font-bold text-[#777]">PNG · JPG · WEBP<br />Max 2MB</span>
+                </span>
+              )}
               <input type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={event => handlePhoto(event.target.files?.[0])} />
             </label>
+
             <div className="space-y-3">
-              <Field label="Display name"><TextInput value={displayName} onChange={event => setDisplayName(event.target.value)} placeholder="Name shown on the board" /></Field>
-              <Field label="Main goal"><TextInput value={primaryGoal} onChange={event => setPrimaryGoal(event.target.value)} placeholder="Drop weight, rebuild discipline, raise standards…" /></Field>
+              <div className="border border-[#2A2A2A] bg-[#101010] p-4">
+                <Field label="Display name">
+                  <TextInput
+                    value={displayName}
+                    onChange={event => setDisplayName(event.target.value)}
+                    placeholder="Name shown on the board"
+                    autoFocus
+                  />
+                </Field>
+              </div>
+              <div className="border border-[#2A2A2A] bg-[#101010] p-4">
+                <Field label="Main goal">
+                  <TextInput
+                    value={primaryGoal}
+                    onChange={event => setPrimaryGoal(event.target.value)}
+                    placeholder="Drop weight, rebuild discipline, raise standards…"
+                  />
+                </Field>
+              </div>
             </div>
           </div>
-          <div className="mt-4 grid gap-3">
-            <Field label="Training level"><select value={trainingLevel} onChange={event => setTrainingLevel(event.target.value)} className="min-h-12 w-full border border-[#2A2A2A] bg-black px-4 text-sm font-bold text-white outline-none focus:border-[#C8A96E]"><option value="starting">Starting again</option><option value="building">Building consistency</option><option value="consistent">Already consistent</option><option value="advanced">Advanced</option></select></Field>
-            <div className="border border-[#2A2A2A] bg-black p-4">
-              <MicroLabel tone="gold">Universal Warden</MicroLabel>
-              <p className="mt-2 text-sm font-bold leading-6 text-[#AFAFAF]">There is no Warden type to pick. The Warden reads your logs, consistency, misses, wins, and group-chat signals, then adapts its feedback from the data.</p>
-            </div>
+
+          {/* Training level */}
+          <div className="border border-[#2A2A2A] bg-[#101010] p-4">
+            <Field label="Training level">
+              <select
+                value={trainingLevel}
+                onChange={event => setTrainingLevel(event.target.value)}
+                className="min-h-12 w-full border border-[#2A2A2A] bg-black px-4 text-sm font-bold text-white outline-none focus:border-[#C8A96E]"
+              >
+                <option value="starting">Starting again</option>
+                <option value="building">Building consistency</option>
+                <option value="consistent">Already consistent</option>
+                <option value="advanced">Advanced</option>
+              </select>
+            </Field>
           </div>
-          <Field label="What usually gets in the way?"><TextArea value={biggestObstacle} onChange={event => setBiggestObstacle(event.target.value)} placeholder="Time, weekends, travel, stress, motivation dips..." /></Field>
-          <SharpButton type="submit" disabled={complete.isPending} className="mt-5 w-full">{complete.isPending ? "Personalising" : "Enter challenge"}</SharpButton>
+
+          {/* Obstacle */}
+          <div className="border border-[#2A2A2A] bg-[#101010] p-4">
+            <Field label="What usually gets in the way?">
+              <TextArea
+                value={biggestObstacle}
+                onChange={event => setBiggestObstacle(event.target.value)}
+                placeholder="Time, weekends, travel, stress, motivation dips…"
+              />
+            </Field>
+          </div>
+
+          {/* Warden info */}
+          <div className="border-l-4 border-[#C8A96E] bg-[#16130B] p-4">
+            <MicroLabel tone="gold">Universal Warden — no type to pick</MicroLabel>
+            <p className="mt-2 text-sm font-bold leading-6 text-[#BDB8AC]">
+              The Warden reads your logs, consistency, misses, wins, and group-chat signals. It adapts from the data — not from a preset style you choose upfront.
+            </p>
+          </div>
+
+          <SharpButton type="submit" disabled={complete.isPending || !displayName.trim()} className="w-full py-5 text-sm">
+            {complete.isPending ? "Setting up your profile…" : "Enter the challenge"}
+          </SharpButton>
         </form>
       </section>
     </main>
