@@ -1,0 +1,19 @@
+{
+  "query": "SELECT id, displayName, livesRemaining, totalPoints, daysComplete, currentStreak, createdAt FROM participants WHERE LOWER(displayName) LIKE '%kwab%' OR LOWER(whatsappName) LIKE '%kwab%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2P9ir9M7b3E7Qkh.8b2c854ea8b3 --database HPubf4auNvt8KXvgrLad5c --execute SELECT id, displayName, livesRemaining, totalPoints, daysComplete, currentStreak, createdAt FROM participants WHERE LOWER(displayName) LIKE '%kwab%' OR LOWER(whatsappName) LIKE '%kwab%';",
+  "rows": [
+    {
+      "id": "60012",
+      "displayName": "Kwabs",
+      "livesRemaining": "2",
+      "totalPoints": "79",
+      "daysComplete": "7",
+      "currentStreak": "0",
+      "createdAt": "2026-05-06 15:46:59"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tdisplayName\tlivesRemaining\ttotalPoints\tdaysComplete\tcurrentStreak\tcreatedAt\n60012\tKwabs\t2\t79\t7\t0\t2026-05-06 15:46:59\n",
+  "stderr": "",
+  "execution_time_ms": 284
+}

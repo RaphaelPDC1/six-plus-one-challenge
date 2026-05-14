@@ -1,0 +1,17 @@
+{
+  "query": "\n-- Kwabs: Day 8 excused (Option B) - 0 non-waived penalties after removing Day 8 event = 4 lives\n-- The remaining penalty event for Kwabs (id 240001 was already deleted) - let's check what's left\nSELECT id, participantId, dailyLogId, reason, status FROM payment_events WHERE participantId = 60012;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2P9ir9M7b3E7Qkh.8b2c854ea8b3 --database HPubf4auNvt8KXvgrLad5c --execute \n-- Kwabs: Day 8 excused (Option B) - 0 non-waived penalties after removing Day 8 event = 4 lives\n-- The remaining penalty event for Kwabs (id 240001 was already deleted) - let's check what's left\nSELECT id, participantId, dailyLogId, reason, status FROM payment_events WHERE participantId = 60012;\n",
+  "rows": [
+    {
+      "id": "270001",
+      "participantId": "60012",
+      "dailyLogId": "1500001",
+      "reason": "Deadline passed for day 8. Missed rule(s): 30m Exercise, Track Everything",
+      "status": "pending"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tparticipantId\tdailyLogId\treason\tstatus\n270001\t60012\t1500001\tDeadline passed for day 8. Missed rule(s): 30m Exercise, Track Everything\tpending\n",
+  "stderr": "",
+  "execution_time_ms": 265
+}

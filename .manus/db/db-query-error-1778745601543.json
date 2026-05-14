@@ -1,0 +1,8 @@
+{
+  "query": "ALTER TABLE `payment_events` ADD CONSTRAINT `payment_events_unique_penalty_idx` UNIQUE(`participantId`,`dailyLogId`);",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2P9ir9M7b3E7Qkh.8b2c854ea8b3 --database HPubf4auNvt8KXvgrLad5c --execute ALTER TABLE `payment_events` ADD CONSTRAINT `payment_events_unique_penalty_idx` UNIQUE(`participantId`,`dailyLogId`);",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1062 (23000) at line 1: Duplicate entry '?' for key 'payment_events.payment_events_unique_penalty_idx'"
+  ]
+}

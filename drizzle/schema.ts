@@ -120,7 +120,10 @@ export const paymentEvents = mysqlTable("payment_events", {
   confirmedByUserId: int("confirmedByUserId"),
   confirmedAt: timestamp("confirmedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-});
+}, table => ({
+  // Prevent duplicate life-loss penalties for the same daily log
+  uniquePenaltyPerLog: uniqueIndex("payment_events_unique_penalty_idx").on(table.participantId, table.dailyLogId),
+}));
 
 export const rewardCatalogue = mysqlTable("reward_catalogue", {
   id: int("id").autoincrement().primaryKey(),

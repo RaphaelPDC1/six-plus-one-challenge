@@ -1,0 +1,1 @@
+ALTER TABLE `payment_events` ADD CONSTRAINT `payment_events_unique_penalty_idx` UNIQUE(`participantId`,`dailyLogId`);

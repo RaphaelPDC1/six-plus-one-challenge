@@ -1458,8 +1458,8 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
     if (availableSlots === 0) { toast.error("You can attach up to 6 proof items per day."); return; }
     files.slice(0, availableSlots).forEach(file => {
       if (!file.type.match(/^(image\/(png|jpeg|webp)|video\/(mp4|webm|quicktime))$/)) { toast.error("Use PNG, JPG, WEBP, MP4, MOV, or WEBM proof media."); return; }
-      const limit = file.type.startsWith("video/") ? 12_000_000 : 5_000_000;
-      if (file.size > limit) { toast.error(file.type.startsWith("video/") ? "Proof video must be under 12MB." : "Proof image must be under 5MB."); return; }
+      const limit = file.type.startsWith("video/") ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
+      if (file.size > limit) { toast.error(file.type.startsWith("video/") ? "Proof video must be under 50MB." : "Proof image must be under 10MB."); return; }
       const reader = new FileReader();
       const mimeType = file.type as "image/png" | "image/jpeg" | "image/webp" | "video/mp4" | "video/webm" | "video/quicktime";
       reader.onload = () => uploadProof.mutate({ fileName: file.name || "exercise-proof", mimeType, dataUrl: String(reader.result) });
@@ -1472,8 +1472,8 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
   function handleBackdatedProofFile(file?: File | null) {
     if (!file) return;
     if (!file.type.match(/^(image\/(png|jpeg|webp)|video\/(mp4|webm|quicktime))$/)) { toast.error("Use PNG, JPG, WEBP, MP4, MOV, or WEBM proof media."); return; }
-    const limit = file.type.startsWith("video/") ? 12_000_000 : 5_000_000;
-    if (file.size > limit) { toast.error(file.type.startsWith("video/") ? "Backdated proof video must be under 12MB." : "Backdated proof image must be under 5MB."); return; }
+    const limit = file.type.startsWith("video/") ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
+    if (file.size > limit) { toast.error(file.type.startsWith("video/") ? "Backdated proof video must be under 50MB." : "Backdated proof image must be under 10MB."); return; }
     const reader = new FileReader();
     const mimeType = file.type as "image/png" | "image/jpeg" | "image/webp" | "video/mp4" | "video/webm" | "video/quicktime";
     reader.onload = () => uploadBackdatedProof.mutate({ fileName: file.name || "nay-day-2-proof", mimeType, dataUrl: String(reader.result) });

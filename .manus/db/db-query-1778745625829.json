@@ -1,0 +1,9 @@
+{
+  "query": "\n-- Delete duplicate payment events, keeping only the first (lowest id) per (participantId, dailyLogId)\nDELETE FROM payment_events\nWHERE id NOT IN (\n  SELECT keep_id FROM (\n    SELECT MIN(id) AS keep_id\n    FROM payment_events\n    WHERE dailyLogId IS NOT NULL\n    GROUP BY participantId, dailyLogId\n  ) AS keepers\n)\nAND dailyLogId IS NOT NULL;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2P9ir9M7b3E7Qkh.8b2c854ea8b3 --database HPubf4auNvt8KXvgrLad5c --execute \n-- Delete duplicate payment events, keeping only the first (lowest id) per (participantId, dailyLogId)\nDELETE FROM payment_events\nWHERE id NOT IN (\n  SELECT keep_id FROM (\n    SELECT MIN(id) AS keep_id\n    FROM payment_events\n    WHERE dailyLogId IS NOT NULL\n    GROUP BY participantId, dailyLogId\n  ) AS keepers\n)\nAND dailyLogId IS NOT NULL;\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 281
+}

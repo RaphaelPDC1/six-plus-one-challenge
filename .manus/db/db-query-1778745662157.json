@@ -1,0 +1,77 @@
+{
+  "query": "\nSELECT id, dayNumber, logDate, dayComplete, pointsAwarded, submittedAt FROM daily_logs WHERE participantId = 90001 ORDER BY dayNumber;\n\n-- Also check Laud's payment events since they show 1 penalty but 4 lives\nSELECT id, participantId, dailyLogId, reason, status FROM payment_events WHERE participantId = 150001;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2P9ir9M7b3E7Qkh.8b2c854ea8b3 --database HPubf4auNvt8KXvgrLad5c --execute \nSELECT id, dayNumber, logDate, dayComplete, pointsAwarded, submittedAt FROM daily_logs WHERE participantId = 90001 ORDER BY dayNumber;\n\n-- Also check Laud's payment events since they show 1 penalty but 4 lives\nSELECT id, participantId, dailyLogId, reason, status FROM payment_events WHERE participantId = 150001;\n",
+  "rows": [
+    {
+      "id": "30002",
+      "dayNumber": "1",
+      "logDate": "2026-05-06",
+      "dayComplete": "1",
+      "pointsAwarded": "10",
+      "submittedAt": "2026-05-06 18:31:03"
+    },
+    {
+      "id": "120002",
+      "dayNumber": "2",
+      "logDate": "2026-05-07",
+      "dayComplete": "1",
+      "pointsAwarded": "14",
+      "submittedAt": "2026-05-07 16:45:04"
+    },
+    {
+      "id": "240003",
+      "dayNumber": "3",
+      "logDate": "2026-05-07",
+      "dayComplete": "1",
+      "pointsAwarded": "14",
+      "submittedAt": "2026-05-08 21:46:41"
+    },
+    {
+      "id": "570002",
+      "dayNumber": "4",
+      "logDate": "2026-05-08",
+      "dayComplete": "1",
+      "pointsAwarded": "14",
+      "submittedAt": "2026-05-09 22:53:56"
+    },
+    {
+      "id": "840003",
+      "dayNumber": "5",
+      "logDate": "2026-05-09",
+      "dayComplete": "1",
+      "pointsAwarded": "10",
+      "submittedAt": "2026-05-10 22:53:26"
+    },
+    {
+      "id": "840006",
+      "dayNumber": "6",
+      "logDate": "2026-05-10",
+      "dayComplete": "1",
+      "pointsAwarded": "8",
+      "submittedAt": "2026-05-11 20:51:41"
+    },
+    {
+      "id": "1140002",
+      "dayNumber": "7",
+      "logDate": "2026-05-11",
+      "dayComplete": "1",
+      "pointsAwarded": "10",
+      "submittedAt": "2026-05-12 20:25:07"
+    },
+    {
+      "id": "1590001",
+      "dayNumber": "8",
+      "logDate": "2026-05-12",
+      "dayComplete": "1",
+      "pointsAwarded": "10",
+      "submittedAt": "2026-05-13 20:20:36"
+    }
+  ],
+  "messages": [
+    "id\tparticipantId\tdailyLogId\treason\tstatus",
+    "120001\t150001\t720001\tDeadline passed for day 4. Missed rule(s): No Alcohol, Clean Eating, 30m Exercise, Daily Reflection, Read & Teach, Track Everything\tpending"
+  ],
+  "stdout": "id\tdayNumber\tlogDate\tdayComplete\tpointsAwarded\tsubmittedAt\n30002\t1\t2026-05-06\t1\t10\t2026-05-06 18:31:03\n120002\t2\t2026-05-07\t1\t14\t2026-05-07 16:45:04\n240003\t3\t2026-05-07\t1\t14\t2026-05-08 21:46:41\n570002\t4\t2026-05-08\t1\t14\t2026-05-09 22:53:56\n840003\t5\t2026-05-09\t1\t10\t2026-05-10 22:53:26\n840006\t6\t2026-05-10\t1\t8\t2026-05-11 20:51:41\n1140002\t7\t2026-05-11\t1\t10\t2026-05-12 20:25:07\n1590001\t8\t2026-05-12\t1\t10\t2026-05-13 20:20:36\nid\tparticipantId\tdailyLogId\treason\tstatus\n120001\t150001\t720001\tDeadline passed for day 4. Missed rule(s): No Alcohol, Clean Eating, 30m Exercise, Daily Reflection, Read & Teach, Track Everything\tpending\n",
+  "stderr": "",
+  "execution_time_ms": 267
+}

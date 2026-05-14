@@ -199,16 +199,17 @@ export const appRouter = router({
       .input(z.object({
         fileName: z.string().trim().min(1).max(180),
         mimeType: z.enum(["image/png", "image/jpeg", "image/webp", "video/mp4", "video/webm", "video/quicktime"]),
-        dataUrl: z.string().max(18_000_000).regex(/^data:(image\/(png|jpeg|webp)|video\/(mp4|webm|quicktime));base64,[A-Za-z0-9+/=]+$/, "Proof media must be a PNG, JPG, WEBP, MP4, MOV, or WEBM data URL."),
+        // base64 overhead is ~4/3 of raw bytes; 50MB video → ~67M chars, 10MB image → ~14M chars
+        dataUrl: z.string().max(70_000_000).regex(/^data:(image\/(png|jpeg|webp)|video\/(mp4|webm|quicktime));base64,[A-Za-z0-9+/=]+$/, "Proof media must be a PNG, JPG, WEBP, MP4, MOV, or WEBM data URL."),
       }))
       .mutation(async ({ ctx, input }) => {
         const participant = await getOrCreateParticipant(ctx.user);
         const extension = input.mimeType === "image/png" ? "png" : input.mimeType === "image/webp" ? "webp" : input.mimeType === "video/mp4" ? "mp4" : input.mimeType === "video/webm" ? "webm" : input.mimeType === "video/quicktime" ? "mov" : "jpg";
         const base64 = input.dataUrl.split(",")[1] ?? "";
         const bytes = Buffer.from(base64, "base64");
-        const sizeLimit = input.mimeType.startsWith("video/") ? 12_000_000 : 5_000_000;
+        const sizeLimit = input.mimeType.startsWith("video/") ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
         if (bytes.length === 0 || bytes.length > sizeLimit) {
-          throw new TRPCError({ code: "BAD_REQUEST", message: input.mimeType.startsWith("video/") ? "Proof video must be under 12MB." : "Proof image must be under 5MB." });
+          throw new TRPCError({ code: "BAD_REQUEST", message: input.mimeType.startsWith("video/") ? "Proof video must be under 50MB." : "Proof image must be under 10MB." });
         }
         const safeName = input.fileName.replace(/[^a-z0-9._-]/gi, "-").slice(0, 80) || "exercise-proof";
         const stored = await storagePut(`exercise-proof/participant-${participant.id}/${Date.now()}-${safeName}.${extension}`, bytes, input.mimeType);

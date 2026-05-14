@@ -1,0 +1,9 @@
+{
+  "query": "\n-- 1. Restore Kwabs to 4 lives\nUPDATE participants SET livesRemaining = 4 WHERE id = 60012;\n\n-- 2. Remove both duplicate payment events for Day 8\nDELETE FROM payment_events WHERE participantId = 60012 AND dailyLogId = 1500001;\n\n-- 3. Remove the duplicate warden life_lost messages for Kwabs (both fired at same second)\nDELETE FROM warden_messages WHERE id IN (300001, 300002);\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2P9ir9M7b3E7Qkh.8b2c854ea8b3 --database HPubf4auNvt8KXvgrLad5c --execute \n-- 1. Restore Kwabs to 4 lives\nUPDATE participants SET livesRemaining = 4 WHERE id = 60012;\n\n-- 2. Remove both duplicate payment events for Day 8\nDELETE FROM payment_events WHERE participantId = 60012 AND dailyLogId = 1500001;\n\n-- 3. Remove the duplicate warden life_lost messages for Kwabs (both fired at same second)\nDELETE FROM warden_messages WHERE id IN (300001, 300002);\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 282
+}

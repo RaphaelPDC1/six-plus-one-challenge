@@ -818,6 +818,8 @@ export async function finalizePreviousDayIfNeeded(participantId: number, now = n
     return { finalized: false as const, reason: "no_overdue_day" as const };
   }
 
+  // Re-fetch the log inside the finalize scope so a concurrent call that already
+  // inserted a penalty row will be visible here (avoids the TOCTOU race).
   let log = await getTodayLog(participantId, dayToFinalize);
   if (!log) {
     await db.insert(dailyLogs).values({
@@ -845,7 +847,11 @@ export async function finalizePreviousDayIfNeeded(participantId: number, now = n
   }
   if (!log || log.dayComplete) return { finalized: false as const, reason: "already_complete" as const };
 
-  const existingPenalty = await db.select().from(paymentEvents).where(eq(paymentEvents.dailyLogId, log.id)).limit(1);
+  // Double-check for an existing penalty AFTER re-reading the log to close the
+  // TOCTOU window where two concurrent snapshot requests both pass the first check.
+  const existingPenalty = await db.select().from(paymentEvents)
+    .where(and(eq(paymentEvents.participantId, participantId), eq(paymentEvents.dailyLogId, log.id)))
+    .limit(1);
   if (existingPenalty[0]) return { finalized: false as const, reason: "already_penalized" as const };
 
   const exerciseDone = Boolean(log.exerciseDone) || ((log.exerciseDuration ?? 0) >= 30 && String(log.exerciseType ?? "").trim().length > 0);

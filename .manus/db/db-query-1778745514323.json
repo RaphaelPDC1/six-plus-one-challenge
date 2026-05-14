@@ -1,0 +1,94 @@
+{
+  "query": "SELECT id, displayName, livesRemaining, totalPoints, daysComplete FROM participants ORDER BY id ASC;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2P9ir9M7b3E7Qkh.8b2c854ea8b3 --database HPubf4auNvt8KXvgrLad5c --execute SELECT id, displayName, livesRemaining, totalPoints, daysComplete FROM participants ORDER BY id ASC;",
+  "rows": [
+    {
+      "id": "60011",
+      "displayName": "Nay",
+      "livesRemaining": "3",
+      "totalPoints": "68",
+      "daysComplete": "6"
+    },
+    {
+      "id": "60012",
+      "displayName": "Kwabs",
+      "livesRemaining": "3",
+      "totalPoints": "79",
+      "daysComplete": "7"
+    },
+    {
+      "id": "90001",
+      "displayName": "Senyo",
+      "livesRemaining": "3",
+      "totalPoints": "90",
+      "daysComplete": "8"
+    },
+    {
+      "id": "90002",
+      "displayName": "G LODGE",
+      "livesRemaining": "4",
+      "totalPoints": "94",
+      "daysComplete": "8"
+    },
+    {
+      "id": "90003",
+      "displayName": "Chernice",
+      "livesRemaining": "4",
+      "totalPoints": "87",
+      "daysComplete": "8"
+    },
+    {
+      "id": "90004",
+      "displayName": "wiwi",
+      "livesRemaining": "4",
+      "totalPoints": "90",
+      "daysComplete": "8"
+    },
+    {
+      "id": "90005",
+      "displayName": "CTM",
+      "livesRemaining": "4",
+      "totalPoints": "92",
+      "daysComplete": "8"
+    },
+    {
+      "id": "90006",
+      "displayName": "Billie bob",
+      "livesRemaining": "4",
+      "totalPoints": "89",
+      "daysComplete": "8"
+    },
+    {
+      "id": "90007",
+      "displayName": "Nat",
+      "livesRemaining": "4",
+      "totalPoints": "91",
+      "daysComplete": "8"
+    },
+    {
+      "id": "90008",
+      "displayName": "Chess",
+      "livesRemaining": "4",
+      "totalPoints": "90",
+      "daysComplete": "8"
+    },
+    {
+      "id": "120001",
+      "displayName": "lando.",
+      "livesRemaining": "0",
+      "totalPoints": "0",
+      "daysComplete": "0"
+    },
+    {
+      "id": "150001",
+      "displayName": "Laud",
+      "livesRemaining": "4",
+      "totalPoints": "74",
+      "daysComplete": "4"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tdisplayName\tlivesRemaining\ttotalPoints\tdaysComplete\n60011\tNay\t3\t68\t6\n60012\tKwabs\t3\t79\t7\n90001\tSenyo\t3\t90\t8\n90002\tG LODGE\t4\t94\t8\n90003\tChernice\t4\t87\t8\n90004\twiwi\t4\t90\t8\n90005\tCTM\t4\t92\t8\n90006\tBillie bob\t4\t89\t8\n90007\tNat\t4\t91\t8\n90008\tChess\t4\t90\t8\n120001\tlando.\t0\t0\t0\n150001\tLaud\t4\t74\t4\n",
+  "stderr": "",
+  "execution_time_ms": 263
+}
