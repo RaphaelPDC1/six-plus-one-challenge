@@ -13,4 +13,6 @@ export const ENV = {
   vapidPublicKey: process.env.VAPID_PUBLIC_KEY ?? "",
   vapidPrivateKey: process.env.VAPID_PRIVATE_KEY ?? "",
   vapidSubject: process.env.VAPID_SUBJECT ?? "mailto:owner@6plus1.local",
+  // Injected by the Manus platform at deploy time; used to detect new deployments
+  deployCommitHash: (process.env.LAST_COMMIT_HASH ?? "").slice(0, 12) || "dev",
 };

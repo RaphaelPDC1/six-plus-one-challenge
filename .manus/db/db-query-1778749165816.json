@@ -1,0 +1,42 @@
+{
+  "query": "SELECT id, title, versionLabel, category, active, publishedAt FROM release_notes ORDER BY publishedAt DESC LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2P9ir9M7b3E7Qkh.8b2c854ea8b3 --database HPubf4auNvt8KXvgrLad5c --execute SELECT id, title, versionLabel, category, active, publishedAt FROM release_notes ORDER BY publishedAt DESC LIMIT 10;",
+  "rows": [
+    {
+      "id": "60001",
+      "title": "Points in Play Now Includes All Bonuses",
+      "versionLabel": "2026.05.11",
+      "category": "community_care",
+      "active": "1",
+      "publishedAt": "2026-05-11 21:57:51"
+    },
+    {
+      "id": "30002",
+      "title": "Proof update",
+      "versionLabel": "Proof edits 2026-05-10",
+      "category": "community_care",
+      "active": "1",
+      "publishedAt": "2026-05-10 22:21:27"
+    },
+    {
+      "id": "30001",
+      "title": "App polish",
+      "versionLabel": "Care polish 2026-05-10",
+      "category": "community_care",
+      "active": "1",
+      "publishedAt": "2026-05-10 22:18:37"
+    },
+    {
+      "id": "1",
+      "title": "Edit update",
+      "versionLabel": "Edit 1",
+      "category": "edit",
+      "active": "1",
+      "publishedAt": "2026-05-10 09:09:58"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitle\tversionLabel\tcategory\tactive\tpublishedAt\n60001\tPoints in Play Now Includes All Bonuses\t2026.05.11\tcommunity_care\t1\t2026-05-11 21:57:51\n30002\tProof update\tProof edits 2026-05-10\tcommunity_care\t1\t2026-05-10 22:21:27\n30001\tApp polish\tCare polish 2026-05-10\tcommunity_care\t1\t2026-05-10 22:18:37\n1\tEdit update\tEdit 1\tedit\t1\t2026-05-10 09:09:58\n",
+  "stderr": "",
+  "execution_time_ms": 1528
+}

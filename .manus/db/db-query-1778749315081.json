@@ -1,0 +1,40 @@
+{
+  "query": "SELECT id, title, summary, body, versionLabel, category, active, publishedAt FROM release_notes ORDER BY publishedAt DESC LIMIT 3;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2P9ir9M7b3E7Qkh.8b2c854ea8b3 --database HPubf4auNvt8KXvgrLad5c --execute SELECT id, title, summary, body, versionLabel, category, active, publishedAt FROM release_notes ORDER BY publishedAt DESC LIMIT 3;",
+  "rows": [
+    {
+      "id": "90001",
+      "title": "System Patch: Stability & Accuracy Boost",
+      "summary": "Your challenge experience is now smoother, faster, and more precise.",
+      "body": "The latest update fortifies the app's core, ensuring rock-solid stability throughout your 50-day trial. Proof uploads are now snappier, reducing friction. Life-loss calculations are more accurate than ever, leaving no room for doubt or debate. Focus on the grind, not the glitches.",
+      "versionLabel": "890d0edc1c43",
+      "category": "community_care",
+      "active": "1",
+      "publishedAt": "2026-05-14 09:01:39"
+    },
+    {
+      "id": "60001",
+      "title": "Points in Play Now Includes All Bonuses",
+      "summary": "Points in Play now shows your full leaderboard total, including boost bonuses.",
+      "body": "We corrected the My Day points display so it lines up with the leaderboard. No action is needed — your submitted results and bonuses are still counted.",
+      "versionLabel": "2026.05.11",
+      "category": "community_care",
+      "active": "1",
+      "publishedAt": "2026-05-11 21:57:51"
+    },
+    {
+      "id": "30002",
+      "title": "Proof update",
+      "summary": "Proof is easier to browse and respond to.",
+      "body": "Proof posts are easier to browse, reactions and comments are live, and Deep Thought now shows the right interpretation. Please tap to acknowledge.",
+      "versionLabel": "Proof edits 2026-05-10",
+      "category": "community_care",
+      "active": "1",
+      "publishedAt": "2026-05-10 22:21:27"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitle\tsummary\tbody\tversionLabel\tcategory\tactive\tpublishedAt\n90001\tSystem Patch: Stability & Accuracy Boost\tYour challenge experience is now smoother, faster, and more precise.\tThe latest update fortifies the app's core, ensuring rock-solid stability throughout your 50-day trial. Proof uploads are now snappier, reducing friction. Life-loss calculations are more accurate than ever, leaving no room for doubt or debate. Focus on the grind, not the glitches.\t890d0edc1c43\tcommunity_care\t1\t2026-05-14 09:01:39\n60001\tPoints in Play Now Includes All Bonuses\tPoints in Play now shows your full leaderboard total, including boost bonuses.\tWe corrected the My Day points display so it lines up with the leaderboard. No action is needed — your submitted results and bonuses are still counted.\t2026.05.11\tcommunity_care\t1\t2026-05-11 21:57:51\n30002\tProof update\tProof is easier to browse and respond to.\tProof posts are easier to browse, reactions and comments are live, and Deep Thought now shows the right interpretation. Please tap to acknowledge.\tProof edits 2026-05-10\tcommunity_care\t1\t2026-05-10 22:21:27\n",
+  "stderr": "",
+  "execution_time_ms": 263
+}

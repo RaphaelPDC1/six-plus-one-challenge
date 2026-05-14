@@ -10,6 +10,7 @@ import { registerWhatsAppWebhook } from "../whatsappWebhook";
 import { registerWardenHttpRoutes } from "../warden/wardenHttpRoutes";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
+import { autoPublishReleaseNoteIfNeeded } from "../autoReleaseNote";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -64,6 +65,10 @@ async function startServer() {
 
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
+    // Auto-publish a community release note for this deployment (non-blocking)
+    autoPublishReleaseNoteIfNeeded().catch(err =>
+      console.error("[AutoReleaseNote] Startup hook failed:", err)
+    );
   });
 }
 

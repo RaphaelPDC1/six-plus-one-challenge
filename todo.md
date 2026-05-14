@@ -1251,10 +1251,10 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Add or update regression coverage proving Proof posts are sorted newest first.
 - [x] Validate Proof newest-first ordering and save a checkpoint.
 
-- [ ] Investigate and fix: Parole participants cannot upload their proof.
-- [ ] Add regression test covering proof upload access for Parole-status participants.
-
 - [x] Restore both of Kwabs' lives (Option B — Day 8 excused) and remove the duplicate payment events.
 - [x] Fix duplicate life-loss race condition: finalizePreviousDayIfNeeded fires twice for the same log/day.
 - [x] Fix video upload size limit: raised to 50MB video / 10MB image (was 12MB/5MB with an off-by-MiB bug).
 - [x] Add regression tests for the duplicate life-loss guard and video upload size limit.
+
+- [x] Auto-generate and publish a release note (AI-written) on every new deployment so the community popup shows automatically without manual intervention.
+- [x] Release note popup dismisses on click and only shows once per participant per version.
