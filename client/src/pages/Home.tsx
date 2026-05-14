@@ -1452,9 +1452,15 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
         <div className="min-w-0 max-w-full overflow-hidden border border-[#2A2A2A] bg-[#101010] p-4 sm:p-5">
           <div className="grid min-w-0 gap-5 md:grid-cols-[minmax(0,1fr)_minmax(0,320px)]">
             <div>
-              <MicroLabel tone="gold">Day {snapshot?.challenge.currentDay ?? "—"} / 50</MicroLabel>
-              <h1 className="mt-3 text-5xl font-black uppercase leading-[0.86] tracking-[-0.08em] text-white md:text-7xl">Log the day.</h1>
-              <p className="mt-4 max-w-xl text-sm font-bold leading-6 text-[#A7A7A7]">Six standards. One honest submission. No cover.</p>
+              <div className="flex items-baseline justify-between gap-4">
+                <MicroLabel tone="gold">Day {snapshot?.challenge.currentDay ?? "—"} · 6+1 four lives</MicroLabel>
+                <MicroLabel>Streak {participant?.currentStreak ?? 0} · {Math.max(0, 50 - (snapshot?.challenge.currentDay ?? 1))} left</MicroLabel>
+              </div>
+              <h1 className="mt-3 text-5xl font-black uppercase leading-[0.86] tracking-[-0.08em] text-white md:text-7xl">
+                Today's<br />
+                <span className="text-[#C8A96E]">Log.</span>
+              </h1>
+              <div className="mt-3 h-[2px] w-16 bg-[#C8A96E]" />
             </div>
             <HealthBar lives={participant?.livesRemaining ?? 4} label="Your lives" />
           </div>
@@ -1562,9 +1568,27 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
           <PosterStat label="Points in play" value={leaderboardVisiblePoints} tone="gold" />
         </div>
 
+        {todayAlreadyComplete && saveNotice?.complete && (
+          <div className="animate-island-in mx-auto mb-4 flex max-w-sm items-center justify-between gap-3 border border-[#C8A96E] bg-black px-4 py-3 shadow-[0_0_32px_rgba(200,169,110,0.22)]" role="status" aria-live="polite">
+            <div className="flex items-center gap-3">
+              <div className="grid h-7 w-7 place-items-center bg-[#C8A96E] text-black">
+                <Check className="h-4 w-4" />
+              </div>
+              <div>
+                <MicroLabel tone="gold">Day {snapshot?.challenge.currentDay ?? "—"} complete</MicroLabel>
+                <p className="mt-0.5 text-sm font-black uppercase leading-none tracking-[-0.03em] text-white">Banked. +{liveTaskPoints.visibleTotal} pts</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <MicroLabel tone="green">Streak</MicroLabel>
+              <p className="mt-0.5 text-xl font-black leading-none text-[#2ECC71]">{participant?.currentStreak ?? 0}</p>
+            </div>
+          </div>
+        )}
+
         <div className={classNames("submit-dock motion-submit-dock z-[70] mx-auto w-[min(100%,calc(100vw-2rem))] max-w-full transition-all duration-300 md:static md:w-full", saveProgressDocked ? "static translate-y-0" : "fixed inset-x-4 bottom-[calc(5.85rem+env(safe-area-inset-bottom))]", saveProgressScale < 0.35 ? "max-w-[9.5rem] rounded-full border border-[#C8A96E]/45 bg-[#070707]/94 p-1 shadow-[0_0_24px_rgba(200,169,110,0.18)] backdrop-blur" : saveProgressScale < 0.78 ? "max-w-[15rem] rounded-full border border-[#C8A96E]/55 bg-[#0D0D0D]/95 p-1.5 shadow-[0_0_32px_rgba(200,169,110,0.22)] backdrop-blur" : "max-w-none rounded-none border border-[#2A2A2A] bg-[#0D0D0D]/95 p-3 backdrop-blur md:border-transparent md:bg-transparent md:p-0 md:backdrop-blur-none", submit.isPending && "submit-dock-pending", allAddressed && !submit.isPending && "submit-dock-ready")} data-save-progress-scale={saveProgressScale} data-save-progress-docked={saveProgressDocked ? "true" : "false"} data-mobile-save-progress-mini-to-section="true" data-mobile-save-progress-above-nav="true">
           <SharpButton className={classNames("w-full max-w-full overflow-hidden whitespace-normal break-words text-center transition-all duration-300", saveProgressScale < 0.35 ? "rounded-full px-3 py-2 text-[0px] shadow-none before:content-['SAVE'] before:text-[9px] before:font-black before:tracking-[0.18em]" : saveProgressScale < 0.78 ? "rounded-full px-4 py-3 text-[10px]" : "py-5 text-sm", submit.isPending && "submit-button-pending")} disabled={submit.isPending} onClick={() => submit.mutate({ ...form, reflectionShared: false, dayNumber: snapshot?.challenge.currentDay ?? 1 })}>
-            {submit.isPending ? (allAddressed ? "Banking the day" : "Saving the work") : allAddressed ? `Submit day ${snapshot?.challenge.currentDay ?? 1}` : `Save draft — ${Math.max(0, passThreshold - completedRules)} more to bank it`}
+            {submit.isPending ? (allAddressed ? "Banking the day…" : "Saving the work…") : allAddressed ? `Submit Day ${snapshot?.challenge.currentDay ?? 1} · +${liveTaskPoints.visibleTotal} pts` : `Need ${Math.max(0, passThreshold - completedRules)} more rule${Math.max(0, passThreshold - completedRules) === 1 ? "" : "s"}`}
           </SharpButton>
           {saveProgressDocked && !allAddressed && <p className="mt-2 text-center text-[10px] font-black uppercase tracking-[0.16em] text-[#C8A96E]/80">Draft only until 5/6 is real. Lives are judged at rollover.</p>}
           {saveNotice && <div role="status" className={classNames("pointer-events-none absolute -top-3 right-3 rounded-full border bg-black/90 px-2 py-1 text-[9px] font-black uppercase leading-none tracking-[0.16em] shadow-[0_0_18px_rgba(0,0,0,0.45)]", saveNotice.complete ? "border-[#2ECC71]/70 text-[#2ECC71]" : "border-[#C8A96E]/70 text-[#C8A96E]")}>{saveNotice.title}</div>}
@@ -1857,8 +1881,37 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
           tone: "green" as const,
         };
 
+  const insightTicker = [
+    `${todayComplete}/${participantCount || 0} banked today`,
+    `${rankedInsights.length} challengers · day ${currentDay} of 50`,
+    rankedInsights.filter((p: any) => Number(p.livesRemaining ?? 4) <= 1).length > 0 ? `${rankedInsights.filter((p: any) => Number(p.livesRemaining ?? 4) <= 1).length} in the red zone` : "No one in the red zone",
+    topBoostEarner ? `Boost leader: ${topBoostEarner.participant.displayName}` : "Boosts up for grabs",
+    `${Math.max(0, 50 - currentDay)} days left`,
+    onPaceCount > 0 ? `${onPaceCount}/${participantCount || 0} on pace` : "Pace check needed",
+  ].filter(Boolean) as string[];
+
   return (
     <div className="motion-page space-y-3 overflow-hidden pb-2" data-testid="overview-metrics-dashboard">
+      {/* Prototype-style headline */}
+      <div className="px-1 pb-1 pt-2">
+        <MicroLabel tone="gold">Quick read · {Math.max(0, 50 - currentDay)} days left</MicroLabel>
+        <h2 className="mt-2 text-4xl font-black uppercase leading-[0.88] tracking-[-0.08em] text-white sm:text-5xl">
+          The room<br />
+          <span className="text-[#C8A96E]">is moving.</span>
+        </h2>
+      </div>
+
+      {/* Insights marquee */}
+      <div className="insights-marquee overflow-hidden" aria-hidden="true">
+        <div className="animate-marquee flex gap-8 whitespace-nowrap py-2.5 pl-4">
+          {[...insightTicker, ...insightTicker].map((item, i) => (
+            <span key={i} className="text-[9px] font-black uppercase tracking-[0.22em] text-[#CFCFCF]">
+              <span className="mr-2.5 text-[#C8A96E]">◆</span>{item}
+            </span>
+          ))}
+        </div>
+      </div>
+
       <section className="sticky top-2 z-30 overflow-hidden border border-[#2A2A2A] bg-[#070707]/95 p-3 shadow-[0_18px_50px_rgba(0,0,0,0.55)] backdrop-blur sm:top-3" data-testid="overview-position-strip">
         <div className="grid grid-cols-4 gap-2 text-center">
           <div className="border-r border-[#242424] pr-2">
@@ -2362,6 +2415,7 @@ function Leaderboard({ snapshot }: { snapshot: Snapshot }) {
   const [expandedParticipantId, setExpandedParticipantId] = useState<string | number | null>(null);
   const [boostKeyOpen, setBoostKeyOpen] = useState(false);
   const [expandedBoostSlotId, setExpandedBoostSlotId] = useState<string | number | null>(null);
+  const [boardMode, setBoardMode] = useState<"PODIUM" | "RACE">("PODIUM");
   const logs = snapshot?.logs ?? [];
   const participants = snapshot?.participants ?? [];
   const currentDay = snapshot?.challenge?.currentDay ?? 1;
@@ -2396,9 +2450,27 @@ function Leaderboard({ snapshot }: { snapshot: Snapshot }) {
   return (
     <section className="motion-page space-y-4 overflow-hidden border border-[#2A2A2A] bg-[#101010] p-3 sm:p-5" data-testid="bosses-board-section">
       <div className="rounded-[1.4rem] border border-[#2A2A2A] bg-[#0D0D0D] p-4 sm:p-5" data-testid="board-mobile-redesign-shell">
-        <MicroLabel tone="gold">Board / Bosses</MicroLabel>
-        <h2 className="mt-2 break-words text-3xl font-black uppercase leading-none tracking-[-0.08em] text-white sm:text-5xl">Podium pressure.</h2>
-        <p className="mt-3 max-w-xl text-xs font-bold uppercase leading-5 tracking-[0.12em] text-[#8D8D8D]">Claude-inspired mobile board: boost key first, stepped podium next, then every challenger with lives, Warden status, delta gaps, and risk callouts.</p>
+        <div className="flex items-end justify-between gap-4">
+          <div>
+            <MicroLabel tone="gold">Day {snapshot?.challenge?.currentDay ?? "—"} · pressure ranking</MicroLabel>
+            <h2 className="mt-2 break-words text-3xl font-black uppercase leading-none tracking-[-0.08em] text-white sm:text-5xl">
+              The <span className="text-[#C8A96E]">board</span>.
+            </h2>
+          </div>
+          <div className="flex border border-[#2A2A2A]">
+            {(["PODIUM", "RACE"] as const).map(mode => (
+              <button
+                key={mode}
+                type="button"
+                onClick={() => { pulse(8); setBoardMode(mode); }}
+                className={classNames(
+                  "px-3 py-2 text-[9px] font-black uppercase tracking-[0.18em] transition",
+                  boardMode === mode ? "bg-[#C8A96E] text-black" : "bg-transparent text-[#777] hover:text-white"
+                )}
+              >{mode}</button>
+            ))}
+          </div>
+        </div>
       </div>
 
       <section className="overflow-hidden rounded-[1.4rem] border border-[#2ECC71]/30 bg-[#07150D]" data-testid="boost-key-slots" data-boost-collapsible-state={boostKeyOpen ? "open" : "closed"}>
@@ -2490,7 +2562,33 @@ function Leaderboard({ snapshot }: { snapshot: Snapshot }) {
         {podium[2] && <PodiumCard participant={podium[2]} index={2} className="order-3 translate-y-5 sm:translate-y-9" onSelect={() => { pulse(14); setSelected(podium[2]); }} />}
       </div>
 
-      <div className="space-y-2" data-testid="full-board-compare-list">
+      {boardMode === "RACE" && (
+        <div className="border border-[#2A2A2A] bg-[#0D0D0D] p-4" data-testid="race-chart-panel">
+          <MicroLabel tone="gold">Race · points over time</MicroLabel>
+          <div className="mt-3 overflow-x-auto">
+            <div className="min-w-[280px]">
+              {ranked.slice(0, 8).map((p: any, i: number) => {
+                const maxPts = Number(ranked[0]?.totalPoints ?? 1);
+                const pct = Math.round((Number(p.totalPoints ?? 0) / Math.max(1, maxPts)) * 100);
+                const colors = ["#C8A96E","#BFC7D5","#B87333","#2ECC71","#9B59B6","#4CA3C9","#E67E22","#C0392B"];
+                return (
+                  <div key={p.id} className="mb-2">
+                    <div className="mb-1 flex items-center justify-between gap-2">
+                      <span className="text-[10px] font-black uppercase tracking-[0.06em] text-white">{p.displayName}</span>
+                      <span className="text-[10px] font-black tabular-nums" style={{ color: colors[i % colors.length] }}>{p.totalPoints}</span>
+                    </div>
+                    <div className="h-2 bg-[#1A1A1A]">
+                      <div className="h-full transition-all duration-700" style={{ width: `${pct}%`, background: colors[i % colors.length] }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className={classNames("space-y-2", boardMode === "RACE" && "hidden")} data-testid="full-board-compare-list">
         <div className="flex items-end justify-between gap-3 px-1">
           <div>
             <MicroLabel tone="red">Full leaderboard</MicroLabel>

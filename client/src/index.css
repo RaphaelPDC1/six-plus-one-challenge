@@ -79,6 +79,77 @@
   --sidebar-ring: oklch(0.74 0.109 84.3);
 }
 
+/* ── Day theme (cream-paper poster, 06:00–18:00 auto) ─────────────────── */
+[data-theme="day"] {
+  --background:  oklch(0.94 0.018 87);
+  --foreground:  oklch(0.09 0 0);
+  --card:        oklch(0.90 0.022 87);
+  --card-foreground: oklch(0.09 0 0);
+  --popover:     oklch(0.91 0.020 87);
+  --popover-foreground: oklch(0.09 0 0);
+  --secondary:   oklch(0.87 0.025 87);
+  --secondary-foreground: oklch(0.15 0 0);
+  --muted:       oklch(0.88 0.020 87);
+  --muted-foreground: oklch(0.40 0 0);
+  --border:      oklch(0.18 0 0);
+  --input:       oklch(1 0 0);
+  --warden-bg:        #F7DBD2;
+  --warden-border:    #C8847A;
+  --warden-text:      #5C1209;
+  --rule-done-bg:     #DCEFD8;
+  --rule-done-border: #5A8F58;
+  --rule-done-text:   #3F6B3D;
+}
+
+/* ── Warden / rule-done tokens for night (default) ──────────────────────── */
+:root {
+  --warden-bg:        #180A09;
+  --warden-border:    #2A0F0D;
+  --warden-text:      #F0D6D1;
+  --rule-done-bg:     #0F1B12;
+  --rule-done-border: #1F4F2F;
+  --rule-done-text:   #7C9A7C;
+}
+
+/* ── New keyframes from prototype ──────────────────────────────────────── */
+@keyframes island-in {
+  0%   { opacity: 0; transform: translateY(-14px) scale(0.92); }
+  60%  { transform: translateY(2px) scale(1.02); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes tick-pop {
+  0%   { transform: scale(0.4); opacity: 0; }
+  55%  { transform: scale(1.2); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes marquee-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+@keyframes life-loss-pulse {
+  0%   { transform: scale(1); filter: brightness(1); }
+  20%  { transform: scale(1.12); filter: brightness(1.5); }
+  50%  { transform: translateX(-1px) scale(1.02); }
+  60%  { transform: translateX(1px) scale(1.02); }
+  70%  { transform: translateX(-1px); }
+  100% { transform: scale(1); filter: brightness(1); }
+}
+
+.animate-island-in  { animation: island-in 480ms cubic-bezier(0.16,1,0.3,1) forwards; }
+.animate-tick-pop   { animation: tick-pop  320ms cubic-bezier(0.16,1,0.3,1); }
+.animate-marquee    { animation: marquee-scroll 36s linear infinite; }
+
+/* ── Insights marquee container ─────────────────────────────────────────── */
+.insights-marquee {
+  overflow: hidden;
+  border: 1px solid #2A2A2A;
+  background: #101010;
+}
+[data-theme="day"] .insights-marquee {
+  border-color: #1A1815;
+  background: #EDE6D8;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -88,6 +159,9 @@
     background: #0d0d0d;
     max-width: 100%;
     overflow-x: hidden;
+  }
+  [data-theme="day"] html, html[data-theme="day"] {
+    background: #F2EDE2;
   }
 
   body {

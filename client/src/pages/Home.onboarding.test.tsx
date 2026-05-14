@@ -568,7 +568,7 @@ describe("Home onboarding shell", () => {
     expect(homeSource).toContain('data-testid="overview-compare-list"');
     expect(homeSource).toContain("Banked today");
     expect(homeSource).toContain('data-testid="pace-bar"');
-    expect(homeSource).toContain("Board / Bosses");
+    expect(homeSource).toContain("The <span");
     expect(homeSource).toContain('data-testid="boost-key-slots"');
     expect(homeSource).toContain('data-testid="boost-key-summary-toggle"');
     expect(homeSource).toContain('data-testid="boost-key-collapsible-panel"');
