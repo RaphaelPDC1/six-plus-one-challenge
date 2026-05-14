@@ -1498,95 +1498,44 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
   }
 
   return (
-    <div className="motion-page grid min-w-0 max-w-full gap-5 overflow-x-hidden xl:grid-cols-[minmax(0,1fr)_360px]">
-      <section className="min-w-0 max-w-full space-y-5 overflow-x-hidden">
-        <div className="min-w-0 max-w-full overflow-hidden border border-[#2A2A2A] bg-[#0D0D0D] p-4 sm:p-5">
-          {/* Header row */}
+    <div className="motion-page grid min-w-0 max-w-full gap-0 overflow-x-hidden xl:grid-cols-[minmax(0,1fr)_360px] xl:gap-5">
+      <section className="min-w-0 max-w-full overflow-x-hidden">
+
+        {/* ── Header — flat on dark background, no card border ── */}
+        <div className="p-4 pb-5 sm:p-5">
           <div className="flex items-baseline justify-between gap-4">
             <MicroLabel tone="gold">Day {snapshot?.challenge.currentDay ?? "—"} · 6+1 Four Lives</MicroLabel>
             <MicroLabel>Streak {participant?.currentStreak ?? 0} · {Math.max(0, 50 - (snapshot?.challenge.currentDay ?? 1))} left</MicroLabel>
           </div>
-
-          {/* Hero headline */}
           <h1 className="mt-3 text-5xl font-black uppercase leading-[0.86] tracking-[-0.1em] text-white sm:text-6xl md:text-7xl">
-            Today's<br />
+            Today’s<br />
             <span className="text-[#C8A96E]">Log.</span>
           </h1>
           <div className="mt-3 h-[2px] w-14 bg-[#C8A96E]" />
-
-          {/* Lives + banked strip — matches prototype */}
           <div className="mt-5 space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-[9px] font-black uppercase tracking-[0.24em] text-[#999]">
-                Lives · {participant?.livesRemaining ?? 4}/4
-              </span>
-              <span className="text-[9px] font-black uppercase tracking-[0.24em] text-[#999]">
-                {completedRules}/{totalRules} banked
-              </span>
+              <span className="text-[9px] font-black uppercase tracking-[0.24em] text-[#999]">Lives · {participant?.livesRemaining ?? 4}/4</span>
+              <span className="text-[9px] font-black uppercase tracking-[0.24em] text-[#999]">{completedRules}/{totalRules} banked</span>
             </div>
-            {/* Segmented lives */}
-            <div className="grid grid-cols-4 gap-1">
-              {Array.from({ length: 4 }).map((_, i) => {
-                const alive = i < (participant?.livesRemaining ?? 4);
-                return (
-                  <div
-                    key={i}
-                    className={classNames(
-                      "h-4 transition-all duration-500",
-                      alive ? "bg-[#C0392B]" : "bg-[#1A1A1A]",
-                    )}
-                  />
-                );
-              })}
+            <div className="grid grid-cols-4 gap-[3px]">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className={classNames("h-[14px] transition-all duration-500", i < (participant?.livesRemaining ?? 4) ? "bg-[#C0392B]" : "bg-[#1F1F1F]")} />
+              ))}
             </div>
-            {/* Rule progress line */}
-            <div className="h-0.5 bg-[#1A1A1A]">
-              <div
-                className="h-full bg-[#C8A96E] transition-all duration-700"
-                style={{ width: `${Math.min(100, (completedRules / totalRules) * 100)}%` }}
-              />
+            <div className="h-[2px] bg-[#1A1A1A]">
+              <div className="h-full bg-[#C8A96E] transition-all duration-700" style={{ width: `${Math.min(100, (completedRules / totalRules) * 100)}%` }} />
             </div>
           </div>
         </div>
 
-        <div data-save-progress-anchor className={classNames("must-do-rules motion-card min-w-0 max-w-full overflow-hidden border-2 p-3 transition-all duration-300 sm:p-4", allAddressed ? "must-do-rules-complete border-[#2ECC71] bg-[#07150D]" : "border-[#C0392B] bg-[#190B0A]")}> 
-          <div className="mb-3 flex flex-col gap-2 border-b border-white/10 pb-3 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <MicroLabel tone={allAddressed ? "green" : "red"}>{allAddressed ? "Standard met" : "Today’s non-negotiables"}</MicroLabel>
-              <h2 className="mt-2 text-2xl font-black uppercase leading-none tracking-[-0.06em] text-white">Six rules. Five banks the day.</h2>
-            </div>
-            <div className="flex min-w-0 flex-wrap gap-2">
-              <div className={classNames("border px-3 py-2 text-[10px] font-black uppercase tracking-[0.18em]", allAddressed ? "border-[#2ECC71] bg-[#0F2A18] text-[#2ECC71]" : "border-[#C0392B] bg-[#2A0F0C] text-[#FFB3A8]")}>{allAddressed ? `${completedRules}/${totalRules} passed` : `${Math.max(0, passThreshold - completedRules)} more to bank it`}</div>
-              <div className="border border-[#C8A96E]/60 bg-[#16130B] px-3 py-2 text-[10px] font-black uppercase tracking-[0.18em] text-[#C8A96E]">+{liveTaskPoints.visibleTotal} live pts</div>
-            </div>
-          </div>
-          <div className="mb-2 min-w-0 max-w-full overflow-hidden border border-[#2A2A2A] bg-black/35 p-1.5 sm:p-2" data-testid="live-task-points-strip" aria-label="Live points compact strip">
-            <div className="flex min-w-0 items-center justify-between gap-2 px-1 pb-1.5">
-              <MicroLabel tone="gold">Live points</MicroLabel>
-              <span className="shrink-0 text-[9px] font-black uppercase tracking-[0.16em] text-[#C8A96E] sm:text-[10px]">+{liveTaskPoints.visibleTotal} now</span>
-            </div>
-            <div className="grid min-w-0 max-w-full grid-cols-4 gap-1" role="list">
-              {pointStripItems.map(item => {
-                const toneClasses = {
-                  gold: "border-[#C8A96E]/55 bg-[#16130B] text-[#C8A96E]",
-                  green: "border-[#2ECC71]/55 bg-[#07150D] text-[#2ECC71]",
-                  purple: "border-[#9B59B6]/55 bg-[#150E1A] text-[#B97DDA]",
-                  white: "border-[#444] bg-[#111] text-white",
-                }[item.tone];
-                return (
-                  <div key={item.label} role="listitem" className={classNames("min-w-0 overflow-hidden border px-1.5 py-1.5 sm:px-2 sm:py-2", toneClasses)}>
-                    <div className="flex min-w-0 items-baseline justify-between gap-1">
-                      <span className="min-w-0 truncate text-[8px] font-black uppercase tracking-[0.12em] text-[#BDBDBD] min-[390px]:text-[9px]">{item.label}</span>
-                      <span className="max-w-[2.75rem] shrink-0 truncate text-right text-base font-black uppercase leading-none tracking-[-0.06em] tabular-nums min-[390px]:text-lg sm:max-w-[4.5rem] sm:text-xl">{item.value}</span>
-                    </div>
-                    <p className="mt-0.5 truncate text-[7px] font-black uppercase tracking-[0.1em] text-[#8F8F8F] min-[390px]:text-[8px] sm:mt-1 sm:text-[9px]">{item.detail}</p>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-          {allAddressed && <div className="mb-3 border border-[#2ECC71]/50 bg-[#0F2A18] p-3 text-xs font-black uppercase tracking-[0.16em] text-[#2ECC71]">5/6 banks the day. Submit once the work is real.</div>}
-          <div className="motion-list space-y-2">
+        {/* ── Warden — inline on mobile, hidden on desktop (shown in aside) ── */}
+        <div className="mb-1 px-4 xl:hidden">
+          <WardenPresence snapshot={snapshot} />
+        </div>
+
+        {/* ── Rule rows — stacked directly, no outer wrapper card ── */}
+        <div data-save-progress-anchor className="must-do-rules min-w-0 max-w-full space-y-[2px] overflow-x-hidden px-4">
+          <div className="motion-list space-y-[2px]">
           <RuleCard title="No alcohol" label="Rule 01" badgeText="HONOUR" badgeColor="#C0392B" points={8} complete={form.noAlcohol} active={openRule === "noAlcohol"} onToggle={() => setOpenRule(openRule === "noAlcohol" ? "exercise" : "noAlcohol")}>
             <label className="flex items-center justify-between gap-4 border border-[#2A2A2A] bg-[#0D0D0D] p-4">
               <span className="text-sm font-black uppercase tracking-[0.12em] text-white">No alcohol. No negotiation.</span>
@@ -1645,14 +1594,22 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
           </div>
         </div>
 
-        <div className="motion-list grid min-w-0 max-w-full gap-2 overflow-hidden bg-[#2A2A2A] p-[2px] sm:grid-cols-3" data-testid="myday-stats-after-must-do">
-          <PosterStat label="Standards logged" value={`${completedRules}/${totalRules}`} tone={allAddressed ? "green" : "gold"} />
-          <PosterStat label="Streak held" value={participant?.currentStreak ?? 0} tone="green" />
-          <PosterStat label="Points in play" value={leaderboardVisiblePoints} tone="gold" />
+        {/* ── Stats strip — matches prototype Stat component exactly ── */}
+        <div className="mt-2 grid grid-cols-3 divide-x divide-[#1A1A1A] border border-[#1A1A1A] mx-4" data-testid="myday-stats-after-must-do">
+          {[
+            { label: "Today", value: `+${liveTaskPoints.visibleTotal}`, color: "#C8A96E" },
+            { label: "Streak", value: participant?.currentStreak ?? 0, color: "var(--text)" },
+            { label: `Day ${snapshot?.challenge.currentDay ?? "—"}/50`, value: `${completedRules}/${totalRules}`, color: allAddressed ? "#2ECC71" : "var(--text)" },
+          ].map((s, i) => (
+            <div key={i} className="p-3 text-center">
+              <p className="text-[8px] font-black uppercase tracking-[0.2em] text-[#777]">{s.label}</p>
+              <p className="mt-1 text-xl font-black uppercase leading-none tracking-[-0.06em] tabular-nums" style={{ color: s.color }}>{s.value}</p>
+            </div>
+          ))}
         </div>
 
         {todayAlreadyComplete && saveNotice?.complete && (
-          <div className="animate-island-in mx-auto mb-4 flex max-w-sm items-center justify-between gap-3 border border-[#C8A96E] bg-black px-4 py-3 shadow-[0_0_32px_rgba(200,169,110,0.22)]" role="status" aria-live="polite">
+          <div className="animate-island-in mx-4 mt-3 flex items-center justify-between gap-3 border border-[#C8A96E] bg-black px-4 py-3 shadow-[0_0_32px_rgba(200,169,110,0.22)]" role="status" aria-live="polite">
             <div className="flex items-center gap-3">
               <div className="grid h-7 w-7 place-items-center bg-[#C8A96E] text-black">
                 <Check className="h-4 w-4" />
@@ -1680,7 +1637,7 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
         </div>
       </section>
 
-      <aside className="min-w-0 max-w-full space-y-5 overflow-x-hidden">
+      <aside className="hidden min-w-0 max-w-full space-y-5 overflow-x-hidden xl:block">
         <WardenPresence snapshot={snapshot} />
         <HealthBar lives={participant?.livesRemaining ?? 4} label="Lives remaining" />
         <div className={classNames("motion-card ghost-life-card border p-4 transition", ghostLifeLocked ? "border-[#4A315D] bg-[#120F18] opacity-80" : "border-[#2A2A2A] bg-[#101010]")} data-ghost-life-state={ghostLifeLocked ? "locked" : "available"}>
