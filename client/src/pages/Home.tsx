@@ -3621,11 +3621,11 @@ function PullToRefreshIndicator({ distance, refreshing }: { distance: number; re
 }
 
 const tabs: Array<{ key: TabKey; label: string; icon: any }> = [
-  { key: "myday", label: "Today", icon: Flame },
-  { key: "overview", label: "Room", icon: Activity },
+  { key: "myday", label: "My Day", icon: Flame },
+  { key: "overview", label: "Overview", icon: Activity },
   { key: "leaderboard", label: "Board", icon: Trophy },
   { key: "proof", label: "Proof", icon: Camera },
-  { key: "rewards", label: "Reward", icon: Gift },
+  { key: "rewards", label: "Rewards", icon: Gift },
   { key: "calendar", label: "Journey", icon: Calendar },
   { key: "admin", label: "Founder", icon: Crown },
 ];
