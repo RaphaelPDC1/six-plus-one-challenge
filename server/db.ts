@@ -1,6 +1,8 @@
 import { and, desc, eq, gte, inArray, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
+  adminAuditLog,
+  type InsertAdminAuditEntry,
   boostWins,
   dailyLogs,
   type DailyLog,
@@ -1374,4 +1376,22 @@ export async function disablePushSubscriptionById(subscriptionId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database unavailable");
   await db.update(pushSubscriptions).set({ enabled: false }).where(eq(pushSubscriptions.id, subscriptionId));
+}
+
+export async function logAdminAction(entry: InsertAdminAuditEntry) {
+  const db = await getDb();
+  if (!db) return; // Non-fatal — audit log is best-effort
+  await db.insert(adminAuditLog).values(entry).catch(err =>
+    console.error("[AdminAudit] Failed to write audit log entry:", err)
+  );
+}
+
+export async function getAdminAuditLog(limit = 50) {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(adminAuditLog)
+    .orderBy(desc(adminAuditLog.createdAt))
+    .limit(limit);
 }

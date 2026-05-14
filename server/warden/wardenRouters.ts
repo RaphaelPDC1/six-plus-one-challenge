@@ -3,6 +3,11 @@ import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
 import { runWardenCycle, triggerImmediateMessage } from "./runner";
 import { getAppSnapshot, getCurrentChallengeDay, getParticipantByUserId } from "../db";
 import { invokeLLM } from "../_core/llm";
+import type { participants, dailyLogs } from "../../drizzle/schema";
+import type { InferSelectModel } from "drizzle-orm";
+
+type Participant = InferSelectModel<typeof participants>;
+type DailyLog = InferSelectModel<typeof dailyLogs>;
 
 /**
  * Warden tRPC router for Make.com webhook integration
@@ -43,7 +48,7 @@ function rememberStableMood(cacheKey: string, fingerprint: string, mood: WardenM
   return mood;
 }
 
-function completedRuleCount(log: Record<string, any> | null | undefined) {
+function completedRuleCount(log: Partial<DailyLog> | null | undefined) {
   if (!log) return 0;
   return [
     Boolean(log.noAlcohol),
@@ -55,7 +60,7 @@ function completedRuleCount(log: Record<string, any> | null | undefined) {
   ].filter(Boolean).length;
 }
 
-function fallbackMood(participant: Record<string, any>, logs: Record<string, any>[], currentDay: number): WardenMoodResult {
+function fallbackMood(participant: Partial<Participant>, logs: Partial<DailyLog>[], currentDay: number): WardenMoodResult {
   const todayLog = logs.find(log => Number(log.dayNumber ?? 0) === currentDay);
   const recentLogs = logs.filter(log => Number(log.dayNumber ?? 0) >= Math.max(1, currentDay - 6));
   const todayCount = completedRuleCount(todayLog);
@@ -83,12 +88,12 @@ export const wardenRouter = router({
       }
       const snapshot = await getAppSnapshot(ctx.user.id, ctx.user.role, ctx.user.email);
       const participants = snapshot.participants ?? [];
-      const participant = participants.find((p: any) => String(p.id) === String(targetParticipantId)) ?? ownParticipant;
+      const participant = (participants as Participant[]).find(p => String(p.id) === String(targetParticipantId)) ?? ownParticipant;
       const currentDay = Number(snapshot.challenge?.currentDay ?? getCurrentChallengeDay());
-      const logs = (snapshot.logs ?? []).filter((log: any) => String(log.participantId) === String(targetParticipantId));
+      const logs = (snapshot.logs as DailyLog[]).filter(log => String(log.participantId) === String(targetParticipantId));
       if (!participant) return { label: "No read yet", tone: "white" as WardenMoodTone, detail: "The Warden could not find this participant profile.", confidence: 0, source: "fallback" as const };
       const fallback = fallbackMood(participant, logs, currentDay);
-      const compactLogs = logs.slice(-8).map((log: any) => {
+      const compactLogs = logs.slice(-8).map(log => {
         const privateReflectionText = String(log.reflectionText ?? "").trim();
         return {
           day: log.dayNumber,

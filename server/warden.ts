@@ -1,5 +1,13 @@
 import { invokeLLM } from "./_core/llm";
 import { getAppSnapshot, logWardenMessage } from "./db";
+import type { participants, dailyLogs, paymentEvents, whatsappChatHistory, redemptionRequests } from "../drizzle/schema";
+import type { InferSelectModel } from "drizzle-orm";
+
+type Participant = InferSelectModel<typeof participants>;
+type DailyLog = InferSelectModel<typeof dailyLogs>;
+type PaymentEvent = InferSelectModel<typeof paymentEvents>;
+type ChatMessage = InferSelectModel<typeof whatsappChatHistory>;
+type Redemption = InferSelectModel<typeof redemptionRequests>;
 
 export type WardenMode = "surveillance" | "commentary" | "on_ramp";
 
@@ -21,7 +29,7 @@ export async function generateWardenCommentary(userIdForContext: number, mode: W
   const snapshot = await getAppSnapshot(userIdForContext);
   const context = {
     challenge: snapshot.challenge,
-    participants: snapshot.participants.map((p: any) => ({
+    participants: (snapshot.participants as Participant[]).map(p => ({
       name: p.displayName,
       livesRemaining: p.livesRemaining,
       points: p.totalPoints,
@@ -29,7 +37,7 @@ export async function generateWardenCommentary(userIdForContext: number, mode: W
       daysComplete: p.daysComplete,
       ghostLifeUsed: p.ghostLifeUsed,
     })),
-    recentLogs: snapshot.logs.slice(0, 25).map((l: any) => ({
+    recentLogs: (snapshot.logs as DailyLog[]).slice(0, 25).map(l => ({
       participantId: l.participantId,
       day: l.dayNumber,
       complete: l.dayComplete,
@@ -41,9 +49,9 @@ export async function generateWardenCommentary(userIdForContext: number, mode: W
       proofUploaded: Boolean(l.exerciseProofUrl),
       submittedAt: l.submittedAt,
     })),
-    pendingPayments: snapshot.payments.filter((p: any) => p.status === "pending").map((p: any) => ({ participantId: p.participantId, amountPence: p.amountPence, reason: p.reason })),
-    recentChatMessages: snapshot.chatHistory.slice(0, 20).map((m: any) => ({ sender: m.senderName || m.senderId, message: m.messageText, timestamp: m.messageTimestamp })),
-    pendingRewards: snapshot.redemptions.filter((r: any) => r.status === "pending").length,
+    pendingPayments: (snapshot.payments as PaymentEvent[]).filter(p => p.status === "pending").map(p => ({ participantId: p.participantId, amountPence: p.amountPence, reason: p.reason })),
+    recentChatMessages: (snapshot.chatHistory as ChatMessage[]).slice(0, 20).map(m => ({ sender: m.senderName || m.senderId, message: m.messageText, timestamp: m.messageTimestamp })),
+    pendingRewards: (snapshot.redemptions as Redemption[]).filter(r => r.status === "pending").length,
   };
 
   const response = await invokeLLM({

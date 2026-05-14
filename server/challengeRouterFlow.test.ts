@@ -19,6 +19,8 @@ const dbMocks = vi.hoisted(() => ({
   markPaymentReceived: vi.fn(),
   markRedemptionFulfilled: vi.fn(),
   rejectSignupRequest: vi.fn(),
+  logAdminAction: vi.fn(),
+  getAdminAuditLog: vi.fn(() => Promise.resolve([])),
   submitDailyLog: vi.fn(),
   triggerLifeLoss: vi.fn(),
   tryApplyGhostLife: vi.fn(),

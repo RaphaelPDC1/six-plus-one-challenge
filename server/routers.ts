@@ -42,6 +42,8 @@ import {
   disablePushSubscription,
   listUserNotifications,
   markUserNotificationsRead,
+  logAdminAction,
+  getAdminAuditLog,
 } from "./db";
 import { generateWardenCommentary } from "./warden";
 import { generateDeepThoughtsForSnapshot } from "./deepThought";
@@ -412,22 +414,30 @@ export const appRouter = router({
   admin: router({
     confirmPayment: adminProcedure.input(z.object({ paymentId: z.number().int() })).mutation(async ({ ctx, input }) => {
       await markPaymentReceived(input.paymentId, ctx.user.id);
+      await logAdminAction({ adminUserId: ctx.user.id, adminName: ctx.user.name ?? "Admin", action: "mark_payment_received", newValue: `paymentId:${input.paymentId}` });
       return { success: true } as const;
     }),
 
     fulfillRedemption: adminProcedure.input(z.object({ redemptionId: z.number().int() })).mutation(async ({ ctx, input }) => {
       await markRedemptionFulfilled(input.redemptionId, ctx.user.id);
+      await logAdminAction({ adminUserId: ctx.user.id, adminName: ctx.user.name ?? "Admin", action: "fulfill_reward", newValue: `redemptionId:${input.redemptionId}` });
       return { success: true } as const;
     }),
 
     approveSignup: adminProcedure.input(z.object({ requestId: z.number().int() })).mutation(async ({ ctx, input }) => {
       await approveSignupRequest(input.requestId, ctx.user.id);
+      await logAdminAction({ adminUserId: ctx.user.id, adminName: ctx.user.name ?? "Admin", action: "approve_signup", newValue: `requestId:${input.requestId}` });
       return { success: true } as const;
     }),
 
     rejectSignup: adminProcedure.input(z.object({ requestId: z.number().int() })).mutation(async ({ ctx, input }) => {
       await rejectSignupRequest(input.requestId, ctx.user.id);
+      await logAdminAction({ adminUserId: ctx.user.id, adminName: ctx.user.name ?? "Admin", action: "reject_signup", newValue: `requestId:${input.requestId}` });
       return { success: true } as const;
+    }),
+
+    auditLog: adminProcedure.query(async () => {
+      return getAdminAuditLog(100);
     }),
 
     logWardenMessage: adminProcedure

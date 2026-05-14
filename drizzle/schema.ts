@@ -260,6 +260,30 @@ export const participantNotifications = mysqlTable("participant_notifications", 
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
 
+export const adminAuditLog = mysqlTable("admin_audit_log", {
+  id: int("id").autoincrement().primaryKey(),
+  adminUserId: int("adminUserId").notNull(),
+  adminName: varchar("adminName", { length: 140 }).notNull(),
+  action: mysqlEnum("action", [
+    "restore_life",
+    "deduct_life",
+    "mark_payment_received",
+    "mark_payment_pending",
+    "adjust_points",
+    "approve_signup",
+    "reject_signup",
+    "fulfill_reward",
+    "cancel_reward",
+    "other",
+  ]).notNull(),
+  targetParticipantId: int("targetParticipantId"),
+  targetParticipantName: varchar("targetParticipantName", { length: 140 }),
+  previousValue: text("previousValue"),
+  newValue: text("newValue"),
+  reason: text("reason"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 export type SignupRequest = typeof signupRequests.$inferSelect;
@@ -279,3 +303,5 @@ export type ReleaseNoteAcknowledgement = typeof releaseNoteAcknowledgements.$inf
 export type PushSubscription = typeof pushSubscriptions.$inferSelect;
 export type NotificationPreference = typeof notificationPreferences.$inferSelect;
 export type ParticipantNotification = typeof participantNotifications.$inferSelect;
+export type AdminAuditEntry = typeof adminAuditLog.$inferSelect;
+export type InsertAdminAuditEntry = typeof adminAuditLog.$inferInsert;

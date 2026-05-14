@@ -3145,7 +3145,64 @@ function AdminPanel({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => 
           <div className="space-y-3">{snapshot?.chatHistory.map((m: any) => <div key={m.id} className="border border-[#2A2A2A] bg-[#0D0D0D] p-4"><p className="font-black uppercase text-white">{m.senderName || m.senderId}</p><p className="mt-2 text-sm font-bold text-[#999]">{m.messageText}</p></div>)}</div>
         </div>
       </section>
+      <AdminAuditLogPanel />
     </div>
+  );
+}
+
+function AdminAuditLogPanel() {
+  const auditLog = trpc.admin.auditLog.useQuery(undefined, { refetchOnWindowFocus: false });
+  const entries = auditLog.data ?? [];
+  const actionLabel: Record<string, string> = {
+    restore_life: "Restored life",
+    deduct_life: "Deducted life",
+    mark_payment_received: "Payment received",
+    mark_payment_pending: "Payment reset",
+    adjust_points: "Adjusted points",
+    approve_signup: "Approved signup",
+    reject_signup: "Rejected signup",
+    fulfill_reward: "Fulfilled reward",
+    cancel_reward: "Cancelled reward",
+    other: "Manual action",
+  };
+  const actionTone = (action: string) => {
+    if (["restore_life", "approve_signup", "fulfill_reward", "mark_payment_received"].includes(action)) return "text-[#2ECC71]";
+    if (["deduct_life", "reject_signup", "cancel_reward"].includes(action)) return "text-[#C0392B]";
+    return "text-[#C8A96E]";
+  };
+  return (
+    <section className="border border-[#2A2A2A] bg-[#101010] p-5 xl:col-span-2">
+      <MicroLabel tone="gold">Admin audit log</MicroLabel>
+      <h2 className="mt-2 text-3xl font-black uppercase tracking-[-0.06em] text-white">Every action. On record.</h2>
+      <p className="mt-3 max-w-2xl text-sm font-bold leading-6 text-[#999]">All manual admin actions are logged here automatically. Use this to track life restores, payment confirmations, and approval decisions.</p>
+      <div className="mt-5 space-y-2">
+        {auditLog.isLoading && <p className="text-sm font-bold text-[#777]">Loading audit log…</p>}
+        {!auditLog.isLoading && entries.length === 0 && (
+          <div className="border border-[#2A2A2A] bg-[#0D0D0D] p-4 text-sm font-bold text-[#777]">No admin actions recorded yet.</div>
+        )}
+        {entries.map((entry: any) => (
+          <div key={entry.id} className="border border-[#2A2A2A] bg-[#0D0D0D] p-3">
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <div className="min-w-0">
+                <p className={classNames("text-xs font-black uppercase tracking-[0.16em]", actionTone(entry.action))}>{actionLabel[entry.action] ?? entry.action}</p>
+                {entry.targetParticipantName && <p className="mt-1 text-sm font-black uppercase text-white">→ {entry.targetParticipantName}</p>}
+                {entry.reason && <p className="mt-1 text-xs font-bold text-[#BDBDBD]">{entry.reason}</p>}
+                {(entry.previousValue || entry.newValue) && (
+                  <p className="mt-1 text-[10px] font-bold text-[#777]">
+                    {entry.previousValue && <span>Before: {entry.previousValue} </span>}
+                    {entry.newValue && <span>After: {entry.newValue}</span>}
+                  </p>
+                )}
+              </div>
+              <div className="text-right">
+                <p className="text-[10px] font-black uppercase tracking-[0.14em] text-[#777]">{entry.adminName}</p>
+                <p className="mt-1 text-[10px] font-bold text-[#555]">{new Date(entry.createdAt).toLocaleString()}</p>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 
