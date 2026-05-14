@@ -1213,33 +1213,83 @@ function Landing() {
 function RuleCard({
   title,
   label,
+  badgeText,
+  badgeColor,
+  points,
   complete,
   active,
-  icon: Icon,
   onToggle,
   children,
 }: {
   title: string;
   label: string;
+  badgeText: string;
+  badgeColor: string;
+  points: number;
   complete: boolean;
   active: boolean;
-  icon: any;
   onToggle: () => void;
   children: React.ReactNode;
 }) {
+  const num = label.replace("Rule ", "");
   return (
-    <article className={classNames("motion-card rule-card-motion border transition-all duration-300 hover:-translate-y-0.5", complete ? "rule-card-complete border-[#2ECC71] bg-[#0F1E15] shadow-[0_0_0_1px_rgba(46,204,113,0.2)]" : active ? "rule-card-active border-[#C0392B] bg-[#1A0D0A] shadow-[0_18px_55px_rgba(192,57,43,0.14)]" : "border-[#2A2A2A] bg-[#101010]")}> 
-      <button className="flex w-full items-center justify-between gap-4 p-4 text-left" onClick={() => { pulse(12); onToggle(); }}>
-        <div className="flex min-w-0 items-center gap-4">
-          <div className={classNames("grid h-11 w-11 place-items-center border", complete ? "border-[#2ECC71] text-[#2ECC71]" : "border-[#343434] text-[#C8A96E]")}>{complete ? <Check className="h-5 w-5 animate-gold-pop" /> : <Icon className="h-5 w-5" />}</div>
-          <div className="min-w-0">
-            <MicroLabel tone={complete ? "green" : "red"}>{complete ? `${label} · done` : `${label} · must do`}</MicroLabel>
-            <h3 className={classNames("mt-2 text-lg font-black uppercase tracking-[-0.04em] text-white", complete && "text-[#2ECC71] line-through decoration-[#2ECC71]/70")}>{title}</h3>
+    <article className={classNames(
+      "rule-card-motion border transition-all duration-200",
+      complete ? "border-[#2ECC71] bg-[#0A180E]" : active ? "border-[#C0392B] bg-[#150908]" : "border-[#2A2A2A] bg-[#0D0D0D]"
+    )}>
+      <button
+        className="flex w-full items-center gap-3 p-3 text-left sm:gap-4 sm:p-4"
+        onClick={() => { pulse(12); onToggle(); }}
+        aria-expanded={active}
+      >
+        {/* Number cell */}
+        <div className={classNames(
+          "flex h-7 w-7 shrink-0 items-center justify-center border text-[11px] font-black tracking-[0.06em]",
+          complete ? "border-[#2ECC71] text-[#2ECC71]" : "border-[#333] text-[#666]"
+        )}>
+          {num}
+        </div>
+
+        {/* Title + badge row */}
+        <div className="min-w-0 flex-1">
+          <h3 className={classNames(
+            "text-[13px] font-black uppercase leading-tight tracking-[-0.02em] sm:text-sm",
+            complete ? "text-[#2ECC71] line-through decoration-[#2ECC71]/60" : "text-white"
+          )}>
+            {title}
+          </h3>
+          <div className="mt-1.5 flex items-center gap-2">
+            <span
+              className="inline-flex items-center border px-1.5 py-0.5 text-[8px] font-black uppercase tracking-[0.18em]"
+              style={{ borderColor: badgeColor, color: badgeColor, background: `${badgeColor}18` }}
+            >
+              {badgeText}
+            </span>
+            <span className="text-[9px] font-black uppercase tracking-[0.12em] text-[#555]">+{points} pts</span>
           </div>
         </div>
-        {active ? <ChevronUp className="h-5 w-5 text-[#C8A96E]" /> : <ChevronDown className="h-5 w-5 text-[#777]" />}
+
+        {/* Checkbox — solid square */}
+        <div
+          className={classNames(
+            "h-6 w-6 shrink-0 transition-all duration-200",
+            complete ? "bg-[#2ECC71]" : "border border-[#333] bg-transparent"
+          )}
+          aria-hidden
+        >
+          {complete && (
+            <svg viewBox="0 0 24 24" className="h-6 w-6 animate-tick-pop" fill="none">
+              <path d="M5 12l4 4L19 8" stroke="#0D0D0D" strokeWidth="2.5" strokeLinecap="square" strokeLinejoin="miter"/>
+            </svg>
+          )}
+        </div>
       </button>
-      {active && <div className="rule-open border-t border-[#2A2A2A] p-4">{children}</div>}
+
+      {active && (
+        <div className="rule-open border-t border-[#1A1A1A] p-3 sm:p-4">
+          {children}
+        </div>
+      )}
     </article>
   );
 }
@@ -1450,20 +1500,52 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
   return (
     <div className="motion-page grid min-w-0 max-w-full gap-5 overflow-x-hidden xl:grid-cols-[minmax(0,1fr)_360px]">
       <section className="min-w-0 max-w-full space-y-5 overflow-x-hidden">
-        <div className="min-w-0 max-w-full overflow-hidden border border-[#2A2A2A] bg-[#101010] p-4 sm:p-5">
-          <div className="grid min-w-0 gap-5 md:grid-cols-[minmax(0,1fr)_minmax(0,320px)]">
-            <div>
-              <div className="flex items-baseline justify-between gap-4">
-                <MicroLabel tone="gold">Day {snapshot?.challenge.currentDay ?? "—"} · 6+1 four lives</MicroLabel>
-                <MicroLabel>Streak {participant?.currentStreak ?? 0} · {Math.max(0, 50 - (snapshot?.challenge.currentDay ?? 1))} left</MicroLabel>
-              </div>
-              <h1 className="mt-3 text-5xl font-black uppercase leading-[0.86] tracking-[-0.08em] text-white md:text-7xl">
-                Today's<br />
-                <span className="text-[#C8A96E]">Log.</span>
-              </h1>
-              <div className="mt-3 h-[2px] w-16 bg-[#C8A96E]" />
+        <div className="min-w-0 max-w-full overflow-hidden border border-[#2A2A2A] bg-[#0D0D0D] p-4 sm:p-5">
+          {/* Header row */}
+          <div className="flex items-baseline justify-between gap-4">
+            <MicroLabel tone="gold">Day {snapshot?.challenge.currentDay ?? "—"} · 6+1 Four Lives</MicroLabel>
+            <MicroLabel>Streak {participant?.currentStreak ?? 0} · {Math.max(0, 50 - (snapshot?.challenge.currentDay ?? 1))} left</MicroLabel>
+          </div>
+
+          {/* Hero headline */}
+          <h1 className="mt-3 text-5xl font-black uppercase leading-[0.86] tracking-[-0.1em] text-white sm:text-6xl md:text-7xl">
+            Today's<br />
+            <span className="text-[#C8A96E]">Log.</span>
+          </h1>
+          <div className="mt-3 h-[2px] w-14 bg-[#C8A96E]" />
+
+          {/* Lives + banked strip — matches prototype */}
+          <div className="mt-5 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-[9px] font-black uppercase tracking-[0.24em] text-[#999]">
+                Lives · {participant?.livesRemaining ?? 4}/4
+              </span>
+              <span className="text-[9px] font-black uppercase tracking-[0.24em] text-[#999]">
+                {completedRules}/{totalRules} banked
+              </span>
             </div>
-            <HealthBar lives={participant?.livesRemaining ?? 4} label="Your lives" />
+            {/* Segmented lives */}
+            <div className="grid grid-cols-4 gap-1">
+              {Array.from({ length: 4 }).map((_, i) => {
+                const alive = i < (participant?.livesRemaining ?? 4);
+                return (
+                  <div
+                    key={i}
+                    className={classNames(
+                      "h-4 transition-all duration-500",
+                      alive ? "bg-[#C0392B]" : "bg-[#1A1A1A]",
+                    )}
+                  />
+                );
+              })}
+            </div>
+            {/* Rule progress line */}
+            <div className="h-0.5 bg-[#1A1A1A]">
+              <div
+                className="h-full bg-[#C8A96E] transition-all duration-700"
+                style={{ width: `${Math.min(100, (completedRules / totalRules) * 100)}%` }}
+              />
+            </div>
           </div>
         </div>
 
@@ -1505,14 +1587,14 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
           </div>
           {allAddressed && <div className="mb-3 border border-[#2ECC71]/50 bg-[#0F2A18] p-3 text-xs font-black uppercase tracking-[0.16em] text-[#2ECC71]">5/6 banks the day. Submit once the work is real.</div>}
           <div className="motion-list space-y-2">
-          <RuleCard title="No alcohol" label="Rule 01" icon={Shield} complete={form.noAlcohol} active={openRule === "noAlcohol"} onToggle={() => setOpenRule(openRule === "noAlcohol" ? "exercise" : "noAlcohol")}>
+          <RuleCard title="No alcohol" label="Rule 01" badgeText="HONOUR" badgeColor="#C0392B" points={8} complete={form.noAlcohol} active={openRule === "noAlcohol"} onToggle={() => setOpenRule(openRule === "noAlcohol" ? "exercise" : "noAlcohol")}>
             <label className="flex items-center justify-between gap-4 border border-[#2A2A2A] bg-[#0D0D0D] p-4">
               <span className="text-sm font-black uppercase tracking-[0.12em] text-white">No alcohol. No negotiation.</span>
               <input type="checkbox" checked={form.noAlcohol} onChange={event => markChecklistItem("noAlcohol", event.target.checked)} className="h-6 w-6 accent-[#2ECC71]" />
             </label>
           </RuleCard>
 
-          <RuleCard title="Clean eating" label="Rule 02" icon={Utensils} complete={rules[1].done} active={openRule === "cleanEating"} onToggle={() => setOpenRule(openRule === "cleanEating" ? "exercise" : "cleanEating")}>
+          <RuleCard title="Clean eating" label="Rule 02" badgeText="NOTE" badgeColor="#C8A96E" points={8} complete={rules[1].done} active={openRule === "cleanEating"} onToggle={() => setOpenRule(openRule === "cleanEating" ? "exercise" : "cleanEating")}>
             <div className="space-y-3">
               <div className="border border-[#C8A96E]/45 bg-[#16130B] p-3 text-[10px] font-black uppercase leading-5 tracking-[0.14em] text-[#F4D58D]">
                 End-of-day rule. Do not tick this in the morning — confirm it only after the food has actually happened.
@@ -1526,7 +1608,7 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
             </div>
           </RuleCard>
 
-          <RuleCard title="Exercise" label="Rule 03" icon={Dumbbell} complete={rules[2].done} active={openRule === "exercise"} onToggle={() => setOpenRule(openRule === "exercise" ? "reflection" : "exercise")}>
+          <RuleCard title="Exercise · 30 min+" label="Rule 03" badgeText="PHOTO" badgeColor="#2ECC71" points={12} complete={rules[2].done} active={openRule === "exercise"} onToggle={() => setOpenRule(openRule === "exercise" ? "reflection" : "exercise")}>
             <div className="grid gap-3 sm:grid-cols-2">
               <Field label="Minutes"><TextInput type="number" value={form.exerciseDuration || ""} onChange={event => setForm({ ...form, exerciseDuration: event.target.value === "" ? 0 : Number(event.target.value) })} placeholder="30+" /></Field>
               <Field label="Workout type"><TextInput value={form.exerciseType} onChange={event => setForm({ ...form, exerciseType: event.target.value })} placeholder="Run, gym, mobility…" /></Field>
@@ -1543,18 +1625,18 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
             </div>
           </RuleCard>
 
-          <RuleCard title="Reflect" label="Rule 04" icon={MessageSquare} complete={rules[3].done} active={openRule === "reflection"} onToggle={() => setOpenRule(openRule === "reflection" ? "readTeach" : "reflection")}>
+          <RuleCard title="Reflection" label="Rule 04" badgeText="REFLECT" badgeColor="#C8A96E" points={8} complete={rules[3].done} active={openRule === "reflection"} onToggle={() => setOpenRule(openRule === "reflection" ? "readTeach" : "reflection")}>
             <JournalReflectionCard
               value={form.reflectionText}
               onChange={reflectionText => setForm({ ...form, reflectionText, reflectionShared: false })}
             />
           </RuleCard>
 
-          <RuleCard title="Read & Teach" label="Rule 05" icon={BookOpen} complete={rules[4].done} active={openRule === "readTeach"} onToggle={() => setOpenRule(openRule === "readTeach" ? "trackedEverything" : "readTeach")}>
+          <RuleCard title="Read & Teach" label="Rule 05" badgeText="TEACH" badgeColor="#C8A96E" points={8} complete={rules[4].done} active={openRule === "readTeach"} onToggle={() => setOpenRule(openRule === "readTeach" ? "trackedEverything" : "readTeach")}>
             <Field label="One useful idea"><TextArea value={form.readTeachText} onChange={event => setForm({ ...form, readTeachText: event.target.value })} placeholder="Teach one useful thing from today." /></Field>
           </RuleCard>
 
-          <RuleCard title="Track everything" label="Rule 06" icon={Activity} complete={form.trackedEverything} active={openRule === "trackedEverything"} onToggle={() => setOpenRule(openRule === "trackedEverything" ? "exercise" : "trackedEverything")}>
+          <RuleCard title="Track everything" label="Rule 06" badgeText="AUTO" badgeColor="#6B6B6B" points={6} complete={form.trackedEverything} active={openRule === "trackedEverything"} onToggle={() => setOpenRule(openRule === "trackedEverything" ? "exercise" : "trackedEverything")}>
             <label className="flex items-center justify-between gap-4 border border-[#2A2A2A] bg-[#0D0D0D] p-4">
               <span className="text-sm font-black uppercase tracking-[0.12em] text-white">Everything tracked honestly</span>
               <input type="checkbox" checked={form.trackedEverything} onChange={event => markChecklistItem("trackedEverything", event.target.checked)} className="h-6 w-6 accent-[#2ECC71]" />
@@ -1913,25 +1995,19 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
         </div>
       </div>
 
-      <section className="sticky top-2 z-30 overflow-hidden border border-[#2A2A2A] bg-[#070707]/95 p-3 shadow-[0_18px_50px_rgba(0,0,0,0.55)] backdrop-blur sm:top-3" data-testid="overview-position-strip">
-        <div className="grid grid-cols-4 gap-2 text-center">
-          <div className="border-r border-[#242424] pr-2">
-            <p className="text-[8px] font-black uppercase tracking-[0.22em] text-[#777]">Rank</p>
-            <p className="mt-1 text-2xl font-black uppercase leading-none tracking-[-0.07em] text-white">{currentRankLabel}</p>
+      {/* 4-col stat strip — matches prototype RANK | PTS | LIVES | DAY */}
+      <section className="sticky top-2 z-30 grid grid-cols-4 divide-x divide-[#1A1A1A] border border-[#2A2A2A] bg-[#070707]/95 shadow-[0_18px_50px_rgba(0,0,0,0.55)] backdrop-blur sm:top-3" data-testid="overview-position-strip">
+        {[
+          { label: "Rank",  value: currentRankLabel, color: "text-white" },
+          { label: "Pts",   value: currentPoints,    color: "text-[#C8A96E]" },
+          { label: "Lives", value: `${currentLives}/4`, color: currentLives <= 1 ? "text-[#C0392B]" : "text-white" },
+          { label: "Day",   value: `${currentDay}/50`, color: "text-white" },
+        ].map(col => (
+          <div key={col.label} className="p-3 text-center">
+            <p className="text-[8px] font-black uppercase tracking-[0.2em] text-[#777]">{col.label}</p>
+            <p className={classNames("mt-1 text-2xl font-black uppercase leading-none tracking-[-0.07em] tabular-nums", col.color)}>{col.value}</p>
           </div>
-          <div className="border-r border-[#242424] pr-2">
-            <p className="text-[8px] font-black uppercase tracking-[0.22em] text-[#C8A96E]">Points</p>
-            <p className="mt-1 text-2xl font-black uppercase leading-none tracking-[-0.07em] text-[#C8A96E]">{currentPoints}</p>
-          </div>
-          <div className="border-r border-[#242424] pr-2">
-            <p className="text-[8px] font-black uppercase tracking-[0.22em] text-[#777]">Lives</p>
-            <div className="mt-2 flex justify-center"><LifeDots lives={currentLives} compact /></div>
-          </div>
-          <div>
-            <p className="text-[8px] font-black uppercase tracking-[0.22em] text-[#777]">Day</p>
-            <p className="mt-1 text-2xl font-black uppercase leading-none tracking-[-0.07em] text-white">{currentDay}<span className="text-xs text-[#777]">/50</span></p>
-          </div>
-        </div>
+        ))}
       </section>
 
       <section className={classNames("relative overflow-hidden border p-4 shadow-[0_0_50px_rgba(0,0,0,0.35)]", nextMove.tone === "red" ? "border-[#C0392B]/65 bg-[#190B0A]" : nextMove.tone === "gold" ? "border-[#C8A96E]/65 bg-[#16130B]" : "border-[#2ECC71]/45 bg-[#07150D]")} data-testid="overview-next-best-move">
@@ -3545,11 +3621,11 @@ function PullToRefreshIndicator({ distance, refreshing }: { distance: number; re
 }
 
 const tabs: Array<{ key: TabKey; label: string; icon: any }> = [
-  { key: "myday", label: "My Day", icon: Flame },
-  { key: "overview", label: "Overview", icon: Activity },
+  { key: "myday", label: "Today", icon: Flame },
+  { key: "overview", label: "Room", icon: Activity },
   { key: "leaderboard", label: "Board", icon: Trophy },
   { key: "proof", label: "Proof", icon: Camera },
-  { key: "rewards", label: "Rewards", icon: Gift },
+  { key: "rewards", label: "Reward", icon: Gift },
   { key: "calendar", label: "Journey", icon: Calendar },
   { key: "admin", label: "Founder", icon: Crown },
 ];
