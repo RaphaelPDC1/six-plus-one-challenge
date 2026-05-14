@@ -128,7 +128,7 @@ function submittedAtTime(log: BoostLog | null | undefined): number {
 
 function submittedHour(log: BoostLog | null | undefined): number {
   const submitted = log?.submittedAt ? new Date(log.submittedAt) : null;
-  return submitted && Number.isFinite(submitted.getTime()) ? submitted.getHours() : -1;
+  return submitted && Number.isFinite(submitted.getTime()) ? submitted.getUTCHours() : -1;
 }
 
 function participantForLog(log: BoostLog, participants: BoostParticipant[]): BoostParticipant | undefined {

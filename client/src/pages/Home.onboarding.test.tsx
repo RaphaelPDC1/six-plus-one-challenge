@@ -585,7 +585,7 @@ describe("Home onboarding shell", () => {
     expect(cssSource).toContain('save-progress-shoot-home 260ms cubic-bezier(0.2, 0.9, 0.25, 1)');
     expect(cssSource).toContain('@keyframes save-progress-shoot-home');
     expect(homeSource).toContain("playAllGreenSubmitHaptic();");
-    expect(homeSource).toContain("if (data.complete)");
+    expect(homeSource).toContain("if (data?.complete)");
     expect(hapticsSource).toContain("submit: [28, 42, 28, 64, 72]");
     expect(hapticsSource).toContain('const VISUAL_HAPTIC_CLASS = "haptic-visual-feedback";');
     expect(hapticsSource).toContain('window.dispatchEvent(new CustomEvent("sixplusone:haptic"');
@@ -602,6 +602,7 @@ describe("Home onboarding shell", () => {
     expect(homeSource).toContain('data-testid="proof-v2-latest-grid"');
     expect(homeSource).toContain('data-testid="proof-v2-pressure-card"');
     expect(homeSource).toContain('data-testid="normal-proof-feed-below-v2"');
+    expect(homeSource).toContain("Proof, insights, comments, and reactions from the group.");
     expect(homeSource.indexOf('data-testid="proof-v2-top-layer"')).toBeLessThan(homeSource.indexOf('data-testid="normal-proof-feed-below-v2"'));
     expect(homeSource.indexOf('data-testid="normal-proof-feed-below-v2"')).toBeLessThan(homeSource.indexOf('data-testid="proof-readable-card"'));
     expect(homeSource).toContain('data-testid="proof-deep-thought"');

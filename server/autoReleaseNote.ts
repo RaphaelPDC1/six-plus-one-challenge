@@ -100,9 +100,19 @@ export async function autoPublishReleaseNoteIfNeeded(): Promise<void> {
 
   console.log(`[AutoReleaseNote] Generating release note for deployment ${versionLabel}…`);
 
+  let note: GeneratedNote;
   try {
-    const note = await generateReleaseNoteContent(context);
+    note = await generateReleaseNoteContent(context);
+  } catch (err) {
+    console.error("[AutoReleaseNote] LLM generation failed — using fallback release note:", err);
+    note = {
+      title: "System Update",
+      summary: "Stability improvements and bug fixes.",
+      body: "This update includes improvements to app stability, proof uploads, and overall reliability.",
+    };
+  }
 
+  try {
     await db.insert(releaseNotes).values({
       title: note.title.trim().slice(0, 180),
       summary: note.summary.trim(),
@@ -112,7 +122,6 @@ export async function autoPublishReleaseNoteIfNeeded(): Promise<void> {
       active: true,
     });
 
-    // Confirm insertion
     const created = await db
       .select({ id: releaseNotes.id, title: releaseNotes.title })
       .from(releaseNotes)
@@ -121,7 +130,6 @@ export async function autoPublishReleaseNoteIfNeeded(): Promise<void> {
 
     console.log(`[AutoReleaseNote] ✓ Published: "${created[0]?.title}" (id ${created[0]?.id}) for ${versionLabel}`);
   } catch (err) {
-    // Non-fatal — the app still works without the release note
-    console.error("[AutoReleaseNote] Failed to generate/publish release note:", err);
+    console.error("[AutoReleaseNote] Failed to insert release note into database:", err);
   }
 }

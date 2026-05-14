@@ -1383,26 +1383,28 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
 
   const submit = trpc.challenge.submitMyDay.useMutation({
     onSuccess: data => {
-      setLastMissed(data.deadlinePassed ? data.missedRules : []);
-      if (data.complete) {
+      setLastMissed((data?.deadlinePassed ?? false) ? (data?.missedRules ?? []) : []);
+      if (data?.complete) {
         playAllGreenSubmitHaptic();
         playDoneCue();
       } else {
         pulse([18, 28, 45]);
       }
       setSaveNotice({
-        title: data.complete ? "Submitted" : "Saved",
-        complete: data.complete,
+        title: (data?.complete) ? "Submitted" : "Saved",
+        complete: data?.complete ?? false,
       });
       if (draftStorageKey && typeof window !== "undefined") {
         window.localStorage.removeItem(draftStorageKey);
       }
       window.setTimeout(() => setSaveNotice(null), 2200);
-      utils.challenge.snapshot.setData(undefined, previous => patchDailyLogIntoSnapshot(previous, data.log, data.participant));
+      if (data?.log) {
+        utils.challenge.snapshot.setData(undefined, previous => patchDailyLogIntoSnapshot(previous, data.log, data?.participant));
+      }
       void utils.challenge.snapshot.invalidate();
       refetch();
     },
-    onError: error => toast.error(error.message),
+    onError: error => toast.error(error.message ?? "Could not save your log. Please try again."),
   });
   const ghost = trpc.challenge.applyGhostLife.useMutation({
     onSuccess: data => {
