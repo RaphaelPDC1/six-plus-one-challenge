@@ -168,7 +168,7 @@ export function CalendarView() {
               <div
                 key={dayNumber}
                 className={classNames(
-                  "motion-calendar-cell motion-press relative aspect-square border p-1 transition hover:-translate-y-0.5",
+                  "motion-press relative aspect-square border p-1 transition hover:-translate-y-0.5",
                   getStatusClasses(status.status),
                   dayNumber === currentDay && "ring-2 ring-[#C8A96E]",
                   isMilestone && "shadow-[inset_0_0_0_1px_rgba(200,169,110,0.45)]",

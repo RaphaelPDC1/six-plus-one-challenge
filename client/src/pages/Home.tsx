@@ -1304,11 +1304,8 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
   const [draftRestored, setDraftRestored] = useState(false);
   const [draftReady, setDraftReady] = useState(false);
   const [saveProgressScale, setSaveProgressScale] = useState(0);
-  const [backdatedNote, setBackdatedNote] = useState("Day 2 proof uploaded after the original technical issue.");
-  const [technicalNoticeDismissed, setTechnicalNoticeDismissed] = useState(() => typeof window !== "undefined" && window.localStorage.getItem("nay-life-restored-technical-notice-dismissed") === "yes");
   const cameraProofInputRef = useRef<HTMLInputElement | null>(null);
   const libraryProofInputRef = useRef<HTMLInputElement | null>(null);
-  const backdatedProofInputRef = useRef<HTMLInputElement | null>(null);
   const participant = snapshot?.participant;
   const currentDayNumber = snapshot?.challenge?.currentDay ?? 1;
   const draftStorageKey = getDraftStorageKey(participant?.userId ?? participant?.id, currentDayNumber);
@@ -1328,11 +1325,6 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
     { label: "Board", value: leaderboardVisiblePoints, detail: "leaderboard", tone: "green" as const },
   ];
   const ghostLifeLocked = Boolean(participant?.ghostLifeUsed);
-  const participantNameForNayCheck = `${participant?.displayName ?? ""} ${participant?.whatsappName ?? ""}`.toLowerCase();
-  const isNayParticipant = participantNameForNayCheck.includes("nay");
-  const nayDayTwoLog = (snapshot?.logs ?? []).find((log: any) => log.participantId === participant?.id && Number(log.dayNumber) === 2);
-  const nayBackdatedProofComplete = Boolean(nayDayTwoLog?.dayComplete && String(nayDayTwoLog?.exerciseProofUrl ?? "").trim());
-  const technicalRestorationNotice = [...(snapshot?.wardenMessages ?? [])].reverse().find((message: any) => String(message.content ?? "").toLowerCase().includes("nay has had one life restored"));
 
   useEffect(() => {
     setDraftReady(false);
@@ -1428,23 +1420,6 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
     },
     onError: error => toast.error(error.message || "Could not upload proof media."),
   });
-  const submitNayBackdatedProof = trpc.challenge.submitNayBackdatedTechnicalProof.useMutation({
-    onSuccess: () => {
-      haptics.success();
-      toast("Backdated Day 2 proof saved. Nay’s restored life stays corrected.");
-      void utils.challenge.snapshot.invalidate();
-      refetch();
-    },
-    onError: error => toast.error(error.message || "Could not save Nay’s backdated proof."),
-  });
-  const uploadBackdatedProof = trpc.challenge.uploadProof.useMutation({
-    onSuccess: data => {
-      const proofMedia = appendProofMedia("", { url: data.url, type: data.mediaType, mimeType: data.mimeType, name: data.fileName });
-      submitNayBackdatedProof.mutate({ dayNumber: 2, proofMedia, note: backdatedNote });
-    },
-    onError: error => toast.error(error.message || "Could not upload the backdated proof media."),
-  });
-
   function markChecklistItem(key: "noAlcohol" | "cleanEating" | "trackedEverything", checked: boolean) {
     pulse(checked ? [18, 30, 18] : 12);
     if (checked) playDoneCue();
@@ -1469,50 +1444,9 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
     if (files.length > availableSlots) toast("Only the first available proof slots were queued.");
   }
 
-  function handleBackdatedProofFile(file?: File | null) {
-    if (!file) return;
-    if (!file.type.match(/^(image\/(png|jpeg|webp)|video\/(mp4|webm|quicktime))$/)) { toast.error("Use PNG, JPG, WEBP, MP4, MOV, or WEBM proof media."); return; }
-    const limit = file.type.startsWith("video/") ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
-    if (file.size > limit) { toast.error(file.type.startsWith("video/") ? "Backdated proof video must be under 50MB." : "Backdated proof image must be under 10MB."); return; }
-    const reader = new FileReader();
-    const mimeType = file.type as "image/png" | "image/jpeg" | "image/webp" | "video/mp4" | "video/webm" | "video/quicktime";
-    reader.onload = () => uploadBackdatedProof.mutate({ fileName: file.name || "nay-day-2-proof", mimeType, dataUrl: String(reader.result) });
-    reader.onerror = () => toast.error("Could not read that backdated proof media.");
-    reader.readAsDataURL(file);
-  }
-
-  function dismissTechnicalNotice() {
-    setTechnicalNoticeDismissed(true);
-    if (typeof window !== "undefined") window.localStorage.setItem("nay-life-restored-technical-notice-dismissed", "yes");
-  }
-
   return (
     <div className="motion-page grid min-w-0 max-w-full gap-5 overflow-x-hidden xl:grid-cols-[minmax(0,1fr)_360px]">
-      {technicalRestorationNotice && !technicalNoticeDismissed && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/82 p-4" role="dialog" aria-modal="true" aria-labelledby="technical-restoration-title" data-testid="technical-restoration-notice">
-          <div className="w-full max-w-md border-2 border-[#2ECC71] bg-[#07150D] p-5 shadow-[0_0_70px_rgba(46,204,113,0.22)]">
-            <MicroLabel tone="green">Technical correction</MicroLabel>
-            <h2 id="technical-restoration-title" className="mt-3 text-4xl font-black uppercase leading-none tracking-[-0.07em] text-white">Nay’s life is restored.</h2>
-            <p className="mt-4 text-sm font-bold leading-6 text-[#CFF5DA]">{technicalRestorationNotice.content}</p>
-            <p className="mt-3 text-[10px] font-black uppercase tracking-[0.16em] text-[#85C99A]">This notice stays visible until you tap the close button below.</p>
-            <button type="button" onClick={dismissTechnicalNotice} className="motion-press mt-5 w-full border border-[#2ECC71] bg-[#2ECC71] px-4 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-black" data-testid="technical-restoration-close">Tap to close</button>
-          </div>
-        </div>
-      )}
       <section className="min-w-0 max-w-full space-y-5 overflow-x-hidden">
-        {isNayParticipant && !nayBackdatedProofComplete && (
-          <div className="border-2 border-[#9B59B6] bg-[#160D1D] p-4 shadow-[0_0_45px_rgba(155,89,182,0.18)]" data-testid="nay-backdated-proof-prompt">
-            <MicroLabel tone="purple">Nay only · Technical upload fix</MicroLabel>
-            <h2 className="mt-2 text-3xl font-black uppercase leading-none tracking-[-0.06em] text-white">Upload your backdated Day 2 proof.</h2>
-            <p className="mt-3 text-sm font-bold leading-6 text-[#D8B4FE]">Your life has already been restored because the original upload issue was technical. Add the missing Day 2 proof here so the proof feed and challenge record match the correction.</p>
-            <textarea value={backdatedNote} onChange={event => setBackdatedNote(event.target.value)} maxLength={300} className="mt-4 min-h-20 w-full border border-[#3E2A4D] bg-black/50 p-3 text-sm font-bold text-white outline-none focus:border-[#D8B4FE]" aria-label="Backdated proof note" />
-            <div className="mt-3 flex flex-wrap gap-2">
-              <button type="button" disabled={uploadBackdatedProof.isPending || submitNayBackdatedProof.isPending} onClick={() => backdatedProofInputRef.current?.click()} className="motion-press border border-[#D8B4FE] bg-[#9B59B6] px-4 py-3 text-[10px] font-black uppercase tracking-[0.16em] text-white disabled:opacity-60">{uploadBackdatedProof.isPending || submitNayBackdatedProof.isPending ? "Saving proof" : "Choose proof media"}</button>
-              <span className="self-center text-[10px] font-black uppercase tracking-[0.14em] text-[#A78ABE]">Image or video accepted</span>
-            </div>
-            <input ref={backdatedProofInputRef} type="file" accept="image/png,image/jpeg,image/webp,video/mp4,video/quicktime,video/webm" className="sr-only" onChange={event => { handleBackdatedProofFile(event.target.files?.[0]); event.currentTarget.value = ""; }} />
-          </div>
-        )}
         <div className="min-w-0 max-w-full overflow-hidden border border-[#2A2A2A] bg-[#101010] p-4 sm:p-5">
           <div className="grid min-w-0 gap-5 md:grid-cols-[minmax(0,1fr)_minmax(0,320px)]">
             <div>
@@ -1704,7 +1638,7 @@ function OverviewMetricCard({
       </div>
     </>
   );
-  const className = classNames("motion-card min-w-0 rounded-[1.25rem] border p-4 text-left transition duration-300", tones[tone], onClick && "motion-press cursor-pointer hover:-translate-y-0.5 hover:border-white/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A96E]/60");
+  const className = classNames("motion-card min-w-0 border p-4 text-left transition duration-300", tones[tone], onClick && "motion-press cursor-pointer hover:-translate-y-0.5 hover:border-white/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A96E]/60");
   return onClick ? <button type="button" onClick={onClick} className={className}>{content}</button> : <article className={className}>{content}</article>;
 }
 
@@ -2409,7 +2343,7 @@ function PodiumCard({ participant, index, onSelect, className }: { participant: 
       <div className="relative mt-3 grid gap-2 sm:mt-4 sm:flex sm:items-end sm:justify-between sm:gap-3">
         <div>
           <p className="text-[8px] font-black uppercase tracking-[0.14em] text-[#777] sm:text-[10px] sm:tracking-[0.16em]">Points</p>
-          <p className={classNames("mt-1 text-2xl font-black leading-none tabular-nums sm:text-4xl", styles.text)}>{participant?.totalPoints ?? 0}</p>
+          <p className={classNames("mt-1 text-2xl font-black leading-none tabular-nums sm:text-4xl", styles.text)}>{participant?.canonicalTotalPoints ?? participant?.totalPoints ?? 0}</p>
         </div>
         <div className="text-left sm:text-right">
           <p className="text-[8px] font-black uppercase tracking-[0.14em] text-[#777] sm:text-[10px] sm:tracking-[0.16em]">Lives</p>
@@ -2907,9 +2841,9 @@ function ProofFeed({ snapshot }: { snapshot: Snapshot }) {
     <section className="mx-auto flex w-full max-w-[56rem] flex-col gap-4" data-testid="proof-page-v2-with-normal-feed">
       <ProofV2TopLayer publicLogs={publicLogs} snapshot={snapshot} latestDay={latestDay} waiting={waiting} />
       <div className="w-full max-w-[38rem] self-center border border-[#202020] bg-[#070707] p-3 shadow-[0_0_40px_rgba(0,0,0,0.45)] sm:p-5" data-testid="proof-feed-redesign">
-        <MicroLabel tone="green">Normal proof feed</MicroLabel>
+        <MicroLabel tone="green">Proof feed</MicroLabel>
         <h2 className="mt-2 break-words text-[2rem] font-black uppercase leading-[0.82] tracking-[-0.08em] text-white sm:text-5xl">Receipts.<br />Insights.<br />Momentum.</h2>
-        <p className="mt-3 max-w-sm text-[10px] font-black uppercase leading-4 tracking-[0.12em] text-[#858585]">Full proof cards, comments, reactions, and Deep Thought stay here below the v2 layer.</p>
+        <p className="mt-3 max-w-sm text-[10px] font-black uppercase leading-4 tracking-[0.12em] text-[#858585]">Proof, insights, comments, and reactions from the group.</p>
         {waiting.length > 0 && (
           <div className="mt-5 border border-[#C0392B]/35 bg-[#19090A]/70 p-3" data-testid="proof-waiting-bar">
             <p className="text-[9px] font-black uppercase tracking-[0.18em] text-[#C0392B]">Waiting on {waiting.length} player{waiting.length === 1 ? "" : "s"} · Day {latestDay}</p>
@@ -3015,7 +2949,7 @@ function Rewards({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => voi
         <p className="max-w-sm text-xs font-bold uppercase tracking-[0.14em] text-[#777]">Only the three agreed rewards are shown. A tap logs the request and sends an admin notification.</p>
       </div>
       <div className="mt-5 grid gap-3 md:grid-cols-3">
-        {snapshot?.rewards.map((reward: any) => {
+        {(snapshot?.rewards ?? []).map((reward: any) => {
           const canRedeem = participantPoints >= reward.pointsCost;
           return (
             <button key={reward.id} className={classNames("motion-card motion-press border bg-[#101010] p-5 text-left transition hover:border-[#C8A96E] disabled:cursor-not-allowed disabled:opacity-60", canRedeem ? "border-[#2A2A2A]" : "border-[#2A2A2A]/70")} disabled={!canRedeem || redeem.isPending} onClick={() => { pulse(12); redeem.mutate({ rewardId: reward.id }); }}>
