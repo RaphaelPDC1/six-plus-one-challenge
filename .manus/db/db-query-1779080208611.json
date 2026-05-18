@@ -1,0 +1,9 @@
+{
+  "query": "\n-- Check if the life-lost warden message (id=510001) is shown as a community popup\n-- The popup is likely driven by warden_messages with sourceEvent='life_lost'\n-- Delete the specific life-lost warden message for Senyo's Day 12\nDELETE FROM warden_messages WHERE id = 510001;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2P9ir9M7b3E7Qkh.8b2c854ea8b3 --database HPubf4auNvt8KXvgrLad5c --execute \n-- Check if the life-lost warden message (id=510001) is shown as a community popup\n-- The popup is likely driven by warden_messages with sourceEvent='life_lost'\n-- Delete the specific life-lost warden message for Senyo's Day 12\nDELETE FROM warden_messages WHERE id = 510001;\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 271
+}

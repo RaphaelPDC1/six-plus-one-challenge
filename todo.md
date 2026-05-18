@@ -1263,6 +1263,6 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Bug: Layout clash on My Day covering Read & Teach / Track Everything rule cards.
 - [x] Bug: Restore smart two-step Save Progress + Lock In button (was smart/auto-detecting, now shows wrong "Save Draft" label).
 
-- [ ] Bug (persistent): My Day crashing/excessive re-rendering still happening after polling fix.
-- [ ] Bug (persistent): Submit button still not working correctly after smart-button fix.
-- [ ] Bug (persistent): Floating submit dock still covers rule card text after submission.
+- [x] Bug (persistent): My Day crashing/excessive re-rendering — fixed by using stable myLogKey string dep instead of object reference.
+- [x] Bug (persistent): Submit button — fixed by showing permanent static "Day Locked In" banner when todayAlreadyComplete is true.
+- [x] Bug (persistent): Floating submit dock covers rule card text — fixed by hiding the dock entirely once the day is locked in.

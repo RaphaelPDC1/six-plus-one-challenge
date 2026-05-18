@@ -1,0 +1,70 @@
+{
+  "query": "\n-- Check participant_notifications for Senyo (life-lost popup)\nSELECT * FROM participant_notifications WHERE participantId = 90001 ORDER BY createdAt DESC LIMIT 10;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2P9ir9M7b3E7Qkh.8b2c854ea8b3 --database HPubf4auNvt8KXvgrLad5c --execute \n-- Check participant_notifications for Senyo (life-lost popup)\nSELECT * FROM participant_notifications WHERE participantId = 90001 ORDER BY createdAt DESC LIMIT 10;\n",
+  "rows": [
+    {
+      "id": "60001",
+      "userId": "210030",
+      "participantId": "90001",
+      "type": "system",
+      "title": "6+1 notifications are ready",
+      "body": "This is a test push from your installed 6+1 challenge app.",
+      "actionUrl": "/",
+      "readAt": "NULL",
+      "pushStatus": "skipped",
+      "pushAttempts": "1",
+      "lastPushError": "VAPID keys are not configured.",
+      "createdAt": "2026-05-11 10:16:15",
+      "updatedAt": "2026-05-11 10:16:15"
+    },
+    {
+      "id": "3",
+      "userId": "210030",
+      "participantId": "90001",
+      "type": "system",
+      "title": "6+1 notifications are ready",
+      "body": "This is a test push from your installed 6+1 challenge app.",
+      "actionUrl": "/",
+      "readAt": "NULL",
+      "pushStatus": "skipped",
+      "pushAttempts": "1",
+      "lastPushError": "VAPID keys are not configured.",
+      "createdAt": "2026-05-10 16:02:56",
+      "updatedAt": "2026-05-10 16:02:56"
+    },
+    {
+      "id": "2",
+      "userId": "210030",
+      "participantId": "90001",
+      "type": "system",
+      "title": "6+1 notifications are ready",
+      "body": "This is a test push from your installed 6+1 challenge app.",
+      "actionUrl": "/",
+      "readAt": "NULL",
+      "pushStatus": "skipped",
+      "pushAttempts": "1",
+      "lastPushError": "VAPID keys are not configured.",
+      "createdAt": "2026-05-10 16:02:50",
+      "updatedAt": "2026-05-10 16:02:50"
+    },
+    {
+      "id": "1",
+      "userId": "210030",
+      "participantId": "90001",
+      "type": "system",
+      "title": "6+1 notifications are ready",
+      "body": "This is a test push from your installed 6+1 challenge app.",
+      "actionUrl": "/",
+      "readAt": "NULL",
+      "pushStatus": "skipped",
+      "pushAttempts": "1",
+      "lastPushError": "VAPID keys are not configured.",
+      "createdAt": "2026-05-10 16:02:32",
+      "updatedAt": "2026-05-10 16:02:32"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tuserId\tparticipantId\ttype\ttitle\tbody\tactionUrl\treadAt\tpushStatus\tpushAttempts\tlastPushError\tcreatedAt\tupdatedAt\n60001\t210030\t90001\tsystem\t6+1 notifications are ready\tThis is a test push from your installed 6+1 challenge app.\t/\tNULL\tskipped\t1\tVAPID keys are not configured.\t2026-05-11 10:16:15\t2026-05-11 10:16:15\n3\t210030\t90001\tsystem\t6+1 notifications are ready\tThis is a test push from your installed 6+1 challenge app.\t/\tNULL\tskipped\t1\tVAPID keys are not configured.\t2026-05-10 16:02:56\t2026-05-10 16:02:56\n2\t210030\t90001\tsystem\t6+1 notifications are ready\tThis is a test push from your installed 6+1 challenge app.\t/\tNULL\tskipped\t1\tVAPID keys are not configured.\t2026-05-10 16:02:50\t2026-05-10 16:02:50\n1\t210030\t90001\tsystem\t6+1 notifications are ready\tThis is a test push from your installed 6+1 challenge app.\t/\tNULL\tskipped\t1\tVAPID keys are not configured.\t2026-05-10 16:02:32\t2026-05-10 16:02:32\n",
+  "stderr": "",
+  "execution_time_ms": 272
+}

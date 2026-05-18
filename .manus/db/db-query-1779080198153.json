@@ -1,0 +1,9 @@
+{
+  "query": "\n-- Step 1: Restore Senyo's life (2 → 3)\nUPDATE participants SET livesRemaining = 3 WHERE id = 90001;\n\n-- Step 2: Delete the Day 12 payment_event (id = 360001) that triggered the life loss\nDELETE FROM payment_events WHERE id = 360001 AND participantId = 90001;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2P9ir9M7b3E7Qkh.8b2c854ea8b3 --database HPubf4auNvt8KXvgrLad5c --execute \n-- Step 1: Restore Senyo's life (2 → 3)\nUPDATE participants SET livesRemaining = 3 WHERE id = 90001;\n\n-- Step 2: Delete the Day 12 payment_event (id = 360001) that triggered the life loss\nDELETE FROM payment_events WHERE id = 360001 AND participantId = 90001;\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 296
+}

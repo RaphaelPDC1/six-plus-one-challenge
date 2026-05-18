@@ -1,0 +1,8 @@
+{
+  "query": "\n-- Senyo's participant record\nSELECT id, name, livesRemaining, createdAt FROM participants WHERE name LIKE '%Senyo%' OR name LIKE '%senyo%';\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2P9ir9M7b3E7Qkh.8b2c854ea8b3 --database HPubf4auNvt8KXvgrLad5c --execute \n-- Senyo's participant record\nSELECT id, name, livesRemaining, createdAt FROM participants WHERE name LIKE '%Senyo%' OR name LIKE '%senyo%';\n",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 3: Unknown column 'name' in 'where clause'"
+  ]
+}
