@@ -1,0 +1,420 @@
+{
+  "query": "\nSELECT \n  dl.id,\n  dl.participantId,\n  p.displayName,\n  dl.dayNumber,\n  dl.dayComplete,\n  dl.pointsAwarded,\n  dl.createdAt,\n  dl.updatedAt\nFROM daily_logs dl\nJOIN participants p ON dl.participantId = p.id\nWHERE p.displayName IN ('Chess', 'Nat', 'CTM')\nORDER BY p.displayName, dl.dayNumber DESC\nLIMIT 50;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2P9ir9M7b3E7Qkh.8b2c854ea8b3 --database HPubf4auNvt8KXvgrLad5c --execute \nSELECT \n  dl.id,\n  dl.participantId,\n  p.displayName,\n  dl.dayNumber,\n  dl.dayComplete,\n  dl.pointsAwarded,\n  dl.createdAt,\n  dl.updatedAt\nFROM daily_logs dl\nJOIN participants p ON dl.participantId = p.id\nWHERE p.displayName IN ('Chess', 'Nat', 'CTM')\nORDER BY p.displayName, dl.dayNumber DESC\nLIMIT 50;\n",
+  "rows": [
+    {
+      "id": "3150002",
+      "participantId": "90008",
+      "displayName": "Chess",
+      "dayNumber": "13",
+      "dayComplete": "0",
+      "pointsAwarded": "0",
+      "createdAt": "2026-05-18 23:00:02",
+      "updatedAt": "2026-05-18 23:00:02"
+    },
+    {
+      "id": "2820001",
+      "participantId": "90008",
+      "displayName": "Chess",
+      "dayNumber": "12",
+      "dayComplete": "1",
+      "pointsAwarded": "10",
+      "createdAt": "2026-05-17 22:31:46",
+      "updatedAt": "2026-05-17 22:31:46"
+    },
+    {
+      "id": "2400001",
+      "participantId": "90008",
+      "displayName": "Chess",
+      "dayNumber": "11",
+      "dayComplete": "1",
+      "pointsAwarded": "10",
+      "createdAt": "2026-05-16 17:32:38",
+      "updatedAt": "2026-05-16 22:58:32"
+    },
+    {
+      "id": "2010001",
+      "participantId": "90008",
+      "displayName": "Chess",
+      "dayNumber": "10",
+      "dayComplete": "0",
+      "pointsAwarded": "0",
+      "createdAt": "2026-05-14 23:40:26",
+      "updatedAt": "2026-05-15 23:02:34"
+    },
+    {
+      "id": "1830001",
+      "participantId": "90008",
+      "displayName": "Chess",
+      "dayNumber": "9",
+      "dayComplete": "1",
+      "pointsAwarded": "10",
+      "createdAt": "2026-05-14 17:35:13",
+      "updatedAt": "2026-05-14 17:47:38"
+    },
+    {
+      "id": "1380001",
+      "participantId": "90008",
+      "displayName": "Chess",
+      "dayNumber": "8",
+      "dayComplete": "1",
+      "pointsAwarded": "10",
+      "createdAt": "2026-05-12 23:45:54",
+      "updatedAt": "2026-05-13 22:55:55"
+    },
+    {
+      "id": "1350002",
+      "participantId": "90008",
+      "displayName": "Chess",
+      "dayNumber": "7",
+      "dayComplete": "1",
+      "pointsAwarded": "10",
+      "createdAt": "2026-05-12 22:56:40",
+      "updatedAt": "2026-05-12 22:56:40"
+    },
+    {
+      "id": "960001",
+      "participantId": "90008",
+      "displayName": "Chess",
+      "dayNumber": "6",
+      "dayComplete": "1",
+      "pointsAwarded": "8",
+      "createdAt": "2026-05-11 08:07:33",
+      "updatedAt": "2026-05-11 22:52:04"
+    },
+    {
+      "id": "840002",
+      "participantId": "90008",
+      "displayName": "Chess",
+      "dayNumber": "5",
+      "dayComplete": "1",
+      "pointsAwarded": "10",
+      "createdAt": "2026-05-10 22:50:58",
+      "updatedAt": "2026-05-10 22:50:58"
+    },
+    {
+      "id": "540001",
+      "participantId": "90008",
+      "displayName": "Chess",
+      "dayNumber": "4",
+      "dayComplete": "1",
+      "pointsAwarded": "14",
+      "createdAt": "2026-05-09 21:50:42",
+      "updatedAt": "2026-05-09 21:50:42"
+    },
+    {
+      "id": "330001",
+      "participantId": "90008",
+      "displayName": "Chess",
+      "dayNumber": "3",
+      "dayComplete": "1",
+      "pointsAwarded": "14",
+      "createdAt": "2026-05-08 11:48:56",
+      "updatedAt": "2026-05-08 22:53:13"
+    },
+    {
+      "id": "180001",
+      "participantId": "90008",
+      "displayName": "Chess",
+      "dayNumber": "2",
+      "dayComplete": "1",
+      "pointsAwarded": "14",
+      "createdAt": "2026-05-07 18:50:41",
+      "updatedAt": "2026-05-07 18:50:41"
+    },
+    {
+      "id": "30008",
+      "participantId": "90008",
+      "displayName": "Chess",
+      "dayNumber": "1",
+      "dayComplete": "1",
+      "pointsAwarded": "10",
+      "createdAt": "2026-05-06 21:09:34",
+      "updatedAt": "2026-05-06 21:39:11"
+    },
+    {
+      "id": "3180001",
+      "participantId": "90005",
+      "displayName": "CTM",
+      "dayNumber": "14",
+      "dayComplete": "1",
+      "pointsAwarded": "8",
+      "createdAt": "2026-05-19 09:28:00",
+      "updatedAt": "2026-05-19 20:11:47"
+    },
+    {
+      "id": "2970001",
+      "participantId": "90005",
+      "displayName": "CTM",
+      "dayNumber": "13",
+      "dayComplete": "0",
+      "pointsAwarded": "0",
+      "createdAt": "2026-05-18 07:31:00",
+      "updatedAt": "2026-05-18 23:00:02"
+    },
+    {
+      "id": "2640001",
+      "participantId": "90005",
+      "displayName": "CTM",
+      "dayNumber": "12",
+      "dayComplete": "1",
+      "pointsAwarded": "10",
+      "createdAt": "2026-05-17 13:39:29",
+      "updatedAt": "2026-05-17 22:05:19"
+    },
+    {
+      "id": "2370001",
+      "participantId": "90005",
+      "displayName": "CTM",
+      "dayNumber": "11",
+      "dayComplete": "1",
+      "pointsAwarded": "10",
+      "createdAt": "2026-05-16 15:36:46",
+      "updatedAt": "2026-05-16 21:27:23"
+    },
+    {
+      "id": "2130001",
+      "participantId": "90005",
+      "displayName": "CTM",
+      "dayNumber": "10",
+      "dayComplete": "1",
+      "pointsAwarded": "60",
+      "createdAt": "2026-05-15 17:27:44",
+      "updatedAt": "2026-05-15 21:39:28"
+    },
+    {
+      "id": "1800001",
+      "participantId": "90005",
+      "displayName": "CTM",
+      "dayNumber": "9",
+      "dayComplete": "1",
+      "pointsAwarded": "10",
+      "createdAt": "2026-05-14 11:57:29",
+      "updatedAt": "2026-05-14 20:44:30"
+    },
+    {
+      "id": "1470001",
+      "participantId": "90005",
+      "displayName": "CTM",
+      "dayNumber": "8",
+      "dayComplete": "1",
+      "pointsAwarded": "10",
+      "createdAt": "2026-05-13 10:31:34",
+      "updatedAt": "2026-05-13 21:19:01"
+    },
+    {
+      "id": "1260001",
+      "participantId": "90005",
+      "displayName": "CTM",
+      "dayNumber": "7",
+      "dayComplete": "1",
+      "pointsAwarded": "10",
+      "createdAt": "2026-05-12 19:22:27",
+      "updatedAt": "2026-05-12 19:34:43"
+    },
+    {
+      "id": "1020002",
+      "participantId": "90005",
+      "displayName": "CTM",
+      "dayNumber": "6",
+      "dayComplete": "1",
+      "pointsAwarded": "10",
+      "createdAt": "2026-05-11 09:37:07",
+      "updatedAt": "2026-05-11 20:17:47"
+    },
+    {
+      "id": "660001",
+      "participantId": "90005",
+      "displayName": "CTM",
+      "dayNumber": "5",
+      "dayComplete": "1",
+      "pointsAwarded": "10",
+      "createdAt": "2026-05-10 09:17:39",
+      "updatedAt": "2026-05-10 20:41:41"
+    },
+    {
+      "id": "480001",
+      "participantId": "90005",
+      "displayName": "CTM",
+      "dayNumber": "4",
+      "dayComplete": "1",
+      "pointsAwarded": "14",
+      "createdAt": "2026-05-09 16:14:46",
+      "updatedAt": "2026-05-09 20:12:14"
+    },
+    {
+      "id": "300001",
+      "participantId": "90005",
+      "displayName": "CTM",
+      "dayNumber": "3",
+      "dayComplete": "1",
+      "pointsAwarded": "14",
+      "createdAt": "2026-05-08 09:59:50",
+      "updatedAt": "2026-05-08 19:25:41"
+    },
+    {
+      "id": "150001",
+      "participantId": "90005",
+      "displayName": "CTM",
+      "dayNumber": "2",
+      "dayComplete": "1",
+      "pointsAwarded": "14",
+      "createdAt": "2026-05-07 17:42:40",
+      "updatedAt": "2026-05-07 19:54:43"
+    },
+    {
+      "id": "30004",
+      "participantId": "90005",
+      "displayName": "CTM",
+      "dayNumber": "1",
+      "dayComplete": "1",
+      "pointsAwarded": "10",
+      "createdAt": "2026-05-06 19:20:24",
+      "updatedAt": "2026-05-06 19:20:24"
+    },
+    {
+      "id": "3210001",
+      "participantId": "90007",
+      "displayName": "Nat",
+      "dayNumber": "14",
+      "dayComplete": "1",
+      "pointsAwarded": "8",
+      "createdAt": "2026-05-19 15:53:28",
+      "updatedAt": "2026-05-19 15:53:28"
+    },
+    {
+      "id": "3150001",
+      "participantId": "90007",
+      "displayName": "Nat",
+      "dayNumber": "13",
+      "dayComplete": "0",
+      "pointsAwarded": "0",
+      "createdAt": "2026-05-18 23:00:02",
+      "updatedAt": "2026-05-18 23:00:02"
+    },
+    {
+      "id": "2730001",
+      "participantId": "90007",
+      "displayName": "Nat",
+      "dayNumber": "12",
+      "dayComplete": "1",
+      "pointsAwarded": "8",
+      "createdAt": "2026-05-17 18:31:41",
+      "updatedAt": "2026-05-17 18:31:41"
+    },
+    {
+      "id": "2430001",
+      "participantId": "90007",
+      "displayName": "Nat",
+      "dayNumber": "11",
+      "dayComplete": "1",
+      "pointsAwarded": "8",
+      "createdAt": "2026-05-16 18:40:20",
+      "updatedAt": "2026-05-16 21:59:02"
+    },
+    {
+      "id": "2220002",
+      "participantId": "90007",
+      "displayName": "Nat",
+      "dayNumber": "10",
+      "dayComplete": "1",
+      "pointsAwarded": "60",
+      "createdAt": "2026-05-15 21:43:42",
+      "updatedAt": "2026-05-15 21:43:42"
+    },
+    {
+      "id": "1860001",
+      "participantId": "90007",
+      "displayName": "Nat",
+      "dayNumber": "9",
+      "dayComplete": "1",
+      "pointsAwarded": "8",
+      "createdAt": "2026-05-14 18:06:04",
+      "updatedAt": "2026-05-14 21:16:20"
+    },
+    {
+      "id": "1410001",
+      "participantId": "90007",
+      "displayName": "Nat",
+      "dayNumber": "8",
+      "dayComplete": "1",
+      "pointsAwarded": "8",
+      "createdAt": "2026-05-13 05:40:25",
+      "updatedAt": "2026-05-13 20:23:21"
+    },
+    {
+      "id": "1110001",
+      "participantId": "90007",
+      "displayName": "Nat",
+      "dayNumber": "7",
+      "dayComplete": "1",
+      "pointsAwarded": "10",
+      "createdAt": "2026-05-12 05:38:23",
+      "updatedAt": "2026-05-12 19:54:41"
+    },
+    {
+      "id": "870001",
+      "participantId": "90007",
+      "displayName": "Nat",
+      "dayNumber": "6",
+      "dayComplete": "1",
+      "pointsAwarded": "10",
+      "createdAt": "2026-05-11 05:27:15",
+      "updatedAt": "2026-05-11 18:47:05"
+    },
+    {
+      "id": "630001",
+      "participantId": "90007",
+      "displayName": "Nat",
+      "dayNumber": "5",
+      "dayComplete": "1",
+      "pointsAwarded": "10",
+      "createdAt": "2026-05-10 06:48:16",
+      "updatedAt": "2026-05-10 17:05:12"
+    },
+    {
+      "id": "420001",
+      "participantId": "90007",
+      "displayName": "Nat",
+      "dayNumber": "4",
+      "dayComplete": "1",
+      "pointsAwarded": "15",
+      "createdAt": "2026-05-09 07:14:12",
+      "updatedAt": "2026-05-09 13:16:33"
+    },
+    {
+      "id": "330002",
+      "participantId": "90007",
+      "displayName": "Nat",
+      "dayNumber": "3",
+      "dayComplete": "1",
+      "pointsAwarded": "14",
+      "createdAt": "2026-05-08 11:52:02",
+      "updatedAt": "2026-05-08 18:21:42"
+    },
+    {
+      "id": "180002",
+      "participantId": "90007",
+      "displayName": "Nat",
+      "dayNumber": "2",
+      "dayComplete": "1",
+      "pointsAwarded": "14",
+      "createdAt": "2026-05-07 19:36:11",
+      "updatedAt": "2026-05-07 19:36:11"
+    },
+    {
+      "id": "30006",
+      "participantId": "90007",
+      "displayName": "Nat",
+      "dayNumber": "1",
+      "dayComplete": "1",
+      "pointsAwarded": "10",
+      "createdAt": "2026-05-06 19:33:27",
+      "updatedAt": "2026-05-06 19:36:33"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tparticipantId\tdisplayName\tdayNumber\tdayComplete\tpointsAwarded\tcreatedAt\tupdatedAt\n3150002\t90008\tChess\t13\t0\t0\t2026-05-18 23:00:02\t2026-05-18 23:00:02\n2820001\t90008\tChess\t12\t1\t10\t2026-05-17 22:31:46\t2026-05-17 22:31:46\n2400001\t90008\tChess\t11\t1\t10\t2026-05-16 17:32:38\t2026-05-16 22:58:32\n2010001\t90008\tChess\t10\t0\t0\t2026-05-14 23:40:26\t2026-05-15 23:02:34\n1830001\t90008\tChess\t9\t1\t10\t2026-05-14 17:35:13\t2026-05-14 17:47:38\n1380001\t90008\tChess\t8\t1\t10\t2026-05-12 23:45:54\t2026-05-13 22:55:55\n1350002\t90008\tChess\t7\t1\t10\t2026-05-12 22:56:40\t2026-05-12 22:56:40\n960001\t90008\tChess\t6\t1\t8\t2026-05-11 08:07:33\t2026-05-11 22:52:04\n840002\t90008\tChess\t5\t1\t10\t2026-05-10 22:50:58\t2026-05-10 22:50:58\n540001\t90008\tChess\t4\t1\t14\t2026-05-09 21:50:42\t2026-05-09 21:50:42\n330001\t90008\tChess\t3\t1\t14\t2026-05-08 11:48:56\t2026-05-08 22:53:13\n180001\t90008\tChess\t2\t1\t14\t2026-05-07 18:50:41\t2026-05-07 18:50:41\n30008\t90008\tChess\t1\t1\t10\t2026-05-06 21:09:34\t2026-05-06 21:39:11\n3180001\t90005\tCTM\t14\t1\t8\t2026-05-19 09:28:00\t2026-05-19 20:11:47\n2970001\t90005\tCTM\t13\t0\t0\t2026-05-18 07:31:00\t2026-05-18 23:00:02\n2640001\t90005\tCTM\t12\t1\t10\t2026-05-17 13:39:29\t2026-05-17 22:05:19\n2370001\t90005\tCTM\t11\t1\t10\t2026-05-16 15:36:46\t2026-05-16 21:27:23\n2130001\t90005\tCTM\t10\t1\t60\t2026-05-15 17:27:44\t2026-05-15 21:39:28\n1800001\t90005\tCTM\t9\t1\t10\t2026-05-14 11:57:29\t2026-05-14 20:44:30\n1470001\t90005\tCTM\t8\t1\t10\t2026-05-13 10:31:34\t2026-05-13 21:19:01\n1260001\t90005\tCTM\t7\t1\t10\t2026-05-12 19:22:27\t2026-05-12 19:34:43\n1020002\t90005\tCTM\t6\t1\t10\t2026-05-11 09:37:07\t2026-05-11 20:17:47\n660001\t90005\tCTM\t5\t1\t10\t2026-05-10 09:17:39\t2026-05-10 20:41:41\n480001\t90005\tCTM\t4\t1\t14\t2026-05-09 16:14:46\t2026-05-09 20:12:14\n300001\t90005\tCTM\t3\t1\t14\t2026-05-08 09:59:50\t2026-05-08 19:25:41\n150001\t90005\tCTM\t2\t1\t14\t2026-05-07 17:42:40\t2026-05-07 19:54:43\n30004\t90005\tCTM\t1\t1\t10\t2026-05-06 19:20:24\t2026-05-06 19:20:24\n3210001\t90007\tNat\t14\t1\t8\t2026-05-19 15:53:28\t2026-05-19 15:53:28\n3150001\t90007\tNat\t13\t0\t0\t2026-05-18 23:00:02\t2026-05-18 23:00:02\n2730001\t90007\tNat\t12\t1\t8\t2026-05-17 18:31:41\t2026-05-17 18:31:41\n2430001\t90007\tNat\t11\t1\t8\t2026-05-16 18:40:20\t2026-05-16 21:59:02\n2220002\t90007\tNat\t10\t1\t60\t2026-05-15 21:43:42\t2026-05-15 21:43:42\n1860001\t90007\tNat\t9\t1\t8\t2026-05-14 18:06:04\t2026-05-14 21:16:20\n1410001\t90007\tNat\t8\t1\t8\t2026-05-13 05:40:25\t2026-05-13 20:23:21\n1110001\t90007\tNat\t7\t1\t10\t2026-05-12 05:38:23\t2026-05-12 19:54:41\n870001\t90007\tNat\t6\t1\t10\t2026-05-11 05:27:15\t2026-05-11 18:47:05\n630001\t90007\tNat\t5\t1\t10\t2026-05-10 06:48:16\t2026-05-10 17:05:12\n420001\t90007\tNat\t4\t1\t15\t2026-05-09 07:14:12\t2026-05-09 13:16:33\n330002\t90007\tNat\t3\t1\t14\t2026-05-08 11:52:02\t2026-05-08 18:21:42\n180002\t90007\tNat\t2\t1\t14\t2026-05-07 19:36:11\t2026-05-07 19:36:11\n30006\t90007\tNat\t1\t1\t10\t2026-05-06 19:33:27\t2026-05-06 19:36:33\n",
+  "stderr": "",
+  "execution_time_ms": 277
+}

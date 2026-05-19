@@ -1,0 +1,28 @@
+{
+  "query": "\nSELECT \n  id, \n  userId, \n  displayName, \n  livesRemaining, \n  totalPoints, \n  currentStreak,\n  createdAt\nFROM participants \nWHERE LOWER(displayName) IN ('chest', 'nat', 'ctm')\nORDER BY displayName;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2P9ir9M7b3E7Qkh.8b2c854ea8b3 --database HPubf4auNvt8KXvgrLad5c --execute \nSELECT \n  id, \n  userId, \n  displayName, \n  livesRemaining, \n  totalPoints, \n  currentStreak,\n  createdAt\nFROM participants \nWHERE LOWER(displayName) IN ('chest', 'nat', 'ctm')\nORDER BY displayName;\n",
+  "rows": [
+    {
+      "id": "90005",
+      "userId": "210147",
+      "displayName": "CTM",
+      "livesRemaining": "3",
+      "totalPoints": "190",
+      "currentStreak": "1",
+      "createdAt": "2026-05-06 19:09:20"
+    },
+    {
+      "id": "90007",
+      "userId": "210223",
+      "displayName": "Nat",
+      "livesRemaining": "3",
+      "totalPoints": "183",
+      "currentStreak": "1",
+      "createdAt": "2026-05-06 19:33:19"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tuserId\tdisplayName\tlivesRemaining\ttotalPoints\tcurrentStreak\tcreatedAt\n90005\t210147\tCTM\t3\t190\t1\t2026-05-06 19:09:20\n90007\t210223\tNat\t3\t183\t1\t2026-05-06 19:33:19\n",
+  "stderr": "",
+  "execution_time_ms": 300
+}
