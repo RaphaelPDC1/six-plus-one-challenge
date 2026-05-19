@@ -1,0 +1,75 @@
+{
+  "query": "\n-- G LODGE (id=90002) daily points\nSELECT dayNumber, pointsAwarded, dayComplete FROM daily_logs WHERE participantId = 90002 ORDER BY dayNumber;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2P9ir9M7b3E7Qkh.8b2c854ea8b3 --database HPubf4auNvt8KXvgrLad5c --execute \n-- G LODGE (id=90002) daily points\nSELECT dayNumber, pointsAwarded, dayComplete FROM daily_logs WHERE participantId = 90002 ORDER BY dayNumber;\n",
+  "rows": [
+    {
+      "dayNumber": "1",
+      "pointsAwarded": "10",
+      "dayComplete": "1"
+    },
+    {
+      "dayNumber": "2",
+      "pointsAwarded": "15",
+      "dayComplete": "1"
+    },
+    {
+      "dayNumber": "3",
+      "pointsAwarded": "15",
+      "dayComplete": "1"
+    },
+    {
+      "dayNumber": "4",
+      "pointsAwarded": "14",
+      "dayComplete": "1"
+    },
+    {
+      "dayNumber": "5",
+      "pointsAwarded": "10",
+      "dayComplete": "1"
+    },
+    {
+      "dayNumber": "6",
+      "pointsAwarded": "10",
+      "dayComplete": "1"
+    },
+    {
+      "dayNumber": "7",
+      "pointsAwarded": "10",
+      "dayComplete": "1"
+    },
+    {
+      "dayNumber": "8",
+      "pointsAwarded": "10",
+      "dayComplete": "1"
+    },
+    {
+      "dayNumber": "9",
+      "pointsAwarded": "8",
+      "dayComplete": "1"
+    },
+    {
+      "dayNumber": "10",
+      "pointsAwarded": "60",
+      "dayComplete": "1"
+    },
+    {
+      "dayNumber": "11",
+      "pointsAwarded": "10",
+      "dayComplete": "1"
+    },
+    {
+      "dayNumber": "12",
+      "pointsAwarded": "10",
+      "dayComplete": "1"
+    },
+    {
+      "dayNumber": "13",
+      "pointsAwarded": "10",
+      "dayComplete": "1"
+    }
+  ],
+  "messages": [],
+  "stdout": "dayNumber\tpointsAwarded\tdayComplete\n1\t10\t1\n2\t15\t1\n3\t15\t1\n4\t14\t1\n5\t10\t1\n6\t10\t1\n7\t10\t1\n8\t10\t1\n9\t8\t1\n10\t60\t1\n11\t10\t1\n12\t10\t1\n13\t10\t1\n",
+  "stderr": "",
+  "execution_time_ms": 273
+}

@@ -244,6 +244,37 @@ export const notificationPreferences = mysqlTable("notification_preferences", {
   uniqueNotificationPreferenceUser: uniqueIndex("notification_preferences_user_idx").on(table.userId),
 }));
 
+export const errorLogs = mysqlTable("error_logs", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId"),
+  participantId: int("participantId"),
+  eventType: varchar("eventType", { length: 80 }).notNull(), // 'api_call', 'calculation', 'sync', 'submission', 'refresh'
+  action: varchar("action", { length: 140 }).notNull(), // 'submitDailyLog', 'getSnapshot', 'updatePoints', etc.
+  severity: mysqlEnum("severity", ["info", "warning", "error", "critical"]).default("info").notNull(),
+  message: text("message").notNull(),
+  context: text("context"), // JSON string with additional data
+  stackTrace: text("stackTrace"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export const bugReports = mysqlTable("bug_reports", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  participantId: int("participantId"),
+  title: varchar("title", { length: 180 }).notNull(),
+  description: text("description").notNull(),
+  screenshotUrl: text("screenshotUrl"),
+  screenshotKey: text("screenshotKey"),
+  affectedPage: varchar("affectedPage", { length: 80 }), // 'my_day', 'proof', 'board', etc.
+  status: mysqlEnum("status", ["open", "acknowledged", "investigating", "resolved", "wontfix"]).default("open").notNull(),
+  priority: mysqlEnum("priority", ["low", "medium", "high", "critical"]).default("medium").notNull(),
+  assignedToUserId: int("assignedToUserId"),
+  resolution: text("resolution"),
+  resolvedAt: timestamp("resolvedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
 export const participantNotifications = mysqlTable("participant_notifications", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),

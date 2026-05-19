@@ -1,0 +1,142 @@
+{
+  "query": "\n-- wiwi boosts\nSELECT user_id, day, boost_name, points_awarded FROM boost_wins WHERE user_id = 90004 ORDER BY day;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2P9ir9M7b3E7Qkh.8b2c854ea8b3 --database HPubf4auNvt8KXvgrLad5c --execute \n-- wiwi boosts\nSELECT user_id, day, boost_name, points_awarded FROM boost_wins WHERE user_id = 90004 ORDER BY day;\n",
+  "rows": [
+    {
+      "user_id": "90004",
+      "day": "2",
+      "boost_name": "DEPTH",
+      "points_awarded": "5"
+    },
+    {
+      "user_id": "90004",
+      "day": "3",
+      "boost_name": "CLEAN SWEEP",
+      "points_awarded": "5"
+    },
+    {
+      "user_id": "90004",
+      "day": "3",
+      "boost_name": "DEEP WORK",
+      "points_awarded": "5"
+    },
+    {
+      "user_id": "90004",
+      "day": "4",
+      "boost_name": "DEEP WORK",
+      "points_awarded": "5"
+    },
+    {
+      "user_id": "90004",
+      "day": "5",
+      "boost_name": "DEEP WORK",
+      "points_awarded": "4"
+    },
+    {
+      "user_id": "90004",
+      "day": "5",
+      "boost_name": "MOVER",
+      "points_awarded": "5"
+    },
+    {
+      "user_id": "90004",
+      "day": "5",
+      "boost_name": "CLEAN SWEEP",
+      "points_awarded": "1"
+    },
+    {
+      "user_id": "90004",
+      "day": "6",
+      "boost_name": "CLEAN SWEEP",
+      "points_awarded": "5"
+    },
+    {
+      "user_id": "90004",
+      "day": "6",
+      "boost_name": "DEEP WORK",
+      "points_awarded": "4"
+    },
+    {
+      "user_id": "90004",
+      "day": "6",
+      "boost_name": "MOVER",
+      "points_awarded": "1"
+    },
+    {
+      "user_id": "90004",
+      "day": "7",
+      "boost_name": "DEEP WORK",
+      "points_awarded": "4"
+    },
+    {
+      "user_id": "90004",
+      "day": "7",
+      "boost_name": "STREAK LOCK",
+      "points_awarded": "6"
+    },
+    {
+      "user_id": "90004",
+      "day": "8",
+      "boost_name": "DEEP WORK",
+      "points_awarded": "4"
+    },
+    {
+      "user_id": "90004",
+      "day": "8",
+      "boost_name": "MOVER",
+      "points_awarded": "5"
+    },
+    {
+      "user_id": "90004",
+      "day": "8",
+      "boost_name": "CLEAN SWEEP",
+      "points_awarded": "1"
+    },
+    {
+      "user_id": "90004",
+      "day": "9",
+      "boost_name": "CLEAN SWEEP",
+      "points_awarded": "5"
+    },
+    {
+      "user_id": "90004",
+      "day": "9",
+      "boost_name": "DEEP WORK",
+      "points_awarded": "4"
+    },
+    {
+      "user_id": "90004",
+      "day": "9",
+      "boost_name": "MOVER",
+      "points_awarded": "1"
+    },
+    {
+      "user_id": "90004",
+      "day": "10",
+      "boost_name": "DEEP WORK",
+      "points_awarded": "4"
+    },
+    {
+      "user_id": "90004",
+      "day": "11",
+      "boost_name": "CLEAN SWEEP",
+      "points_awarded": "5"
+    },
+    {
+      "user_id": "90004",
+      "day": "12",
+      "boost_name": "CLEAN SWEEP",
+      "points_awarded": "5"
+    },
+    {
+      "user_id": "90004",
+      "day": "12",
+      "boost_name": "DEEP WORK",
+      "points_awarded": "4"
+    }
+  ],
+  "messages": [],
+  "stdout": "user_id\tday\tboost_name\tpoints_awarded\n90004\t2\tDEPTH\t5\n90004\t3\tCLEAN SWEEP\t5\n90004\t3\tDEEP WORK\t5\n90004\t4\tDEEP WORK\t5\n90004\t5\tDEEP WORK\t4\n90004\t5\tMOVER\t5\n90004\t5\tCLEAN SWEEP\t1\n90004\t6\tCLEAN SWEEP\t5\n90004\t6\tDEEP WORK\t4\n90004\t6\tMOVER\t1\n90004\t7\tDEEP WORK\t4\n90004\t7\tSTREAK LOCK\t6\n90004\t8\tDEEP WORK\t4\n90004\t8\tMOVER\t5\n90004\t8\tCLEAN SWEEP\t1\n90004\t9\tCLEAN SWEEP\t5\n90004\t9\tDEEP WORK\t4\n90004\t9\tMOVER\t1\n90004\t10\tDEEP WORK\t4\n90004\t11\tCLEAN SWEEP\t5\n90004\t12\tCLEAN SWEEP\t5\n90004\t12\tDEEP WORK\t4\n",
+  "stderr": "",
+  "execution_time_ms": 265
+}

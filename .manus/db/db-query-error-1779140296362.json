@@ -1,0 +1,8 @@
+{
+  "query": "\n-- Boost wins for both participants\nSELECT participantId, displayName, COUNT(*) as boostCount, SUM(pointsAwarded) as boostPoints \nFROM boost_wins \nWHERE participantId IN (90002, 90004)\nGROUP BY participantId, displayName;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2P9ir9M7b3E7Qkh.8b2c854ea8b3 --database HPubf4auNvt8KXvgrLad5c --execute \n-- Boost wins for both participants\nSELECT participantId, displayName, COUNT(*) as boostCount, SUM(pointsAwarded) as boostPoints \nFROM boost_wins \nWHERE participantId IN (90002, 90004)\nGROUP BY participantId, displayName;\n",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 3: Unknown column 'participantid' in 'group statement'"
+  ]
+}

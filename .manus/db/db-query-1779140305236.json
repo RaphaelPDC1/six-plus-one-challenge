@@ -1,0 +1,124 @@
+{
+  "query": "\n-- G LODGE boosts\nSELECT user_id, day, boost_name, points_awarded FROM boost_wins WHERE user_id = 90002 ORDER BY day;\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2P9ir9M7b3E7Qkh.8b2c854ea8b3 --database HPubf4auNvt8KXvgrLad5c --execute \n-- G LODGE boosts\nSELECT user_id, day, boost_name, points_awarded FROM boost_wins WHERE user_id = 90002 ORDER BY day;\n",
+  "rows": [
+    {
+      "user_id": "90002",
+      "day": "1",
+      "boost_name": "FIRST UP",
+      "points_awarded": "5"
+    },
+    {
+      "user_id": "90002",
+      "day": "3",
+      "boost_name": "GHOST HUNTER",
+      "points_awarded": "5"
+    },
+    {
+      "user_id": "90002",
+      "day": "3",
+      "boost_name": "EARLY BIRD",
+      "points_awarded": "5"
+    },
+    {
+      "user_id": "90002",
+      "day": "4",
+      "boost_name": "DEEP WORK",
+      "points_awarded": "5"
+    },
+    {
+      "user_id": "90002",
+      "day": "5",
+      "boost_name": "DEEP WORK",
+      "points_awarded": "4"
+    },
+    {
+      "user_id": "90002",
+      "day": "5",
+      "boost_name": "CLEAN SWEEP",
+      "points_awarded": "5"
+    },
+    {
+      "user_id": "90002",
+      "day": "6",
+      "boost_name": "CLEAN SWEEP",
+      "points_awarded": "5"
+    },
+    {
+      "user_id": "90002",
+      "day": "6",
+      "boost_name": "STREAK LOCK",
+      "points_awarded": "5"
+    },
+    {
+      "user_id": "90002",
+      "day": "7",
+      "boost_name": "DEEP WORK",
+      "points_awarded": "4"
+    },
+    {
+      "user_id": "90002",
+      "day": "7",
+      "boost_name": "STREAK LOCK",
+      "points_awarded": "6"
+    },
+    {
+      "user_id": "90002",
+      "day": "8",
+      "boost_name": "MOVER",
+      "points_awarded": "5"
+    },
+    {
+      "user_id": "90002",
+      "day": "8",
+      "boost_name": "CLEAN SWEEP",
+      "points_awarded": "5"
+    },
+    {
+      "user_id": "90002",
+      "day": "9",
+      "boost_name": "CLEAN SWEEP",
+      "points_awarded": "5"
+    },
+    {
+      "user_id": "90002",
+      "day": "9",
+      "boost_name": "DEEP WORK",
+      "points_awarded": "4"
+    },
+    {
+      "user_id": "90002",
+      "day": "10",
+      "boost_name": "DEEP WORK",
+      "points_awarded": "4"
+    },
+    {
+      "user_id": "90002",
+      "day": "11",
+      "boost_name": "DEEP WORK",
+      "points_awarded": "4"
+    },
+    {
+      "user_id": "90002",
+      "day": "11",
+      "boost_name": "CLEAN SWEEP",
+      "points_awarded": "5"
+    },
+    {
+      "user_id": "90002",
+      "day": "12",
+      "boost_name": "CLEAN SWEEP",
+      "points_awarded": "5"
+    },
+    {
+      "user_id": "90002",
+      "day": "12",
+      "boost_name": "DEEP WORK",
+      "points_awarded": "4"
+    }
+  ],
+  "messages": [],
+  "stdout": "user_id\tday\tboost_name\tpoints_awarded\n90002\t1\tFIRST UP\t5\n90002\t3\tGHOST HUNTER\t5\n90002\t3\tEARLY BIRD\t5\n90002\t4\tDEEP WORK\t5\n90002\t5\tDEEP WORK\t4\n90002\t5\tCLEAN SWEEP\t5\n90002\t6\tCLEAN SWEEP\t5\n90002\t6\tSTREAK LOCK\t5\n90002\t7\tDEEP WORK\t4\n90002\t7\tSTREAK LOCK\t6\n90002\t8\tMOVER\t5\n90002\t8\tCLEAN SWEEP\t5\n90002\t9\tCLEAN SWEEP\t5\n90002\t9\tDEEP WORK\t4\n90002\t10\tDEEP WORK\t4\n90002\t11\tDEEP WORK\t4\n90002\t11\tCLEAN SWEEP\t5\n90002\t12\tCLEAN SWEEP\t5\n90002\t12\tDEEP WORK\t4\n",
+  "stderr": "",
+  "execution_time_ms": 262
+}

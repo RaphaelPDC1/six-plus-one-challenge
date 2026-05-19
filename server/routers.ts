@@ -481,6 +481,58 @@ export const appRouter = router({
   }),
 
   warden: wardenRouter,
+
+  debug: router({
+    reportBug: protectedProcedure
+      .input(z.object({
+        title: z.string().trim().min(3).max(180),
+        description: z.string().trim().min(3).max(4000),
+        affectedPage: z.string().max(80).optional(),
+        priority: z.enum(["low", "medium", "high", "critical"]).default("medium"),
+        screenshotUrl: z.string().url().max(2000).optional(),
+        screenshotKey: z.string().max(500).optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const participant = await getParticipantByUserId(ctx.user.id);
+        const { createBugReport } = await import("./logging");
+        const result = await createBugReport({
+          userId: ctx.user.id,
+          participantId: participant?.id,
+          title: input.title,
+          description: input.description,
+          affectedPage: input.affectedPage,
+          priority: input.priority,
+          screenshotUrl: input.screenshotUrl,
+          screenshotKey: input.screenshotKey,
+        });
+        await logWardenMessage({
+          mode: "system",
+          sourceEvent: "bug_report",
+          content: `Bug report from ${participant?.displayName || ctx.user.email}: "${input.title}" (Priority: ${input.priority})`,
+        });
+        try {
+          await notifyOwner({
+            title: "Bug Report: " + input.title,
+            content: `From ${participant?.displayName || ctx.user.email}\n\nPage: ${input.affectedPage || "unknown"}\nPriority: ${input.priority}\n\n${input.description}`,
+          });
+        } catch (error) {
+          console.warn("[BugReport] Owner notification failed", error);
+        }
+        return { success: true, bugReportId: Math.random() } as const;
+      }),
+
+    forceRefresh: protectedProcedure.mutation(async ({ ctx }) => {
+      const participant = await getParticipantByUserId(ctx.user.id);
+      const { logSync } = await import("./logging");
+      await logSync({
+        userId: ctx.user.id,
+        participantId: participant?.id,
+        action: "forceRefresh",
+        issue: "User manually triggered refresh",
+      });
+      return getAppSnapshot(ctx.user.id, ctx.user.role, ctx.user.email);
+    }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;

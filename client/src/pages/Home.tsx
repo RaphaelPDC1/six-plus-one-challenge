@@ -1509,7 +1509,16 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
         <div className="p-4 pb-5 sm:p-5">
           <div className="flex items-baseline justify-between gap-4">
             <MicroLabel tone="gold">Day {snapshot?.challenge.currentDay ?? "—"} · 6+1 Four Lives</MicroLabel>
-            <MicroLabel>Streak {participant?.currentStreak ?? 0} · {Math.max(0, 50 - (snapshot?.challenge.currentDay ?? 1))} left</MicroLabel>
+            <div className="flex items-center gap-2">
+              <MicroLabel>Streak {participant?.currentStreak ?? 0} · {Math.max(0, 50 - (snapshot?.challenge.currentDay ?? 1))} left</MicroLabel>
+              <button
+                onClick={() => refetch()}
+                className="text-xs font-bold text-[#C8A96E] hover:text-[#E8C9A0] transition-colors"
+                title="Force refresh data"
+              >
+                ↻
+              </button>
+            </div>
           </div>
           <h1 className="mt-3 text-5xl font-black uppercase leading-[0.86] tracking-[-0.1em] text-white sm:text-6xl md:text-7xl">
             Today’s<br />
