@@ -161,8 +161,9 @@ describe("challengeLogic", () => {
       deadlinePassed: false,
     });
 
-    expect(firstCompletion).toMatchObject({ dayComplete: true, newlyComplete: true, pointsAwarded: 8, draftSaved: false });
-    expect(repeatedCompletion).toMatchObject({ dayComplete: true, newlyComplete: false, pointsAwarded: 8, draftSaved: false });
+    // No ruleState provided → fallback uses DAILY_PASS_THRESHOLD (5 rules) in order: 8+8+12+8+8 = 44
+    expect(firstCompletion).toMatchObject({ dayComplete: true, newlyComplete: true, pointsAwarded: 44, draftSaved: false });
+    expect(repeatedCompletion).toMatchObject({ dayComplete: true, newlyComplete: false, pointsAwarded: 44, draftSaved: false });
     expect(repeatedCompletion.submittedAt).toBe(submittedAt);
   });
 
@@ -244,9 +245,10 @@ describe("challengeLogic", () => {
 
   it("does not let a completed-to-draft-to-completed toggle re-open streak credit", () => {
     const originalSubmittedAt = new Date("2026-05-06T12:00:00Z");
+    // Simulate a previously completed day that was awarded 50 pts (new scoring)
     const draftToggle = resolveDailyCompletionAward({
       dayComplete: true,
-      pointsAwarded: 8,
+      pointsAwarded: 50,
       submittedAt: originalSubmittedAt,
     }, {
       complete: false,
@@ -266,17 +268,31 @@ describe("challengeLogic", () => {
       deadlinePassed: false,
     });
 
-    expect(draftToggle).toMatchObject({ alreadyComplete: true, dayComplete: true, newlyComplete: false, pointsAwarded: 8, draftSaved: false });
+    expect(draftToggle).toMatchObject({ alreadyComplete: true, dayComplete: true, newlyComplete: false, pointsAwarded: 50, draftSaved: false });
     expect(draftToggle.submittedAt).toBe(originalSubmittedAt);
-    expect(retickedCompletion).toMatchObject({ alreadyComplete: true, dayComplete: true, newlyComplete: false, pointsAwarded: 8, draftSaved: false });
+    expect(retickedCompletion).toMatchObject({ alreadyComplete: true, dayComplete: true, newlyComplete: false, pointsAwarded: 50, draftSaved: false });
     expect(retickedCompletion.submittedAt).toBe(originalSubmittedAt);
   });
 
-  it("uses the approved base scoring values while preserving 5/6 as a complete day", () => {
-    const fiveOfSix = calculateDailyPoints(4, true, { completedRules: 5, submittedAt: new Date("2026-05-06T18:00:00Z"), ghostLifeUsed: true, currentStreak: 1 });
-    const fullGreen = calculateDailyPoints(4, true, { completedRules: 6, submittedAt: new Date("2026-05-06T10:00:00Z"), ghostLifeUsed: false, currentStreak: 4 });
+  it("uses per-rule point values matching the UI labels (8+8+12+8+8+6=50 max)", () => {
+    // 5 of 6 rules: noAlcohol(8) + cleanEating(8) + exercise(12) + reflection(8) + readTeach(8) = 44
+    const fiveOfSix = calculateDailyPoints(4, true, {
+      completedRules: 5,
+      submittedAt: new Date("2026-05-06T18:00:00Z"),
+      ghostLifeUsed: true,
+      currentStreak: 1,
+      ruleState: { noAlcohol: true, cleanEating: true, exerciseDone: true, reflectionDone: true, readTeachDone: true, trackedEverything: false },
+    });
+    // 6 of 6 rules: 8+8+12+8+8+6 = 50
+    const fullGreen = calculateDailyPoints(4, true, {
+      completedRules: 6,
+      submittedAt: new Date("2026-05-06T10:00:00Z"),
+      ghostLifeUsed: false,
+      currentStreak: 4,
+      ruleState: { noAlcohol: true, cleanEating: true, exerciseDone: true, reflectionDone: true, readTeachDone: true, trackedEverything: true },
+    });
 
-    expect(fiveOfSix).toBe(8);
-    expect(fullGreen).toBe(10);
+    expect(fiveOfSix).toBe(44); // 8+8+12+8+8 = 44
+    expect(fullGreen).toBe(50); // 8+8+12+8+8+6 = 50
   });
 });

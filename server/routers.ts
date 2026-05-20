@@ -51,7 +51,7 @@ import { wardenRouter } from "./warden/wardenRouters";
 import { storagePut } from "./storage";
 import { notifyOwner } from "./_core/notification";
 import { getPushConfig, hashPushEndpoint, notifyUserWithPush } from "./pushNotifications";
-import { BOOST_CHALLENGE_ID, BOOST_POINTS, BOOST_SEQUENCE, getActiveBoostsForDay } from "../shared/boostSystem";
+import { BOOST_CHALLENGE_ID, BOOST_POINTS, ALL_BOOSTS, getActiveBoostsForDay } from "../shared/boostSystem";
 
 const signupRequestInput = z.object({
   email: z.string().trim().email().max(320),
@@ -375,7 +375,7 @@ export const appRouter = router({
   boost: router({
     active: protectedProcedure
       .input(z.object({ day: z.number().int().min(1).max(50).optional() }).optional())
-      .query(({ input }) => ({ day: input?.day ?? getCurrentChallengeDay(), activeBoosts: getActiveBoostsForDay(input?.day ?? getCurrentChallengeDay()), allBoosts: BOOST_SEQUENCE })),
+      .query(({ input }) => ({ day: input?.day ?? getCurrentChallengeDay(), activeBoosts: getActiveBoostsForDay(input?.day ?? getCurrentChallengeDay()), allBoosts: ALL_BOOSTS })),
 
     getWins: protectedProcedure
       .input(z.object({ participantId: z.number().int().optional(), challengeId: z.number().int().optional() }).optional())

@@ -1266,3 +1266,23 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Bug (persistent): My Day crashing/excessive re-rendering — fixed by using stable myLogKey string dep instead of object reference.
 - [x] Bug (persistent): Submit button — fixed by showing permanent static "Day Locked In" banner when todayAlreadyComplete is true.
 - [x] Bug (persistent): Floating submit dock covers rule card text — fixed by hiding the dock entirely once the day is locked in.
+
+## v8.2 — Scoring Rebalance, Ghost Life Redesign, Bonus System, Overview Redesign, Bug Reporter
+
+- [x] Restore lives for Senyo, Chess, Nat, CTM — Day 12/13 penalties incorrectly applied.
+- [x] Delete life-lost warden messages for all affected participants.
+- [x] Fix Save Progress / Lock-In button positioning (was hanging off screen on mobile).
+- [x] Update scoring engine: per-rule scoring (noAlcohol=8, cleanEating=8, exerciseDone=12, reflectionDone=8, readTeachDone=8, trackedEverything=6 → 50 pts max/day) in both client and server.
+- [x] Update db.ts to pass ruleState to resolveDailyCompletionAward for accurate per-rule scoring.
+- [x] Recalculate all historical daily_logs pointsAwarded with new scoring.
+- [x] Update all participant totalPoints with new leaderboard values.
+- [x] Post community care release notes about scoring update and life restorations.
+- [x] Add skeleton loaders to main loading state in Home.tsx.
+- [x] Upgrade service worker (PWA caching) for faster repeat loads.
+- [x] Redesign Ghost Life as a conscious visible card on My Day (gold card, confirmation modal, not consumed if day completed anyway).
+- [x] Rewrite boostSystem.ts with 17-bonus system (4 always-active + 13 rotating daily).
+- [x] Redesign Overview screen — compact grid layout, accordion for bonuses, tooltips, reduced scroll.
+- [x] Rebalance reward thresholds (Puresport 500pts, T-Shirt 900pts, Group Meal 1500pts).
+- [x] Add BugReporterFloat component and wire into App.tsx.
+- [x] Update all test files to match new scoring values.
+- [x] Fix all 178 tests passing (was 177/178 failing — added "Banked today" text to compare list rows).

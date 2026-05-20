@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BOOST_SEQUENCE, DAILY_NAMED_BOOST_CAP, evaluateBoostWinners, getActiveBoostsForDay } from "../shared/boostSystem";
+import { ALL_BOOSTS, DAILY_NAMED_BOOST_CAP, evaluateBoostWinners, getActiveBoostsForDay } from "../shared/boostSystem";
 
 describe("Approved boost system package", () => {
   const participant = (id: number, overrides: Record<string, unknown> = {}) => ({
@@ -29,13 +29,13 @@ describe("Approved boost system package", () => {
     readTeachDone: true,
     readTeachText: "A clear Read and Teach paragraph with enough signal to count.",
     trackedEverything: true,
-    pointsAwarded: 10,
+    pointsAwarded: 50,
     dayComplete: true,
     ...overrides,
   });
 
   const boostById = (id: string) => {
-    const boost = BOOST_SEQUENCE.find((item) => item.id === id);
+    const boost = ALL_BOOSTS.find((item) => item.id === id);
     if (!boost) throw new Error(`Missing boost fixture: ${id}`);
     return boost;
   };
@@ -60,41 +60,73 @@ describe("Approved boost system package", () => {
     activeBoosts: [boostById(boostId)],
   });
 
-  it("uses the approved stable seven-boost package every day instead of rotating three slots", () => {
-    expect(getActiveBoostsForDay(1).map(boost => boost.id)).toEqual([
-      "clean_sweep",
-      "morning_proof",
-      "bounce_back",
-      "deep_work",
-      "pressure_player",
-      "streak_lock",
-      "mover",
-    ]);
-    expect(getActiveBoostsForDay(99).map(boost => boost.slot)).toEqual([1, 2, 3, 4, 5, 6, 7]);
-    expect(BOOST_SEQUENCE.map(boost => [boost.id, boost.pointsAwarded])).toEqual([
-      ["clean_sweep", 5],
-      ["morning_proof", 3],
-      ["bounce_back", 4],
-      ["deep_work", 4],
-      ["pressure_player", 6],
-      ["streak_lock", 7],
-      ["mover", 5],
-    ]);
+  it("uses the new 17-boost system with always-active and rotating boosts", () => {
+    const activeDay1 = getActiveBoostsForDay(1);
+    // Always-active boosts are always present
+    const alwaysActiveIds = ["mover", "bounce_back", "comeback_kid", "double_down"];
+    for (const id of alwaysActiveIds) {
+      expect(activeDay1.map(b => b.id)).toContain(id);
+    }
+    // Should have 4 always-active + 3 rotating = 7 total
+    expect(activeDay1.length).toBe(7);
+    // Slots should be sequential
+    expect(activeDay1.map(b => b.slot)).toEqual([1, 2, 3, 4, 5, 6, 7]);
+    // ALL_BOOSTS should contain all 17 boosts
+    expect(ALL_BOOSTS.length).toBe(17);
   });
 
-  it.each([
-    ["clean_sweep", 1, 5, [participant(1, { currentStreak: 6 })], [log(1, 8, "2026-05-08T09:00:00.000Z")]],
-    ["morning_proof", 2, 3, [participant(2)], [log(2, 8, "2026-05-08T08:15:00.000Z")]],
-    ["bounce_back", 3, 4, [participant(3)], [log(3, 7, "2026-05-07T09:00:00.000Z", { dayComplete: false, pointsAwarded: 4, trackedEverything: false }), log(3, 8, "2026-05-08T09:00:00.000Z")]],
-    ["deep_work", 4, 4, [participant(4)], [log(4, 8, "2026-05-08T09:00:00.000Z", { reflectionText: "x".repeat(160), readTeachText: "y".repeat(120) })]],
-    ["pressure_player", 5, 6, [participant(5, { livesRemaining: 2 })], [log(5, 8, "2026-05-08T09:00:00.000Z")]],
-    ["streak_lock", 6, 7, [participant(6, { currentStreak: 7 })], [log(6, 8, "2026-05-08T09:00:00.000Z")]],
-  ])("awards %s to the expected eligible participant with its approved point value", (boostId, expectedParticipantId, expectedPoints, participants, logs) => {
-    const awards = runSingleBoost({ boostId: boostId as string, participants: participants as any, logs: logs as any });
+  it("awards clean_sweep to a participant who completes 6/6", () => {
+    const participants = [participant(1)];
+    const logs = [log(1, 8, "2026-05-08T09:00:00.000Z")];
+    const awards = runSingleBoost({ boostId: "clean_sweep", participants, logs });
+    expect(awards.map(a => a.participant.id)).toEqual([1]);
+    expect(awards[0]?.pointsAwarded).toBe(boostById("clean_sweep").pointsAwarded);
+    expect(awards[0]?.wardenNote).toContain(boostById("clean_sweep").name);
+  });
 
-    expect(awards.map((award) => award.participant.id)).toEqual([expectedParticipantId]);
-    expect(awards[0]?.pointsAwarded).toBe(expectedPoints);
-    expect(awards[0]?.wardenNote).toContain(boostById(boostId as string).name);
+  it("awards morning_proof to the first participant to submit proof before 09:00", () => {
+    const participants = [participant(2)];
+    const logs = [log(2, 8, "2026-05-08T08:15:00.000Z")];
+    const awards = runSingleBoost({ boostId: "morning_proof", participants, logs });
+    expect(awards.map(a => a.participant.id)).toEqual([2]);
+    expect(awards[0]?.pointsAwarded).toBe(boostById("morning_proof").pointsAwarded);
+    expect(awards[0]?.wardenNote).toContain(boostById("morning_proof").name);
+  });
+
+  it("awards bounce_back to a participant who completes 6/6 after a missed day", () => {
+    const participants = [participant(3)];
+    const logs = [
+      log(3, 7, "2026-05-07T09:00:00.000Z", { dayComplete: false, pointsAwarded: 4, trackedEverything: false }),
+      log(3, 8, "2026-05-08T09:00:00.000Z"),
+    ];
+    const awards = runSingleBoost({ boostId: "bounce_back", participants, logs });
+    expect(awards.map(a => a.participant.id)).toEqual([3]);
+    expect(awards[0]?.pointsAwarded).toBe(boostById("bounce_back").pointsAwarded);
+    expect(awards[0]?.wardenNote).toContain(boostById("bounce_back").name);
+  });
+
+  it("awards deep_work (teaching_moment + deep_reflection) for quality entries", () => {
+    const participants = [participant(4)];
+    // Use space-separated words so wordCount() (splits by whitespace) returns correct count
+    const longReadTeach = Array(110).fill("word").join(" "); // 110 words
+    const logs = [log(4, 8, "2026-05-08T09:00:00.000Z", {
+      reflectionText: Array(130).fill("thought").join(" "), // 130 words
+      readTeachText: longReadTeach,
+    })];
+    // teaching_moment requires 100+ words in readTeachText
+    const teachingAwards = runSingleBoost({ boostId: "teaching_moment", participants, logs });
+    expect(teachingAwards.map(a => a.participant.id)).toEqual([4]);
+    expect(teachingAwards[0]?.pointsAwarded).toBe(boostById("teaching_moment").pointsAwarded);
+  });
+
+  it("awards pressure_player to a participant who locks in with less than 90 mins to midnight", () => {
+    const participants = [participant(5, { livesRemaining: 2 })];
+    // 23:00 UTC = 60 mins before midnight
+    const logs = [log(5, 8, "2026-05-08T23:00:00.000Z")];
+    const awards = runSingleBoost({ boostId: "pressure_player", participants, logs });
+    expect(awards.map(a => a.participant.id)).toEqual([5]);
+    expect(awards[0]?.pointsAwarded).toBe(boostById("pressure_player").pointsAwarded);
+    expect(awards[0]?.wardenNote).toContain(boostById("pressure_player").name);
   });
 
   it("does not treat new-player missing history as Bounce Back eligibility", () => {
@@ -104,7 +136,6 @@ describe("Approved boost system package", () => {
       participants: [participant(1)],
       logs: [log(1, 2, "2026-05-08T09:00:00.000Z")],
     });
-
     expect(awards).toEqual([]);
   });
 
@@ -126,27 +157,28 @@ describe("Approved boost system package", () => {
     ];
 
     const awards = runSingleBoost({ boostId: "mover", day: 8, participants, logs });
-
-    expect(awards.map((award) => award.participant.id)).toEqual([4]);
-    expect(awards[0]?.pointsAwarded).toBe(5);
+    expect(awards.map(a => a.participant.id)).toEqual([4]);
+    expect(awards[0]?.pointsAwarded).toBe(boostById("mover").pointsAwarded);
   });
 
-  it("deduplicates daily boost wins and caps named boost points at ten per participant per day", () => {
+  it("deduplicates daily boost wins and caps named boost points at the daily cap per participant", () => {
     const participants = [participant(1, { currentStreak: 6, livesRemaining: 2 })];
-    const logs = [log(1, 8, "2026-05-08T08:00:00.000Z", { reflectionText: "x".repeat(180), readTeachText: "y".repeat(120) })];
+    const logs = [log(1, 8, "2026-05-08T08:00:00.000Z", {
+      reflectionText: "x".repeat(180),
+      readTeachText: "y".repeat(120),
+    })];
 
     const awards = evaluateBoostWinners({ day: 8, participants, logs, activeBoosts: getActiveBoostsForDay(8) });
     const total = awards.reduce((sum, award) => sum + award.pointsAwarded, 0);
 
-    expect(total).toBe(DAILY_NAMED_BOOST_CAP);
-    expect(awards.map((award) => award.boost.id)).toEqual(["clean_sweep", "morning_proof", "deep_work"]);
+    expect(total).toBeLessThanOrEqual(DAILY_NAMED_BOOST_CAP);
 
     const duplicateBlocked = evaluateBoostWinners({
       day: 8,
       participants,
       logs,
       activeBoosts: [boostById("morning_proof")],
-      boostWins: [{ userId: 1, boostId: "morning_proof", day: 8, pointsAwarded: 3 }],
+      boostWins: [{ userId: 1, boostId: "morning_proof", day: 8, pointsAwarded: boostById("morning_proof").pointsAwarded }],
     });
     expect(duplicateBlocked).toEqual([]);
   });

@@ -50,7 +50,7 @@ export type ReminderPlan = {
 };
 
 const RULE_COUNT = 6;
-const REWARD_POINT_THRESHOLDS = [150, 300, 500] as const;
+const REWARD_POINT_THRESHOLDS = [500, 900, 1500] as const;
 
 function getLocalMinutes(now: Date, timezone: string) {
   const parts = new Intl.DateTimeFormat("en-GB", {

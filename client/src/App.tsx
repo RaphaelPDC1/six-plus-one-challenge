@@ -7,6 +7,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import Register from "./pages/Register";
+import { BugReporterFloat } from "./components/BugReporter";
 
 function Router() {
   return (
@@ -41,6 +42,7 @@ function App() {
         <TooltipProvider>
           <Toaster />
           <Router />
+          <BugReporterFloat />
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>

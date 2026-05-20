@@ -74,22 +74,49 @@ export function isPassingLog(log: ChallengeLog | null | undefined): boolean {
   return Boolean(log?.completed || log?.dayComplete || getLogCompletedRuleCount(log) >= DAILY_PASS_THRESHOLD);
 }
 
-export function calculateLiveTaskPoints(completedRules: number, options: { hasProof?: boolean; hasInsight?: boolean; trackedEverything?: boolean } = {}) {
-  const safeRules = Math.max(0, Math.min(DAILY_RULE_COUNT, completedRules));
-  const rulePoints = safeRules * 2;
-  const passBonus = safeRules >= DAILY_PASS_THRESHOLD ? 4 : 0;
-  const fullGreenBonus = safeRules >= DAILY_RULE_COUNT ? 3 : 0;
+// Per-rule point values matching the UI labels
+export const RULE_POINTS: Record<string, number> = {
+  noAlcohol: 8,
+  cleanEating: 8,
+  exercise: 12,
+  reflection: 8,
+  readTeach: 8,
+  trackedEverything: 6,
+};
+
+export function calculateLiveTaskPoints(
+  completedRules: number,
+  options: {
+    hasProof?: boolean;
+    hasInsight?: boolean;
+    trackedEverything?: boolean;
+    ruleStates?: { key: string; done: boolean }[];
+  } = {}
+) {
+  let rulePoints = 0;
+  if (options.ruleStates && options.ruleStates.length > 0) {
+    // Use per-rule values when rule states are available
+    for (const rule of options.ruleStates) {
+      if (rule.done) rulePoints += RULE_POINTS[rule.key] ?? 8;
+    }
+  } else {
+    // Fallback: use average points per rule (8+8+12+8+8+6)/6 ≈ 8.33, use 8 as safe default
+    const safeRules = Math.max(0, Math.min(DAILY_RULE_COUNT, completedRules));
+    // Approximate by assuming rules done in order: noAlcohol, cleanEating, exercise, reflection, readTeach, trackedEverything
+    const orderedKeys = ["noAlcohol", "cleanEating", "exercise", "reflection", "readTeach", "trackedEverything"];
+    for (let i = 0; i < safeRules; i++) rulePoints += RULE_POINTS[orderedKeys[i]] ?? 8;
+  }
   const proofBonus = options.hasProof ? 1 : 0;
   const insightBonus = options.hasInsight ? 1 : 0;
   const trackingBonus = options.trackedEverything ? 1 : 0;
   return {
     rulePoints,
-    passBonus,
-    fullGreenBonus,
+    passBonus: 0,
+    fullGreenBonus: 0,
     proofBonus,
     insightBonus,
     trackingBonus,
-    visibleTotal: rulePoints + passBonus + fullGreenBonus + proofBonus + insightBonus + trackingBonus,
+    visibleTotal: rulePoints + proofBonus + insightBonus + trackingBonus,
   };
 }
 

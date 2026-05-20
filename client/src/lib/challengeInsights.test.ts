@@ -8,17 +8,33 @@ import {
 
 describe("challenge insight calculations", () => {
   it("shows live points increasing as rule ticks, proof, insight, and tracking are added", () => {
+    // 0 rules = 0 pts
     expect(calculateLiveTaskPoints(0).visibleTotal).toBe(0);
-    expect(calculateLiveTaskPoints(4).visibleTotal).toBe(8);
-    expect(calculateLiveTaskPoints(5, { hasProof: true }).visibleTotal).toBe(15);
-    expect(calculateLiveTaskPoints(6, { hasProof: true, hasInsight: true, trackedEverything: true })).toMatchObject({
-      rulePoints: 12,
-      passBonus: 4,
-      fullGreenBonus: 3,
+    // 4 rules (fallback order: noAlcohol=8, cleanEating=8, exercise=12, reflection=8) = 36
+    expect(calculateLiveTaskPoints(4).visibleTotal).toBe(36);
+    // 5 rules (fallback: 8+8+12+8+8=44) + proof bonus = 45
+    expect(calculateLiveTaskPoints(5, { hasProof: true }).visibleTotal).toBe(45);
+    // 6 rules with ruleStates: 8+8+12+8+8+6=50 + proof+insight+tracking bonuses = 53
+    expect(calculateLiveTaskPoints(6, {
+      hasProof: true,
+      hasInsight: true,
+      trackedEverything: true,
+      ruleStates: [
+        { key: "noAlcohol", done: true },
+        { key: "cleanEating", done: true },
+        { key: "exercise", done: true },
+        { key: "reflection", done: true },
+        { key: "readTeach", done: true },
+        { key: "trackedEverything", done: true },
+      ],
+    })).toMatchObject({
+      rulePoints: 50,
+      passBonus: 0,
+      fullGreenBonus: 0,
       proofBonus: 1,
       insightBonus: 1,
       trackingBonus: 1,
-      visibleTotal: 22,
+      visibleTotal: 53,
     });
   });
 

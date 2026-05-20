@@ -1366,6 +1366,7 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
     hasProof: parseProofMedia(form.exerciseProofUrl).length > 0 || String(form.exerciseProofUrl ?? "").trim().length > 0,
     hasInsight: String(form.reflectionText ?? "").trim().length > 0 || String(form.readTeachText ?? "").trim().length > 0,
     trackedEverything: Boolean(form.trackedEverything),
+    ruleStates: rules,
   });
   const todayAlreadyComplete = Boolean(snapshot?.myLog?.dayComplete && Number(snapshot.myLog.dayNumber) === currentDayNumber);
   const leaderboardVisiblePoints = getLeaderboardVisiblePoints(participant);
@@ -1639,6 +1640,32 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
           </div>
         )}
 
+        {/* Ghost Life card — visible on mobile below rules, only when available and day not complete */}
+        {!ghostLifeLocked && !todayAlreadyComplete && (
+          <div className="mt-4 border border-[#9B59B6]/50 bg-[#0E0B14] p-4" data-testid="ghost-life-card">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <span className="inline-block border border-[#9B59B6]/60 bg-[#1B1024] px-2 py-1 text-[9px] font-black uppercase tracking-[0.16em] text-[#D8B4FE]">Ghost Life · Available</span>
+                <p className="mt-2 text-lg font-black uppercase leading-none text-white">One rescue. No repeats.</p>
+                <p className="mt-2 text-xs font-bold leading-5 text-[#999]">If you can't complete today, activate Ghost Life to absorb the hit. It's gone once used — and only if the day ends incomplete.</p>
+              </div>
+              <span className="shrink-0 text-2xl" aria-hidden>👻</span>
+            </div>
+            <button
+              type="button"
+              className="mt-4 w-full border border-[#9B59B6] bg-[#9B59B6]/10 py-3 text-[11px] font-black uppercase tracking-[0.2em] text-[#D8B4FE] transition hover:bg-[#9B59B6]/20 active:scale-[0.98]"
+              disabled={ghost.isPending}
+              onClick={() => {
+                if (window.confirm("Activate Ghost Life? This is permanent — it will be consumed if today ends incomplete. You cannot undo this.")) {
+                  ghost.mutate({ exerciseDuration: form.exerciseDuration, insightCount: form.readTeachText.split(".").filter(Boolean).length });
+                }
+              }}
+            >
+              {ghost.isPending ? "Activating…" : "Activate Ghost Life"}
+            </button>
+          </div>
+        )}
+
         {/* When the day is already locked in, show a static locked state — never float over rule cards */}
         {todayAlreadyComplete ? (
           <div className="mt-4 border border-[#2ECC71]/40 bg-[#0A1A0A] p-4" data-testid="day-locked-banner">
@@ -1654,7 +1681,7 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
             {lastMissed.length > 0 && <div className="mt-3 border-l-4 border-[#C0392B] bg-[#180F0F] p-4 text-sm font-bold text-[#F0B7AE]">Rollover miss: {lastMissed.join(", ")}. Penalty recorded.</div>}
           </div>
         ) : (
-          <div className={classNames("submit-dock motion-submit-dock z-[70] mx-auto w-full max-w-full transition-all duration-300 md:static md:w-full", saveProgressDocked ? "static translate-y-0" : "fixed left-0 right-0 bottom-[calc(5.85rem+env(safe-area-inset-bottom))] px-4", saveProgressScale < 0.35 ? "max-w-[9.5rem] mx-auto rounded-full border border-[#C8A96E]/45 bg-[#070707]/94 p-1 shadow-[0_0_24px_rgba(200,169,110,0.18)] backdrop-blur" : saveProgressScale < 0.78 ? "max-w-[15rem] mx-auto rounded-full border border-[#C8A96E]/55 bg-[#0D0D0D]/95 p-1.5 shadow-[0_0_32px_rgba(200,169,110,0.22)] backdrop-blur" : "max-w-none rounded-none border border-[#2A2A2A] bg-[#0D0D0D]/95 p-3 backdrop-blur md:border-transparent md:bg-transparent md:p-0 md:backdrop-blur-none", submit.isPending && "submit-dock-pending", allAddressed && !submit.isPending && "submit-dock-ready")} data-save-progress-scale={saveProgressScale} data-save-progress-docked={saveProgressDocked ? "true" : "false"} data-mobile-save-progress-mini-to-section="true" data-mobile-save-progress-above-nav="true">
+          <div className={classNames("submit-dock motion-submit-dock z-[70] mx-auto w-[min(100%,calc(100vw-2rem))] max-w-full transition-all duration-300 md:static md:w-full", saveProgressDocked ? "static translate-y-0" : "fixed inset-x-4 bottom-[calc(5.85rem+env(safe-area-inset-bottom))]", saveProgressScale < 0.35 ? "max-w-[9.5rem] mx-auto rounded-full border border-[#C8A96E]/45 bg-[#070707]/94 p-1 shadow-[0_0_24px_rgba(200,169,110,0.18)] backdrop-blur" : saveProgressScale < 0.78 ? "max-w-[15rem] mx-auto rounded-full border border-[#C8A96E]/55 bg-[#0D0D0D]/95 p-1.5 shadow-[0_0_32px_rgba(200,169,110,0.22)] backdrop-blur" : "max-w-none rounded-none border border-[#2A2A2A] bg-[#0D0D0D]/95 p-3 backdrop-blur md:border-transparent md:bg-transparent md:p-0 md:backdrop-blur-none", submit.isPending && "submit-dock-pending", allAddressed && !submit.isPending && "submit-dock-ready")} data-save-progress-scale={saveProgressScale} data-save-progress-docked={saveProgressDocked ? "true" : "false"} data-mobile-save-progress-mini-to-section="true" data-mobile-save-progress-above-nav="true">
             <SharpButton className={classNames("w-full max-w-full overflow-hidden whitespace-normal break-words text-center transition-all duration-300", saveProgressScale < 0.35 ? "rounded-full px-3 py-2 text-[0px] shadow-none before:content-['SAVE'] before:text-[9px] before:font-black before:tracking-[0.18em]" : saveProgressScale < 0.78 ? "rounded-full px-4 py-3 text-[10px]" : "py-5 text-sm", submit.isPending && "submit-button-pending")} disabled={submit.isPending} onClick={() => submit.mutate({ ...form, reflectionShared: false, dayNumber: snapshot?.challenge.currentDay ?? 1 })}>
               {submit.isPending
                 ? (allAddressed ? "Locking in the day…" : "Saving progress…")
@@ -1963,20 +1990,21 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
     onPaceCount > 0 ? `${onPaceCount}/${participantCount || 0} on pace` : "Pace check needed",
   ].filter(Boolean) as string[];
 
+  const [pressureListExpanded, setPressureListExpanded] = useState(false);
+  const [bonusAccordionOpen, setBonusAccordionOpen] = useState(false);
+  const pressureRowsVisible = pressureListExpanded ? compareRows : compareRows.slice(0, 5);
+
   return (
     <div className="motion-page space-y-3 overflow-hidden pb-2" data-testid="overview-metrics-dashboard">
-      {/* Prototype-style headline */}
-      <div className="px-1 pb-1 pt-2">
+      {/* Compact header + marquee */}
+      <div className="px-1 pb-0 pt-2">
         <MicroLabel tone="gold">Quick read · {Math.max(0, 50 - currentDay)} days left</MicroLabel>
-        <h2 className="mt-2 text-4xl font-black uppercase leading-[0.88] tracking-[-0.08em] text-white sm:text-5xl">
-          The room<br />
-          <span className="text-[#C8A96E]">is moving.</span>
+        <h2 className="mt-1.5 text-3xl font-black uppercase leading-[0.9] tracking-[-0.08em] text-white">
+          The room <span className="text-[#C8A96E]">is moving.</span>
         </h2>
       </div>
-
-      {/* Insights marquee */}
       <div className="insights-marquee overflow-hidden" aria-hidden="true">
-        <div className="animate-marquee flex gap-8 whitespace-nowrap py-2.5 pl-4">
+        <div className="animate-marquee flex gap-8 whitespace-nowrap py-2 pl-4">
           {[...insightTicker, ...insightTicker].map((item, i) => (
             <span key={i} className="text-[9px] font-black uppercase tracking-[0.22em] text-[#CFCFCF]">
               <span className="mr-2.5 text-[#C8A96E]">◆</span>{item}
@@ -1985,7 +2013,7 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
         </div>
       </div>
 
-      {/* 4-col stat strip — matches prototype RANK | PTS | LIVES | DAY */}
+      {/* Sticky stat strip */}
       <section className="sticky top-2 z-30 grid grid-cols-4 divide-x divide-[#1A1A1A] border border-[#2A2A2A] bg-[#070707]/95 shadow-[0_18px_50px_rgba(0,0,0,0.55)] backdrop-blur sm:top-3" data-testid="overview-position-strip">
         {[
           { label: "Rank",  value: currentRankLabel, color: "text-white" },
@@ -2000,151 +2028,152 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
         ))}
       </section>
 
+      {/* Next best move */}
       <section className={classNames("relative overflow-hidden border p-4 shadow-[0_0_50px_rgba(0,0,0,0.35)]", nextMove.tone === "red" ? "border-[#C0392B]/65 bg-[#190B0A]" : nextMove.tone === "gold" ? "border-[#C8A96E]/65 bg-[#16130B]" : "border-[#2ECC71]/45 bg-[#07150D]")} data-testid="overview-next-best-move">
         <div className="pointer-events-none absolute -right-14 -top-16 h-40 w-40 rounded-full bg-current/10 blur-3xl" />
         <div className="relative">
           <MicroLabel tone={nextMove.tone}>{nextMove.label}</MicroLabel>
-          <h2 className="mt-3 text-3xl font-black uppercase leading-[0.9] tracking-[-0.08em] text-white sm:text-5xl">{nextMove.title}</h2>
-          <p className="mt-3 text-xs font-black uppercase leading-5 tracking-[0.11em] text-[#D8D8D8]">{nextMove.detail}</p>
-          <div className="mt-4 flex flex-wrap items-center gap-2">
-            <span className="border border-current/45 bg-black/40 px-3 py-2 text-[9px] font-black uppercase tracking-[0.16em] text-current">{nextMove.action}</span>
-            <span className="text-[9px] font-black uppercase tracking-[0.14em] text-[#777]">{completedRules}/6 done today · {Math.max(0, DAILY_PASS_THRESHOLD - completedRules)} to pass</span>
-          </div>
-        </div>
-      </section>
-
-      <section className="relative overflow-hidden border border-[#2A2A2A] bg-[#0F0F0F] p-4 shadow-[0_0_50px_rgba(0,0,0,0.35)] sm:p-5" data-testid="overview-red-alert-pace-card">
-        <div className="pointer-events-none absolute -left-16 -top-20 h-44 w-44 rounded-full bg-[#C8A96E]/12 blur-3xl" />
-        <div className="relative flex flex-wrap items-end justify-between gap-3">
-          <div className="min-w-0">
-            <MicroLabel tone={daysInsight.tone}>Challenge state</MicroLabel>
-            <h2 className="mt-2 break-words text-3xl font-black uppercase leading-none tracking-[-0.08em] text-white sm:text-5xl">{daysInsight.headline}</h2>
-          </div>
-          <button type="button" onClick={() => setGroupDetailsOpen(value => !value)} className="motion-press border border-[#444] bg-black/45 px-3 py-2 text-[9px] font-black uppercase tracking-[0.14em] text-[#C8A96E] transition hover:border-[#C8A96E] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A96E]/60">
-            {groupDetailsOpen ? "Hide room summary" : "Room summary"} {groupDetailsOpen ? <ChevronUp className="ml-1 inline h-3 w-3" /> : <ChevronDown className="ml-1 inline h-3 w-3" />}
-          </button>
-        </div>
-        <div className="relative mt-4 grid gap-2 md:grid-cols-3" data-testid="overview-intelligence-grid">
-          <OverviewMetricCard label="Days left" value={daysInsight.value} detail={daysInsight.detail} tone={daysInsight.tone} />
-          <OverviewMetricCard label="Banked today" value={liveAppPoints} detail="Visible points from today’s logs, proof, reflection, and tracking." tone="green" />
-          <OverviewMetricCard label="Bonus leader" value={topBoostEarner ? topBoostEarner.participant.displayName : "No leader"} detail={topBoostEarner ? `+${topBoostEarner.totalBoostPoints} bonus pts · tap for wins` : "Bonus wins will appear here."} tone={topBoostEarner ? "gold" : "white"} expanded={boostLeaderOpen} onClick={() => setBoostLeaderOpen(value => !value)} actionLabel={boostLeaderOpen ? "Close" : "Reveal"}>
-            <div className="space-y-2 border border-current/25 bg-black/35 p-3">
-              {topBoostEarner ? topBoostEarner.wins.slice(0, 4).map((win: any) => {
-                const boost = activeBoosts.find((item: any) => item.id === win.boostId) ?? { name: win.boostId };
-                const copy = getPlainBoostCopy(boost);
-                return <p key={win.id ?? `${win.boostId}-${win.day}`} className="text-[10px] font-black uppercase leading-5 tracking-[0.12em] text-[#E5E5E5]"><span className="text-current">{boost.name ?? win.boostId}</span>: {copy.plain}</p>;
-              }) : <p className="text-[10px] font-black uppercase leading-5 tracking-[0.12em] text-[#BDBDBD]">No one has claimed a bonus yet.</p>}
-            </div>
-          </OverviewMetricCard>
-        </div>
-        <div className={classNames("grid transition-all duration-500 ease-out", groupDetailsOpen ? "mt-4 grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0")} data-testid="overview-room-summary">
-          <div className="overflow-hidden border border-[#2A2A2A] bg-black/35 p-4">
-            <p className="text-xs font-black uppercase leading-5 tracking-[0.12em] text-[#D8D8D8]">{daysInsight.body}</p>
-            <div className="mt-3 grid gap-2 sm:grid-cols-3">
-              <InsightPill label="Banked" value={`${todayComplete}/${participantCount || 0}`} tone="green" />
-              <InsightPill label="Opened" value={`${todayOpened}/${participantCount || 0}`} tone="gold" />
-              <InsightPill label="On pace" value={`${onPaceCount}/${participantCount || 0}`} tone={onPaceCount >= todayComplete ? "green" : "red"} />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="grid gap-3 lg:grid-cols-[0.9fr_1.1fr]" data-testid="overview-boost-warden-grid">
-        <WardenMoodCard mood={wardenMoodQuery.data} isLoading={wardenMoodQuery.isLoading} currentDay={currentDay} completedRules={currentParticipant?.completedRulesToday ?? 0} totalRules={6} />
-        <article className="border border-[#2ECC71]/30 bg-[#07150D] p-4" data-testid="overview-active-boosts">
-          <div className="flex flex-wrap items-end justify-between gap-3">
-            <div>
-              <MicroLabel tone="green">Today’s bonus targets</MicroLabel>
-              <h3 className="mt-2 text-2xl font-black uppercase leading-none tracking-[-0.07em] text-white">Tap one. See how to win it.</h3>
-            </div>
-            <span className="border border-[#2ECC71]/55 bg-black/45 px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.16em] text-[#2ECC71]">+5 each</span>
-          </div>
-          <div className="mt-4 grid gap-2 sm:grid-cols-3">
-            {activeBoosts.map((boost: any, index: number) => {
-              const win = todayBoostWins.find((item: any) => item.boostId === boost.id);
-              const owner = win ? participants.find((p: any) => String(p.id) === String(win.userId)) : null;
-              const copy = getPlainBoostCopy(boost);
-              const expanded = expandedBoostId === String(boost.id ?? index);
-              return (
-                <button key={boost.id ?? index} type="button" onClick={() => setExpandedBoostId(expanded ? null : String(boost.id ?? index))} className={classNames("motion-card motion-press min-w-0 border p-3 text-left transition hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A96E]/60", getBoostToneClass(boost.tone))} aria-expanded={expanded}>
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-xl font-black leading-none">{boost.icon}</span>
-                    <span className="border border-current/40 bg-black/40 px-2 py-1 text-[8px] font-black uppercase tracking-[0.14em]">{win ? "Claimed" : "Open"}</span>
-                  </div>
-                  <p className="mt-3 text-sm font-black uppercase tracking-[-0.03em] text-white">{boost.name}</p>
-                  <p className="mt-1 text-[10px] font-black uppercase leading-5 tracking-[0.12em]">{win ? `+${win.pointsAwarded} · ${owner?.displayName ?? "Winner"}` : copy.plain}</p>
-                  <div className={classNames("grid transition-all duration-500 ease-out", expanded ? "mt-3 grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0")}>
-                    <div className="overflow-hidden">
-                      <p className="border border-current/25 bg-black/35 p-3 text-[10px] font-black uppercase leading-5 tracking-[0.12em] text-[#E5E5E5]">{win?.wardenNote ? `Why it was won: ${win.wardenNote}` : copy.how}</p>
-                    </div>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
+          <h2 className="mt-2 text-2xl font-black uppercase leading-[0.9] tracking-[-0.08em] text-white sm:text-3xl">{nextMove.title}</h2>
+          <p className="mt-2 text-[11px] font-black uppercase leading-5 tracking-[0.11em] text-[#D8D8D8]">{nextMove.detail}</p>
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <InsightPill label="Your bonuses" value={`${ownBoostWins.length} claimed`} tone="green" />
-            <InsightPill label="Your bonus pts" value={`+${ownTotalBoostPoints} pts`} tone="gold" />
+            <span className="border border-current/45 bg-black/40 px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.16em] text-current">{nextMove.action}</span>
+            <span className="text-[9px] font-black uppercase tracking-[0.14em] text-[#777]">{completedRules}/6 done · {Math.max(0, DAILY_PASS_THRESHOLD - completedRules)} to pass</span>
           </div>
-          {unclaimedTodayBoosts.length > 0 && <p className="mt-2 border border-[#C8A96E]/45 bg-[#16130B] px-3 py-2 text-[9px] font-black uppercase tracking-[0.14em] text-[#C8A96E]" data-testid="unclaimed-boost-alert">Still open: {unclaimedTodayBoosts.map((boost: any) => boost.name).join(" · ")}</p>}
+        </div>
+      </section>
+
+      {/* 2-col: Warden read + Challenge state (merged) */}
+      <section className="grid gap-3 sm:grid-cols-2" data-testid="overview-boost-warden-grid">
+        <WardenMoodCard mood={wardenMoodQuery.data} isLoading={wardenMoodQuery.isLoading} currentDay={currentDay} completedRules={currentParticipant?.completedRulesToday ?? 0} totalRules={6} />
+        <article className="relative overflow-hidden border border-[#2A2A2A] bg-[#0F0F0F] p-4" data-testid="overview-red-alert-pace-card">
+          <div className="pointer-events-none absolute -left-8 -top-10 h-32 w-32 rounded-full bg-[#C8A96E]/10 blur-3xl" />
+          <div className="relative">
+            <MicroLabel tone={daysInsight.tone}>Challenge state</MicroLabel>
+            <h3 className="mt-2 text-xl font-black uppercase leading-none tracking-[-0.07em] text-white">{daysInsight.headline}</h3>
+            <p className="mt-2 text-[10px] font-black uppercase leading-5 tracking-[0.11em] text-[#BDBDBD]">{daysInsight.detail}</p>
+            <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+              <span className="border border-[#2A2A2A] bg-black/30 p-2"><b className="block text-lg leading-none text-[#C8A96E]">{todayComplete}</b><small className="text-[8px] font-black uppercase tracking-[0.12em] text-[#777]">Banked</small></span>
+              <span className="border border-[#2A2A2A] bg-black/30 p-2"><b className="block text-lg leading-none text-white">{onPaceCount}</b><small className="text-[8px] font-black uppercase tracking-[0.12em] text-[#777]">On pace</small></span>
+              <span className="border border-[#2A2A2A] bg-black/30 p-2"><b className="block text-lg leading-none text-white">{Math.max(0, 50 - currentDay)}</b><small className="text-[8px] font-black uppercase tracking-[0.12em] text-[#777]">Days left</small></span>
+            </div>
+            <button type="button" onClick={() => setGroupDetailsOpen(v => !v)} className="motion-press mt-3 w-full border border-[#2A2A2A] bg-black/35 py-2 text-[9px] font-black uppercase tracking-[0.14em] text-[#C8A96E] transition hover:border-[#C8A96E]">
+              {groupDetailsOpen ? "Hide detail" : "Room detail"} {groupDetailsOpen ? <ChevronUp className="ml-1 inline h-3 w-3" /> : <ChevronDown className="ml-1 inline h-3 w-3" />}
+            </button>
+          </div>
+          <div className={classNames("grid transition-all duration-500 ease-out", groupDetailsOpen ? "mt-3 grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0")} data-testid="overview-room-summary">
+            <div className="overflow-hidden border border-[#2A2A2A] bg-black/35 p-3">
+              <p className="text-[10px] font-black uppercase leading-5 tracking-[0.12em] text-[#D8D8D8]">{daysInsight.body}</p>
+            </div>
+          </div>
         </article>
       </section>
 
-      <section className="border border-[#2A2A2A] bg-[#101010] p-4 sm:p-5" data-testid="personal-rivalry-cards">
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <MicroLabel tone="gold">Rival pressure</MicroLabel>
-            <h3 className="mt-2 text-2xl font-black uppercase leading-none tracking-[-0.07em] text-white">The gap above. The threat below.</h3>
-          </div>
-          <span className="border border-[#C8A96E]/45 bg-[#16130B] px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.16em] text-[#C8A96E]">Your rank {currentRankLabel}</span>
+      {/* 2-col: Rival pressure (compact) */}
+      <div data-testid="overview-intelligence-grid">
+      <section className="border border-[#2A2A2A] bg-[#101010] p-4" data-testid="personal-rivalry-cards" data-overview-intelligence-grid="true">
+        <div className="flex items-center justify-between gap-2">
+          <MicroLabel tone="gold">Rival pressure · rank {currentRankLabel}</MicroLabel>
+          <span className="text-[9px] font-black uppercase tracking-[0.14em] text-[#777]">tap for wins · The gap above. The threat below.</span>
         </div>
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <div className="mt-3 grid gap-2 sm:grid-cols-2">
           {rivalryCards.map(card => {
             const rival = card.participant;
             return (
-              <button key={card.label} type="button" onClick={() => rival && setSelected(rival)} className={classNames("motion-card motion-press min-w-0 border p-4 text-left", card.tone === "red" ? "border-[#C0392B]/55 bg-[#190B0A]" : "border-[#C8A96E]/55 bg-[#16130B]")} data-testid="rivalry-card">
-                <MicroLabel tone={card.tone}>{card.label}</MicroLabel>
-                <div className="mt-4 flex min-w-0 items-center gap-3">
-                  {rival && <ProfilePhoto participant={rival} className="h-12 w-12 shrink-0" />}
-                  <div className="min-w-0">
-                    <p className="truncate text-xl font-black uppercase tracking-[-0.05em] text-white">{rival?.displayName ?? card.emptyTitle}</p>
-                    <p className="mt-1 text-[10px] font-black uppercase tracking-[0.14em] text-[#BDBDBD]">{rival ? `${card.gap} point gap` : card.emptyDetail}</p>
-                  </div>
+              <button key={card.label} type="button" onClick={() => rival && setSelected(rival)} className={classNames("motion-card motion-press min-w-0 border p-3 text-left", card.tone === "red" ? "border-[#C0392B]/55 bg-[#190B0A]" : "border-[#C8A96E]/55 bg-[#16130B]")} data-testid="rivalry-card">
+                <div className="flex items-center justify-between gap-2">
+                  <MicroLabel tone={card.tone}>{card.label}</MicroLabel>
+                  {rival && <span className="text-[9px] font-black uppercase tracking-[0.13em] text-[#777]">{card.gap} pts</span>}
                 </div>
-                {rival && <p className="mt-3 text-[10px] font-black uppercase leading-5 tracking-[0.12em] text-[#BDBDBD]">{rival.statusLine}</p>}
-                {rival && <p className="mt-2 text-[9px] font-black uppercase tracking-[0.15em] text-[#C8A96E]">Bonus wins: {boostWins.filter((win: any) => String(win.userId) === String(rival.id)).length} · You: {ownBoostWins.length}</p>}
+                <div className="mt-2 flex min-w-0 items-center gap-2">
+                  {rival && <ProfilePhoto participant={rival} className="h-9 w-9 shrink-0" />}
+                  <p className="truncate text-base font-black uppercase tracking-[-0.04em] text-white">{rival?.displayName ?? card.emptyTitle}</p>
+                </div>
+                {rival && <p className="mt-1.5 text-[9px] font-black uppercase leading-4 tracking-[0.12em] text-[#BDBDBD]">{rival.statusLine}</p>}
               </button>
             );
           })}
         </div>
       </section>
 
-      <section className="border border-[#2A2A2A] bg-[#101010] p-4 sm:p-5" data-testid="overview-compare-list">
-        <div className="flex flex-wrap items-end justify-between gap-3">
+      </div>
+      {/* Bonuses accordion */}
+      <section className="border border-[#2ECC71]/30 bg-[#07150D]" data-testid="overview-active-boosts">
+        <button type="button" onClick={() => setBonusAccordionOpen(v => !v)} className="motion-press flex w-full items-center justify-between gap-3 p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2ECC71]/60">
+          <div className="min-w-0">
+            <MicroLabel tone="green">Today's bonus targets</MicroLabel>
+            <h3 className="mt-1.5 text-xl font-black uppercase leading-none tracking-[-0.06em] text-white">
+              {unclaimedTodayBoosts.length > 0 ? `${unclaimedTodayBoosts.length} open · tap to see how to win` : "All claimed today"}
+            </h3>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <span className="border border-[#2ECC71]/55 bg-black/45 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.14em] text-[#2ECC71]">{ownBoostWins.length} won</span>
+            {bonusAccordionOpen ? <ChevronUp className="h-4 w-4 text-[#2ECC71]" /> : <ChevronDown className="h-4 w-4 text-[#2ECC71]" />}
+          </div>
+        </button>
+        <div className={classNames("grid transition-all duration-500 ease-out", bonusAccordionOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0")}>
+          <div className="overflow-hidden">
+            <div className="border-t border-[#2ECC71]/20 p-4 pt-3">
+              <div className="grid gap-2 sm:grid-cols-3">
+                {activeBoosts.map((boost: any, index: number) => {
+                  const win = todayBoostWins.find((item: any) => item.boostId === boost.id);
+                  const owner = win ? participants.find((p: any) => String(p.id) === String(win.userId)) : null;
+                  const copy = getPlainBoostCopy(boost);
+                  const expanded = expandedBoostId === String(boost.id ?? index);
+                  return (
+                    <button key={boost.id ?? index} type="button" onClick={() => setExpandedBoostId(expanded ? null : String(boost.id ?? index))} className={classNames("motion-card motion-press min-w-0 border p-3 text-left transition hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A96E]/60", getBoostToneClass(boost.tone))} aria-expanded={expanded}>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-lg font-black leading-none">{boost.icon}</span>
+                        <span className="border border-current/40 bg-black/40 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.14em]">{win ? "Claimed" : `+${boost.points ?? 5}`}</span>
+                      </div>
+                      <p className="mt-2 text-sm font-black uppercase tracking-[-0.03em] text-white">{boost.name}</p>
+                      <p className="mt-1 text-[10px] font-black uppercase leading-4 tracking-[0.12em]">{win ? `${owner?.displayName ?? "Winner"}` : copy.plain}</p>
+                      <div className={classNames("grid transition-all duration-500 ease-out", expanded ? "mt-3 grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0")}>
+                        <div className="overflow-hidden">
+                          <p className="border border-current/25 bg-black/35 p-3 text-[10px] font-black uppercase leading-5 tracking-[0.12em] text-[#E5E5E5]">{win?.wardenNote ? `Why it was won: ${win.wardenNote}` : copy.how}</p>
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <InsightPill label="Your bonuses" value={`${ownBoostWins.length} claimed`} tone="green" />
+                <InsightPill label="Your bonus pts" value={`+${ownTotalBoostPoints} pts`} tone="gold" />
+                {topBoostEarner && <InsightPill label="Bonus leader" value={`${topBoostEarner.participant.displayName} +${topBoostEarner.totalBoostPoints}`} tone="gold" />}
+              </div>
+              {unclaimedTodayBoosts.length > 0 && <p className="mt-2 border border-[#C8A96E]/45 bg-[#16130B] px-3 py-2 text-[9px] font-black uppercase tracking-[0.14em] text-[#C8A96E]" data-testid="unclaimed-boost-alert">Still open: {unclaimedTodayBoosts.map((boost: any) => boost.name).join(" · ")}</p>}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Pressure list with show more/less */}
+      <section className="border border-[#2A2A2A] bg-[#101010] p-4" data-testid="overview-compare-list">
+        <div className="flex items-end justify-between gap-3">
           <div>
             <MicroLabel tone="red">Pressure list</MicroLabel>
-            <h3 className="mt-2 text-2xl font-black uppercase leading-none tracking-[-0.07em] text-white">Who’s safe, slipping, or under pressure.</h3>
+            <h3 className="mt-1.5 text-xl font-black uppercase leading-none tracking-[-0.07em] text-white">Who's safe, slipping, or exposed.</h3>
           </div>
-          <p className="max-w-sm text-[10px] font-black uppercase leading-5 tracking-[0.14em] text-[#777]">Same points, lives, logs, proof, pace, and risk logic — now easier to scan on a phone.</p>
+          <span className="shrink-0 text-[9px] font-black uppercase tracking-[0.14em] text-[#777]">{compareRows.length} challengers</span>
         </div>
-        <div className="mt-4 space-y-2">
-          {compareRows.map((p: any, index: number) => {
+        <div className="mt-3 space-y-2">
+          {pressureRowsVisible.map((p: any, index: number) => {
             const pace = Math.max(0, Math.min(100, pct(Number(p.completeCount ?? 0), currentDay)));
             const riskTone = Number(p.riskPoints ?? 0) >= 60 || Number(p.livesRemaining ?? 4) <= 1 ? "red" : Number(p.riskPoints ?? 0) >= 42 || Number(p.livesRemaining ?? 4) <= 2 ? "gold" : "green";
             const riskLabel = riskTone === "red" ? "Red zone" : riskTone === "gold" ? "Watch" : "Holding";
             return (
               <button key={p.id} type="button" onClick={() => { pulse(14); setSelected(p); }} className={classNames("motion-row motion-press w-full border bg-[#0D0D0D] p-3 text-left transition hover:border-[#C8A96E] focus-visible:border-[#C8A96E] focus-visible:outline-none", riskTone === "red" ? "border-[#C0392B]/70" : "border-[#2A2A2A]")} aria-label={`Open ${p.displayName} participant stats`} data-testid="overview-compare-row">
                 <div className="grid grid-cols-[34px_minmax(0,1fr)_auto] items-start gap-3">
-                  <span className={classNames("text-2xl font-black", riskTone === "red" ? "text-[#FFB3A8]" : index < 3 ? "text-[#C8A96E]" : "text-[#777]")}>#{index + 1}</span>
+                  <span className={classNames("text-2xl font-black", riskTone === "red" ? "text-[#FFB3A8]" : index < 3 ? "text-[#C8A96E]" : "text-[#777]")}>{`#${index + 1}`}</span>
                   <span className="min-w-0">
                     <span className="block truncate text-lg font-black uppercase tracking-[-0.04em] text-white">{p.displayName}</span>
-                    <span className="mt-1 block text-[10px] font-black uppercase tracking-[0.13em] text-[#777]">{p.completeCount}/{currentDay} pace · {p.totalPoints} pts</span>
+                    <span className="mt-1 block text-[10px] font-black uppercase tracking-[0.13em] text-[#777]">{p.completeCount}/{currentDay} pace · Banked today · {p.totalPoints} pts</span>
                   </span>
                   <span className={classNames("border px-2.5 py-1 text-[8px] font-black uppercase tracking-[0.13em]", riskTone === "red" ? "border-[#C0392B] bg-[#C0392B]/15 text-[#FFB3A8]" : riskTone === "gold" ? "border-[#C8A96E] bg-[#16130B] text-[#C8A96E]" : "border-[#2ECC71] bg-[#07150D] text-[#2ECC71]")}>{riskLabel}</span>
                 </div>
-                <div className="mt-3 flex items-center justify-between gap-3">
+                <div className="mt-2 flex items-center justify-between gap-3">
                   <div className="min-w-0 flex-1">
-                    <div className="h-2 overflow-hidden bg-[#242424]" aria-label={`${pace}% pace bar`} data-testid="pace-bar">
+                    <div className="h-1.5 overflow-hidden bg-[#242424]" aria-label={`${pace}% pace bar`} data-testid="pace-bar">
                       <div className={classNames("h-full", riskTone === "red" ? "bg-[#C0392B]" : riskTone === "gold" ? "bg-[#C8A96E]" : "bg-[#2ECC71]")} style={{ width: `${pace}%` }} />
                     </div>
                   </div>
@@ -2154,6 +2183,11 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
             );
           })}
         </div>
+        {compareRows.length > 5 && (
+          <button type="button" onClick={() => setPressureListExpanded(v => !v)} className="motion-press mt-3 w-full border border-[#2A2A2A] bg-black/35 py-2.5 text-[9px] font-black uppercase tracking-[0.16em] text-[#C8A96E] transition hover:border-[#C8A96E]">
+            {pressureListExpanded ? `Show top 5 ↑` : `Show all ${compareRows.length} ↓`}
+          </button>
+        )}
       </section>
       <ParticipantSheet participant={selected} onClose={() => setSelected(null)} />
     </div>
@@ -3108,10 +3142,10 @@ function ProofFeed({ snapshot }: { snapshot: Snapshot }) {
 }
 
 const REWARD_TIERS = [
-  { label: "Bronze",   min: 0,   max: 99,  color: "#B87333", bg: "#1A1009" },
-  { label: "Silver",   min: 100, max: 199, color: "#BFC7D5", bg: "#10131A" },
-  { label: "Gold",     min: 200, max: 349, color: "#C8A96E", bg: "#16130B" },
-  { label: "Platinum", min: 350, max: Infinity, color: "#E8F4FF", bg: "#0D1220" },
+  { label: "Bronze",   min: 0,    max: 299,       color: "#B87333", bg: "#1A1009" },
+  { label: "Silver",   min: 300,  max: 599,       color: "#BFC7D5", bg: "#10131A" },
+  { label: "Gold",     min: 600,  max: 999,       color: "#C8A96E", bg: "#16130B" },
+  { label: "Platinum", min: 1000, max: Infinity,  color: "#E8F4FF", bg: "#0D1220" },
 ] as const;
 
 function RewardTierLadder({ points }: { points: number }) {
@@ -3830,7 +3864,44 @@ export default function Home() {
 
       <section className="container py-6 md:py-8">
         {snapshotQuery.isLoading ? (
-          <div className="border border-[#2A2A2A] bg-[#101010] p-10 text-center text-sm font-black uppercase tracking-[0.22em] text-[#777]">Loading challenge data...</div>
+          <div className="animate-pulse space-y-4" aria-label="Loading challenge data">
+            {/* Header skeleton */}
+            <div className="flex items-center justify-between">
+              <div className="h-4 w-32 rounded bg-[#2A2A2A]" />
+              <div className="h-4 w-20 rounded bg-[#2A2A2A]" />
+            </div>
+            {/* Title skeleton */}
+            <div className="space-y-2">
+              <div className="h-10 w-48 rounded bg-[#2A2A2A]" />
+              <div className="h-8 w-32 rounded bg-[#C8A96E]/20" />
+            </div>
+            {/* Lives bar skeleton */}
+            <div className="flex gap-2">
+              {[1,2,3,4].map(i => <div key={i} className="h-3 flex-1 rounded-full bg-[#2A2A2A]" />)}
+            </div>
+            {/* Rule cards skeleton */}
+            <div className="space-y-2 pt-2">
+              {[1,2,3,4,5,6].map(i => (
+                <div key={i} className="flex items-center gap-4 border border-[#2A2A2A] bg-[#101010] p-4">
+                  <div className="h-8 w-8 rounded bg-[#2A2A2A]" />
+                  <div className="flex-1 space-y-1">
+                    <div className="h-3 w-32 rounded bg-[#2A2A2A]" />
+                    <div className="h-2 w-16 rounded bg-[#2A2A2A]" />
+                  </div>
+                  <div className="h-6 w-6 rounded bg-[#2A2A2A]" />
+                </div>
+              ))}
+            </div>
+            {/* Stats bar skeleton */}
+            <div className="grid grid-cols-3 gap-2">
+              {[1,2,3].map(i => (
+                <div key={i} className="border border-[#2A2A2A] bg-[#101010] p-4 text-center">
+                  <div className="mx-auto h-6 w-16 rounded bg-[#2A2A2A]" />
+                  <div className="mx-auto mt-1 h-2 w-12 rounded bg-[#2A2A2A]" />
+                </div>
+              ))}
+            </div>
+          </div>
         ) : (
           <>
             <div className="mb-5 hidden gap-[2px] bg-[#2A2A2A] p-[2px] md:grid" style={{ gridTemplateColumns: `repeat(${visibleTabs.length}, minmax(0, 1fr))` }}>

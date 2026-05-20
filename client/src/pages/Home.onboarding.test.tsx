@@ -668,8 +668,8 @@ describe("Home onboarding shell", () => {
     expect(homeSource).not.toContain("snap-start overflow-hidden");
     expect(homeSource).toContain("liveTaskPoints.visibleTotal");
     expect(homeSource).toContain("w-[min(100%,calc(100vw-2rem))] max-w-full");
-    expect(homeSource).toContain("max-w-[9.5rem] rounded-full border border-[#C8A96E]/45 bg-[#070707]/94 p-1");
-    expect(homeSource).toContain("max-w-[15rem] rounded-full border border-[#C8A96E]/55 bg-[#0D0D0D]/95 p-1.5");
+    expect(homeSource).toContain("max-w-[9.5rem] mx-auto rounded-full border border-[#C8A96E]/45 bg-[#070707]/94 p-1");
+    expect(homeSource).toContain("max-w-[15rem] mx-auto rounded-full border border-[#C8A96E]/55 bg-[#0D0D0D]/95 p-1.5");
     expect(homeSource).toContain("rounded-full px-3 py-2 text-[0px]");
     expect(homeSource).toContain("rounded-full px-4 py-3 text-[10px]");
     expect(readFileSync(new URL("../index.css", import.meta.url), "utf8")).toContain("overflow-x: hidden;");

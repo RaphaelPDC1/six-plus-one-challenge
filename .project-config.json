@@ -1,0 +1,46 @@
+{
+  "build_command": "pnpm run build",
+  "capabilities": [
+    "db",
+    "server",
+    "user"
+  ],
+  "dev_command": "pnpm run dev",
+  "env_vars": {
+    "DATABASE_URL": "mysql://2P9ir9M7b3E7Qkh.8b2c854ea8b3:5sod30Wh3iVl1SS5qfPi@gateway04.us-east-1.prod.aws.tidbcloud.com:4000/HPubf4auNvt8KXvgrLad5c?ssl={\"rejectUnauthorized\":true}"
+  },
+  "experiments": [
+    "no_db_push"
+  ],
+  "git_remote": {
+    "repo_url": "s3://vida-prod-gitrepo/webdev-git/310519663397047835/HPubf4auNvt8KXvgrLad5c",
+    "access_key_id": "ASIAZV3A2ECZKDNANFYZ",
+    "secret_access_key": "WWAuDW65IBVax40qiMA63ann15O//81Gwjz3GGZX",
+    "session_token": "IQoJb3JpZ2luX2VjEB4aCXVzLWVhc3QtMSJGMEQCIGWWrk8r17lb+bnMZ92w8eVfnhxIL2Kbnig790hJo9iAAiBN3iD4ykIK87IgmbhJJpsu5WD0X8nK+zikEfVQOpA0QCr/Awjm//////////8BEAQaDDY2NTM4NjA5ODg2NiIMEx1vPXzVQpjnIsBbKtMDHIkKfwPtTygR08/VM+f+DflNPbjppyA8EOgpl3l6KDYs8qNF3kGo6s3j3lR+QMLosT8ygSPsY1pjkAsjrpm3T5VzKjenTldY5G6t9cpndZQaQ3ymYrPSyaOcAWlTr3OamBt+oQuBE0QWriLjW5+64KikUbpdYP/hLryiJE61hCtMISvLYHZEByFbu74BHoM8unTZ5zYhQ9C6L7RIjLmgQjT9S4HbUt0BNWNt2c6hEux+32/N+ZRuuwEMGPi2a1wPuN8NcY4o7Lm70jOEu/hCvNvvpz2nobn0qpE3/GdRAax6ZCVfMeVQGFvfKiRHernXRYxJHjlBJTVXQD8yzf2P1UFR87p471DMc55ZwMqekfE3C0tIQCYAtq8W1F10H0z40oiaP3FwEo8jH1ckoTNPaDQ+4mCENc8fnCncdsjXztF9sdRme0KYnhJQrpmBVhCTvmqT+v1NgI2ViSK5h8N8zIq4MfOK1R8CH1DwMHtHUGVrlGRO6GZmvzTXSyIQUPnaixqQWqekAd6TuftoZWW4WbLkd4+MNiMdV9EVnT35qeuW6onZGcoe7ZxeKhtq0Ct7JmRpYb96TTlSTnDmCd7OeN73U8MGzK2Sfz0Nx0cfAIaYEA0wjYO10AY6ngFPFnX/BYc97bQVtUZKc/BzXqMeyJJhU1y+0BpmssyP71X5ADjq0BmrojCwpK4vQ8EBKKqvmGLOlkp12BUKYVEf2nJH+M42iOS5E88VmmEfnhdD/zH0D63GRvslhUuhcQ9xcoNar33zSy6nFZ/fm9eHX/dAVTLpg2eLP1Qw2PPm7BFoUtET+PpoWamdrvFVDG/E3zPBw5R8WiSTxbZH7w==",
+    "expiration": "2026-05-20T17:07:25.000Z"
+  },
+  "name": "six-plus-one-challenge",
+  "path": "/home/ubuntu/six-plus-one-challenge",
+  "port": 3000,
+  "secrets": {
+    "BUILT_IN_FORGE_API_KEY": "a8Rm6UojEaXqLZ4AtU92YU",
+    "BUILT_IN_FORGE_API_URL": "https://forge.manus.ai",
+    "JWT_SECRET": "mmXrsHuMAKwurs8mjSicuu",
+    "MAKE_WEBHOOK_URL": "https://hook.eu1.make.com/y95usg78un45tqw98cec59nwf6qr11jc",
+    "OAUTH_SERVER_URL": "https://api.manus.im",
+    "OWNER_NAME": "Raphael Togbe",
+    "OWNER_OPEN_ID": "nWt84jhFC6TvU2pjjTVzEf",
+    "VITE_ANALYTICS_ENDPOINT": "https://manus-analytics.com",
+    "VITE_ANALYTICS_WEBSITE_ID": "96e4a7e9-d4f3-4e5e-9aba-c65b6a23bee4",
+    "VITE_APP_ID": "HPubf4auNvt8KXvgrLad5c",
+    "VITE_APP_LOGO": "https://files.manuscdn.com/user_upload_by_module/web_dev_logo/310519663397047835/LEVSWJYcIqjKSceh.webp",
+    "VITE_APP_TITLE": "6+1 4 Lives Challenge",
+    "VITE_FRONTEND_FORGE_API_KEY": "MdcNB7vhtgW6ZkFDFkwcfo",
+    "VITE_FRONTEND_FORGE_API_URL": "https://forge.manus.ai",
+    "VITE_OAUTH_PORTAL_URL": "https://manus.im",
+    "WHAPI_GROUP_ID": "120363406264492414@g.us",
+    "WHAPI_TOKEN": "YiG1aVDSQJ2lYOkuIYEliKUx3SpEAulT"
+  },
+  "template_id": "web-db-user",
+  "test_command": "pnpm test"
+}

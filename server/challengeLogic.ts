@@ -56,11 +56,51 @@ export function calculateCheckpointAward(dayNumber: number, complete: boolean): 
   return complete ? calculateCheckpointBonus(dayNumber) : 0;
 }
 
-export function calculateDailyPoints(dayNumber: number, complete: boolean, options: { completedRules?: number; submittedAt?: Date; ghostLifeUsed?: boolean; currentStreak?: number } = {}): number {
+// Per-rule point values matching the UI labels
+export const SERVER_RULE_POINTS: Record<string, number> = {
+  noAlcohol: 8,
+  cleanEating: 8,
+  exerciseDone: 12,
+  reflectionDone: 8,
+  readTeachDone: 8,
+  trackedEverything: 6,
+};
+
+export function calculateDailyPoints(
+  dayNumber: number,
+  complete: boolean,
+  options: {
+    completedRules?: number;
+    submittedAt?: Date;
+    ghostLifeUsed?: boolean;
+    currentStreak?: number;
+    ruleState?: {
+      noAlcohol?: boolean;
+      cleanEating?: boolean;
+      exerciseDone?: boolean;
+      reflectionDone?: boolean;
+      readTeachDone?: boolean;
+      trackedEverything?: boolean;
+    };
+  } = {}
+): number {
   if (!complete) return 0;
-  const completedRules = Math.max(0, Math.min(DAILY_RULE_COUNT, options.completedRules ?? DAILY_PASS_THRESHOLD));
-  const baseCompletionPoints = completedRules >= DAILY_RULE_COUNT ? 10 : 8;
-  return baseCompletionPoints + calculateCheckpointBonus(dayNumber);
+  let basePoints = 0;
+  if (options.ruleState) {
+    // Use per-rule values when rule state is available
+    if (options.ruleState.noAlcohol) basePoints += SERVER_RULE_POINTS.noAlcohol;
+    if (options.ruleState.cleanEating) basePoints += SERVER_RULE_POINTS.cleanEating;
+    if (options.ruleState.exerciseDone) basePoints += SERVER_RULE_POINTS.exerciseDone;
+    if (options.ruleState.reflectionDone) basePoints += SERVER_RULE_POINTS.reflectionDone;
+    if (options.ruleState.readTeachDone) basePoints += SERVER_RULE_POINTS.readTeachDone;
+    if (options.ruleState.trackedEverything) basePoints += SERVER_RULE_POINTS.trackedEverything;
+  } else {
+    // Fallback: use completedRules count with average points
+    const completedRules = Math.max(0, Math.min(DAILY_RULE_COUNT, options.completedRules ?? DAILY_PASS_THRESHOLD));
+    const orderedKeys = ["noAlcohol", "cleanEating", "exerciseDone", "reflectionDone", "readTeachDone", "trackedEverything"];
+    for (let i = 0; i < completedRules; i++) basePoints += SERVER_RULE_POINTS[orderedKeys[i]] ?? 8;
+  }
+  return basePoints + calculateCheckpointBonus(dayNumber);
 }
 
 export function applyLifeLoss(currentLives: number): number {

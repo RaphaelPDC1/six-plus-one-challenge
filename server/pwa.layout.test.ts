@@ -47,7 +47,7 @@ describe("PWA and mobile layout refinements", () => {
     expect(source).toContain('data-mobile-save-progress-above-nav="true"');
     expect(source).toContain('data-mobile-save-progress-mini-to-section="true"');
     expect(source).toContain('data-save-progress-docked={saveProgressDocked ? "true" : "false"}');
-    expect(source).toContain('saveProgressDocked ? "static translate-y-0" : "fixed inset-x-4 bottom-[calc(5.85rem+env(safe-area-inset-bottom))]"');
+    expect(source).toContain('saveProgressDocked ? "static translate-y-0" : "fixed inset-x-4 bottom-[calc(5.85rem+env(safe-area-inset-bottom))]"'); // inset-x-4 keeps the dock within safe viewport margins
     expect(source).toContain("z-[70]");
     expect(source).toContain("saveProgressScale");
     expect(source).toContain("data-save-progress-scale");

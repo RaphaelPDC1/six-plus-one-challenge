@@ -38,9 +38,9 @@ export const CHALLENGE_TIME_ZONE = "Europe/London";
 export const DEFAULT_MONZO_PAYMENT_LINK = "https://monzo.me/6plus1challenge/25";
 
 const REQUESTED_REWARD_CATALOGUE = [
-  { name: "Puresport Mystery Item", description: "A founder-approved Puresport mystery reward for reaching the first redemption tier.", pointsCost: 150, category: "Puresport" },
-  { name: "6plus1 T-Shirt", description: "A 6plus1 challenge T-shirt unlocked through consistent completed days.", pointsCost: 300, category: "6plus1" },
-  { name: "Group Meal Unlocked", description: "A group meal reward unlocked for the highest consistency tier.", pointsCost: 500, category: "6plus1" },
+  { name: "Puresport Mystery Item", description: "A founder-approved Puresport mystery reward for reaching the first redemption tier.", pointsCost: 500, category: "Puresport" },
+  { name: "6plus1 T-Shirt", description: "A 6plus1 challenge T-shirt unlocked through consistent completed days.", pointsCost: 900, category: "6plus1" },
+  { name: "Group Meal Unlocked", description: "A group meal reward unlocked for the highest consistency tier.", pointsCost: 1500, category: "6plus1" },
 ] as const;
 
 export async function getDb() {
@@ -568,11 +568,19 @@ export function resolveDailyCompletionAward(existing: Pick<DailyLog, "dayComplet
   completedRules?: number;
   ghostLifeUsed?: boolean;
   currentStreak?: number;
+  ruleState?: {
+    noAlcohol?: boolean;
+    cleanEating?: boolean;
+    exerciseDone?: boolean;
+    reflectionDone?: boolean;
+    readTeachDone?: boolean;
+    trackedEverything?: boolean;
+  };
 }) {
   const alreadyComplete = Boolean(existing?.dayComplete);
   const dayComplete = alreadyComplete || input.complete;
   const newlyComplete = input.complete && !alreadyComplete;
-  const pointsAwarded = alreadyComplete ? (existing?.pointsAwarded ?? 0) : input.complete ? calculateDailyPoints(input.dayNumber, true, { completedRules: input.completedRules, submittedAt: input.submittedAt, ghostLifeUsed: input.ghostLifeUsed, currentStreak: input.currentStreak }) : 0;
+  const pointsAwarded = alreadyComplete ? (existing?.pointsAwarded ?? 0) : input.complete ? calculateDailyPoints(input.dayNumber, true, { completedRules: input.completedRules, submittedAt: input.submittedAt, ghostLifeUsed: input.ghostLifeUsed, currentStreak: input.currentStreak, ruleState: input.ruleState }) : 0;
   const submittedAt = alreadyComplete ? (existing?.submittedAt ?? input.submittedAt) : input.deadlinePassed || input.complete ? input.submittedAt : null;
 
   return {
@@ -661,7 +669,7 @@ export async function submitDailyLog(participantId: number, input: SubmitDailyLo
   const participantRows = await db.select().from(participants).where(eq(participants.id, participantId)).limit(1);
   const currentParticipant = participantRows[0];
   const completedRules = [protectedInput.noAlcohol, cleanEatingDone, exerciseDone, reflectionDone, readTeachDone, protectedInput.trackedEverything].filter(Boolean).length;
-  const awardState = resolveDailyCompletionAward(existing, { complete, dayNumber: protectedInput.dayNumber, submittedAt, deadlinePassed, completedRules, ghostLifeUsed: Boolean(currentParticipant?.ghostLifeUsed), currentStreak: currentParticipant?.currentStreak ?? 0 });
+  const awardState = resolveDailyCompletionAward(existing, { complete, dayNumber: protectedInput.dayNumber, submittedAt, deadlinePassed, completedRules, ghostLifeUsed: Boolean(currentParticipant?.ghostLifeUsed), currentStreak: currentParticipant?.currentStreak ?? 0, ruleState: { noAlcohol: protectedInput.noAlcohol, cleanEating: cleanEatingDone, exerciseDone, reflectionDone, readTeachDone, trackedEverything: protectedInput.trackedEverything } });
   const values = {
     participantId,
     dayNumber: protectedInput.dayNumber,
