@@ -1300,3 +1300,11 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Fix untick-and-save: if day is already locked (dayComplete=true), skip merge protection and trust incoming input directly
 - [x] Improve Overview boost section — full pool view with always-active (4) and rotating (13) sections, active/inactive states, all-time win counts
 - [x] Import ALWAYS_ACTIVE_BOOSTS and ROTATING_BOOSTS from @shared/boostSystem for client-side rendering
+
+## v8.4 — Reward Threshold Increase
+
+- [x] Raise Puresport Mystery Item threshold from 500 → 1,000 pts (code + DB)
+- [x] Raise 6plus1 T-Shirt threshold from 900 → 1,500 pts (code + DB)
+- [x] Raise Group Meal threshold from 1,500 → 2,500 pts (code + DB)
+- [x] Update REWARD_POINT_THRESHOLDS in notificationReminderRules.ts to match
+- [x] All 180 tests pass, TypeScript clean

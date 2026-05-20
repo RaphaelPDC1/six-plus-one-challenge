@@ -38,9 +38,9 @@ export const CHALLENGE_TIME_ZONE = "Europe/London";
 export const DEFAULT_MONZO_PAYMENT_LINK = "https://monzo.me/6plus1challenge/25";
 
 const REQUESTED_REWARD_CATALOGUE = [
-  { name: "Puresport Mystery Item", description: "A founder-approved Puresport mystery reward for reaching the first redemption tier.", pointsCost: 500, category: "Puresport" },
-  { name: "6plus1 T-Shirt", description: "A 6plus1 challenge T-shirt unlocked through consistent completed days.", pointsCost: 900, category: "6plus1" },
-  { name: "Group Meal Unlocked", description: "A group meal reward unlocked for the highest consistency tier.", pointsCost: 1500, category: "6plus1" },
+  { name: "Puresport Mystery Item", description: "A founder-approved Puresport mystery reward for reaching the first redemption tier.", pointsCost: 1000, category: "Puresport" },
+  { name: "6plus1 T-Shirt", description: "A 6plus1 challenge T-shirt unlocked through consistent completed days.", pointsCost: 1500, category: "6plus1" },
+  { name: "Group Meal Unlocked", description: "A group meal reward unlocked for the highest consistency tier.", pointsCost: 2500, category: "6plus1" },
 ] as const;
 
 export async function getDb() {
