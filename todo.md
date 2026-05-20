@@ -1286,3 +1286,17 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Add BugReporterFloat component and wire into App.tsx.
 - [x] Update all test files to match new scoring values.
 - [x] Fix all 178 tests passing (was 177/178 failing — added "Banked today" text to compare list rows).
+
+## v8.3 — Same-Day Boost Evaluation on Lock-In
+
+- [x] Wire calculateAndAwardBoostsForDay(currentDay) into submitDailyLog so same-day boosts fire immediately on lock-in
+- [x] Add same-day boost wins to the submitDailyLog return payload so the UI can show newly earned boosts
+- [x] Add regression tests for same-day boost evaluation on lock-in
+- [x] Validate all 180 tests pass and save checkpoint
+
+## v8.3 — UI Fixes: Save Button Overlap, Untick Override, Overview Boosts
+
+- [x] Fix Save Progress sticky button overlapping Ghost Life card — add mb-[calc(5.5rem+env(safe-area-inset-bottom))] to Ghost Life card so button never covers it
+- [x] Fix untick-and-save: if day is already locked (dayComplete=true), skip merge protection and trust incoming input directly
+- [x] Improve Overview boost section — full pool view with always-active (4) and rotating (13) sections, active/inactive states, all-time win counts
+- [x] Import ALWAYS_ACTIVE_BOOSTS and ROTATING_BOOSTS from @shared/boostSystem for client-side rendering

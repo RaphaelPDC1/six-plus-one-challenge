@@ -621,6 +621,12 @@ function resolveProofInputValue(inputValue: string | undefined | null, existingV
 
 export function mergeDailyLogInputWithoutWipingExistingWork(existing: DailyLog | undefined, input: SubmitDailyLogInput): SubmitDailyLogInput {
   if (!existing) return input;
+  // If the day is already locked (complete), the user can still edit and re-save to override.
+  // For an already-complete day, we trust the incoming input directly (no merge protection needed
+  // since the day is already banked and the user is intentionally making a correction).
+  const alreadyLocked = Boolean(existing.dayComplete);
+  if (alreadyLocked) return input;
+
   const existingExerciseComplete = Boolean(existing.exerciseDone) || ((existing.exerciseDuration ?? 0) >= 30 && String(existing.exerciseType ?? "").trim().length > 0);
   const inputExerciseComplete = input.exerciseDuration >= 30 && input.exerciseType.trim().length > 0;
 
@@ -720,7 +726,28 @@ export async function submitDailyLog(participantId: number, input: SubmitDailyLo
 
   const updatedParticipant = (await db.select().from(participants).where(eq(participants.id, participantId)).limit(1))[0] ?? currentParticipant;
 
-  return { complete: awardState.dayComplete, pointsAwarded: awardState.pointsAwarded, missedRules, deadlinePassed, draftSaved: awardState.draftSaved, log: await getTodayLog(participantId, protectedInput.dayNumber), participant: updatedParticipant };
+  // ── Same-day boost evaluation ─────────────────────────────────────────────────
+  // Run immediately on lock-in so boosts like CLEAN SWEEP, MORNING PROOF,
+  // PROOF BEAST, TEACHING MOMENT, etc. appear in the same snapshot response.
+  // Only runs when the day is fully locked in (not a draft save).
+  let newBoostWins: Array<{ boostId: string; boostName: string; pointsAwarded: number; wardenNote: string | null }> = [];
+  if (awardState.dayComplete) {
+    try {
+      const boostResult = await calculateAndAwardBoostsForDay(protectedInput.dayNumber, BOOST_CHALLENGE_ID);
+      newBoostWins = boostResult.awards
+        .filter(r => r.created && String((r.boostWin as any)?.userId) === String(participantId))
+        .map(r => ({
+          boostId: String((r.boostWin as any)?.boostId ?? ""),
+          boostName: String((r.boostWin as any)?.boostName ?? ""),
+          pointsAwarded: Number((r.boostWin as any)?.pointsAwarded ?? 0),
+          wardenNote: (r.boostWin as any)?.wardenNote ?? null,
+        }));
+    } catch (boostError) {
+      console.warn("[Boosts] Same-day evaluation skipped after lock-in", boostError);
+    }
+  }
+
+  return { complete: awardState.dayComplete, pointsAwarded: awardState.pointsAwarded, missedRules, deadlinePassed, draftSaved: awardState.draftSaved, log: await getTodayLog(participantId, protectedInput.dayNumber), participant: updatedParticipant, newBoostWins };
 }
 
 export async function recordNayBackdatedTechnicalProof(participantId: number, input: { dayNumber?: number; proofMedia: string; note?: string }) {

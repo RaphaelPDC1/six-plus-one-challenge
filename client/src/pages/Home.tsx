@@ -45,6 +45,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { ALWAYS_ACTIVE_BOOSTS, ROTATING_BOOSTS, getActiveBoostsForDay } from "@shared/boostSystem";
 
 type Snapshot = any;
 
@@ -1457,6 +1458,14 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
       if (data?.log) {
         utils.challenge.snapshot.setData(undefined, previous => patchDailyLogIntoSnapshot(previous, data.log, data?.participant));
       }
+      // Show a toast for each new boost win earned on lock-in
+      if (data?.complete && Array.isArray(data?.newBoostWins) && data.newBoostWins.length > 0) {
+        window.setTimeout(() => {
+          for (const win of data.newBoostWins) {
+            toast.success(`${win.boostName} +${win.pointsAwarded}pts`, { description: win.wardenNote ?? undefined, duration: 4000 });
+          }
+        }, 600);
+      }
       void utils.challenge.snapshot.invalidate();
       refetch();
     },
@@ -1642,7 +1651,7 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
 
         {/* Ghost Life card — visible on mobile below rules, only when available and day not complete */}
         {!ghostLifeLocked && !todayAlreadyComplete && (
-          <div className="mt-4 border border-[#9B59B6]/50 bg-[#0E0B14] p-4" data-testid="ghost-life-card">
+          <div className="mt-4 mb-[calc(5.5rem+env(safe-area-inset-bottom))] border border-[#9B59B6]/50 bg-[#0E0B14] p-4" data-testid="ghost-life-card">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <span className="inline-block border border-[#9B59B6]/60 bg-[#1B1024] px-2 py-1 text-[9px] font-black uppercase tracking-[0.16em] text-[#D8B4FE]">Ghost Life · Available</span>
@@ -2096,13 +2105,13 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
       </section>
 
       </div>
-      {/* Bonuses accordion */}
+      {/* Bonuses section — full pool view */}
       <section className="border border-[#2ECC71]/30 bg-[#07150D]" data-testid="overview-active-boosts">
         <button type="button" onClick={() => setBonusAccordionOpen(v => !v)} className="motion-press flex w-full items-center justify-between gap-3 p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2ECC71]/60">
           <div className="min-w-0">
-            <MicroLabel tone="green">Today's bonus targets</MicroLabel>
+            <MicroLabel tone="green">Bonus pool · {ALWAYS_ACTIVE_BOOSTS.length} always-on + 3 rotating</MicroLabel>
             <h3 className="mt-1.5 text-xl font-black uppercase leading-none tracking-[-0.06em] text-white">
-              {unclaimedTodayBoosts.length > 0 ? `${unclaimedTodayBoosts.length} open · tap to see how to win` : "All claimed today"}
+              {unclaimedTodayBoosts.length > 0 ? `${unclaimedTodayBoosts.length} open today · tap to see all` : "All today's slots claimed"}
             </h3>
           </div>
           <div className="flex shrink-0 items-center gap-2">
@@ -2112,36 +2121,85 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
         </button>
         <div className={classNames("grid transition-all duration-500 ease-out", bonusAccordionOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0")}>
           <div className="overflow-hidden">
-            <div className="border-t border-[#2ECC71]/20 p-4 pt-3">
-              <div className="grid gap-2 sm:grid-cols-3">
-                {activeBoosts.map((boost: any, index: number) => {
-                  const win = todayBoostWins.find((item: any) => item.boostId === boost.id);
-                  const owner = win ? participants.find((p: any) => String(p.id) === String(win.userId)) : null;
-                  const copy = getPlainBoostCopy(boost);
-                  const expanded = expandedBoostId === String(boost.id ?? index);
-                  return (
-                    <button key={boost.id ?? index} type="button" onClick={() => setExpandedBoostId(expanded ? null : String(boost.id ?? index))} className={classNames("motion-card motion-press min-w-0 border p-3 text-left transition hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A96E]/60", getBoostToneClass(boost.tone))} aria-expanded={expanded}>
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-lg font-black leading-none">{boost.icon}</span>
-                        <span className="border border-current/40 bg-black/40 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.14em]">{win ? "Claimed" : `+${boost.points ?? 5}`}</span>
-                      </div>
-                      <p className="mt-2 text-sm font-black uppercase tracking-[-0.03em] text-white">{boost.name}</p>
-                      <p className="mt-1 text-[10px] font-black uppercase leading-4 tracking-[0.12em]">{win ? `${owner?.displayName ?? "Winner"}` : copy.plain}</p>
-                      <div className={classNames("grid transition-all duration-500 ease-out", expanded ? "mt-3 grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0")}>
-                        <div className="overflow-hidden">
-                          <p className="border border-current/25 bg-black/35 p-3 text-[10px] font-black uppercase leading-5 tracking-[0.12em] text-[#E5E5E5]">{win?.wardenNote ? `Why it was won: ${win.wardenNote}` : copy.how}</p>
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-              <div className="mt-3 flex flex-wrap items-center gap-2">
+            <div className="border-t border-[#2ECC71]/20 p-4 pt-3 space-y-4">
+              {/* Stats row */}
+              <div className="flex flex-wrap items-center gap-2">
                 <InsightPill label="Your bonuses" value={`${ownBoostWins.length} claimed`} tone="green" />
                 <InsightPill label="Your bonus pts" value={`+${ownTotalBoostPoints} pts`} tone="gold" />
                 {topBoostEarner && <InsightPill label="Bonus leader" value={`${topBoostEarner.participant.displayName} +${topBoostEarner.totalBoostPoints}`} tone="gold" />}
               </div>
-              {unclaimedTodayBoosts.length > 0 && <p className="mt-2 border border-[#C8A96E]/45 bg-[#16130B] px-3 py-2 text-[9px] font-black uppercase tracking-[0.14em] text-[#C8A96E]" data-testid="unclaimed-boost-alert">Still open: {unclaimedTodayBoosts.map((boost: any) => boost.name).join(" · ")}</p>}
+
+              {/* Always-active boosts */}
+              <div>
+                <p className="mb-2 text-[9px] font-black uppercase tracking-[0.18em] text-[#2ECC71]/70">Always active · every day</p>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {ALWAYS_ACTIVE_BOOSTS.map((boost) => {
+                    const win = todayBoostWins.find((item: any) => item.boostId === boost.id);
+                    const allTimeWins = boostWins.filter((item: any) => item.boostId === boost.id);
+                    const owner = win ? participants.find((p: any) => String(p.id) === String(win.userId)) : null;
+                    const copy = getPlainBoostCopy(boost);
+                    const expanded = expandedBoostId === `always-${boost.id}`;
+                    return (
+                      <button key={boost.id} type="button" onClick={() => setExpandedBoostId(expanded ? null : `always-${boost.id}`)} className={classNames("motion-card motion-press min-w-0 border p-3 text-left transition hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A96E]/60", getBoostToneClass(boost.tone))} aria-expanded={expanded}>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-base font-black leading-none">{boost.icon}</span>
+                          <div className="flex items-center gap-1.5">
+                            {win && <span className="border border-[#2ECC71]/60 bg-[#2ECC71]/10 px-1.5 py-0.5 text-[7px] font-black uppercase tracking-[0.12em] text-[#2ECC71]">Won today</span>}
+                            <span className="border border-current/40 bg-black/40 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.14em]">+{boost.pointsAwarded}</span>
+                          </div>
+                        </div>
+                        <p className="mt-1.5 text-[11px] font-black uppercase tracking-[-0.02em] text-white">{boost.name}</p>
+                        <p className="mt-0.5 text-[9px] font-black uppercase leading-4 tracking-[0.1em] opacity-70">{win ? `${owner?.displayName ?? "Winner"} claimed it` : copy.plain}</p>
+                        {allTimeWins.length > 0 && !win && <p className="mt-0.5 text-[8px] font-black uppercase tracking-[0.1em] text-[#2ECC71]/60">{allTimeWins.length}× won in challenge</p>}
+                        <div className={classNames("grid transition-all duration-500 ease-out", expanded ? "mt-2 grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0")}>
+                          <div className="overflow-hidden">
+                            <p className="border border-current/25 bg-black/35 p-2 text-[9px] font-black uppercase leading-5 tracking-[0.1em] text-[#E5E5E5]">{win?.wardenNote ? `Won: ${win.wardenNote}` : copy.how}</p>
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Rotating boosts — today's 3 active + inactive pool */}
+              <div>
+                <p className="mb-2 text-[9px] font-black uppercase tracking-[0.18em] text-[#C8A96E]/70">Rotating pool · 3 drawn per day from {ROTATING_BOOSTS.length} total</p>
+                <div className="grid gap-2 sm:grid-cols-3">
+                  {ROTATING_BOOSTS.map((boost) => {
+                    const isActiveToday = activeBoosts.some((ab: any) => ab.id === boost.id);
+                    const win = isActiveToday ? todayBoostWins.find((item: any) => item.boostId === boost.id) : null;
+                    const allTimeWins = boostWins.filter((item: any) => item.boostId === boost.id);
+                    const owner = win ? participants.find((p: any) => String(p.id) === String(win.userId)) : null;
+                    const copy = getPlainBoostCopy(boost);
+                    const expanded = expandedBoostId === `rotating-${boost.id}`;
+                    return (
+                      <button key={boost.id} type="button" onClick={() => setExpandedBoostId(expanded ? null : `rotating-${boost.id}`)} className={classNames("motion-card motion-press min-w-0 border p-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A96E]/60", isActiveToday ? classNames("hover:-translate-y-0.5", getBoostToneClass(boost.tone)) : "border-[#1E1E1E] bg-[#0A0A0A] opacity-50")} aria-expanded={expanded}>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className={classNames("text-base font-black leading-none", !isActiveToday && "grayscale")}>{boost.icon}</span>
+                          <div className="flex items-center gap-1.5">
+                            {isActiveToday && <span className="border border-[#2ECC71]/50 bg-[#2ECC71]/10 px-1.5 py-0.5 text-[7px] font-black uppercase tracking-[0.12em] text-[#2ECC71]">Active</span>}
+                            {win && <span className="border border-[#C8A96E]/60 bg-[#C8A96E]/10 px-1.5 py-0.5 text-[7px] font-black uppercase tracking-[0.12em] text-[#C8A96E]">Won</span>}
+                            <span className="border border-current/40 bg-black/40 px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.14em]">+{boost.pointsAwarded}</span>
+                          </div>
+                        </div>
+                        <p className="mt-1.5 text-[11px] font-black uppercase tracking-[-0.02em] text-white">{boost.name}</p>
+                        <p className="mt-0.5 text-[9px] font-black uppercase leading-4 tracking-[0.1em] opacity-70">
+                          {win ? `${owner?.displayName ?? "Winner"} claimed it` : isActiveToday ? copy.plain : "Not in today's rotation"}
+                        </p>
+                        {allTimeWins.length > 0 && <p className="mt-0.5 text-[8px] font-black uppercase tracking-[0.1em] text-[#C8A96E]/50">{allTimeWins.length}× won in challenge</p>}
+                        <div className={classNames("grid transition-all duration-500 ease-out", expanded ? "mt-2 grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0")}>
+                          <div className="overflow-hidden">
+                            <p className="border border-current/25 bg-black/35 p-2 text-[9px] font-black uppercase leading-5 tracking-[0.1em] text-[#E5E5E5]">{win?.wardenNote ? `Won: ${win.wardenNote}` : copy.how}</p>
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {unclaimedTodayBoosts.length > 0 && <p className="border border-[#C8A96E]/45 bg-[#16130B] px-3 py-2 text-[9px] font-black uppercase tracking-[0.14em] text-[#C8A96E]" data-testid="unclaimed-boost-alert">Still open today: {unclaimedTodayBoosts.map((boost: any) => boost.name).join(" · ")}</p>}
             </div>
           </div>
         </div>

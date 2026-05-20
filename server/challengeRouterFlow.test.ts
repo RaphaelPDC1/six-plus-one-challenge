@@ -232,4 +232,71 @@ describe("challenge router flow", () => {
     expect(dbMocks.approveSignupRequest).toHaveBeenCalledWith(44, 42);
     expect(dbMocks.rejectSignupRequest).toHaveBeenCalledWith(45, 42);
   });
+
+  it("passes newBoostWins through from submitDailyLog when a day is locked in", async () => {
+    dbMocks.getOrCreateParticipant.mockResolvedValue({ id: 7, displayName: "Marcus" });
+    const boostWins = [
+      { boostId: "clean_sweep", boostName: "CLEAN SWEEP", pointsAwarded: 6, wardenNote: "CLEAN SWEEP: completed all 6 rules today." },
+    ];
+    dbMocks.submitDailyLog.mockResolvedValue({
+      complete: true,
+      pointsAwarded: 50,
+      missedRules: [],
+      draftSaved: false,
+      log: { id: 101, dayComplete: true },
+      participant: { id: 7, totalPoints: 56 },
+      newBoostWins: boostWins,
+    });
+
+    const caller = appRouter.createCaller(createParticipantContext());
+    const result = await caller.challenge.submitMyDay({
+      dayNumber: 1,
+      noAlcohol: true,
+      cleanEating: true,
+      cleanEatingNote: "Clean day.",
+      exerciseDuration: 35,
+      exerciseType: "Run",
+      exerciseProofUrl: "https://example.com/proof.jpg",
+      reflectionText: "Stayed disciplined.",
+      reflectionShared: false,
+      readTeachText: "A useful insight on discipline and compounding behaviour.",
+      trackedEverything: true,
+    });
+
+    expect(result.complete).toBe(true);
+    expect(result.newBoostWins).toEqual(boostWins);
+    expect(result.newBoostWins[0].boostId).toBe("clean_sweep");
+    expect(result.newBoostWins[0].pointsAwarded).toBe(6);
+  });
+
+  it("returns an empty newBoostWins array when a log is saved as a draft (not locked in)", async () => {
+    dbMocks.getOrCreateParticipant.mockResolvedValue({ id: 7, displayName: "Marcus" });
+    dbMocks.submitDailyLog.mockResolvedValue({
+      complete: false,
+      pointsAwarded: 0,
+      missedRules: ["Track Everything"],
+      draftSaved: true,
+      log: { id: 102 },
+      participant: { id: 7, totalPoints: 0 },
+      newBoostWins: [],
+    });
+
+    const caller = appRouter.createCaller(createParticipantContext());
+    const result = await caller.challenge.submitMyDay({
+      dayNumber: 1,
+      noAlcohol: true,
+      cleanEating: true,
+      cleanEatingNote: "Clean day.",
+      exerciseDuration: 35,
+      exerciseType: "Run",
+      exerciseProofUrl: "",
+      reflectionText: "Stayed disciplined.",
+      reflectionShared: false,
+      readTeachText: "A useful insight.",
+      trackedEverything: false,
+    });
+
+    expect(result.complete).toBe(false);
+    expect(result.newBoostWins).toEqual([]);
+  });
 });
