@@ -3530,6 +3530,14 @@ function AdminPanel({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => 
     },
     onError: error => toast(error.message || "Could not publish the update."),
   });
+  const generateInsight = trpc.admin.generateCommunityInsight.useMutation({
+    onSuccess: (data) => {
+      haptics.success();
+      setReleaseNoteForm(current => ({ ...current, body: JSON.stringify(data, null, 2), category: "community_care" }));
+      toast("AI insight generated — review and publish.");
+    },
+    onError: error => toast(error.message || "Could not generate insight."),
+  });
   return (
     <div className="grid gap-5 xl:grid-cols-2">
       <section className="border border-[#2A2A2A] bg-[#101010] p-5 xl:col-span-2" data-testid="release-note-admin-panel">
@@ -3543,7 +3551,10 @@ function AdminPanel({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => 
           <Field label="Category"><select value={releaseNoteForm.category} onChange={event => setReleaseNoteForm(current => ({ ...current, category: event.target.value as any }))} className="min-h-12 w-full border border-[#2A2A2A] bg-black px-3 py-3 text-sm font-bold text-white outline-none focus:border-[#C8A96E]"><option value="edit">Edit</option><option value="community_care">Community care</option><option value="rules">Rules</option><option value="rewards">Rewards</option><option value="technical">Technical</option></select></Field>
           <div className="md:col-span-2"><Field label="Update body"><textarea value={releaseNoteForm.body} onChange={event => setReleaseNoteForm(current => ({ ...current, body: event.target.value }))} placeholder="Explain the update in clear, kind, in-game language." className="min-h-28 w-full border border-[#2A2A2A] bg-black px-3 py-3 text-sm font-bold leading-6 text-white outline-none focus:border-[#C8A96E]" /></Field></div>
         </div>
-        <SharpButton className="mt-4 min-h-11 px-5 py-3" disabled={createReleaseNote.isPending || !releaseNoteForm.title.trim() || !releaseNoteForm.versionLabel.trim() || !releaseNoteForm.summary.trim() || !releaseNoteForm.body.trim()} onClick={() => createReleaseNote.mutate({ ...releaseNoteForm, active: true })}>{createReleaseNote.isPending ? "Publishing..." : "Publish update pop-up"}</SharpButton>
+        <div className="mt-4 flex flex-wrap gap-3">
+          <SharpButton className="min-h-11 px-5 py-3" disabled={generateInsight.isPending} onClick={() => generateInsight.mutate()} style={{ background: "#1A0A00", border: "1px solid #C8A96E", color: "#C8A96E" }}>{generateInsight.isPending ? "Generating AI insight..." : "✦ Generate AI community insight"}</SharpButton>
+          <SharpButton className="min-h-11 px-5 py-3" disabled={createReleaseNote.isPending || !releaseNoteForm.title.trim() || !releaseNoteForm.versionLabel.trim() || !releaseNoteForm.summary.trim() || !releaseNoteForm.body.trim()} onClick={() => createReleaseNote.mutate({ ...releaseNoteForm, active: true })}>{createReleaseNote.isPending ? "Publishing..." : "Publish update pop-up"}</SharpButton>
+        </div>
       </section>
       <section className="border border-[#2A2A2A] bg-[#101010] p-5">
         <MicroLabel tone="red">Monzo obligations</MicroLabel>
@@ -3697,14 +3708,58 @@ function AdminAuditLogPanel() {
 function CommunityCareReleaseNotePopup({ note, isPending, onAcknowledge }: { note: any; isPending: boolean; onAcknowledge: (id: number) => void }) {
   if (!note) return null;
   const categoryLabel = note.category === "community_care" ? "Community care" : note.category === "rules" ? "Rules" : note.category === "rewards" ? "Rewards" : note.category === "technical" ? "Technical" : "Edit";
+  // Parse 3-layer insight from body if it's JSON, otherwise fall back to plain text
+  let layers: { personalLayer?: string; groupLayer?: string; gameLayer?: string; redHighlights?: string[] } | null = null;
+  try {
+    const parsed = JSON.parse(note.body);
+    if (parsed && typeof parsed === "object" && (parsed.personalLayer || parsed.groupLayer || parsed.gameLayer)) {
+      layers = parsed;
+    }
+  } catch { /* plain text body */ }
   const popup = (
     <div className="fixed inset-0 z-[95] flex items-end justify-center bg-black/55 p-3 sm:items-center sm:p-4" role="dialog" aria-modal="true" aria-label={`${categoryLabel} update`} data-testid="community-care-release-note-popup">
-      <div className="motion-sheet-panel max-h-[58vh] w-full max-w-sm overflow-y-auto border border-[#2ECC71] bg-[#0D0D0D] p-3 shadow-[0_18px_48px_rgba(0,0,0,0.72)] sm:p-4">
+      <div className="motion-sheet-panel max-h-[82vh] w-full max-w-sm overflow-y-auto border border-[#2ECC71] bg-[#0D0D0D] p-3 shadow-[0_18px_48px_rgba(0,0,0,0.72)] sm:p-4">
         <MicroLabel tone="green">{categoryLabel} · {note.versionLabel}</MicroLabel>
         <h2 className="mt-2 text-xl font-black uppercase leading-none tracking-[-0.06em] text-white sm:text-2xl">{note.title}</h2>
         <p className="mt-2 border-l-4 border-[#2ECC71] bg-[#07150D] p-2.5 text-[11px] font-black leading-4 text-[#CFF6DA] sm:text-xs sm:leading-5">{note.summary}</p>
-        <p className="mt-2 whitespace-pre-wrap text-[11px] font-bold leading-4 text-[#D8D8D8] sm:text-xs sm:leading-5">{note.body}</p>
-        <button type="button" disabled={isPending} onClick={() => onAcknowledge(Number(note.id))} className="motion-press mt-3 min-h-10 w-full bg-[#2ECC71] px-4 py-2.5 text-[9px] font-black uppercase tracking-[0.16em] text-black transition hover:bg-[#79F0A0] disabled:opacity-50">{isPending ? "Saving..." : "Got it"}</button>
+        {layers ? (
+          <div className="mt-3 space-y-2">
+            {layers.personalLayer && (
+              <div className="border border-[#1A1A1A] bg-[#0A0A0A] p-2.5">
+                <p className="mb-1 text-[8px] font-black uppercase tracking-[0.18em] text-[#C8A96E]">You</p>
+                <p className="text-[11px] font-bold leading-4 text-[#D8D8D8] sm:text-xs sm:leading-5">{layers.personalLayer}</p>
+              </div>
+            )}
+            {layers.groupLayer && (
+              <div className="border border-[#1A1A1A] bg-[#0A0A0A] p-2.5">
+                <p className="mb-1 text-[8px] font-black uppercase tracking-[0.18em] text-[#C8A96E]">The group</p>
+                <p className="text-[11px] font-bold leading-4 text-[#D8D8D8] sm:text-xs sm:leading-5">{layers.groupLayer}</p>
+              </div>
+            )}
+            {layers.gameLayer && (
+              <div className="border border-[#1A1A1A] bg-[#0A0A0A] p-2.5">
+                <p className="mb-1 text-[8px] font-black uppercase tracking-[0.18em] text-[#C8A96E]">The game</p>
+                <p className="text-[11px] font-bold leading-4 text-[#D8D8D8] sm:text-xs sm:leading-5">{layers.gameLayer}</p>
+              </div>
+            )}
+            {Array.isArray(layers.redHighlights) && layers.redHighlights.length > 0 && (
+              <div className="border border-[#E74C3C]/40 bg-[#150505] p-2.5">
+                <p className="mb-2 text-[8px] font-black uppercase tracking-[0.18em] text-[#E74C3C]">How to earn more</p>
+                <ul className="space-y-1.5">
+                  {layers.redHighlights.map((highlight, i) => (
+                    <li key={i} className="flex items-start gap-2">
+                      <span className="mt-0.5 shrink-0 text-[#E74C3C]">▸</span>
+                      <span className="text-[11px] font-black leading-4 text-[#FF6B6B] sm:text-xs sm:leading-5">{highlight}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        ) : (
+          <p className="mt-2 whitespace-pre-wrap text-[11px] font-bold leading-4 text-[#D8D8D8] sm:text-xs sm:leading-5">{note.body}</p>
+        )}
+        <button type="button" disabled={isPending} onClick={() => onAcknowledge(Number(note.id))} className="motion-press mt-3 min-h-10 w-full bg-[#2ECC71] px-4 py-2.5 text-[9px] font-black uppercase tracking-[0.16em] text-black transition hover:bg-[#79F0A0] disabled:opacity-50">{isPending ? "Saving..." : "Got it — let's go"}</button>
       </div>
     </div>
   );

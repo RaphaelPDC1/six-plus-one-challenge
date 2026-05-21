@@ -47,6 +47,7 @@ import {
 } from "./db";
 import { generateWardenCommentary } from "./warden";
 import { generateDeepThoughtsForSnapshot } from "./deepThought";
+import { generateReleaseNoteInsight } from "./releaseNoteGenerator";
 import { wardenRouter } from "./warden/wardenRouters";
 import { storagePut } from "./storage";
 import { notifyOwner } from "./_core/notification";
@@ -463,6 +464,32 @@ export const appRouter = router({
         active: z.boolean().default(true),
       }))
       .mutation(({ ctx, input }) => createCommunityCareReleaseNote(input, ctx.user.id)),
+    generateCommunityInsight: adminProcedure
+      .mutation(async ({ ctx }) => {
+        const snapshot = await getAppSnapshot(ctx.user.id, ctx.user.role, ctx.user.email);
+        const recentLogs = snapshot.logs
+          .filter((log: any) => log.dayComplete)
+          .slice(0, 21)
+          .map((log: any) => ({
+            dayNumber: log.dayNumber,
+            exerciseType: log.exerciseType ?? undefined,
+            exerciseDuration: log.exerciseDuration ?? undefined,
+            reflectionText: log.reflectionText ?? undefined,
+            readTeachText: log.readTeachText ?? undefined,
+            cleanEatingNote: log.cleanEatingNote ?? undefined,
+            pointsAwarded: log.pointsAwarded,
+          }));
+        const totalPts = snapshot.participants.reduce((sum: number, p: any) => sum + p.totalPoints, 0);
+        const avgPts = snapshot.participants.length > 0 ? Math.round(totalPts / snapshot.participants.length) : 0;
+        const avgStreak = snapshot.participants.length > 0
+          ? Math.round(snapshot.participants.reduce((sum: number, p: any) => sum + p.currentStreak, 0) / snapshot.participants.length)
+          : 0;
+        return generateReleaseNoteInsight(
+          ctx.user.name ?? ctx.user.email ?? "Challenger",
+          recentLogs,
+          { avgPointsPerDay: avgPts, avgStreakLength: avgStreak, totalParticipants: snapshot.participants.length },
+        );
+      }),
   }),
 
   whatsapp: router({

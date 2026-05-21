@@ -1318,3 +1318,12 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Remove rules container pb-[5.5rem] bottom padding (no longer needed)
 - [x] Update 3 tests to match new inline submit button markup
 - [x] All 180 tests pass, TypeScript clean
+
+## v8.6 — AI-Powered Release Notes with Proof Post Analysis
+
+- [x] Created releaseNoteGenerator.ts with generateReleaseNoteInsight LLM function (3-layer: personal/group/game + red highlights)
+- [x] Added generateCommunityInsight admin procedure to routers.ts (admin-only, calls LLM with snapshot data)
+- [x] Upgraded CommunityCareReleaseNotePopup to parse JSON body and render 3-layer format with red highlights section
+- [x] Added gold "Generate AI community insight" button to admin release note form (fills body textarea with JSON insight)
+- [x] Added releaseNoteGenerator mock and generateCommunityInsight test to challengeRouterFlow.test.ts
+- [x] All 181 tests pass, TypeScript clean

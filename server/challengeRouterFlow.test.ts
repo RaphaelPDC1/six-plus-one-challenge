@@ -31,6 +31,14 @@ vi.mock("./db", () => dbMocks);
 vi.mock("./warden", () => ({
   generateWardenCommentary: vi.fn(),
 }));
+vi.mock("./releaseNoteGenerator", () => ({
+  generateReleaseNoteInsight: vi.fn().mockResolvedValue({
+    personalLayer: "You are building real momentum.",
+    groupLayer: "The group is thriving together.",
+    gameLayer: "Complete all 6 rules to unlock rotating bonuses.",
+    redHighlights: ["All 6 rules = 50 pts + bonuses", "Streaks multiply your power"],
+  }),
+}));
 
 import { appRouter } from "./routers";
 
@@ -267,6 +275,25 @@ describe("challenge router flow", () => {
     expect(result.newBoostWins).toEqual(boostWins);
     expect(result.newBoostWins[0].boostId).toBe("clean_sweep");
     expect(result.newBoostWins[0].pointsAwarded).toBe(6);
+  });
+
+  it("allows only admins to generate AI community insight and blocks participants", async () => {
+    dbMocks.getAppSnapshot.mockResolvedValue({
+      logs: [],
+      participants: [{ totalPoints: 200, currentStreak: 3 }, { totalPoints: 300, currentStreak: 5 }],
+    });
+
+    const adminCaller = appRouter.createCaller(createAdminContext());
+    const result = await adminCaller.admin.generateCommunityInsight();
+    expect(result).toMatchObject({
+      personalLayer: expect.any(String),
+      groupLayer: expect.any(String),
+      gameLayer: expect.any(String),
+      redHighlights: expect.any(Array),
+    });
+
+    const participantCaller = appRouter.createCaller(createParticipantContext());
+    await expect((participantCaller.admin as any).generateCommunityInsight()).rejects.toThrow();
   });
 
   it("returns an empty newBoostWins array when a log is saved as a draft (not locked in)", async () => {
