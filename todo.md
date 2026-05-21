@@ -1336,3 +1336,14 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] visibleTabs now filters admin tab by adminMode so it only appears in desktop tab bar when in admin mode
 - [x] Bottom nav unaffected (admin tab was already excluded from mobileTabs)
 - [x] All 181 tests pass, TypeScript clean
+
+## v8.8 — Collapsed Folder Views + Warden Anti-Gaming Intelligence
+
+- [x] My Day folder header: "3/6 done · 14 pts · 4-day streak" or red life-risk override, collapses full rules on tap
+- [x] Overview folder header: "68% complete today · 12 Movers active · 4 at risk", collapses full group view
+- [x] Board folder header: "Top: Maya, Kwabs, Sen · You're #7", collapses full leaderboard
+- [x] Warden getPersonalInsight procedure: LLM analyses last 7 days of logs (timing, reflection patterns, streak anomalies), returns one dry observation per participant per day (cached 6h)
+- [x] Warden getCollectiveBoardMessage procedure: LLM analyses group-level patterns, returns one anonymous collective observation (cached 6h)
+- [x] WardenPresence updated to show personalInsight when available (both mobile and desktop sidebar)
+- [x] Board shows Warden collective note below content when available
+- [x] All 181 tests pass, TypeScript clean

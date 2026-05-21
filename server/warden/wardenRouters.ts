@@ -257,6 +257,98 @@ export const wardenRouter = router({
     }),
 
   /**
+   * Get a personal Warden anti-gaming insight for a specific participant.
+   * Analyses last 7 days of logs: submission timing, reflection text patterns, streak anomalies.
+   * Cached per participant per day (6h TTL). Returns one sharp observation.
+   */
+  getPersonalInsight: protectedProcedure
+    .input(z.object({ participantId: z.number() }))
+    .query(async ({ ctx, input }) => {
+      const cacheKey = `personal-insight-${input.participantId}-${new Date().toISOString().slice(0, 10)}`;
+      const cached = wardenMoodCache.get(cacheKey);
+      if (cached && Date.now() - cached.createdAt < WARDEN_MOOD_CACHE_TTL_MS) {
+        return { message: cached.mood.detail, source: "cache" as const };
+      }
+      try {
+        const { getDb } = await import("../db");
+        const db = await getDb();
+        if (!db) return { message: "No hiding place. Log the day.", source: "fallback" as const };
+        const { dailyLogs: logsTable } = await import("../../drizzle/schema");
+        const { eq, desc } = await import("drizzle-orm");
+        const logs = await db.select().from(logsTable).where(eq(logsTable.participantId, input.participantId)).orderBy(desc(logsTable.dayNumber)).limit(7);
+        if (logs.length < 2) return { message: "The record is thin. Keep logging.", source: "fallback" as const };
+        const timingData = logs.map(log => ({
+          day: log.dayNumber,
+          submittedAt: log.submittedAt ? new Date(log.submittedAt).toISOString() : null,
+          hour: log.submittedAt ? new Date(log.submittedAt).getHours() : null,
+          complete: log.dayComplete,
+          reflectionLength: String(log.reflectionText ?? "").trim().length,
+          readTeachLength: String(log.readTeachText ?? "").trim().length,
+          exerciseDuration: log.exerciseDuration,
+          exerciseType: String(log.exerciseType ?? "").trim().slice(0, 60),
+        }));
+        const lateNightCount = timingData.filter(d => d.hour !== null && (d.hour >= 23 || d.hour < 2)).length;
+        const shortReflections = timingData.filter(d => d.complete && d.reflectionLength < 20).length;
+        const repeatedExercise = timingData.length >= 3 && timingData.slice(0, 3).every(d => d.exerciseType && d.exerciseType === timingData[0].exerciseType);
+        const prompt = `You are the Warden of a 50-day discipline challenge. You have access to a participant's last ${logs.length} days of logs. Write ONE short, sharp observation about their patterns — not a compliment, not a punishment. Dry. Intelligent. Slightly intimidating. Never cheesy. Never motivational-speaker energy. Make them feel seen.\n\nData:\n${JSON.stringify(timingData, null, 2)}\n\nPatterns detected:\n- Late-night submissions (11pm-2am): ${lateNightCount} of ${logs.length} days\n- Short reflections when complete: ${shortReflections} of ${logs.length} days\n- Same exercise type 3 days in a row: ${repeatedExercise}\n\nWrite ONE sentence (max 180 chars). No quotes. No prefix. Just the observation.`;
+        const response = await invokeLLM({
+          messages: [
+            { role: "system", content: "You are the Warden. One sentence. Dry. Sharp. No fluff." },
+            { role: "user", content: prompt },
+          ],
+        });
+        const message = String(response?.choices?.[0]?.message?.content ?? "").trim().slice(0, 200) || "The pattern is clear. Keep logging.";
+        wardenMoodCache.set(cacheKey, { fingerprint: cacheKey, mood: { label: "insight", tone: "red", detail: message, confidence: 0.8, source: "ai" }, createdAt: Date.now() });
+        return { message, source: "ai" as const };
+      } catch (err) {
+        console.warn("[Warden] getPersonalInsight failed", err);
+        return { message: "No hiding place. Log the day.", source: "fallback" as const };
+      }
+    }),
+
+  /**
+   * Get a collective Warden board message about group-level patterns.
+   * Anonymous, never accuses individuals. One observation per day.
+   */
+  getCollectiveBoardMessage: publicProcedure
+    .query(async () => {
+      const cacheKey = `collective-board-${new Date().toISOString().slice(0, 10)}`;
+      const cached = wardenMoodCache.get(cacheKey);
+      if (cached && Date.now() - cached.createdAt < WARDEN_MOOD_CACHE_TTL_MS) {
+        return { message: cached.mood.detail, source: "cache" as const };
+      }
+      try {
+        const { getDb, getCurrentChallengeDay } = await import("../db");
+        const currentDay = getCurrentChallengeDay();
+        const db = await getDb();
+        if (!db) return { message: "Warden note: the system is watching consistency, not theatrics.", source: "fallback" as const };
+        const { dailyLogs: logsTable } = await import("../../drizzle/schema");
+        const { gte } = await import("drizzle-orm");
+        const recentLogs = await db.select().from(logsTable).where(gte(logsTable.dayNumber, Math.max(1, currentDay - 3))).limit(200);
+        const lateNightCount = recentLogs.filter(log => {
+          if (!log.submittedAt) return false;
+          const h = new Date(log.submittedAt).getHours();
+          return h >= 23 || h < 2;
+        }).length;
+        const totalComplete = recentLogs.filter(log => log.dayComplete).length;
+        const shortReflectionCount = recentLogs.filter(log => log.dayComplete && String(log.reflectionText ?? "").trim().length < 15).length;
+        const prompt = `You are the Warden of a 50-day group discipline challenge. Write ONE collective observation about the group's patterns — anonymous, never accusing individuals. Dry. Intelligent. Slightly intimidating. Never cheesy.\n\nGroup data (last 3 days):\n- Total complete logs: ${totalComplete}\n- Late-night submissions (11pm-2am): ${lateNightCount}\n- Very short reflections when complete: ${shortReflectionCount}\n\nWrite ONE sentence (max 200 chars). No quotes. No prefix. General pattern observation only.`;
+        const response = await invokeLLM({
+          messages: [
+            { role: "system", content: "You are the Warden. One sentence. Dry. Sharp. Group-level only." },
+            { role: "user", content: prompt },
+          ],
+        });
+        const message = String(response?.choices?.[0]?.message?.content ?? "").trim().slice(0, 220) || "Warden note: late-night check-ins are rising. The system is watching consistency, not theatrics.";
+        wardenMoodCache.set(cacheKey, { fingerprint: cacheKey, mood: { label: "board", tone: "red", detail: message, confidence: 0.8, source: "ai" }, createdAt: Date.now() });
+        return { message, source: "ai" as const };
+      } catch (err) {
+        console.warn("[Warden] getCollectiveBoardMessage failed", err);
+        return { message: "Warden note: late-night check-ins are rising. The system is watching consistency, not theatrics.", source: "fallback" as const };
+      }
+    }),
+
+  /**
    * Get today's message count for monitoring daily limits
    * Called by Make.com or admin dashboard
    */

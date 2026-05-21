@@ -746,8 +746,9 @@ function PosterStat({ label, value, tone = "gold" }: { label: string; value: str
   );
 }
 
-function WardenPresence({ snapshot }: { snapshot: Snapshot }) {
+function WardenPresence({ snapshot, personalInsight }: { snapshot: Snapshot; personalInsight?: string }) {
   const latest = [...(snapshot?.wardenMessages ?? [])].reverse()[0];
+  const displayMessage = personalInsight ?? latest?.content ?? "Log honestly. The group sees momentum. The Warden sees patterns.";
   return (
     <aside className="motion-card warden-pulse border-l-4 border-[#C0392B] bg-[#130F0F] p-4">
       <div className="flex items-center justify-between gap-4">
@@ -755,9 +756,14 @@ function WardenPresence({ snapshot }: { snapshot: Snapshot }) {
         <span className="h-2 w-2 animate-pulse bg-[#C0392B]" />
       </div>
       <p className="mt-3 text-sm font-bold leading-6 text-[#D8D8D8]">
-        <span className="type-caret pr-1">{latest?.content ?? "Log honestly. The group sees momentum. The Warden sees patterns."}</span>
+        <span className="type-caret pr-1">{displayMessage}</span>
       </p>
-      <p className="mt-3 text-[10px] font-black uppercase tracking-[0.28em] text-[#777]">1–4 organic messages per day · drama-driven</p>
+      {personalInsight && (
+        <p className="mt-2 text-[10px] font-black uppercase tracking-[0.28em] text-[#C0392B]/70">Personal observation · one per day</p>
+      )}
+      {!personalInsight && (
+        <p className="mt-2 text-[10px] font-black uppercase tracking-[0.28em] text-[#777]">1–4 organic messages per day · drama-driven</p>
+      )}
     </aside>
   );
 }
@@ -1386,6 +1392,23 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
     { label: "Board", value: leaderboardVisiblePoints, detail: "leaderboard", tone: "green" as const },
   ];
   const ghostLifeLocked = Boolean(participant?.ghostLifeUsed);
+  const [myDayExpanded, setMyDayExpanded] = useState(true);
+  // Smart status line: life-risk override or normal completion/pts/streak
+  const livesLeft = participant?.livesRemaining ?? 4;
+  const isLifeAtRisk = livesLeft <= 2 && !todayAlreadyComplete;
+  const myDayStatusLine = isLifeAtRisk
+    ? `⚠ ${livesLeft} ${livesLeft === 1 ? 'life' : 'lives'} left — log today or lose one`
+    : `${completedRules}/6 done · ${liveTaskPoints.rulePoints + liveTaskPoints.passBonus + liveTaskPoints.proofBonus + liveTaskPoints.insightBonus} pts · ${participant?.currentStreak ?? 0}-day streak`;
+  // Personal Warden insight (anti-gaming, one per day, cached 6h)
+  const personalInsightQuery = trpc.warden.getPersonalInsight.useQuery(
+    { participantId: Number(participant?.id ?? 0) },
+    {
+      enabled: Boolean(participant?.id),
+      staleTime: 6 * 60 * 60 * 1000,
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+    },
+  );
   // Use a stable string key (id + dayNumber + dayComplete) so the form only
   // resets when the actual log content changes, not on every 60s snapshot poll
   // that returns a new object reference.
@@ -1559,13 +1582,26 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
           </div>
         </div>
 
-        {/* ── Warden — inline on mobile, hidden on desktop (shown in aside) ── */}
+                {/* ── Warden — inline on mobile, hidden on desktop (shown in aside) ── */}
         <div className="mb-1 px-4 xl:hidden">
-          <WardenPresence snapshot={snapshot} />
+          <WardenPresence snapshot={snapshot} personalInsight={personalInsightQuery.data?.message} />
         </div>
-
+        {/* ── My Day folder header — tap to collapse/expand rules ── */}
+        <button
+          type="button"
+          onClick={() => setMyDayExpanded(v => !v)}
+          className="mx-4 mb-2 flex w-[calc(100%-2rem)] items-center justify-between gap-3 border border-[#2A2A2A] bg-[#0D0D0D] px-4 py-3 text-left transition hover:border-[#C8A96E]/50"
+          aria-expanded={myDayExpanded}
+          data-testid="myday-folder-header"
+        >
+          <span className={classNames(
+            "text-[10px] font-black uppercase tracking-[0.18em]",
+            isLifeAtRisk ? "text-[#C0392B]" : todayAlreadyComplete ? "text-[#2ECC71]" : "text-[#C8A96E]"
+          )}>{myDayStatusLine}</span>
+          <ChevronDown className={classNames("h-4 w-4 shrink-0 text-[#777] transition-transform duration-300", myDayExpanded ? "rotate-180" : "rotate-0")} aria-hidden="true" />
+        </button>
         {/* ── Rule rows — stacked directly, no outer wrapper card ── */}
-        <div data-save-progress-anchor className="must-do-rules min-w-0 max-w-full space-y-[2px] overflow-x-hidden px-4 pb-2">
+        <div data-save-progress-anchor className={classNames("must-do-rules min-w-0 max-w-full space-y-[2px] overflow-x-hidden px-4 pb-2", myDayExpanded ? "" : "hidden")}>
           <div className="motion-list space-y-[2px]">
           <RuleCard title="No alcohol" label="Rule 01" badgeText="HONOUR" badgeColor="#C0392B" points={8} complete={form.noAlcohol} active={openRule === "noAlcohol"} onToggle={() => setOpenRule(openRule === "noAlcohol" ? "exercise" : "noAlcohol")}>
             <label className="flex items-center justify-between gap-4 border border-[#2A2A2A] bg-[#0D0D0D] p-4">
@@ -1727,7 +1763,7 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
       </section>
 
       <aside className="hidden min-w-0 max-w-full space-y-5 overflow-x-hidden xl:block">
-        <WardenPresence snapshot={snapshot} />
+        <WardenPresence snapshot={snapshot} personalInsight={personalInsightQuery.data?.message} />
         <HealthBar lives={participant?.livesRemaining ?? 4} label="Lives remaining" />
         <div className={classNames("motion-card ghost-life-card border p-4 transition", ghostLifeLocked ? "border-[#4A315D] bg-[#120F18] opacity-80" : "border-[#2A2A2A] bg-[#101010]")} data-ghost-life-state={ghostLifeLocked ? "locked" : "available"}>
           <div className="flex items-start justify-between gap-3">
@@ -2021,7 +2057,11 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
 
   const [pressureListExpanded, setPressureListExpanded] = useState(false);
   const [bonusAccordionOpen, setBonusAccordionOpen] = useState(false);
+  const [overviewExpanded, setOverviewExpanded] = useState(true);
   const pressureRowsVisible = pressureListExpanded ? compareRows : compareRows.slice(0, 5);
+  // Group momentum status line
+  const todayPct = participantCount > 0 ? Math.round((todayComplete / participantCount) * 100) : 0;
+  const overviewStatusLine = `${todayPct}% complete today · ${todayOpened} Movers active · ${riskCount} at risk`;
 
   return (
     <div className="motion-page space-y-3 overflow-hidden pb-2" data-testid="overview-metrics-dashboard">
@@ -2032,6 +2072,19 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
           The room <span className="text-[#C8A96E]">is moving.</span>
         </h2>
       </div>
+      {/* Overview folder header */}
+      <button
+        type="button"
+        onClick={() => setOverviewExpanded(v => !v)}
+        className="mx-1 flex w-[calc(100%-0.5rem)] items-center justify-between gap-3 border border-[#2A2A2A] bg-[#0D0D0D] px-4 py-3 text-left transition hover:border-[#C8A96E]/50"
+        aria-expanded={overviewExpanded}
+        data-testid="overview-folder-header"
+      >
+        <span className="text-[10px] font-black uppercase tracking-[0.18em] text-[#C8A96E]">{overviewStatusLine}</span>
+        <ChevronDown className={classNames("h-4 w-4 shrink-0 text-[#777] transition-transform duration-300", overviewExpanded ? "rotate-180" : "rotate-0")} aria-hidden="true" />
+      </button>
+      {/* Collapsible content */}
+      <div className={overviewExpanded ? "" : "hidden"}>
       <div className="insights-marquee overflow-hidden" aria-hidden="true">
         <div className="animate-marquee flex gap-8 whitespace-nowrap py-2 pl-4">
           {[...insightTicker, ...insightTicker].map((item, i) => (
@@ -2268,6 +2321,7 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
         )}
       </section>
       <ParticipantSheet participant={selected} onClose={() => setSelected(null)} />
+      </div>{/* end collapsible */}
     </div>
   );
 }
@@ -2626,8 +2680,34 @@ function Leaderboard({ snapshot }: { snapshot: Snapshot }) {
   });
   const claimedBoostCount = boostSlots.filter((slot: any) => slot.claimed).length;
   const openBoostCount = Math.max(0, boostSlots.length - claimedBoostCount);
+  const [boardExpanded, setBoardExpanded] = useState(true);
+  // Top-3 names + my rank for the folder header
+  const myParticipantId = snapshot?.participant?.id;
+  const myRank = ranked.findIndex((p: any) => String(p.id) === String(myParticipantId));
+  const top3Names = ranked.slice(0, 3).map((p: any) => p.displayName ?? "—").join(", ");
+  const boardStatusLine = top3Names
+    ? `Top: ${top3Names}${myRank >= 0 ? ` · You're #${myRank + 1}` : ""}`
+    : `${ranked.length} challengers ranked`;
+  // Collective Warden board message (anonymous, group-level)
+  const collectiveInsightQuery = trpc.warden.getCollectiveBoardMessage.useQuery(
+    undefined,
+    { staleTime: 6 * 60 * 60 * 1000, refetchOnWindowFocus: false, refetchOnReconnect: false },
+  );
   return (
     <section className="motion-page space-y-4 overflow-hidden border border-[#2A2A2A] bg-[#101010] p-3 sm:p-5" data-testid="bosses-board-section">
+      {/* Board folder header */}
+      <button
+        type="button"
+        onClick={() => setBoardExpanded(v => !v)}
+        className="flex w-full items-center justify-between gap-3 border border-[#2A2A2A] bg-[#0D0D0D] px-4 py-3 text-left transition hover:border-[#C8A96E]/50"
+        aria-expanded={boardExpanded}
+        data-testid="board-folder-header"
+      >
+        <span className="text-[10px] font-black uppercase tracking-[0.18em] text-[#C8A96E]">{boardStatusLine}</span>
+        <ChevronDown className={classNames("h-4 w-4 shrink-0 text-[#777] transition-transform duration-300", boardExpanded ? "rotate-180" : "rotate-0")} aria-hidden="true" />
+      </button>
+      {/* Collapsible board content */}
+      <div className={boardExpanded ? "space-y-4" : "hidden"}>
       <div className="rounded-[1.4rem] border border-[#2A2A2A] bg-[#0D0D0D] p-4 sm:p-5" data-testid="board-mobile-redesign-shell">
         <div className="flex items-end justify-between gap-4">
           <div>
@@ -2823,6 +2903,14 @@ function Leaderboard({ snapshot }: { snapshot: Snapshot }) {
         })}
       </div>
       <ParticipantSheet participant={selected} onClose={() => setSelected(null)} />
+      </div>{/* end board collapsible */}
+      {/* Warden collective note — anonymous, group-level */}
+      {collectiveInsightQuery.data?.message && (
+        <aside className="border-l-4 border-[#C0392B] bg-[#130F0F] px-4 py-3" data-testid="board-warden-collective-note">
+          <p className="text-[9px] font-black uppercase tracking-[0.22em] text-[#C0392B]">Warden note</p>
+          <p className="mt-2 text-sm font-bold leading-6 text-[#D8D8D8]">{collectiveInsightQuery.data.message}</p>
+        </aside>
+      )}
     </section>
   );
 }
