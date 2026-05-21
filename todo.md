@@ -1308,3 +1308,13 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Raise Group Meal threshold from 1,500 → 2,500 pts (code + DB)
 - [x] Update REWARD_POINT_THRESHOLDS in notificationReminderRules.ts to match
 - [x] All 180 tests pass, TypeScript clean
+
+## v8.5 — Editable Read & Teach + Submit Button Placement
+
+- [x] Make Read & Teach text field fully editable before submission — collapsed card shows text preview with "Tap to edit" hint
+- [x] Auto-advance to Track Everything card when Read & Teach text > 1 char (600ms delay)
+- [x] Move Save Progress button inline (static, mx-4 mt-4 below rules container) — no longer floats over Ghost Life
+- [x] Remove Ghost Life card bottom margin (no longer needed)
+- [x] Remove rules container pb-[5.5rem] bottom padding (no longer needed)
+- [x] Update 3 tests to match new inline submit button markup
+- [x] All 180 tests pass, TypeScript clean

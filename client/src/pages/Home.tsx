@@ -1221,6 +1221,7 @@ function RuleCard({
   active,
   onToggle,
   children,
+  completedPreview,
 }: {
   title: string;
   label: string;
@@ -1231,6 +1232,7 @@ function RuleCard({
   active: boolean;
   onToggle: () => void;
   children: React.ReactNode;
+  completedPreview?: string;
 }) {
   const num = label.replace("Rule ", "");
   return (
@@ -1286,6 +1288,12 @@ function RuleCard({
         </div>
       </button>
 
+      {completedPreview && !active && (
+        <div className="border-t border-[#2ECC71]/20 bg-[#0A180E]/60 px-3 py-2">
+          <p className="line-clamp-2 text-xs font-bold leading-5 text-[#2ECC71]/70 italic">{completedPreview}</p>
+          <p className="mt-0.5 text-[9px] font-black uppercase tracking-[0.16em] text-[#2ECC71]/40">Tap to edit</p>
+        </div>
+      )}
       {active && (
         <div className="rule-open border-t border-[#1A1A1A] p-3 sm:p-4">
           {children}
@@ -1557,7 +1565,7 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
         </div>
 
         {/* ── Rule rows — stacked directly, no outer wrapper card ── */}
-        <div data-save-progress-anchor className="must-do-rules min-w-0 max-w-full space-y-[2px] overflow-x-hidden px-4 pb-[5.5rem] md:pb-0">
+        <div data-save-progress-anchor className="must-do-rules min-w-0 max-w-full space-y-[2px] overflow-x-hidden px-4 pb-2">
           <div className="motion-list space-y-[2px]">
           <RuleCard title="No alcohol" label="Rule 01" badgeText="HONOUR" badgeColor="#C0392B" points={8} complete={form.noAlcohol} active={openRule === "noAlcohol"} onToggle={() => setOpenRule(openRule === "noAlcohol" ? "exercise" : "noAlcohol")}>
             <label className="flex items-center justify-between gap-4 border border-[#2A2A2A] bg-[#0D0D0D] p-4">
@@ -1604,8 +1612,20 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
             />
           </RuleCard>
 
-          <RuleCard title="Read & Teach" label="Rule 05" badgeText="TEACH" badgeColor="#C8A96E" points={8} complete={rules[4].done} active={openRule === "readTeach"} onToggle={() => setOpenRule(openRule === "readTeach" ? "trackedEverything" : "readTeach")}>
-            <Field label="One useful idea"><TextArea value={form.readTeachText} onChange={event => setForm({ ...form, readTeachText: event.target.value })} placeholder="Teach one useful thing from today." /></Field>
+          <RuleCard title="Read & Teach" label="Rule 05" badgeText="TEACH" badgeColor="#C8A96E" points={8} complete={rules[4].done} active={openRule === "readTeach"} onToggle={() => setOpenRule(openRule === "readTeach" ? "trackedEverything" : "readTeach")} completedPreview={rules[4].done && openRule !== "readTeach" ? form.readTeachText : undefined}>
+            <Field label="One useful idea">
+              <TextArea
+                value={form.readTeachText}
+                onChange={event => {
+                  const val = event.target.value;
+                  setForm(current => ({ ...current, readTeachText: val }));
+                  if (val.trim().length > 1 && openRule === "readTeach") {
+                    window.setTimeout(() => setOpenRule("trackedEverything"), 600);
+                  }
+                }}
+                placeholder="Teach one useful thing from today."
+              />
+            </Field>
           </RuleCard>
 
           <RuleCard title="Track everything" label="Rule 06" badgeText="AUTO" badgeColor="#6B6B6B" points={6} complete={form.trackedEverything} active={openRule === "trackedEverything"} onToggle={() => setOpenRule(openRule === "trackedEverything" ? "exercise" : "trackedEverything")}>
@@ -1651,7 +1671,7 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
 
         {/* Ghost Life card — visible on mobile below rules, only when available and day not complete */}
         {!ghostLifeLocked && !todayAlreadyComplete && (
-          <div className="mt-4 mb-[calc(5.5rem+env(safe-area-inset-bottom))] border border-[#9B59B6]/50 bg-[#0E0B14] p-4" data-testid="ghost-life-card">
+          <div className="mt-4 border border-[#9B59B6]/50 bg-[#0E0B14] p-4" data-testid="ghost-life-card">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <span className="inline-block border border-[#9B59B6]/60 bg-[#1B1024] px-2 py-1 text-[9px] font-black uppercase tracking-[0.16em] text-[#D8B4FE]">Ghost Life · Available</span>
@@ -1690,15 +1710,15 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
             {lastMissed.length > 0 && <div className="mt-3 border-l-4 border-[#C0392B] bg-[#180F0F] p-4 text-sm font-bold text-[#F0B7AE]">Rollover miss: {lastMissed.join(", ")}. Penalty recorded.</div>}
           </div>
         ) : (
-          <div className={classNames("submit-dock motion-submit-dock z-[70] mx-auto w-[min(100%,calc(100vw-2rem))] max-w-full transition-all duration-300 md:static md:w-full", saveProgressDocked ? "static translate-y-0" : "fixed inset-x-4 bottom-[calc(5.85rem+env(safe-area-inset-bottom))]", saveProgressScale < 0.35 ? "max-w-[9.5rem] mx-auto rounded-full border border-[#C8A96E]/45 bg-[#070707]/94 p-1 shadow-[0_0_24px_rgba(200,169,110,0.18)] backdrop-blur" : saveProgressScale < 0.78 ? "max-w-[15rem] mx-auto rounded-full border border-[#C8A96E]/55 bg-[#0D0D0D]/95 p-1.5 shadow-[0_0_32px_rgba(200,169,110,0.22)] backdrop-blur" : "max-w-none rounded-none border border-[#2A2A2A] bg-[#0D0D0D]/95 p-3 backdrop-blur md:border-transparent md:bg-transparent md:p-0 md:backdrop-blur-none", submit.isPending && "submit-dock-pending", allAddressed && !submit.isPending && "submit-dock-ready")} data-save-progress-scale={saveProgressScale} data-save-progress-docked={saveProgressDocked ? "true" : "false"} data-mobile-save-progress-mini-to-section="true" data-mobile-save-progress-above-nav="true">
-            <SharpButton className={classNames("w-full max-w-full overflow-hidden whitespace-normal break-words text-center transition-all duration-300", saveProgressScale < 0.35 ? "rounded-full px-3 py-2 text-[0px] shadow-none before:content-['SAVE'] before:text-[9px] before:font-black before:tracking-[0.18em]" : saveProgressScale < 0.78 ? "rounded-full px-4 py-3 text-[10px]" : "py-5 text-sm", submit.isPending && "submit-button-pending")} disabled={submit.isPending} onClick={() => submit.mutate({ ...form, reflectionShared: false, dayNumber: snapshot?.challenge.currentDay ?? 1 })}>
+          <div className={classNames("submit-dock motion-submit-dock relative mx-4 mt-4", submit.isPending && "submit-dock-pending", allAddressed && !submit.isPending && "submit-dock-ready")} data-save-progress-scale={saveProgressScale} data-save-progress-docked="true" data-mobile-save-progress-mini-to-section="true" data-mobile-save-progress-above-nav="true">
+            <SharpButton className={classNames("w-full py-5 text-sm", submit.isPending && "submit-button-pending")} disabled={submit.isPending} onClick={() => submit.mutate({ ...form, reflectionShared: false, dayNumber: snapshot?.challenge.currentDay ?? 1 })}>
               {submit.isPending
                 ? (allAddressed ? "Locking in the day…" : "Saving progress…")
                 : allAddressed
                   ? `Lock In Day ${snapshot?.challenge.currentDay ?? 1} · +${liveTaskPoints.visibleTotal} pts`
                   : `Save Progress · ${completedRules}/${totalRules} done`}
             </SharpButton>
-            {saveProgressDocked && !allAddressed && <p className="mt-2 text-center text-[10px] font-black uppercase tracking-[0.16em] text-[#C8A96E]/80">Save keeps your work. Lock In submits the day before midnight.</p>}
+            {!allAddressed && <p className="mt-2 text-center text-[10px] font-black uppercase tracking-[0.16em] text-[#C8A96E]/80">Save keeps your work. Lock In submits the day before midnight.</p>}
             {saveNotice && <div role="status" className={classNames("pointer-events-none absolute -top-3 right-3 rounded-full border bg-black/90 px-2 py-1 text-[9px] font-black uppercase leading-none tracking-[0.16em] shadow-[0_0_18px_rgba(0,0,0,0.45)]", saveNotice.complete ? "border-[#2ECC71]/70 text-[#2ECC71]" : "border-[#C8A96E]/70 text-[#C8A96E]")}>{saveNotice.title}</div>}
             {draftRestored && <div role="status" className="pointer-events-none absolute -top-3 left-3 rounded-full border border-[#C8A96E]/70 bg-black/90 px-2 py-1 text-[9px] font-black uppercase leading-none tracking-[0.16em] text-[#C8A96E] shadow-[0_0_18px_rgba(0,0,0,0.45)]">Draft recovered</div>}
             {lastMissed.length > 0 && <div className="mt-3 border-l-4 border-[#C0392B] bg-[#180F0F] p-4 text-sm font-bold text-[#F0B7AE]">Rollover miss: {lastMissed.join(", ")}. Penalty recorded.</div>}

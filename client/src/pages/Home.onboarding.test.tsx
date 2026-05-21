@@ -577,10 +577,9 @@ describe("Home onboarding shell", () => {
     expect(homeSource).toContain("+5 bonus available");
     expect(homeSource).toContain("const saveProgressDocked = saveProgressScale >= 0.78;");
     expect(homeSource).toContain('data-mobile-save-progress-mini-to-section="true"');
-    expect(homeSource).toContain('data-save-progress-docked={saveProgressDocked ? "true" : "false"}');
-    expect(homeSource).toContain('saveProgressDocked ? "static translate-y-0" : "fixed inset-x-4 bottom-[calc(5.85rem+env(safe-area-inset-bottom))]"');
-    expect(homeSource).toContain("max-w-[9.5rem]");
-    expect(homeSource).toContain("before:content-['SAVE']");
+    expect(homeSource).toContain('data-save-progress-docked="true"');
+    expect(homeSource).toContain("submit-dock motion-submit-dock relative mx-4 mt-4");
+    expect(homeSource).toContain("w-full py-5 text-sm");
     expect(cssSource).toContain('save-progress-shoot-home 260ms cubic-bezier(0.2, 0.9, 0.25, 1)');
     expect(cssSource).toContain('@keyframes save-progress-shoot-home');
     expect(homeSource).toContain("playAllGreenSubmitHaptic();");
@@ -667,11 +666,8 @@ describe("Home onboarding shell", () => {
     expect(homeSource).not.toContain("flex max-w-full snap-x gap-1 overflow-x-auto overscroll-x-contain");
     expect(homeSource).not.toContain("snap-start overflow-hidden");
     expect(homeSource).toContain("liveTaskPoints.visibleTotal");
-    expect(homeSource).toContain("w-[min(100%,calc(100vw-2rem))] max-w-full");
-    expect(homeSource).toContain("max-w-[9.5rem] mx-auto rounded-full border border-[#C8A96E]/45 bg-[#070707]/94 p-1");
-    expect(homeSource).toContain("max-w-[15rem] mx-auto rounded-full border border-[#C8A96E]/55 bg-[#0D0D0D]/95 p-1.5");
-    expect(homeSource).toContain("rounded-full px-3 py-2 text-[0px]");
-    expect(homeSource).toContain("rounded-full px-4 py-3 text-[10px]");
+    expect(homeSource).toContain("submit-dock motion-submit-dock relative mx-4 mt-4");
+    expect(homeSource).toContain("w-full py-5 text-sm");
     expect(readFileSync(new URL("../index.css", import.meta.url), "utf8")).toContain("overflow-x: hidden;");
     expect(homeSource).not.toContain('data-testid="live-task-points-panel"');
     expect(homeSource).toContain("Save keeps your work. Lock In submits the day before midnight.");
