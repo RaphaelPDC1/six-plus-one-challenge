@@ -3827,6 +3827,19 @@ export default function Home() {
   const { user, loading, isAuthenticated, logout } = useAuth();
   const reduceMotion = useReducedMotion();
   const [activeTab, setActiveTab] = useState<TabKey>("myday");
+  const [adminMode, setAdminMode] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return window.localStorage.getItem("sixone-admin-mode") === "true";
+  });
+  const toggleAdminMode = () => {
+    setAdminMode(prev => {
+      const next = !prev;
+      if (typeof window !== "undefined") window.localStorage.setItem("sixone-admin-mode", String(next));
+      if (next) setActiveTab("admin");
+      else setActiveTab("myday");
+      return next;
+    });
+  };
   const [transitionDirection, setTransitionDirection] = useState<SwipeDirection>(1);
   const [entryVisible, setEntryVisible] = useState(() => typeof window !== "undefined" && window.sessionStorage.getItem("sixone-entry-seen") !== "true");
   const [loginEntryVisible, setLoginEntryVisible] = useState(false);
@@ -3850,7 +3863,7 @@ export default function Home() {
     staleTime: 30000,
   });
   const snapshot = snapshotQuery.data;
-  const visibleTabs = tabs.filter(tab => tab.key !== "admin" || user?.role === "admin");
+  const visibleTabs = tabs.filter(tab => tab.key !== "admin" || (user?.role === "admin" && adminMode));
   const mobileTabs = visibleTabs.filter(tab => tab.key !== "admin");
   const swipeTabs = mobileTabs.length > 0 ? mobileTabs : visibleTabs;
   const activeSwipeIndex = Math.max(0, swipeTabs.findIndex(tab => tab.key === activeTab));
@@ -3988,7 +4001,16 @@ export default function Home() {
             </div>
           </button>
           <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-            <span className="hidden border border-[#2A2A2A] px-3 py-2 text-[9px] font-black uppercase tracking-[0.22em] text-[#777] sm:inline-block">{user?.role === "admin" ? "Founder" : "Participant"}</span>
+            {user?.role === "admin" && (
+              <button
+                onClick={toggleAdminMode}
+                className={`flex items-center gap-1.5 border px-3 py-2 text-[9px] font-black uppercase tracking-[0.18em] transition ${adminMode ? "border-[#E74C3C] bg-[#1A0505] text-[#E74C3C] hover:border-[#C0392B]" : "border-[#2ECC71] bg-[#07150D] text-[#2ECC71] hover:border-[#27AE60]"}`}
+                aria-label={adminMode ? "Switch to player mode" : "Switch to admin mode"}
+                data-testid="admin-player-mode-toggle"
+              >
+                {adminMode ? "⚙ Admin" : "▶ Player"}
+              </button>
+            )}
             <button className="border border-[#2A2A2A] px-3 py-2.5 text-[9px] font-black uppercase tracking-[0.16em] text-white hover:border-[#C8A96E] hover:text-[#C8A96E] sm:px-4 sm:py-3 sm:text-[10px] sm:tracking-[0.18em]" onClick={() => setNotificationsOpen(true)} aria-label="Open PWA notification settings"><Bell className="h-4 w-4 sm:hidden" /><span className="hidden sm:inline">Notify</span></button>
             <button className="border border-[#2A2A2A] px-3 py-2.5 text-[9px] font-black uppercase tracking-[0.16em] text-white hover:border-[#C8A96E] hover:text-[#C8A96E] sm:px-4 sm:py-3 sm:text-[10px] sm:tracking-[0.18em]" onClick={() => logout()}>Logout</button>
           </div>

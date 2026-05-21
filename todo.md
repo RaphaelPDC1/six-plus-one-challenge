@@ -1327,3 +1327,12 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Added gold "Generate AI community insight" button to admin release note form (fills body textarea with JSON insight)
 - [x] Added releaseNoteGenerator mock and generateCommunityInsight test to challengeRouterFlow.test.ts
 - [x] All 181 tests pass, TypeScript clean
+
+## v8.7 — Admin/Player Mode Toggle for Senyo
+
+- [x] Added adminMode state persisted in localStorage (default: false = player mode)
+- [x] Added toggle pill to header visible only when user.role === "admin" (green ▶ Player / red ⚙ Admin)
+- [x] Tapping toggle switches activeTab to "admin" (admin mode) or "myday" (player mode)
+- [x] visibleTabs now filters admin tab by adminMode so it only appears in desktop tab bar when in admin mode
+- [x] Bottom nav unaffected (admin tab was already excluded from mobileTabs)
+- [x] All 181 tests pass, TypeScript clean
