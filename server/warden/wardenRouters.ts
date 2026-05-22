@@ -349,6 +349,116 @@ export const wardenRouter = router({
     }),
 
   /**
+   * Get 3 Warden red-highlight bullets focused on TODAY's live group data.
+   * Cache key includes day + 6h time-slot so it refreshes 4x/day:
+   *   slot 0 = 00:00–05:59, slot 1 = 06:00–11:59, slot 2 = 12:00–17:59, slot 3 = 18:00–23:59
+   * Warden voice: dry, intelligent, slightly intimidating. Never generic.
+   */
+  getDailyReds: publicProcedure
+    .query(async () => {
+      const now = new Date();
+      const dayStr = now.toISOString().slice(0, 10);
+      const timeSlot = Math.floor(now.getUTCHours() / 6); // 0-3
+      const cacheKey = `daily-reds-${dayStr}-slot${timeSlot}`;
+      const cached = wardenMoodCache.get(cacheKey);
+      if (cached && Date.now() - cached.createdAt < WARDEN_MOOD_CACHE_TTL_MS) {
+        // Parse the stored JSON array from detail
+        try {
+          const reds = JSON.parse(cached.mood.detail) as string[];
+          return { reds, source: "cache" as const, slot: timeSlot };
+        } catch { /* fall through to regenerate */ }
+      }
+      try {
+        const { getDb, getCurrentChallengeDay } = await import("../db");
+        const currentDay = getCurrentChallengeDay();
+        const db = await getDb();
+        if (!db) return { reds: ["Log today. The gap compounds.", "Every rule missed is a point lost permanently.", "The group is watching who shows up."], source: "fallback" as const, slot: timeSlot };
+        const { dailyLogs: logsTable, participants: participantsTable } = await import("../../drizzle/schema");
+        const { eq } = await import("drizzle-orm");
+        // Fetch today's logs and all participants
+        const [todayLogs, allParticipants] = await Promise.all([
+          db.select().from(logsTable).where(eq(logsTable.dayNumber, currentDay)).limit(100),
+          db.select().from(participantsTable).limit(100),
+        ]);
+        const totalParticipants = allParticipants.length;
+        const loggedToday = todayLogs.length;
+        const completedToday = todayLogs.filter(l => l.dayComplete).length;
+        const notLoggedCount = Math.max(0, totalParticipants - loggedToday);
+        const livesAtRisk = allParticipants.filter(p => (p.livesRemaining ?? 4) <= 1).length;
+        // Rule-level gap analysis for today
+        const ruleKeys = ["noAlcohol", "cleanEating", "exerciseDone", "reflectionDone", "readTeachDone", "trackedEverything"] as const;
+        const ruleLabels: Record<string, string> = { noAlcohol: "no-alcohol", cleanEating: "clean eating", exerciseDone: "exercise", reflectionDone: "reflection", readTeachDone: "read & teach", trackedEverything: "track everything" };
+        const ruleMissCounts = ruleKeys.map(key => ({
+          rule: ruleLabels[key],
+          missed: todayLogs.filter(l => !l[key as keyof typeof l]).length,
+        })).sort((a, b) => b.missed - a.missed);
+        const topMissedRule = ruleMissCounts[0];
+        const lateNightCount = todayLogs.filter(l => {
+          if (!l.submittedAt) return false;
+          const h = new Date(l.submittedAt).getUTCHours();
+          return h >= 22 || h < 2;
+        }).length;
+        const prompt = `You are the Warden of a 50-day group discipline challenge. It is day ${currentDay}/50, time slot ${timeSlot} (0=midnight, 1=6am, 2=noon, 3=6pm UTC).
+
+TODAY'S LIVE DATA:
+- Total participants: ${totalParticipants}
+- Logged today: ${loggedToday} (${notLoggedCount} have NOT logged yet)
+- Completed today: ${completedToday}
+- Lives at risk (≤1 life): ${livesAtRisk}
+- Late-night submissions so far: ${lateNightCount}
+- Most-missed rule today: "${topMissedRule?.rule}" (${topMissedRule?.missed} participants missed it)
+- Rule miss breakdown: ${ruleMissCounts.slice(0, 4).map(r => `${r.rule}: ${r.missed} missed`).join(", ")}
+
+Generate EXACTLY 3 short, punchy red-highlight bullets about TODAY's data. Each bullet:
+- Max 14 words
+- References actual numbers from today's data
+- Warden voice: dry, precise, slightly unsettling
+- No generic advice. No motivation. No fluff.
+- Each bullet should feel like a different angle: one about who hasn't logged, one about a specific rule gap, one about risk/stakes
+
+Respond in JSON only.`;
+        const response = await invokeLLM({
+          messages: [
+            { role: "system", content: "You are the Warden. Three bullets. Dry. Sharp. Today's data only. JSON only." },
+            { role: "user", content: prompt },
+          ],
+          response_format: {
+            type: "json_schema",
+            json_schema: {
+              name: "warden_daily_reds",
+              strict: true,
+              schema: {
+                type: "object",
+                properties: {
+                  reds: {
+                    type: "array",
+                    items: { type: "string" },
+                    minItems: 3,
+                    maxItems: 3,
+                  },
+                },
+                required: ["reds"],
+                additionalProperties: false,
+              },
+            },
+          },
+        });
+        const rawContent = response.choices[0].message.content;
+        const content = typeof rawContent === "string" ? rawContent : null;
+        if (!content) throw new Error("Empty LLM response");
+        const parsed = JSON.parse(content);
+        const reds: string[] = Array.isArray(parsed.reds) && parsed.reds.length >= 3
+          ? parsed.reds.slice(0, 3).map((r: unknown) => String(r).slice(0, 120))
+          : [`${notLoggedCount} challengers haven't logged yet today.`, `"${topMissedRule?.rule}" is today's most-missed rule.`, livesAtRisk > 0 ? `${livesAtRisk} challenger${livesAtRisk > 1 ? "s are" : " is"} one miss from losing a life.` : "No lives at risk — keep it that way."];
+        wardenMoodCache.set(cacheKey, { fingerprint: cacheKey, mood: { label: "daily-reds", tone: "red", detail: JSON.stringify(reds), confidence: 0.9, source: "ai" }, createdAt: Date.now() });
+        return { reds, source: "ai" as const, slot: timeSlot };
+      } catch (err) {
+        console.warn("[Warden] getDailyReds failed", err);
+        return { reds: ["Log today. The gap compounds.", "Every rule missed is a point lost permanently.", "The group is watching who shows up."], source: "fallback" as const, slot: timeSlot };
+      }
+    }),
+
+  /**
    * Get today's message count for monitoring daily limits
    * Called by Make.com or admin dashboard
    */

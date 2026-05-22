@@ -768,6 +768,36 @@ function WardenPresence({ snapshot, personalInsight }: { snapshot: Snapshot; per
   );
 }
 
+const SLOT_LABELS = ["Midnight", "Morning", "Afternoon", "Evening"] as const;
+
+function WardenDailyReds({ reds, isLoading, slot }: { reds?: string[]; isLoading?: boolean; slot?: number }) {
+  const slotLabel = slot !== undefined ? SLOT_LABELS[slot] ?? "" : "";
+  return (
+    <div className="border border-[#C0392B]/40 bg-[#0E0808] p-4">
+      <div className="flex items-center justify-between gap-3">
+        <MicroLabel tone="red">Warden reds · today</MicroLabel>
+        {slotLabel && <span className="text-[8px] font-black uppercase tracking-[0.18em] text-[#C0392B]/60">{slotLabel} window</span>}
+      </div>
+      {isLoading && (
+        <div className="mt-3 space-y-2">
+          {[0, 1, 2].map(i => <div key={i} className="h-4 animate-pulse bg-[#1A0A0A]" />)}
+        </div>
+      )}
+      {!isLoading && Array.isArray(reds) && reds.length > 0 && (
+        <ul className="mt-3 space-y-2">
+          {reds.map((bullet, i) => (
+            <li key={i} className="flex items-start gap-2">
+              <span className="mt-[3px] shrink-0 text-[#E74C3C]">▸</span>
+              <p className="text-[11px] font-bold leading-5 text-[#D8D8D8]">{bullet}</p>
+            </li>
+          ))}
+        </ul>
+      )}
+      <p className="mt-3 text-[8px] font-black uppercase tracking-[0.18em] text-[#C0392B]/50">Refreshes 4× daily · live group data</p>
+    </div>
+  );
+}
+
 function LifeLossAlert({ snapshot }: { snapshot: Snapshot | undefined }) {
   const [visibleEvent, setVisibleEvent] = useState<any>(null);
   const payments = snapshot?.payments ?? [];
@@ -1399,6 +1429,12 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
   const myDayStatusLine = isLifeAtRisk
     ? `⚠ ${livesLeft} ${livesLeft === 1 ? 'life' : 'lives'} left — log today or lose one`
     : `${completedRules}/6 done · ${liveTaskPoints.rulePoints + liveTaskPoints.passBonus + liveTaskPoints.proofBonus + liveTaskPoints.insightBonus} pts · ${participant?.currentStreak ?? 0}-day streak`;
+  // Warden Daily Reds — 3 bullets about today's group data, refreshes 4x/day
+  const dailyRedsQuery = trpc.warden.getDailyReds.useQuery(undefined, {
+    staleTime: 6 * 60 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  });
   // Personal Warden insight (anti-gaming, one per day, cached 6h)
   const personalInsightQuery = trpc.warden.getPersonalInsight.useQuery(
     { participantId: Number(participant?.id ?? 0) },
@@ -1780,6 +1816,7 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
           <MicroLabel tone="red">Latest Warden note</MicroLabel>
           <p className="mt-3 text-sm font-bold leading-6 text-[#BDBDBD]">{latestWarden?.content ?? "No hiding place. Log the day."}</p>
         </div>
+        <WardenDailyReds reds={dailyRedsQuery.data?.reds} isLoading={dailyRedsQuery.isLoading} slot={dailyRedsQuery.data?.slot} />
       </aside>
     </div>
   );
@@ -2911,8 +2948,23 @@ function Leaderboard({ snapshot }: { snapshot: Snapshot }) {
           <p className="mt-2 text-sm font-bold leading-6 text-[#D8D8D8]">{collectiveInsightQuery.data.message}</p>
         </aside>
       )}
+      {/* Warden Daily Reds — 3 bullets about today's live group data */}
+      <WardenDailyRedsBoard />
     </section>
   );
+}
+
+/**
+ * Standalone board-level Warden Daily Reds — fetches its own data so it can be
+ * dropped anywhere without prop drilling.
+ */
+function WardenDailyRedsBoard() {
+  const dailyRedsQuery = trpc.warden.getDailyReds.useQuery(undefined, {
+    staleTime: 6 * 60 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  });
+  return <WardenDailyReds reds={dailyRedsQuery.data?.reds} isLoading={dailyRedsQuery.isLoading} slot={dailyRedsQuery.data?.slot} />;
 }
 
 export function buildProofWardenInsight(owner: any, log: any, ownerLogs: any[]) {

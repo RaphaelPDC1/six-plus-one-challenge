@@ -1358,3 +1358,13 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Update CommunityCareReleaseNotePopup to render the personalised format
 - [x] Keep admin broadcast form (kept alongside new per-participant button)
 - [x] All 181 tests pass, TypeScript clean
+
+## v8.10 — Warden Daily Reds (4x/day, today's data only)
+
+- [x] Add getDailyReds warden procedure: 3 LLM-generated red bullets focused on today's group data, cached 6h (refreshes 4x/day)
+- [x] Cache key includes day + 6h time-slot (0-5, 6-11, 12-17, 18-23) so it refreshes at 00:00, 06:00, 12:00, 18:00
+- [x] LLM receives: today's completion rate, who has/hasn't logged, rule-level gaps, lives at risk, bonus windows
+- [x] LLM generates: exactly 3 short punchy red bullets (max 14 words each), Warden voice
+- [x] Display getDailyReds in My Day sidebar (below Latest Warden note) and in Overview
+- [x] Add heartbeat for auto-scheduling personalised care notes every 3 days (handler + SDK patches ready; register after deploy)
+- [x] All 181 tests pass, TypeScript clean

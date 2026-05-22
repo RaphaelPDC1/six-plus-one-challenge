@@ -11,6 +11,7 @@ import { registerWardenHttpRoutes } from "../warden/wardenHttpRoutes";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { autoPublishReleaseNoteIfNeeded } from "../autoReleaseNote";
+import { handlePersonalisedCareNotes } from "../scheduledPersonalisedCare";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -41,6 +42,9 @@ async function startServer() {
   registerOAuthRoutes(app);
   registerWhatsAppWebhook(app);
   registerWardenHttpRoutes(app);
+  // Scheduled / Heartbeat endpoints — MUST be before tRPC and Vite fallthrough
+  app.post("/api/scheduled/personalised-care-notes", handlePersonalisedCareNotes);
+
   // tRPC API
   app.use(
     "/api/trpc",
