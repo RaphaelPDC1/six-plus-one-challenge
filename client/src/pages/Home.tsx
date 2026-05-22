@@ -830,18 +830,40 @@ function PosterStat({ label, value, tone = "gold" }: { label: string; value: str
 }
 
 function WardenPresence({ snapshot }: { snapshot: Snapshot }) {
-  const latest = [...(snapshot?.wardenMessages ?? [])].reverse()[0];
-  const displayMessage = latest?.content ?? "Log honestly. The group sees momentum. The Warden sees patterns.";
+  const watchQuery = trpc.warden.getPersonalWardenWatch.useQuery(undefined, {
+    staleTime: 6 * 60 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  });
+  const SLOT_LABELS_WATCH = ["Midnight", "Morning", "Afternoon", "Evening"] as const;
+  const slotLabel = watchQuery.data?.slot !== undefined ? SLOT_LABELS_WATCH[watchQuery.data.slot] ?? "" : "";
+  const tone = watchQuery.data?.tone ?? "red";
+  const borderColor = tone === "green" ? "border-[#2ECC71]" : tone === "gold" ? "border-[#C8A96E]" : tone === "purple" ? "border-[#9B59B6]" : "border-[#C0392B]";
+  const dotColor = tone === "green" ? "bg-[#2ECC71]" : tone === "gold" ? "bg-[#C8A96E]" : tone === "purple" ? "bg-[#9B59B6]" : "bg-[#C0392B]";
+  const labelTone = (tone === "white" ? "red" : tone) as "red" | "gold" | "green" | "purple";
+  const displayMessage = watchQuery.isLoading
+    ? null
+    : (watchQuery.data?.message ?? "No hiding place. Log the day.");
   return (
-    <aside className="motion-card warden-pulse border-l-4 border-[#C0392B] bg-[#130F0F] p-4">
+    <aside className={classNames("motion-card warden-pulse border-l-4 bg-[#130F0F] p-4", borderColor)}>
       <div className="flex items-center justify-between gap-4">
-        <MicroLabel tone="red">The Warden is watching</MicroLabel>
-        <span className="h-2 w-2 animate-pulse bg-[#C0392B]" />
+        <MicroLabel tone={labelTone}>The Warden is watching</MicroLabel>
+        <div className="flex items-center gap-2">
+          {slotLabel && <span className="text-[8px] font-black uppercase tracking-[0.18em] text-[#777]">{slotLabel}</span>}
+          <span className={classNames("h-2 w-2 animate-pulse", dotColor)} />
+        </div>
       </div>
-      <p className="mt-3 text-sm font-bold leading-6 text-[#D8D8D8]">
-        <span className="type-caret pr-1">{displayMessage}</span>
-      </p>
-      <p className="mt-2 text-[10px] font-black uppercase tracking-[0.28em] text-[#777]">1–4 organic messages per day · drama-driven</p>
+      {watchQuery.isLoading ? (
+        <div className="mt-3 space-y-1">
+          <div className="h-4 w-3/4 animate-pulse bg-[#1A0A0A]" />
+          <div className="h-4 w-1/2 animate-pulse bg-[#1A0A0A]" />
+        </div>
+      ) : (
+        <p className="mt-3 text-sm font-bold leading-6 text-[#D8D8D8]">
+          <span className="type-caret pr-1">{displayMessage}</span>
+        </p>
+      )}
+      <p className="mt-2 text-[8px] font-black uppercase tracking-[0.28em] text-[#777]">Personal read · refreshes 4× daily</p>
     </aside>
   );
 }
@@ -1868,7 +1890,7 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
       </section>
 
       <aside className="hidden min-w-0 max-w-full flex flex-col gap-1.5 overflow-x-hidden xl:flex">
-        <CollapsibleSection sectionKey="myday-warden" label="The Warden is watching" summary={[...(snapshot?.wardenMessages ?? [])].reverse()[0]?.content?.slice(0, 60) ?? "Watching…"} tone="red">
+        <CollapsibleSection sectionKey="myday-warden" label="The Warden is watching" summary="Personal read · refreshes 4× daily" tone="red">
           <WardenPresence snapshot={snapshot} />
         </CollapsibleSection>
         <CollapsibleSection sectionKey="myday-lives" label="Lives" summary={`${participant?.livesRemaining ?? 4}/4 lives remaining`} tone={((participant?.livesRemaining ?? 4) <= 2) ? "red" : "gold"}>

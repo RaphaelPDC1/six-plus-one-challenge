@@ -514,6 +514,121 @@ Respond in JSON only.`;
     }),
 
   /**
+   * Get a personal Warden "watching" message for the logged-in participant.
+   * Inward-facing: reads THIS participant's full history, onboarding profile,
+   * streak, lives, rule compliance patterns, submission timing, and points
+   * trajectory. Generates one sharp message aimed directly at them.
+   * Cached 6h per participant (same 4x-daily refresh as getDailyReds).
+   */
+  getPersonalWardenWatch: protectedProcedure
+    .query(async ({ ctx }) => {
+      const now = new Date();
+      const dayStr = now.toISOString().slice(0, 10);
+      const timeSlot = Math.floor(now.getUTCHours() / 6);
+      const ownParticipant = await getParticipantByUserId(ctx.user.id);
+      if (!ownParticipant) return { message: "No hiding place. Log the day.", tone: "red" as WardenMoodTone, source: "fallback" as const, slot: timeSlot };
+      const pid = ownParticipant.id;
+      const cacheKey = `personal-watch-${pid}-${dayStr}-slot${timeSlot}`;
+      const cached = wardenMoodCache.get(cacheKey);
+      if (cached && Date.now() - cached.createdAt < WARDEN_MOOD_CACHE_TTL_MS) {
+        return { message: cached.mood.detail, tone: cached.mood.tone, source: "cache" as const, slot: timeSlot };
+      }
+      try {
+        const { getDb, getCurrentChallengeDay } = await import("../db");
+        const currentDay = getCurrentChallengeDay();
+        const db = await getDb();
+        if (!db) return { message: "No hiding place. Log the day.", tone: "red" as WardenMoodTone, source: "fallback" as const, slot: timeSlot };
+        const { dailyLogs: logsTable, participants: participantsTable } = await import("../../drizzle/schema");
+        const { eq, desc } = await import("drizzle-orm");
+
+        // Full log history for this participant
+        const allLogs = await db.select().from(logsTable).where(eq(logsTable.participantId, pid)).orderBy(desc(logsTable.dayNumber)).limit(60);
+        // All participants for rank context
+        const allParticipants = await db.select().from(participantsTable).limit(100);
+        const ranked = [...allParticipants].sort((a, b) => (b.totalPoints ?? 0) - (a.totalPoints ?? 0));
+        const myRank = ranked.findIndex(p => p.id === pid) + 1;
+        const totalParticipants = allParticipants.length;
+
+        const todayLog = allLogs.find(l => Number(l.dayNumber ?? 0) === currentDay);
+        const last7 = allLogs.slice(0, 7);
+        const last7Complete = last7.filter(l => l.dayComplete).length;
+        const ruleKeys = ["noAlcohol", "cleanEating", "exerciseDone", "reflectionDone", "readTeachDone", "trackedEverything"] as const;
+        const ruleLabels: Record<string, string> = { noAlcohol: "no-alcohol", cleanEating: "clean eating", exerciseDone: "exercise", reflectionDone: "reflection", readTeachDone: "read & teach", trackedEverything: "track everything" };
+
+        // Most-missed rule across all their logs
+        const completedLogs = allLogs.filter(l => l.dayComplete);
+        const ruleMissRates = ruleKeys.map(key => ({
+          rule: ruleLabels[key],
+          missRate: completedLogs.length > 0
+            ? Math.round((completedLogs.filter(l => !l[key as keyof typeof l]).length / completedLogs.length) * 100)
+            : 0,
+        })).sort((a, b) => b.missRate - a.missRate);
+        const weakestRule = ruleMissRates[0];
+
+        // Submission timing pattern
+        const timingHours = allLogs.filter(l => l.submittedAt).map(l => new Date(l.submittedAt!).getUTCHours());
+        const avgHour = timingHours.length > 0 ? Math.round(timingHours.reduce((s, h) => s + h, 0) / timingHours.length) : null;
+        const lateNightCount = timingHours.filter(h => h >= 22 || h < 2).length;
+
+        // Streak and lives
+        const streak = ownParticipant.currentStreak ?? 0;
+        const lives = ownParticipant.livesRemaining ?? 4;
+        const totalPoints = ownParticipant.totalPoints ?? 0;
+        const daysComplete = ownParticipant.daysComplete ?? 0;
+        const daysRemaining = 50 - currentDay;
+
+        // Points gap to person above and below
+        const myRankIndex = myRank - 1;
+        const above = myRankIndex > 0 ? ranked[myRankIndex - 1] : null;
+        const below = myRankIndex < ranked.length - 1 ? ranked[myRankIndex + 1] : null;
+        const gapAbove = above ? (above.totalPoints ?? 0) - totalPoints : 0;
+        const gapBelow = below ? totalPoints - (below.totalPoints ?? 0) : 0;
+
+        const prompt = `You are the Warden of a 50-day discipline challenge. You are addressing ONE specific participant directly. You have studied their complete record.
+
+PARTICIPANT: ${ownParticipant.displayName}
+Goal: ${ownParticipant.primaryGoal ?? "not stated"}
+Biggest obstacle: ${ownParticipant.biggestObstacle ?? "not stated"}
+Training level: ${ownParticipant.trainingLevel ?? "not stated"}
+
+CHALLENGE STATE: Day ${currentDay}/50 · ${daysRemaining} days remaining
+
+THEIR RECORD:
+- Days complete: ${daysComplete}/${currentDay} (${currentDay > 0 ? Math.round((daysComplete / currentDay) * 100) : 0}%)
+- Last 7 days complete: ${last7Complete}/7
+- Current streak: ${streak} days
+- Lives remaining: ${lives}/4
+- Total points: ${totalPoints} · Rank ${myRank}/${totalParticipants}
+- Gap to person above: ${gapAbove > 0 ? `${gapAbove} pts behind` : "They lead"}
+- Gap to person below: ${gapBelow > 0 ? `${gapBelow} pts ahead` : "No gap"}
+
+PATTERN ANALYSIS:
+- Weakest rule (highest miss rate): "${weakestRule?.rule}" (${weakestRule?.missRate}% miss rate)
+- Average submission hour (UTC): ${avgHour !== null ? `${avgHour}:00` : "unknown"}
+- Late-night submissions (10pm-2am): ${lateNightCount} of ${allLogs.length} days
+- Today logged: ${todayLog ? "yes" : "no"} · Today complete: ${todayLog?.dayComplete ? "yes" : "no"}
+
+Write ONE message (2-3 sentences max, 220 chars max). Address them directly — use their name once. Reference their specific data. Warden voice: dry, precise, slightly unsettling, like a system that has been watching them specifically. Not motivational. Not punishing. Just seen. No quotes. No prefix.`;
+
+        const response = await invokeLLM({
+          messages: [
+            { role: "system", content: "You are the Warden. Address this participant directly. Dry. Sharp. Specific. No fluff." },
+            { role: "user", content: prompt },
+          ],
+        });
+        const rawMessage = String(response?.choices?.[0]?.message?.content ?? "").trim().slice(0, 240);
+        const message = rawMessage || `${ownParticipant.displayName}, the record is being read. Keep logging.`;
+        // Determine tone from lives/risk
+        const tone: WardenMoodTone = lives <= 1 ? "red" : lives === 2 ? "gold" : streak >= 7 ? "green" : "white";
+        wardenMoodCache.set(cacheKey, { fingerprint: cacheKey, mood: { label: "personal-watch", tone, detail: message, confidence: 0.85, source: "ai" }, createdAt: Date.now() });
+        return { message, tone, source: "ai" as const, slot: timeSlot };
+      } catch (err) {
+        console.warn("[Warden] getPersonalWardenWatch failed", err);
+        return { message: "No hiding place. Log the day.", tone: "red" as WardenMoodTone, source: "fallback" as const, slot: timeSlot };
+      }
+    }),
+
+  /**
    * Get today's message count for monitoring daily limits
    * Called by Make.com or admin dashboard
    */

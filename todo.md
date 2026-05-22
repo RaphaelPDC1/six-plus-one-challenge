@@ -1385,3 +1385,12 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] When only 1-2 components are visible/expanded, layout fills space — no floating islands
 - [x] Adaptive fill: expanded components stretch to use available vertical space gracefully
 - [x] All 181 tests pass, TypeScript clean
+
+## v8.13 — Split Warden intelligence streams
+
+- [x] Add `getPersonalWardenWatch` protected procedure — reads this participant's full log history, onboarding profile, streak, lives, rule compliance pattern, points trajectory; generates 1 sharp inward-facing Warden message aimed directly at them; cached 6h per participant
+- [x] Keep `getDailyReds` as collective group intelligence (past+present+future across all participants)
+- [x] Update `WardenPresence` component to call `getPersonalWardenWatch` instead of showing the latest organic broadcast message
+- [x] The personal watch message should feel like the Warden has been studying this specific person — reference their name, their specific gaps, their streak, their risk
+- [x] Warden Reds (Overview + Board) remain on `getDailyReds` — no change
+- [x] All 181 tests pass, TypeScript clean
