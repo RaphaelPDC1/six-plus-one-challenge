@@ -3626,6 +3626,13 @@ function AdminPanel({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => 
     },
     onError: error => toast(error.message || "Could not generate insight."),
   });
+  const generatePersonalised = trpc.admin.generatePersonalisedCareNotes.useMutation({
+    onSuccess: (data) => {
+      haptics.success();
+      toast(`Personalised care notes sent: ${data.generated} delivered, ${data.failed} skipped.`);
+    },
+    onError: error => toast(error.message || "Could not generate personalised notes."),
+  });
   return (
     <div className="grid gap-5 xl:grid-cols-2">
       <section className="border border-[#2A2A2A] bg-[#101010] p-5 xl:col-span-2" data-testid="release-note-admin-panel">
@@ -3641,6 +3648,7 @@ function AdminPanel({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => 
         </div>
         <div className="mt-4 flex flex-wrap gap-3">
           <SharpButton className="min-h-11 px-5 py-3" disabled={generateInsight.isPending} onClick={() => generateInsight.mutate()} style={{ background: "#1A0A00", border: "1px solid #C8A96E", color: "#C8A96E" }}>{generateInsight.isPending ? "Generating AI insight..." : "✦ Generate AI community insight"}</SharpButton>
+          <SharpButton className="min-h-11 px-5 py-3" disabled={generatePersonalised.isPending} onClick={() => generatePersonalised.mutate({ versionLabel: releaseNoteForm.versionLabel || "v8.9" })} style={{ background: "#0A001A", border: "1px solid #9B59B6", color: "#C39BD3" }}>{generatePersonalised.isPending ? "Sending personalised notes..." : "✦ Send personalised care notes to all"}</SharpButton>
           <SharpButton className="min-h-11 px-5 py-3" disabled={createReleaseNote.isPending || !releaseNoteForm.title.trim() || !releaseNoteForm.versionLabel.trim() || !releaseNoteForm.summary.trim() || !releaseNoteForm.body.trim()} onClick={() => createReleaseNote.mutate({ ...releaseNoteForm, active: true })}>{createReleaseNote.isPending ? "Publishing..." : "Publish update pop-up"}</SharpButton>
         </div>
       </section>
@@ -3797,11 +3805,24 @@ function CommunityCareReleaseNotePopup({ note, isPending, onAcknowledge }: { not
   if (!note) return null;
   const categoryLabel = note.category === "community_care" ? "Community care" : note.category === "rules" ? "Rules" : note.category === "rewards" ? "Rewards" : note.category === "technical" ? "Technical" : "Edit";
   // Parse 3-layer insight from body if it's JSON, otherwise fall back to plain text
+  // Supports both broadcast format (personalLayer/groupLayer/gameLayer) and
+  // personalised format (personalObservation/forwardStrategy/communityNote)
   let layers: { personalLayer?: string; groupLayer?: string; gameLayer?: string; redHighlights?: string[] } | null = null;
   try {
     const parsed = JSON.parse(note.body);
-    if (parsed && typeof parsed === "object" && (parsed.personalLayer || parsed.groupLayer || parsed.gameLayer)) {
-      layers = parsed;
+    if (parsed && typeof parsed === "object") {
+      if (parsed.personalLayer || parsed.groupLayer || parsed.gameLayer) {
+        // Broadcast format
+        layers = parsed;
+      } else if (parsed.personalObservation || parsed.forwardStrategy || parsed.communityNote) {
+        // Personalised format — map to display layers
+        layers = {
+          personalLayer: parsed.personalObservation,
+          groupLayer: parsed.communityNote,
+          gameLayer: parsed.forwardStrategy,
+          redHighlights: parsed.redHighlights,
+        };
+      }
     }
   } catch { /* plain text body */ }
   const popup = (

@@ -1066,13 +1066,17 @@ export async function seedReleaseNotesIfEmpty() {
 export async function getLatestUnacknowledgedReleaseNote(userId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database unavailable");
-  await seedReleaseNotesIfEmpty();
   const [notes, acknowledgements] = await Promise.all([
-    db.select().from(releaseNotes).where(eq(releaseNotes.active, true)).orderBy(desc(releaseNotes.publishedAt)).limit(10),
+    db.select().from(releaseNotes).where(eq(releaseNotes.active, true)).orderBy(desc(releaseNotes.publishedAt)).limit(20),
     db.select().from(releaseNoteAcknowledgements).where(eq(releaseNoteAcknowledgements.userId, userId)),
   ]);
   const acknowledgedIds = new Set(acknowledgements.map(row => row.releaseNoteId));
-  return notes.find(note => !acknowledgedIds.has(note.id)) ?? null;
+  // Show personalised notes for this user first, then broadcast notes (targetUserId null)
+  const eligible = notes.filter(note =>
+    !acknowledgedIds.has(note.id) &&
+    (note.targetUserId === null || note.targetUserId === userId)
+  );
+  return eligible[0] ?? null;
 }
 
 export async function acknowledgeReleaseNoteForUser(releaseNoteId: number, userId: number) {
@@ -1090,7 +1094,7 @@ export async function acknowledgeReleaseNoteForUser(releaseNoteId: number, userI
   return { success: true as const };
 }
 
-export async function createCommunityCareReleaseNote(input: { title: string; summary: string; body: string; versionLabel: string; category?: "edit" | "community_care" | "rules" | "rewards" | "technical"; active?: boolean }, createdByUserId: number) {
+export async function createCommunityCareReleaseNote(input: { title: string; summary: string; body: string; versionLabel: string; category?: "edit" | "community_care" | "rules" | "rewards" | "technical"; active?: boolean; targetUserId?: number | null }, createdByUserId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database unavailable");
   const values = {
@@ -1101,6 +1105,7 @@ export async function createCommunityCareReleaseNote(input: { title: string; sum
     category: input.category ?? "edit",
     active: input.active ?? true,
     createdByUserId,
+    targetUserId: input.targetUserId ?? null,
   };
   await db.insert(releaseNotes).values(values);
   const created = await db.select().from(releaseNotes).orderBy(desc(releaseNotes.createdAt)).limit(1);

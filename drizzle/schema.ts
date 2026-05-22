@@ -192,6 +192,7 @@ export const releaseNotes = mysqlTable("release_notes", {
   active: boolean("active").default(true).notNull(),
   publishedAt: timestamp("publishedAt").defaultNow().notNull(),
   createdByUserId: int("createdByUserId"),
+  targetUserId: int("targetUserId"), // null = broadcast to all; set = personalised for one participant
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });

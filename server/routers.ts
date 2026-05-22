@@ -47,7 +47,7 @@ import {
 } from "./db";
 import { generateWardenCommentary } from "./warden";
 import { generateDeepThoughtsForSnapshot } from "./deepThought";
-import { generateReleaseNoteInsight } from "./releaseNoteGenerator";
+import { generateReleaseNoteInsight, generatePersonalisedCareInsight } from "./releaseNoteGenerator";
 import { wardenRouter } from "./warden/wardenRouters";
 import { storagePut } from "./storage";
 import { notifyOwner } from "./_core/notification";
@@ -489,6 +489,77 @@ export const appRouter = router({
           recentLogs,
           { avgPointsPerDay: avgPts, avgStreakLength: avgStreak, totalParticipants: snapshot.participants.length },
         );
+      }),
+    generatePersonalisedCareNotes: adminProcedure
+      .input(z.object({ versionLabel: z.string().trim().min(1).max(80).default("v8.9") }))
+      .mutation(async ({ ctx, input }) => {
+        const snapshot = await getAppSnapshot(ctx.user.id, "admin", ctx.user.email);
+        const allParticipants = snapshot.participants as any[];
+        const allLogs = snapshot.logs as any[];
+        const totalPts = allParticipants.reduce((s: number, p: any) => s + p.totalPoints, 0);
+        const avgTotalPoints = allParticipants.length > 0 ? Math.round(totalPts / allParticipants.length) : 0;
+        const avgStreak = allParticipants.length > 0
+          ? Math.round(allParticipants.reduce((s: number, p: any) => s + p.currentStreak, 0) / allParticipants.length)
+          : 0;
+        const completedToday = allLogs.filter((l: any) => l.dayNumber === snapshot.challenge.currentDay && l.dayComplete).length;
+        const completionRateToday = allParticipants.length > 0 ? Math.round((completedToday / allParticipants.length) * 100) : 0;
+        const participantsAtRisk = allParticipants.filter((p: any) => p.livesRemaining <= 1).length;
+        const sortedByPoints = [...allParticipants].sort((a: any, b: any) => b.totalPoints - a.totalPoints);
+        const groupStats = { totalParticipants: allParticipants.length, avgTotalPoints, avgStreak, completionRateToday, participantsAtRisk };
+        const results: Array<{ participantId: number; name: string; success: boolean; error?: string }> = [];
+        for (const participant of allParticipants) {
+          try {
+            const rank = sortedByPoints.findIndex((p: any) => p.id === participant.id) + 1;
+            const recentLogs = allLogs
+              .filter((l: any) => l.participantId === participant.id)
+              .sort((a: any, b: any) => b.dayNumber - a.dayNumber)
+              .slice(0, 3)
+              .map((l: any) => ({
+                dayNumber: l.dayNumber,
+                submittedAt: l.submittedAt ? new Date(l.submittedAt).toISOString() : undefined,
+                noAlcohol: !!l.noAlcohol,
+                cleanEating: !!l.cleanEating,
+                exerciseDone: !!l.exerciseDone,
+                reflectionDone: !!l.reflectionDone,
+                readTeachDone: !!l.readTeachDone,
+                trackedEverything: !!l.trackedEverything,
+                pointsAwarded: l.pointsAwarded ?? 0,
+                exerciseType: l.exerciseType ?? undefined,
+                exerciseDuration: l.exerciseDuration ?? undefined,
+                reflectionText: String(l.reflectionText ?? "").slice(0, 80) || undefined,
+                readTeachText: String(l.readTeachText ?? "").slice(0, 80) || undefined,
+              }));
+            if (recentLogs.length === 0) {
+              results.push({ participantId: participant.id, name: participant.displayName ?? "?", success: false, error: "No logs" });
+              continue;
+            }
+            const careCtx = {
+              name: participant.displayName ?? "Challenger",
+              dayNumber: snapshot.challenge.currentDay,
+              totalPoints: participant.totalPoints ?? 0,
+              currentStreak: participant.currentStreak ?? 0,
+              livesRemaining: participant.livesRemaining ?? 4,
+              rank,
+              recentLogs,
+              groupStats,
+            };
+            const insight = await generatePersonalisedCareInsight(careCtx);
+            const body = JSON.stringify(insight);
+            await createCommunityCareReleaseNote({
+              title: `Warden Insight — ${participant.displayName ?? "Challenger"}`,
+              summary: insight.personalObservation.slice(0, 200),
+              body,
+              versionLabel: input.versionLabel,
+              category: "community_care",
+              active: true,
+              targetUserId: participant.userId,
+            }, ctx.user.id);
+            results.push({ participantId: participant.id, name: participant.displayName ?? "?", success: true });
+          } catch (err: any) {
+            results.push({ participantId: participant.id, name: participant.displayName ?? "?", success: false, error: err?.message ?? "Unknown" });
+          }
+        }
+        return { generated: results.filter(r => r.success).length, failed: results.filter(r => !r.success).length, results };
       }),
   }),
 

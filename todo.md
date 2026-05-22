@@ -1347,3 +1347,14 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] WardenPresence updated to show personalInsight when available (both mobile and desktop sidebar)
 - [x] Board shows Warden collective note below content when available
 - [x] All 181 tests pass, TypeScript clean
+
+## v8.9 — Personalised Community Care Notes (Per-Participant, Every 3 Days)
+
+- [x] Rewrite releaseNoteGenerator.ts to generate one personalised card per participant (not a broadcast)
+- [x] LLM receives: participant's last 3 days logs, onboarding profile (goals/obstacles/training), group rank/context
+- [x] LLM generates: personal observation, forward-looking points strategy, community care note
+- [x] Add generatePersonalisedCareNotes admin procedure that creates one DB row per participant
+- [ ] Add schedulePersonalisedCareNotes heartbeat that runs every 3 days automatically (deferred to v8.10)
+- [x] Update CommunityCareReleaseNotePopup to render the personalised format
+- [x] Keep admin broadcast form (kept alongside new per-participant button)
+- [x] All 181 tests pass, TypeScript clean

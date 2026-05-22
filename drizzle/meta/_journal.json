@@ -99,6 +99,13 @@
       "when": 1779226322986,
       "tag": "0013_talented_purple_man",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "5",
+      "when": 1779408543482,
+      "tag": "0014_plain_shaman",
+      "breakpoints": true
     }
   ]
 }

@@ -1,0 +1,1 @@
+ALTER TABLE `release_notes` ADD `targetUserId` int;
