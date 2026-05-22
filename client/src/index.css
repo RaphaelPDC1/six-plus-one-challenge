@@ -732,6 +732,19 @@ html.haptic-visual-feedback body {
   animation: none;
 }
 
+/* ── Brand spacing scale (4px base) ─────────────────────────────────────── */
+:root {
+  --sp-1:  2px;   /* grid gaps, life dot gaps */
+  --sp-2:  4px;   /* micro spacing, life dots */
+  --sp-3:  8px;   /* label→content, tag padding */
+  --sp-4:  12px;  /* compact card padding */
+  --sp-5:  16px;  /* standard card padding, row padding, mobile horizontal */
+  --sp-6:  20px;  /* section internal padding, large cards */
+  --sp-7:  24px;  /* between sections on mobile */
+  --sp-8:  32px;  /* major section gaps, page top padding */
+  --sp-9:  48px;  /* desktop section gaps only */
+}
+
 /* Site-wide motion polish: fast, tactile and reduced-motion safe. */
 :root {
   --motion-fast: 160ms;
@@ -739,6 +752,10 @@ html.haptic-visual-feedback body {
   --motion-slow: 520ms;
   --motion-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --motion-ease-snap: cubic-bezier(0.2, 0.9, 0.18, 1.12);
+  /* Brand transition shorthands */
+  --t-default: 0.2s ease;
+  --t-expand:  0.3s ease;
+  --t-tab:     0.2s ease;
 }
 
 @keyframes motion-page-in {
@@ -936,6 +953,82 @@ html.haptic-visual-feedback .motion-card {
   }
 }
 
+
+/* ── Brand typography scale ─────────────────────────────────────────── */
+.type-display {
+  font-size: clamp(40px, 8vw, 80px);
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+  line-height: 0.9;
+}
+
+.type-section {
+  font-size: clamp(24px, 4vw, 40px);
+  font-weight: 900;
+  letter-spacing: -0.015em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.type-card-title {
+  font-size: clamp(14px, 1.5vw, 16px);
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  text-transform: uppercase;
+  line-height: 1.1;
+}
+
+.type-body {
+  font-size: clamp(13px, 1.4vw, 14px);
+  font-weight: 400;
+  letter-spacing: normal;
+  color: #999999;
+  line-height: 1.5;
+}
+
+.type-section-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.type-micro {
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.type-stat {
+  font-size: clamp(32px, 5vw, 56px);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.type-mono {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: clamp(10px, 1.1vw, 12px);
+  letter-spacing: 0.05em;
+}
+
+/* ── Life dot pulse ─────────────────────────────────────────────────── */
+@keyframes life-dot-pulse {
+  0%, 100% { box-shadow: 0 0 4px #C0392B; }
+  50%       { box-shadow: 0 0 10px #C0392B, 0 0 20px rgba(192,57,43,0.4); }
+}
+
+.life-dot-active {
+  animation: life-dot-pulse 2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .life-dot-active { animation: none !important; }
+}
 
 @keyframes podium-gold-champion {
   0%, 100% { filter: saturate(1) drop-shadow(0 0 0 rgba(200,169,110,0)); }

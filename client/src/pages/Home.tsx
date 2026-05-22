@@ -2761,7 +2761,7 @@ function LifeDots({ lives, compact = false }: { lives: number; compact?: boolean
     <span className={classNames("inline-flex items-center", compact ? "gap-1" : "gap-1.5")} aria-label={`${safeLives} of 4 lives remaining`} data-testid="life-dots">
       {Array.from({ length: 4 }).map((_, index) => {
         const alive = index < safeLives;
-        return <span key={index} className={classNames("rounded-full border", compact ? "h-2.5 w-2.5" : "h-3 w-3", alive ? "border-[#2ECC71] bg-[#2ECC71] shadow-[0_0_12px_rgba(46,204,113,0.42)]" : "border-[#3A1815] bg-[#180A08]")} />;
+        return <span key={index} className={classNames("rounded-full border", compact ? "h-2.5 w-2.5" : "h-3 w-3", alive ? "border-[#C0392B] bg-[#C0392B] life-dot-active" : "border-[#222222] bg-[#222222]")} />;
       })}
     </span>
   );

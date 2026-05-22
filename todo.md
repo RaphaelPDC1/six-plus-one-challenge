@@ -1421,3 +1421,14 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] BugReporter.tsx bottom sheet rounded-t-2xl removed
 - [x] ComponentShowcase.tsx rounded corners left as-is (dev-only, not user-facing)
 - [x] All 181 tests pass, TypeScript clean
+
+## v8.16 — Spacing, Typography, Motion, Copy
+
+- [x] Spacing scale: --sp-1 (2px) through --sp-9 (48px) CSS custom properties added to :root
+- [x] Typography: .type-display, .type-section, .type-card-title, .type-body, .type-section-label, .type-micro, .type-stat, .type-mono utility classes added with exact brand spec values
+- [x] Motion: --t-default, --t-expand, --t-tab transition tokens added to :root
+- [x] Motion: life dot pulse — @keyframes life-dot-pulse + .life-dot-active class (2s ease-in-out infinite), applied to LifeDots component
+- [x] Motion: all other animations already present (warden-pulse, motion-list stagger, life-loss-pulse, tab-stage, sheet-panel, motion-card/press/row, reduced-motion guards)
+- [x] Copy audit: no banned words found in any .tsx file — codebase is clean
+- [x] Copy audit: LLM system prompt in messageGenerator.ts already bans praise words at the model level
+- [x] All 181 tests pass, TypeScript clean
