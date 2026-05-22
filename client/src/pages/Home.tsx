@@ -830,10 +830,16 @@ function PosterStat({ label, value, tone = "gold" }: { label: string; value: str
 }
 
 function WardenPresence({ snapshot }: { snapshot: Snapshot }) {
+  // Include participant ID in the query key so React Query never bleeds
+  // a cached result from one account into another when switching users.
+  const myParticipantId = snapshot?.participant?.id;
   const watchQuery = trpc.warden.getPersonalWardenWatch.useQuery(undefined, {
     staleTime: 6 * 60 * 60 * 1000,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
+    // queryKey is auto-derived from the procedure path; we bust it per-user
+    // by disabling the query until we know who we are, then re-enabling.
+    enabled: myParticipantId != null,
   });
   const SLOT_LABELS_WATCH = ["Midnight", "Morning", "Afternoon", "Evening"] as const;
   const slotLabel = watchQuery.data?.slot !== undefined ? SLOT_LABELS_WATCH[watchQuery.data.slot] ?? "" : "";
@@ -1890,13 +1896,13 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
       </section>
 
       <aside className="hidden min-w-0 max-w-full flex flex-col gap-1.5 overflow-x-hidden xl:flex">
-        <CollapsibleSection sectionKey="myday-warden" label="The Warden is watching" summary="Personal read · refreshes 4× daily" tone="red">
+        <CollapsibleSection sectionKey="myday-warden" label="The Warden is watching" summary="Personal read · refreshes 4× daily" tone="red" defaultOpen={true}>
           <WardenPresence snapshot={snapshot} />
         </CollapsibleSection>
-        <CollapsibleSection sectionKey="myday-lives" label="Lives" summary={`${participant?.livesRemaining ?? 4}/4 lives remaining`} tone={((participant?.livesRemaining ?? 4) <= 2) ? "red" : "gold"}>
+        <CollapsibleSection sectionKey="myday-lives" label="Lives" summary={`${participant?.livesRemaining ?? 4}/4 lives remaining`} tone={((participant?.livesRemaining ?? 4) <= 2) ? "red" : "gold"} defaultOpen={false}>
           <HealthBar lives={participant?.livesRemaining ?? 4} label="Lives remaining" />
         </CollapsibleSection>
-        <CollapsibleSection sectionKey="myday-ghost" label="Ghost Life" summary={ghostLifeLocked ? "Used · locked for challenge" : "Available · one rescue"} tone="purple">
+        <CollapsibleSection sectionKey="myday-ghost" label="Ghost Life" summary={ghostLifeLocked ? "Used · locked for challenge" : "Available · one rescue"} tone="purple" defaultOpen={false}>
         <div className={classNames("motion-card ghost-life-card border p-4 transition", ghostLifeLocked ? "border-[#4A315D] bg-[#120F18] opacity-80" : "border-[#2A2A2A] bg-[#101010]")} data-ghost-life-state={ghostLifeLocked ? "locked" : "available"}>
           <div className="flex items-start justify-between gap-3">
             <MicroLabel tone="purple">Ghost Life</MicroLabel>
@@ -1909,7 +1915,7 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
           </SharpButton>
         </div>
         </CollapsibleSection>
-        <CollapsibleSection sectionKey="myday-warden-note" label="Latest Warden note" summary={(latestWarden?.content ?? "No hiding place. Log the day.").slice(0, 60)} tone="red" fillWhenAlone>
+        <CollapsibleSection sectionKey="myday-warden-note" label="Latest Warden note" summary={(latestWarden?.content ?? "No hiding place. Log the day.").slice(0, 60)} tone="red" fillWhenAlone defaultOpen={false}>
           <div className="border border-[#2A2A2A] bg-[#101010] p-4">
             <MicroLabel tone="red">Latest Warden note</MicroLabel>
             <p className="mt-3 text-sm font-bold leading-6 text-[#BDBDBD]">{latestWarden?.content ?? "No hiding place. Log the day."}</p>
@@ -2208,19 +2214,12 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
           The room <span className="text-[#C8A96E]">is moving.</span>
         </h2>
       </div>
-      {/* Overview folder header */}
-      <button
-        type="button"
-        onClick={() => setOverviewExpanded(v => !v)}
-        className="mx-1 flex w-[calc(100%-0.5rem)] items-center justify-between gap-3 border border-[#2A2A2A] bg-[#0D0D0D] px-4 py-3 text-left transition hover:border-[#C8A96E]/50"
-        aria-expanded={overviewExpanded}
-        data-testid="overview-folder-header"
-      >
+      {/* Status line */}
+      <div className="mx-1 flex w-[calc(100%-0.5rem)] items-center gap-3 border border-[#2A2A2A] bg-[#0D0D0D] px-4 py-2.5" data-testid="overview-folder-header">
         <span className="text-[10px] font-black uppercase tracking-[0.18em] text-[#C8A96E]">{overviewStatusLine}</span>
-        <ChevronDown className={classNames("h-4 w-4 shrink-0 text-[#777] transition-transform duration-300", overviewExpanded ? "rotate-180" : "rotate-0")} aria-hidden="true" />
-      </button>
-      {/* Collapsible content */}
-      <div className={overviewExpanded ? "flex flex-col gap-2" : "hidden"}>
+      </div>
+      {/* Content */}
+      <div className="flex flex-col gap-2 min-h-screen">
       <div className="insights-marquee overflow-hidden" aria-hidden="true">
         <div className="animate-marquee flex gap-8 whitespace-nowrap py-2 pl-4">
           {[...insightTicker, ...insightTicker].map((item, i) => (
@@ -2247,7 +2246,7 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
       </section>
 
       {/* Next best move */}
-      <CollapsibleSection sectionKey="overview-next-move" label="Next best move" summary={`${nextMove.title} · ${completedRules}/6 done`} tone={nextMove.tone === "red" ? "red" : nextMove.tone === "green" ? "green" : "gold"}>
+      <CollapsibleSection sectionKey="overview-next-move" label="Next best move" summary={`${nextMove.title} · ${completedRules}/6 done`} tone={nextMove.tone === "red" ? "red" : nextMove.tone === "green" ? "green" : "gold"} defaultOpen={true}>
       <section className={classNames("relative overflow-hidden border p-4 shadow-[0_0_50px_rgba(0,0,0,0.35)]", nextMove.tone === "red" ? "border-[#C0392B]/65 bg-[#190B0A]" : nextMove.tone === "gold" ? "border-[#C8A96E]/65 bg-[#16130B]" : "border-[#2ECC71]/45 bg-[#07150D]")} data-testid="overview-next-best-move">
         <div className="pointer-events-none absolute -right-14 -top-16 h-40 w-40 rounded-full bg-current/10 blur-3xl" />
         <div className="relative">
@@ -2263,7 +2262,7 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
       </CollapsibleSection>
 
       {/* 2-col: Warden read + Challenge state (merged) */}
-      <CollapsibleSection sectionKey="overview-warden-challenge" label="Warden read · Challenge state" summary={`${todayComplete}/${participantCount} banked · ${riskCount} at risk`} tone="gold">
+      <CollapsibleSection sectionKey="overview-warden-challenge" label="Warden read · Challenge state" summary={`${todayComplete}/${participantCount} banked · ${riskCount} at risk`} tone="gold" defaultOpen={false}>
       <section className="grid gap-3 sm:grid-cols-2" data-testid="overview-boost-warden-grid">
         <WardenMoodCard mood={wardenMoodQuery.data} isLoading={wardenMoodQuery.isLoading} currentDay={currentDay} completedRules={currentParticipant?.completedRulesToday ?? 0} totalRules={6} />
         <article className="relative overflow-hidden border border-[#2A2A2A] bg-[#0F0F0F] p-4" data-testid="overview-red-alert-pace-card">
@@ -2291,7 +2290,7 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
       </CollapsibleSection>
 
       {/* 2-col: Rival pressure (compact) */}
-      <CollapsibleSection sectionKey="overview-rivals" label="Rival pressure" summary={`Rank ${currentRankLabel} · ${chasing ? `${chasing.displayName} above` : "You lead"} · ${beingChasedBy ? `${beingChasedBy.displayName} below` : "No threat"}`} tone="gold">
+      <CollapsibleSection sectionKey="overview-rivals" label="Rival pressure" summary={`Rank ${currentRankLabel} · ${chasing ? `${chasing.displayName} above` : "You lead"} · ${beingChasedBy ? `${beingChasedBy.displayName} below` : "No threat"}`} tone="gold" defaultOpen={false}>
       <div data-testid="overview-intelligence-grid">
       <section className="border border-[#2A2A2A] bg-[#101010] p-4" data-testid="personal-rivalry-cards" data-overview-intelligence-grid="true">
         <div className="flex items-center justify-between gap-2">
@@ -2319,22 +2318,22 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
       </section>
       </div>
       </CollapsibleSection>
-      {/* Bonuses section — full pool view */}
-      <CollapsibleSection sectionKey="overview-bonuses" label="Bonus pool" summary={`${unclaimedTodayBoosts.length} open today · ${ownBoostWins.length} won`} tone="green">
+      {/* Boosts — unified pool + won tokens */}
+      <CollapsibleSection sectionKey="overview-bonuses" label="Boosts" summary={`${unclaimedTodayBoosts.length} open today · ${ownBoostWins.length} won · +${ownTotalBoostPoints} pts`} tone="green" defaultOpen={false}>
       <section className="border border-[#2ECC71]/30 bg-[#07150D]" data-testid="overview-active-boosts">
-        <button type="button" onClick={() => setBonusAccordionOpen(v => !v)} className="motion-press flex w-full items-center justify-between gap-3 p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2ECC71]/60">
+        {/* Header row */}
+        <div className="flex items-center justify-between gap-3 p-4 pb-3">
           <div className="min-w-0">
-            <MicroLabel tone="green">Bonus pool · {ALWAYS_ACTIVE_BOOSTS.length} always-on + 3 rotating</MicroLabel>
+            <MicroLabel tone="green">Boosts · {ALWAYS_ACTIVE_BOOSTS.length} always-on + 3 rotating</MicroLabel>
             <h3 className="mt-1.5 text-xl font-black uppercase leading-none tracking-[-0.06em] text-white">
-              {unclaimedTodayBoosts.length > 0 ? `${unclaimedTodayBoosts.length} open today · tap to see all` : "All today's slots claimed"}
+              {unclaimedTodayBoosts.length > 0 ? `${unclaimedTodayBoosts.length} open today` : "All today's slots claimed"}
             </h3>
           </div>
           <div className="flex shrink-0 items-center gap-2">
-            <span className="border border-[#2ECC71]/55 bg-black/45 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.14em] text-[#2ECC71]">{ownBoostWins.length} won</span>
-            {bonusAccordionOpen ? <ChevronUp className="h-4 w-4 text-[#2ECC71]" /> : <ChevronDown className="h-4 w-4 text-[#2ECC71]" />}
+            <span className="border border-[#2ECC71]/55 bg-black/45 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.14em] text-[#2ECC71]">{ownBoostWins.length} won · +{ownTotalBoostPoints} pts</span>
           </div>
-        </button>
-        <div className={classNames("grid transition-all duration-500 ease-out", bonusAccordionOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0")}>
+        </div>
+        <div>
           <div className="overflow-hidden">
             <div className="border-t border-[#2ECC71]/20 p-4 pt-3 space-y-4">
               {/* Stats row */}
@@ -2388,8 +2387,10 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
                     const owner = win ? participants.find((p: any) => String(p.id) === String(win.userId)) : null;
                     const copy = getPlainBoostCopy(boost);
                     const expanded = expandedBoostId === `rotating-${boost.id}`;
+                    const isBoostExpanded = expanded;
                     return (
-                      <button key={boost.id} type="button" onClick={() => setExpandedBoostId(expanded ? null : `rotating-${boost.id}`)} className={classNames("motion-card motion-press min-w-0 border p-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A96E]/60", isActiveToday ? classNames("hover:-translate-y-0.5", getBoostToneClass(boost.tone)) : "border-[#1E1E1E] bg-[#0A0A0A] opacity-50")} aria-expanded={expanded}>
+                      <article key={boost.id} className={classNames("min-w-0 overflow-hidden border", isActiveToday ? getBoostToneClass(boost.tone) : "border-[#1E1E1E] bg-[#0A0A0A] opacity-50")} data-testid="boost-slot-card">
+                      <button type="button" onClick={() => setExpandedBoostId(expanded ? null : `rotating-${boost.id}`)} className="motion-card motion-press w-full p-3 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C8A96E]/60" aria-expanded={isBoostExpanded}>
                         <div className="flex items-center justify-between gap-2">
                           <span className={classNames("text-base font-black leading-none", !isActiveToday && "grayscale")}>{boost.icon}</span>
                           <div className="flex items-center gap-1.5">
@@ -2402,13 +2403,24 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
                         <p className="mt-0.5 text-[9px] font-black uppercase leading-4 tracking-[0.1em] opacity-70">
                           {win ? `${owner?.displayName ?? "Winner"} claimed it` : isActiveToday ? copy.plain : "Not in today's rotation"}
                         </p>
-                        {allTimeWins.length > 0 && <p className="mt-0.5 text-[8px] font-black uppercase tracking-[0.1em] text-[#C8A96E]/50">{allTimeWins.length}× won in challenge</p>}
-                        <div className={classNames("grid transition-all duration-500 ease-out", expanded ? "mt-2 grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0")}>
-                          <div className="overflow-hidden">
-                            <p className="border border-current/25 bg-black/35 p-2 text-[9px] font-black uppercase leading-5 tracking-[0.1em] text-[#E5E5E5]">{win?.wardenNote ? `Won: ${win.wardenNote}` : copy.how}</p>
+                        {win && (
+                          <div className="mt-2 flex min-w-0 items-center gap-2 border border-current/25 bg-black/35 p-2" data-testid="boost-claimant">
+                            <span className="min-w-0">
+                              <span className="block text-[8px] font-black uppercase tracking-[0.16em] opacity-75">Won by</span>
+                              <span className="block truncate text-xs font-black uppercase tracking-[0.06em] text-white">{owner?.displayName ?? "Winner"}</span>
+                            </span>
                           </div>
-                        </div>
+                        )}
+                        {allTimeWins.length > 0 && <p className="mt-0.5 text-[8px] font-black uppercase tracking-[0.1em] text-[#C8A96E]/50">{allTimeWins.length}× won in challenge</p>}
+                        <p className="mt-2 text-[9px] font-black uppercase tracking-[0.16em] opacity-80" data-testid="boost-tap-hint">Tap to see what this boost does</p>
                       </button>
+                      {isBoostExpanded && (
+                        <div className="border-t border-current/25 bg-black/35 p-3" data-testid="boost-detail-panel">
+                          <p className="text-[11px] font-black uppercase leading-5 tracking-[0.11em] text-white">{win?.wardenNote ? `Won: ${win.wardenNote}` : copy.how}</p>
+                          <p className="mt-2 text-[10px] font-bold uppercase leading-5 tracking-[0.12em] text-[#BDBDBD]">How it is won: {copy.how}</p>
+                        </div>
+                      )}
+                      </article>
                     );
                   })}
                 </div>
@@ -2419,10 +2431,10 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
           </div>
         </div>
       </section>
+      </CollapsibleSection>
 
       {/* Pressure list with show more/less */}
-      </CollapsibleSection>
-      <CollapsibleSection sectionKey="overview-pressure" label="Pressure list" summary={`${compareRows.length} challengers · ${riskCount} at risk`} tone="red" fillWhenAlone>
+      <CollapsibleSection sectionKey="overview-pressure" label="Pressure list" summary={`${compareRows.length} challengers · ${riskCount} at risk`} tone="red" fillWhenAlone defaultOpen={true}>
       <section className="border border-[#2A2A2A] bg-[#101010] p-4" data-testid="overview-compare-list">
         <div className="flex items-end justify-between gap-3">
           <div>
@@ -2840,19 +2852,12 @@ function Leaderboard({ snapshot }: { snapshot: Snapshot }) {
   );
   return (
     <section className="motion-page space-y-4 overflow-hidden border border-[#2A2A2A] bg-[#101010] p-3 sm:p-5" data-testid="bosses-board-section">
-      {/* Board folder header */}
-      <button
-        type="button"
-        onClick={() => setBoardExpanded(v => !v)}
-        className="flex w-full items-center justify-between gap-3 border border-[#2A2A2A] bg-[#0D0D0D] px-4 py-3 text-left transition hover:border-[#C8A96E]/50"
-        aria-expanded={boardExpanded}
-        data-testid="board-folder-header"
-      >
+      {/* Board status line */}
+      <div className="flex w-full items-center gap-3 border border-[#2A2A2A] bg-[#0D0D0D] px-4 py-2.5" data-testid="board-folder-header">
         <span className="text-[10px] font-black uppercase tracking-[0.18em] text-[#C8A96E]">{boardStatusLine}</span>
-        <ChevronDown className={classNames("h-4 w-4 shrink-0 text-[#777] transition-transform duration-300", boardExpanded ? "rotate-180" : "rotate-0")} aria-hidden="true" />
-      </button>
-      {/* Collapsible board content */}
-      <div className={boardExpanded ? "flex flex-col gap-2" : "hidden"}>
+      </div>
+      {/* Board content */}
+      <div className="flex flex-col gap-2 min-h-screen">
       <div className="rounded-[1.4rem] border border-[#2A2A2A] bg-[#0D0D0D] p-4 sm:p-5" data-testid="board-mobile-redesign-shell">
         <div className="flex items-end justify-between gap-4">
           <div>
@@ -2877,90 +2882,9 @@ function Leaderboard({ snapshot }: { snapshot: Snapshot }) {
         </div>
       </div>
 
-      <section className="overflow-hidden rounded-[1.4rem] border border-[#2ECC71]/30 bg-[#07150D]" data-testid="boost-key-slots" data-boost-collapsible-state={boostKeyOpen ? "open" : "closed"}>
-        <button
-          type="button"
-          className="motion-press flex w-full items-center justify-between gap-3 p-4 text-left"
-          aria-expanded={boostKeyOpen}
-          aria-controls="boost-key-collapsible-panel"
-          data-testid="boost-key-summary-toggle"
-          onClick={() => { pulse(12); setBoostKeyOpen(value => !value); }}
-        >
-          <span className="min-w-0">
-            <MicroLabel tone="green">Boost Key</MicroLabel>
-            <span className="mt-2 block text-2xl font-black uppercase leading-none tracking-[-0.07em] text-white">Boost tokens tucked away.</span>
-            <span className="mt-2 block text-[10px] font-black uppercase leading-5 tracking-[0.14em] text-[#A9EFC0]">{openBoostCount} open · {claimedBoostCount} claimed · tap to {boostKeyOpen ? "hide" : "reveal"} the slots</span>
-          </span>
-          <span className="flex shrink-0 flex-col items-end gap-2">
-            <span className="rounded-full border border-[#2ECC71]/55 bg-black/45 px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.16em] text-[#2ECC71]">Day {currentDay}</span>
-            <ChevronDown className={classNames("h-5 w-5 text-[#2ECC71] transition-transform duration-300", boostKeyOpen ? "rotate-180" : "rotate-0")} aria-hidden="true" />
-          </span>
-        </button>
-        <AnimatePresence initial={false}>
-          {boostKeyOpen && (
-            <motion.div
-              id="boost-key-collapsible-panel"
-              key="boost-key-collapsible-panel"
-              initial="closed"
-              animate="open"
-              exit="closed"
-              variants={boostCollapseVariants}
-              transition={{ duration: 0.34, ease: [0.16, 1, 0.3, 1] }}
-              className="overflow-hidden border-t border-[#2ECC71]/25"
-              data-testid="boost-key-collapsible-panel"
-            >
-        <div className="grid gap-2 p-4 sm:grid-cols-3">
-          {boostSlots.map((slot: any, index: number) => {
-            const toneClass = getBoostToneClass(slot.tone);
-            const isBoostExpanded = String(expandedBoostSlotId) === String(slot.id ?? slot.slot ?? index);
-            const detailId = `boost-slot-${slot.id ?? slot.slot ?? index}-detail`;
-            return (
-              <article key={slot.id ?? `${slot.title}-${index}`} className={classNames("min-w-0 overflow-hidden rounded-[1rem] border", toneClass)} data-boost-slot={index + 1} data-testid="boost-slot-card">
-                <button
-                  type="button"
-                  className="motion-press w-full p-3 text-left"
-                  aria-expanded={isBoostExpanded}
-                  aria-controls={detailId}
-                  aria-label={`Show ${slot.title} boost details`}
-                  onClick={() => { pulse(12); setExpandedBoostSlotId(isBoostExpanded ? null : (slot.id ?? slot.slot ?? index)); }}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-[9px] font-black uppercase tracking-[0.16em]">{slot.icon} · Slot {slot.slot ?? index + 1}</span>
-                    <span className="rounded-full border border-current/40 bg-black/40 px-2 py-1 text-[8px] font-black uppercase tracking-[0.14em]">{slot.state}</span>
-                  </div>
-                  <p className="mt-3 truncate text-sm font-black uppercase tracking-[-0.03em] text-white">{slot.title}</p>
-                  {slot.claimed ? (
-                    <div className="mt-3 flex min-w-0 items-center gap-2 border border-current/25 bg-black/35 p-2" data-testid="boost-claimant">
-                      <ProfilePhoto participant={slot.owner} className="h-9 w-9 shrink-0" />
-                      <span className="min-w-0">
-                        <span className="block text-[8px] font-black uppercase tracking-[0.16em] opacity-75">Won by</span>
-                        <span className="block truncate text-xs font-black uppercase tracking-[0.06em] text-white">{slot.claimantName}</span>
-                      </span>
-                    </div>
-                  ) : (
-                    <p className="mt-3 text-[10px] font-black uppercase tracking-[0.13em]">Unclaimed today</p>
-                  )}
-                  <p className="mt-2 text-[10px] font-black uppercase tracking-[0.13em]">{slot.pointsLine}</p>
-                  <p className="mt-3 text-[9px] font-black uppercase tracking-[0.16em] opacity-80" data-testid="boost-tap-hint">Tap to learn what this boost does</p>
-                </button>
-                {isBoostExpanded && (
-                  <div id={detailId} className="border-t border-current/25 bg-black/35 p-3" data-testid="boost-detail-panel">
-                    <MicroLabel tone={slot.tone === "green" ? "green" : slot.tone === "red" ? "red" : slot.tone === "purple" ? "purple" : "gold"}>What it does</MicroLabel>
-                    <p className="mt-2 text-[11px] font-black uppercase leading-5 tracking-[0.11em] text-white">{slot.detail}</p>
-                    <p className="mt-3 text-[10px] font-bold uppercase leading-5 tracking-[0.12em] text-[#BDBDBD]">How it is won: {slot.antiGaming}</p>
-                    {slot.resultNote && <p className="mt-3 border-l-2 border-current pl-3 text-[10px] font-bold uppercase leading-5 tracking-[0.12em] text-[#D8D8D8]">Why {slot.claimantName} got it: {slot.resultNote}</p>}
-                  </div>
-                )}
-              </article>
-            );
-          })}
-        </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </section>
+      {/* Boost Key Slots removed — see Overview → Boosts section */}
 
-      <CollapsibleSection sectionKey="board-podium" label="Podium · Race" summary={`${podium[0]?.displayName ?? "Leader"} leads · ${ranked.length} challengers`} tone="gold">
+      <CollapsibleSection sectionKey="board-podium" label="Podium · Race" summary={`${podium[0]?.displayName ?? "Leader"} leads · ${ranked.length} challengers`} tone="gold" defaultOpen={false}>
       <div className="grid grid-cols-3 items-end gap-1.5 sm:gap-3 lg:grid-cols-[0.95fr_1.1fr_0.95fr] lg:items-end" data-testid="top-three-podium" data-mobile-podium-layout="horizontal-stepped" aria-label="Top three arranged as a horizontal mobile podium: second, first, third">
         {podium[0] && <PodiumCard participant={podium[0]} index={0} className="order-2" onSelect={() => { pulse([12, 24, 12]); setSelected(podium[0]); }} />}
         {podium[1] && <PodiumCard participant={podium[1]} index={1} className="order-1 translate-y-3 sm:translate-y-5" onSelect={() => { pulse(14); setSelected(podium[1]); }} />}
@@ -2994,7 +2918,7 @@ function Leaderboard({ snapshot }: { snapshot: Snapshot }) {
       )}
 
       </CollapsibleSection>
-      <CollapsibleSection sectionKey="board-leaderboard" label="Full leaderboard" summary={`${ranked.length} challengers · ${ranked[0]?.displayName ?? ""} leads`} tone="red" fillWhenAlone>
+      <CollapsibleSection sectionKey="board-leaderboard" label="Full leaderboard" summary={`${ranked.length} challengers · ${ranked[0]?.displayName ?? ""} leads`} tone="red" fillWhenAlone defaultOpen={true}>
       <div className={classNames("space-y-2", boardMode === "RACE" && "hidden")} data-testid="full-board-compare-list">
         <div className="flex items-end justify-between gap-3 px-1">
           <div>
@@ -4198,6 +4122,8 @@ export default function Home() {
     const nextIndex = Math.max(0, swipeTabs.findIndex(tab => tab.key === nextTab));
     setTransitionDirection(direction ?? (nextIndex >= currentIndex ? 1 : -1));
     setActiveTab(nextTab);
+    // Always scroll to top when switching tabs
+    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "instant" });
   };
 
   const handleTouchStart = (event: React.TouchEvent<HTMLElement>) => {

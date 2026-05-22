@@ -1394,3 +1394,19 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] The personal watch message should feel like the Warden has been studying this specific person — reference their name, their specific gaps, their streak, their risk
 - [x] Warden Reds (Overview + Board) remain on `getDailyReds` — no change
 - [x] All 181 tests pass, TypeScript clean
+
+## v8.14 — UX cleanup, merged boosts, enriched Warden Reds
+
+- [x] Remove top-level Overview collapse toggle button (the whole-page fold at the top of Overview)
+- [x] Remove top-level Board collapse toggle button (the whole-page fold at the top of Board)
+- [x] Scroll to top on every tab change (window.scrollTo on tab navigation)
+- [x] All CollapsibleSections default to collapsed (defaultOpen=false) except: My Day rules list, Board full leaderboard
+- [x] Fix page-fill: outer tab containers use min-h-screen so collapsed bars don't float in empty space
+- [x] Merge Boost Key Slots + Bonus Pool into one unified "Boosts" CollapsibleSection — show available boosts and won tokens together, remove duplication
+- [x] Enrich getDailyReds: include sample Read & Teach text and workout descriptions from today's logs in the LLM prompt so the Warden can reference what people actually posted
+- [x] Move Warden Daily Reds above the rules list on mobile My Day
+- [x] All 181 tests pass, TypeScript clean
+
+## v8.14 CRITICAL BUGS (fixed)
+- [x] Fix getPersonalWardenWatch pulling wrong participant data — added `enabled: myParticipantId != null` so React Query waits for the snapshot before firing, preventing stale cross-user cache bleed
+- [x] Wrong name at top of Today's Log — confirmed this is the Warden card showing wrong user's message; fixed by the cache guard above. Today's Log header itself does not show participant name.

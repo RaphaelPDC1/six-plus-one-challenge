@@ -568,10 +568,8 @@ describe("Home onboarding shell", () => {
     expect(homeSource).toContain("Banked today");
     expect(homeSource).toContain('data-testid="pace-bar"');
     expect(homeSource).toContain("The <span");
-    expect(homeSource).toContain('data-testid="boost-key-slots"');
-    expect(homeSource).toContain('data-testid="boost-key-summary-toggle"');
-    expect(homeSource).toContain('data-testid="boost-key-collapsible-panel"');
-    expect(homeSource).toContain("Boost tokens tucked away.");
+    // Boost Key Slots merged into Overview Boosts section (v8.14)
+    expect(homeSource).toContain('data-testid="boost-slot-card"');
     expect(homeSource).toContain('data-testid="overview-active-boosts"');
     expect(homeSource).toContain('data-testid="warden-mood-card"');
     expect(homeSource).toContain("+5 bonus available");
@@ -769,10 +767,9 @@ describe("Home onboarding shell", () => {
     expect(homeSource).toContain('data-swipe-transition="spring-slide-blur"');
     expect(homeSource).toContain('data-testid={`swipe-page-${activeTab}`}');
     expect(homeSource).toContain("<AnimatePresence mode=\"wait\" initial={false} custom={transitionDirection}>");
-    expect(homeSource).toContain("const [boostKeyOpen, setBoostKeyOpen] = useState(false);");
-    expect(homeSource).toContain('data-boost-collapsible-state={boostKeyOpen ? "open" : "closed"}');
-    expect(homeSource).toContain("boostCollapseVariants");
-    expect(homeSource).toContain('aria-controls="boost-key-collapsible-panel"');
+    // Boost Key Slots merged into Overview Boosts section (v8.14) — state vars removed
+    expect(homeSource).toContain('data-testid="boost-slot-card"');
+    expect(homeSource).toContain('data-testid="boost-detail-panel"');
     expect(homeSource).toContain('data-mobile-podium-layout="horizontal-stepped"');
     expect(homeSource).toContain('data-podium-motion={styles.motion}');
     expect(cssSource).toContain("@keyframes podium-gold-champion");

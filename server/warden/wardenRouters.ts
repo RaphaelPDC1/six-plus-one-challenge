@@ -381,6 +381,21 @@ export const wardenRouter = router({
           db.select().from(logsTable).where(eq(logsTable.dayNumber, currentDay)).limit(100),
         ]);
 
+        // Collect Read & Teach snippets and workout types from today's logs
+        const readTeachSnippets = todayLogs
+          .filter(l => l.readTeachText && String(l.readTeachText).trim().length > 5)
+          .map(l => String(l.readTeachText).trim().slice(0, 120))
+          .slice(0, 6);
+        const workoutTypes = todayLogs
+          .filter(l => l.exerciseType && String(l.exerciseType).trim().length > 1)
+          .map(l => String(l.exerciseType).trim().slice(0, 60))
+          .slice(0, 8);
+        // Also grab recent Read & Teach from last 7 days for pattern analysis
+        const recentReadTeach = allLogs
+          .filter(l => Number(l.dayNumber ?? 0) >= Math.max(1, currentDay - 6) && l.readTeachText && String(l.readTeachText).trim().length > 5)
+          .map(l => String(l.readTeachText).trim().slice(0, 100))
+          .slice(0, 10);
+
         const totalParticipants = allParticipants.length;
         const ruleKeys = ["noAlcohol", "cleanEating", "exerciseDone", "reflectionDone", "readTeachDone", "trackedEverything"] as const;
         const ruleLabels: Record<string, string> = { noAlcohol: "no-alcohol", cleanEating: "clean eating", exerciseDone: "exercise", reflectionDone: "reflection", readTeachDone: "read & teach", trackedEverything: "track everything" };
@@ -442,7 +457,17 @@ export const wardenRouter = router({
           ? (sortedPts[0].totalPoints ?? 0) - (sortedPts[sortedPts.length - 1].totalPoints ?? 0)
           : 0;
 
-        const prompt = `You are the Warden of a 50-day group discipline challenge. You have access to the FULL challenge history — past patterns, current state, and forward-looking risk.
+        const readTeachSection = readTeachSnippets.length > 0
+          ? `\nTODAY'S READ & TEACH (what participants posted):\n${readTeachSnippets.map((s, i) => `- "${s}"`).join("\n")}`
+          : "";
+        const workoutSection = workoutTypes.length > 0
+          ? `\nTODAY'S WORKOUTS: ${workoutTypes.join(" · ")}`
+          : "";
+        const recentReadTeachSection = recentReadTeach.length > 0
+          ? `\nRECENT READ & TEACH (last 7 days, for pattern analysis):\n${recentReadTeach.map(s => `- "${s}"`).join("\n")}`
+          : "";
+
+        const prompt = `You are the Warden of a 50-day group discipline challenge. You have access to the FULL challenge history — past patterns, current state, forward-looking risk, AND what participants have actually been reading, learning, and doing in their workouts.
 
 CHALLENGE STATE: Day ${currentDay}/50 · ${daysRemaining} days remaining · Time slot ${timeSlot} (0=midnight, 1=6am, 2=noon, 3=6pm UTC)
 
@@ -450,12 +475,12 @@ TODAY (present):
 - ${totalParticipants} participants · ${loggedToday} logged · ${notLoggedCount} have NOT logged
 - ${completedToday} completed today
 - Most-missed rule today: "${topMissedToday?.rule}" (${topMissedToday?.missed} missed)
-- Late-night submissions today: ${lateNightToday}
+- Late-night submissions today: ${lateNightToday}${workoutSection}${readTeachSection}
 
 PAST TRENDS (all ${currentDay} days):
 - Overall completion rate: ${overallCompletionPct}%
 - Last 7 days completion: ${last7Pct}% (trend: ${trendDirection})
-- Most chronically missed rule across all time: "${chronicallyMissedRule?.rule}" (${chronicallyMissedRule?.missRate}% miss rate)
+- Most chronically missed rule across all time: "${chronicallyMissedRule?.rule}" (${chronicallyMissedRule?.missRate}% miss rate)${recentReadTeachSection}
 
 FORWARD-LOOKING RISK:
 - Lives at risk (≤1 life remaining): ${livesAtRisk}
@@ -465,9 +490,10 @@ FORWARD-LOOKING RISK:
 - Points gap (top vs bottom): ${pointsGap} pts
 
 Generate EXACTLY 3 red-highlight bullets. Each bullet MUST:
-- Be max 16 words
-- Reference specific numbers from the data above
+- Be max 18 words
+- Reference specific data from above (numbers, rule names, or actual content from Read & Teach / workouts when available)
 - Use a different lens: one from past patterns, one from present state, one from forward risk
+- When Read & Teach content is available, at least one bullet should reference or react to what the group is actually reading/learning
 - Warden voice: dry, precise, slightly unsettling — like a system that has been watching the whole time
 - No generic advice. No motivation. No fluff. Make them feel seen.
 
