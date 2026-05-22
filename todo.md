@@ -1410,3 +1410,14 @@ User priority: the Warden should read the room, find tensions between words and 
 ## v8.14 CRITICAL BUGS (fixed)
 - [x] Fix getPersonalWardenWatch pulling wrong participant data — added `enabled: myParticipantId != null` so React Query waits for the snapshot before firing, preventing stale cross-user cache bleed
 - [x] Wrong name at top of Today's Log — confirmed this is the Warden card showing wrong user's message; fixed by the cache guard above. Today's Log header itself does not show participant name.
+
+## v8.15 — Brand Deck Revamp
+
+- [x] index.css: colour tokens corrected — foreground to warm white #F5F0E8, secondary-foreground to #999 dim, poster-card to #111111/#F5F0E8
+- [x] Remove Google Fonts Inter import from index.html — system font only
+- [x] --radius: 0px (was 0.375rem)
+- [x] font-family: system-ui / -apple-system / Helvetica Neue — no external fonts
+- [x] All rounded-[*] corner classes removed from Home.tsx (10 violations fixed)
+- [x] BugReporter.tsx bottom sheet rounded-t-2xl removed
+- [x] ComponentShowcase.tsx rounded corners left as-is (dev-only, not user-facing)
+- [x] All 181 tests pass, TypeScript clean

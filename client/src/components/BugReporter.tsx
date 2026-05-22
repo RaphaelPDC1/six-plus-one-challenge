@@ -278,7 +278,7 @@ export function BugReporterFloat() {
       {/* Slide-up sheet */}
       {open && (
         <div className="fixed inset-0 z-[60] flex items-end justify-center" onClick={(e) => { if (e.target === e.currentTarget) setOpen(false); }}>
-          <div className="w-full max-w-lg rounded-t-2xl border border-[#2A2A2A] bg-[#0D0D0D] p-5 pb-8 shadow-[0_-8px_40px_rgba(0,0,0,0.7)]">
+          <div className="w-full max-w-lg border border-[#2A2A2A] bg-[#0D0D0D] p-5 pb-8 shadow-[0_-8px_40px_rgba(0,0,0,0.7)]">
             {/* Handle */}
             <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-[#333]" />
             <div className="mb-4 flex items-center justify-between">

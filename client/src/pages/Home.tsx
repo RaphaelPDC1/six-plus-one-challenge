@@ -942,8 +942,8 @@ function LifeLossAlert({ snapshot }: { snapshot: Snapshot | undefined }) {
   const livesAfter = clampLives(participant?.livesRemaining ?? 4);
   const alert = (
     <div className="pointer-events-none fixed inset-0 z-[120] grid place-items-center bg-black/42 px-4 backdrop-blur-[2px]" role="status" aria-live="polite" data-testid="life-loss-alert-overlay">
-      <section className="pointer-events-auto w-full max-w-md overflow-hidden rounded-[1.6rem] border border-[#C0392B]/70 bg-[#120706] p-5 text-white shadow-[0_0_80px_rgba(192,57,43,0.34)]">
-        <div className="relative overflow-hidden rounded-[1.25rem] border border-[#C0392B]/45 bg-black p-4">
+      <section className="pointer-events-auto w-full max-w-md overflow-hidden border border-[#C0392B]/70 bg-[#120706] p-5 text-white shadow-[0_0_80px_rgba(192,57,43,0.34)]">
+        <div className="relative overflow-hidden border border-[#C0392B]/45 bg-black p-4">
           <div className="absolute -right-10 -top-14 h-36 w-36 animate-pulse rounded-full bg-[#C0392B]/25 blur-3xl" aria-hidden="true" />
           <MicroLabel tone="red">Life lost · group alert</MicroLabel>
           <div className="relative mt-4 flex items-center gap-3">
@@ -2060,7 +2060,7 @@ function WardenMoodCard({ mood, isLoading, currentDay, completedRules, totalRule
   const safeMood = mood?.source === "ai" && mood?.detail ? mood : interpreted;
   const tone = safeMood.tone === "red" ? "red" : safeMood.tone === "green" ? "green" : safeMood.tone === "purple" ? "purple" : safeMood.tone === "white" ? "white" : "gold";
   return (
-    <article className={classNames("motion-card min-w-0 rounded-[1.4rem] border p-4", getBoostToneClass(tone))} data-testid="warden-mood-card">
+    <article className={classNames("motion-card min-w-0 border p-4", getBoostToneClass(tone))} data-testid="warden-mood-card">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <MicroLabel tone={tone === "white" ? "muted" : tone}>Warden read</MicroLabel>
         <span className="rounded-full border border-current/40 bg-black/40 px-2 py-1 text-[8px] font-black uppercase tracking-[0.14em]">{isLoading ? "Reading" : safeMood.source === "ai" ? "AI read" : "Today read"}</span>
@@ -2068,9 +2068,9 @@ function WardenMoodCard({ mood, isLoading, currentDay, completedRules, totalRule
       <h3 className="mt-3 break-words text-2xl font-black uppercase leading-none tracking-[-0.07em] text-white">{safeMood.label}</h3>
       <p className="mt-3 text-xs font-black uppercase leading-5 tracking-[0.11em] text-[#E5E5E5]">{safeMood.detail}</p>
       <div className="mt-4 grid grid-cols-3 gap-2 text-center">
-        <span className="rounded-[0.9rem] border border-current/25 bg-black/30 p-2"><b className="block text-lg leading-none text-white">{done}</b><small className="text-[8px] font-black uppercase tracking-[0.12em]">Done</small></span>
-        <span className="rounded-[0.9rem] border border-current/25 bg-black/30 p-2"><b className="block text-lg leading-none text-white">{missing}</b><small className="text-[8px] font-black uppercase tracking-[0.12em]">Open</small></span>
-        <span className="rounded-[0.9rem] border border-current/25 bg-black/30 p-2"><b className="block text-lg leading-none text-white">{daysRemaining}</b><small className="text-[8px] font-black uppercase tracking-[0.12em]">Days</small></span>
+        <span className="border border-current/25 bg-black/30 p-2"><b className="block text-lg leading-none text-white">{done}</b><small className="text-[8px] font-black uppercase tracking-[0.12em]">Done</small></span>
+        <span className="border border-current/25 bg-black/30 p-2"><b className="block text-lg leading-none text-white">{missing}</b><small className="text-[8px] font-black uppercase tracking-[0.12em]">Open</small></span>
+        <span className="border border-current/25 bg-black/30 p-2"><b className="block text-lg leading-none text-white">{daysRemaining}</b><small className="text-[8px] font-black uppercase tracking-[0.12em]">Days</small></span>
       </div>
     </article>
   );
@@ -2858,7 +2858,7 @@ function Leaderboard({ snapshot }: { snapshot: Snapshot }) {
       </div>
       {/* Board content */}
       <div className="flex flex-col gap-2 min-h-screen">
-      <div className="rounded-[1.4rem] border border-[#2A2A2A] bg-[#0D0D0D] p-4 sm:p-5" data-testid="board-mobile-redesign-shell">
+      <div className="border border-[#2A2A2A] bg-[#0D0D0D] p-4 sm:p-5" data-testid="board-mobile-redesign-shell">
         <div className="flex items-end justify-between gap-4">
           <div>
             <MicroLabel tone="gold">Day {snapshot?.challenge?.currentDay ?? "—"} · pressure ranking</MicroLabel>
@@ -2937,7 +2937,7 @@ function Leaderboard({ snapshot }: { snapshot: Snapshot }) {
           const todayPlayerBoostWins = todayBoostWins.filter((win: any) => String(win.userId) === String(p.id));
           const totalBoostPoints = playerBoostWins.reduce((sum: number, win: any) => sum + Number(win.pointsAwarded ?? 5), 0);
           return (
-            <article key={p.id} className={classNames("motion-row overflow-hidden rounded-[1.15rem] border bg-[#0D0D0D] transition hover:border-[#C8A96E]", eliminationRisk ? "border-[#C0392B]/75 bg-[#190B0A] shadow-[0_0_26px_rgba(192,57,43,0.12)]" : index === 0 ? "border-[#C8A96E]/70 bg-[#16130B]" : "border-[#2A2A2A]")} data-testid="board-player-row" data-elimination-risk={eliminationRisk ? "true" : "false"}>
+            <article key={p.id} className={classNames("motion-row overflow-hidden border bg-[#0D0D0D] transition hover:border-[#C8A96E]", eliminationRisk ? "border-[#C0392B]/75 bg-[#190B0A] shadow-[0_0_26px_rgba(192,57,43,0.12)]" : index === 0 ? "border-[#C8A96E]/70 bg-[#16130B]" : "border-[#2A2A2A]")} data-testid="board-player-row" data-elimination-risk={eliminationRisk ? "true" : "false"}>
               <button type="button" onClick={() => { pulse(14); setExpandedParticipantId(isExpanded ? null : p.id); }} className="motion-press grid w-full grid-cols-[42px_minmax(0,1fr)] gap-3 p-3 text-left sm:grid-cols-[56px_56px_minmax(0,1fr)_minmax(155px,0.65fr)_auto_32px] sm:items-center sm:p-4" aria-expanded={isExpanded} aria-controls={detailId} aria-label={`Toggle ${p.displayName} Board metrics`}>
                 <span className={classNames("row-span-2 text-2xl font-black sm:row-span-1 sm:text-3xl", eliminationRisk ? "text-[#FFB3A8]" : index === 0 ? "text-[#C8A96E]" : index === 1 ? "text-[#BFC7D5]" : index === 2 ? "text-[#D58A45]" : "text-[#777]")}>#{index + 1}</span>
                 <span className="hidden sm:block"><ProfilePhoto participant={p} className="h-12 w-12" /></span>
@@ -3988,7 +3988,7 @@ const tabs: Array<{ key: TabKey; label: string; icon: any }> = [
 function MobileBottomNav({ mobileTabs, activeTab, activeMobileIndex, onSelect }: { mobileTabs: Array<{ key: TabKey; label: string; icon: any }>; activeTab: TabKey; activeMobileIndex: number; onSelect: (tab: TabKey) => void }) {
   const nav = (
     <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-[80] px-3 pb-[calc(0.7rem+env(safe-area-inset-bottom))] md:hidden" aria-label="Mobile primary navigation" data-testid="mobile-floating-nav" data-fixed-viewport-nav="true">
-      <div className="pointer-events-auto relative mx-auto flex max-w-[26rem] items-center justify-between overflow-hidden rounded-[1.35rem] border border-[#C8A96E]/45 bg-[#070707]/96 px-1.5 py-2 shadow-[0_18px_44px_rgba(0,0,0,0.78)] backdrop-blur-xl">
+      <div className="pointer-events-auto relative mx-auto flex max-w-[26rem] items-center justify-between overflow-hidden border border-[#C8A96E]/45 bg-[#070707]/96 px-1.5 py-2 shadow-[0_18px_44px_rgba(0,0,0,0.78)] backdrop-blur-xl">
         <div
           className="motion-tab-indicator absolute top-0 z-0 h-[3px] rounded-full bg-[#C8A96E] shadow-[0_24px_28px_rgba(200,169,110,0.48)] transition-transform duration-300 ease-out"
           style={{ width: `${100 / Math.max(1, mobileTabs.length)}%`, transform: `translateX(${activeMobileIndex * 100}%)` }}
@@ -4003,7 +4003,7 @@ function MobileBottomNav({ mobileTabs, activeTab, activeMobileIndex, onSelect }:
               type="button"
               onClick={() => { pulse(10); onSelect(tab.key); }}
               className={classNames(
-                "motion-tab motion-press relative z-10 flex min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-[1rem] px-1 py-2 text-[7px] font-black uppercase leading-none tracking-[0.08em] transition-colors duration-200 min-[380px]:text-[8px]",
+                "motion-tab motion-press relative z-10 flex min-w-0 flex-1 flex-col items-center justify-center gap-1 px-1 py-2 text-[7px] font-black uppercase leading-none tracking-[0.08em] transition-colors duration-200 min-[380px]:text-[8px]",
                 active ? "motion-tab-active bg-[#151108] text-[#C8A96E]" : "text-[#777] hover:text-white"
               )}
               aria-current={active ? "page" : undefined}
