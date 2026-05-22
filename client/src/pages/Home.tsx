@@ -746,9 +746,9 @@ function PosterStat({ label, value, tone = "gold" }: { label: string; value: str
   );
 }
 
-function WardenPresence({ snapshot, personalInsight }: { snapshot: Snapshot; personalInsight?: string }) {
+function WardenPresence({ snapshot }: { snapshot: Snapshot }) {
   const latest = [...(snapshot?.wardenMessages ?? [])].reverse()[0];
-  const displayMessage = personalInsight ?? latest?.content ?? "Log honestly. The group sees momentum. The Warden sees patterns.";
+  const displayMessage = latest?.content ?? "Log honestly. The group sees momentum. The Warden sees patterns.";
   return (
     <aside className="motion-card warden-pulse border-l-4 border-[#C0392B] bg-[#130F0F] p-4">
       <div className="flex items-center justify-between gap-4">
@@ -758,12 +758,7 @@ function WardenPresence({ snapshot, personalInsight }: { snapshot: Snapshot; per
       <p className="mt-3 text-sm font-bold leading-6 text-[#D8D8D8]">
         <span className="type-caret pr-1">{displayMessage}</span>
       </p>
-      {personalInsight && (
-        <p className="mt-2 text-[10px] font-black uppercase tracking-[0.28em] text-[#C0392B]/70">Personal observation · one per day</p>
-      )}
-      {!personalInsight && (
-        <p className="mt-2 text-[10px] font-black uppercase tracking-[0.28em] text-[#777]">1–4 organic messages per day · drama-driven</p>
-      )}
+      <p className="mt-2 text-[10px] font-black uppercase tracking-[0.28em] text-[#777]">1–4 organic messages per day · drama-driven</p>
     </aside>
   );
 }
@@ -1435,16 +1430,7 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
   });
-  // Personal Warden insight (anti-gaming, one per day, cached 6h)
-  const personalInsightQuery = trpc.warden.getPersonalInsight.useQuery(
-    { participantId: Number(participant?.id ?? 0) },
-    {
-      enabled: Boolean(participant?.id),
-      staleTime: 6 * 60 * 60 * 1000,
-      refetchOnWindowFocus: false,
-      refetchOnReconnect: false,
-    },
-  );
+
   // Use a stable string key (id + dayNumber + dayComplete) so the form only
   // resets when the actual log content changes, not on every 60s snapshot poll
   // that returns a new object reference.
@@ -1620,7 +1606,7 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
 
                 {/* ── Warden — inline on mobile, hidden on desktop (shown in aside) ── */}
         <div className="mb-1 px-4 xl:hidden">
-          <WardenPresence snapshot={snapshot} personalInsight={personalInsightQuery.data?.message} />
+          <WardenPresence snapshot={snapshot} />
         </div>
         {/* ── My Day folder header — tap to collapse/expand rules ── */}
         <button
@@ -1799,7 +1785,7 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
       </section>
 
       <aside className="hidden min-w-0 max-w-full space-y-5 overflow-x-hidden xl:block">
-        <WardenPresence snapshot={snapshot} personalInsight={personalInsightQuery.data?.message} />
+        <WardenPresence snapshot={snapshot} />
         <HealthBar lives={participant?.livesRemaining ?? 4} label="Lives remaining" />
         <div className={classNames("motion-card ghost-life-card border p-4 transition", ghostLifeLocked ? "border-[#4A315D] bg-[#120F18] opacity-80" : "border-[#2A2A2A] bg-[#101010]")} data-ghost-life-state={ghostLifeLocked ? "locked" : "available"}>
           <div className="flex items-start justify-between gap-3">

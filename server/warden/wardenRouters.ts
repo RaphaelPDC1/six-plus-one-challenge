@@ -349,20 +349,18 @@ export const wardenRouter = router({
     }),
 
   /**
-   * Get 3 Warden red-highlight bullets focused on TODAY's live group data.
-   * Cache key includes day + 6h time-slot so it refreshes 4x/day:
-   *   slot 0 = 00:00–05:59, slot 1 = 06:00–11:59, slot 2 = 12:00–17:59, slot 3 = 18:00–23:59
-   * Warden voice: dry, intelligent, slightly intimidating. Never generic.
+   * Get 3 Warden red-highlight bullets using FULL accumulated data — past trends,
+   * present state, and forward-looking risk analysis. Refreshes 4x/day (6h slots).
+   * The Warden reads the whole challenge arc, not just today.
    */
   getDailyReds: publicProcedure
     .query(async () => {
       const now = new Date();
       const dayStr = now.toISOString().slice(0, 10);
       const timeSlot = Math.floor(now.getUTCHours() / 6); // 0-3
-      const cacheKey = `daily-reds-${dayStr}-slot${timeSlot}`;
+      const cacheKey = `daily-reds-v2-${dayStr}-slot${timeSlot}`;
       const cached = wardenMoodCache.get(cacheKey);
       if (cached && Date.now() - cached.createdAt < WARDEN_MOOD_CACHE_TTL_MS) {
-        // Parse the stored JSON array from detail
         try {
           const reds = JSON.parse(cached.mood.detail) as string[];
           return { reds, source: "cache" as const, slot: timeSlot };
@@ -374,52 +372,110 @@ export const wardenRouter = router({
         const db = await getDb();
         if (!db) return { reds: ["Log today. The gap compounds.", "Every rule missed is a point lost permanently.", "The group is watching who shows up."], source: "fallback" as const, slot: timeSlot };
         const { dailyLogs: logsTable, participants: participantsTable } = await import("../../drizzle/schema");
-        const { eq } = await import("drizzle-orm");
-        // Fetch today's logs and all participants
-        const [todayLogs, allParticipants] = await Promise.all([
-          db.select().from(logsTable).where(eq(logsTable.dayNumber, currentDay)).limit(100),
+        const { eq, gte } = await import("drizzle-orm");
+
+        // Fetch ALL data: all participants + all logs to date
+        const [allParticipants, allLogs, todayLogs] = await Promise.all([
           db.select().from(participantsTable).limit(100),
+          db.select().from(logsTable).where(gte(logsTable.dayNumber, 1)).limit(5000),
+          db.select().from(logsTable).where(eq(logsTable.dayNumber, currentDay)).limit(100),
         ]);
+
         const totalParticipants = allParticipants.length;
+        const ruleKeys = ["noAlcohol", "cleanEating", "exerciseDone", "reflectionDone", "readTeachDone", "trackedEverything"] as const;
+        const ruleLabels: Record<string, string> = { noAlcohol: "no-alcohol", cleanEating: "clean eating", exerciseDone: "exercise", reflectionDone: "reflection", readTeachDone: "read & teach", trackedEverything: "track everything" };
+
+        // — TODAY —
         const loggedToday = todayLogs.length;
         const completedToday = todayLogs.filter(l => l.dayComplete).length;
         const notLoggedCount = Math.max(0, totalParticipants - loggedToday);
-        const livesAtRisk = allParticipants.filter(p => (p.livesRemaining ?? 4) <= 1).length;
-        // Rule-level gap analysis for today
-        const ruleKeys = ["noAlcohol", "cleanEating", "exerciseDone", "reflectionDone", "readTeachDone", "trackedEverything"] as const;
-        const ruleLabels: Record<string, string> = { noAlcohol: "no-alcohol", cleanEating: "clean eating", exerciseDone: "exercise", reflectionDone: "reflection", readTeachDone: "read & teach", trackedEverything: "track everything" };
-        const ruleMissCounts = ruleKeys.map(key => ({
+        const todayRuleMisses = ruleKeys.map(key => ({
           rule: ruleLabels[key],
           missed: todayLogs.filter(l => !l[key as keyof typeof l]).length,
         })).sort((a, b) => b.missed - a.missed);
-        const topMissedRule = ruleMissCounts[0];
-        const lateNightCount = todayLogs.filter(l => {
+        const topMissedToday = todayRuleMisses[0];
+        const lateNightToday = todayLogs.filter(l => {
           if (!l.submittedAt) return false;
           const h = new Date(l.submittedAt).getUTCHours();
           return h >= 22 || h < 2;
         }).length;
-        const prompt = `You are the Warden of a 50-day group discipline challenge. It is day ${currentDay}/50, time slot ${timeSlot} (0=midnight, 1=6am, 2=noon, 3=6pm UTC).
 
-TODAY'S LIVE DATA:
-- Total participants: ${totalParticipants}
-- Logged today: ${loggedToday} (${notLoggedCount} have NOT logged yet)
-- Completed today: ${completedToday}
-- Lives at risk (≤1 life): ${livesAtRisk}
-- Late-night submissions so far: ${lateNightCount}
-- Most-missed rule today: "${topMissedRule?.rule}" (${topMissedRule?.missed} participants missed it)
-- Rule miss breakdown: ${ruleMissCounts.slice(0, 4).map(r => `${r.rule}: ${r.missed} missed`).join(", ")}
+        // — PAST TRENDS (all logs to date) —
+        const completedLogs = allLogs.filter(l => l.dayComplete);
+        const totalExpected = totalParticipants * currentDay;
+        const overallCompletionPct = totalExpected > 0 ? Math.round((completedLogs.length / totalExpected) * 100) : 0;
+        // Per-rule miss rate across all time
+        const allTimeRuleMisses = ruleKeys.map(key => ({
+          rule: ruleLabels[key],
+          missRate: completedLogs.length > 0
+            ? Math.round((completedLogs.filter(l => !l[key as keyof typeof l]).length / completedLogs.length) * 100)
+            : 0,
+        })).sort((a, b) => b.missRate - a.missRate);
+        const chronicallyMissedRule = allTimeRuleMisses[0];
+        // Last-7-days trend
+        const last7Logs = allLogs.filter(l => Number(l.dayNumber ?? 0) >= Math.max(1, currentDay - 6));
+        const last7Complete = last7Logs.filter(l => l.dayComplete).length;
+        const last7Expected = totalParticipants * Math.min(7, currentDay);
+        const last7Pct = last7Expected > 0 ? Math.round((last7Complete / last7Expected) * 100) : 0;
+        const trendDirection = last7Pct > overallCompletionPct ? "improving" : last7Pct < overallCompletionPct ? "declining" : "flat";
 
-Generate EXACTLY 3 short, punchy red-highlight bullets about TODAY's data. Each bullet:
-- Max 14 words
-- References actual numbers from today's data
-- Warden voice: dry, precise, slightly unsettling
-- No generic advice. No motivation. No fluff.
-- Each bullet should feel like a different angle: one about who hasn't logged, one about a specific rule gap, one about risk/stakes
+        // — FORWARD-LOOKING RISK —
+        const livesAtRisk = allParticipants.filter(p => (p.livesRemaining ?? 4) <= 1).length;
+        const livesWarning = allParticipants.filter(p => (p.livesRemaining ?? 4) === 2).length;
+        const daysRemaining = 50 - currentDay;
+        // Participants on a streak worth protecting
+        const streakProtectors = allParticipants.filter(p => (p.currentStreak ?? 0) >= 5).length;
+        // Participants who haven't logged in 2+ days (ghost risk)
+        const participantLastLog: Record<number, number> = {};
+        for (const log of allLogs) {
+          const pid = Number(log.participantId);
+          const day = Number(log.dayNumber ?? 0);
+          if (!participantLastLog[pid] || day > participantLastLog[pid]) participantLastLog[pid] = day;
+        }
+        const ghostRisk = allParticipants.filter(p => {
+          const last = participantLastLog[Number(p.id)] ?? 0;
+          return currentDay - last >= 2;
+        }).length;
+        // Points gap: spread between top and bottom active participant
+        const sortedPts = [...allParticipants].sort((a, b) => (b.totalPoints ?? 0) - (a.totalPoints ?? 0));
+        const pointsGap = sortedPts.length >= 2
+          ? (sortedPts[0].totalPoints ?? 0) - (sortedPts[sortedPts.length - 1].totalPoints ?? 0)
+          : 0;
+
+        const prompt = `You are the Warden of a 50-day group discipline challenge. You have access to the FULL challenge history — past patterns, current state, and forward-looking risk.
+
+CHALLENGE STATE: Day ${currentDay}/50 · ${daysRemaining} days remaining · Time slot ${timeSlot} (0=midnight, 1=6am, 2=noon, 3=6pm UTC)
+
+TODAY (present):
+- ${totalParticipants} participants · ${loggedToday} logged · ${notLoggedCount} have NOT logged
+- ${completedToday} completed today
+- Most-missed rule today: "${topMissedToday?.rule}" (${topMissedToday?.missed} missed)
+- Late-night submissions today: ${lateNightToday}
+
+PAST TRENDS (all ${currentDay} days):
+- Overall completion rate: ${overallCompletionPct}%
+- Last 7 days completion: ${last7Pct}% (trend: ${trendDirection})
+- Most chronically missed rule across all time: "${chronicallyMissedRule?.rule}" (${chronicallyMissedRule?.missRate}% miss rate)
+
+FORWARD-LOOKING RISK:
+- Lives at risk (≤1 life remaining): ${livesAtRisk}
+- Lives on warning (2 lives): ${livesWarning}
+- Ghost risk (2+ days no log): ${ghostRisk} participants
+- Participants on a 5+ day streak worth protecting: ${streakProtectors}
+- Points gap (top vs bottom): ${pointsGap} pts
+
+Generate EXACTLY 3 red-highlight bullets. Each bullet MUST:
+- Be max 16 words
+- Reference specific numbers from the data above
+- Use a different lens: one from past patterns, one from present state, one from forward risk
+- Warden voice: dry, precise, slightly unsettling — like a system that has been watching the whole time
+- No generic advice. No motivation. No fluff. Make them feel seen.
 
 Respond in JSON only.`;
+
         const response = await invokeLLM({
           messages: [
-            { role: "system", content: "You are the Warden. Three bullets. Dry. Sharp. Today's data only. JSON only." },
+            { role: "system", content: "You are the Warden. Three bullets. Past. Present. Future risk. Dry. Sharp. JSON only." },
             { role: "user", content: prompt },
           ],
           response_format: {
@@ -430,12 +486,7 @@ Respond in JSON only.`;
               schema: {
                 type: "object",
                 properties: {
-                  reds: {
-                    type: "array",
-                    items: { type: "string" },
-                    minItems: 3,
-                    maxItems: 3,
-                  },
+                  reds: { type: "array", items: { type: "string" }, minItems: 3, maxItems: 3 },
                 },
                 required: ["reds"],
                 additionalProperties: false,
@@ -448,13 +499,17 @@ Respond in JSON only.`;
         if (!content) throw new Error("Empty LLM response");
         const parsed = JSON.parse(content);
         const reds: string[] = Array.isArray(parsed.reds) && parsed.reds.length >= 3
-          ? parsed.reds.slice(0, 3).map((r: unknown) => String(r).slice(0, 120))
-          : [`${notLoggedCount} challengers haven't logged yet today.`, `"${topMissedRule?.rule}" is today's most-missed rule.`, livesAtRisk > 0 ? `${livesAtRisk} challenger${livesAtRisk > 1 ? "s are" : " is"} one miss from losing a life.` : "No lives at risk — keep it that way."];
+          ? parsed.reds.slice(0, 3).map((r: unknown) => String(r).slice(0, 140))
+          : [
+              `${overallCompletionPct}% overall completion rate across ${currentDay} days.`,
+              `${notLoggedCount} challengers haven't logged yet today.`,
+              livesAtRisk > 0 ? `${livesAtRisk} challenger${livesAtRisk > 1 ? "s are" : " is"} one miss from elimination.` : `${ghostRisk} participants showing ghost-risk patterns.`,
+            ];
         wardenMoodCache.set(cacheKey, { fingerprint: cacheKey, mood: { label: "daily-reds", tone: "red", detail: JSON.stringify(reds), confidence: 0.9, source: "ai" }, createdAt: Date.now() });
         return { reds, source: "ai" as const, slot: timeSlot };
       } catch (err) {
         console.warn("[Warden] getDailyReds failed", err);
-        return { reds: ["Log today. The gap compounds.", "Every rule missed is a point lost permanently.", "The group is watching who shows up."], source: "fallback" as const, slot: timeSlot };
+        return { reds: ["The pattern is clear. The Warden has been watching.", "Every rule missed is a point lost permanently.", "The group is watching who shows up."], source: "fallback" as const, slot: timeSlot };
       }
     }),
 

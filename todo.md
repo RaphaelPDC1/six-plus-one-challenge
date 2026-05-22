@@ -1354,7 +1354,7 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] LLM receives: participant's last 3 days logs, onboarding profile (goals/obstacles/training), group rank/context
 - [x] LLM generates: personal observation, forward-looking points strategy, community care note
 - [x] Add generatePersonalisedCareNotes admin procedure that creates one DB row per participant
-- [ ] Add schedulePersonalisedCareNotes heartbeat that runs every 3 days automatically (deferred to v8.10)
+- [x] Add schedulePersonalisedCareNotes heartbeat that runs every 3 days automatically — handler + SDK patches done in v8.10; register cron after user deploys
 - [x] Update CommunityCareReleaseNotePopup to render the personalised format
 - [x] Keep admin broadcast form (kept alongside new per-participant button)
 - [x] All 181 tests pass, TypeScript clean
@@ -1367,4 +1367,11 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] LLM generates: exactly 3 short punchy red bullets (max 14 words each), Warden voice
 - [x] Display getDailyReds in My Day sidebar (below Latest Warden note) and in Overview
 - [x] Add heartbeat for auto-scheduling personalised care notes every 3 days (handler + SDK patches ready; register after deploy)
+- [x] All 181 tests pass, TypeScript clean
+
+## v8.11 — Warden Daily Reds upgrade + WardenPresence revert
+
+- [x] Revert WardenPresence to original (remove personalInsight prop display change, restore original subtitle text)
+- [x] Upgrade getDailyReds: use full accumulated data — all logs to date, per-participant streaks/lives/points trends, rule consistency over time, projected risk, forward-looking stakes
+- [x] LLM prompt uses past (all historical logs), present (today's data), future (who is at risk of losing a life, who is on a streak worth protecting)
 - [x] All 181 tests pass, TypeScript clean
