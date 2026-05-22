@@ -51,6 +51,89 @@ type Snapshot = any;
 
 const LIFE_LOSS_ALERT_BASELINE_KEY = "sixone-life-loss-alert-baseline-v2";
 const LIFE_LOSS_ALERT_SEEN_PREFIX = "sixone-life-loss-alert-seen-v2";
+const SECTION_COLLAPSE_PREFIX = "sixone-section-collapse-v1";
+
+/**
+ * Persisted collapse state for a named UI section.
+ * Defaults to `defaultOpen` on first visit.
+ */
+function useCollapse(key: string, defaultOpen = true): [boolean, () => void] {
+  const storageKey = `${SECTION_COLLAPSE_PREFIX}-${key}`;
+  const [open, setOpen] = useState<boolean>(() => {
+    if (typeof window === "undefined") return defaultOpen;
+    const stored = window.localStorage.getItem(storageKey);
+    if (stored === null) return defaultOpen;
+    return stored === "true";
+  });
+  const toggle = () => {
+    setOpen(prev => {
+      const next = !prev;
+      if (typeof window !== "undefined") window.localStorage.setItem(storageKey, String(next));
+      return next;
+    });
+  };
+  return [open, toggle];
+}
+
+/**
+ * Compact collapsible section header used throughout My Day / Overview / Board.
+ * Shows a 1-line summary when collapsed; children render when open.
+ */
+function CollapsibleSection({
+  sectionKey,
+  label,
+  summary,
+  tone = "gold",
+  defaultOpen = true,
+  children,
+  className = "",
+  fillWhenAlone = false,
+}: {
+  sectionKey: string;
+  label: string;
+  summary: string;
+  tone?: "gold" | "red" | "green" | "purple" | "muted";
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+  className?: string;
+  fillWhenAlone?: boolean;
+}) {
+  const [open, toggle] = useCollapse(sectionKey, defaultOpen);
+  const toneClasses: Record<string, string> = {
+    gold: "border-[#C8A96E]/40 text-[#C8A96E]",
+    red: "border-[#C0392B]/40 text-[#C0392B]",
+    green: "border-[#2ECC71]/40 text-[#2ECC71]",
+    purple: "border-[#9B59B6]/40 text-[#9B59B6]",
+    muted: "border-[#2A2A2A] text-[#777]",
+  };
+  const chevronColor: Record<string, string> = {
+    gold: "text-[#C8A96E]",
+    red: "text-[#C0392B]",
+    green: "text-[#2ECC71]",
+    purple: "text-[#9B59B6]",
+    muted: "text-[#777]",
+  };
+  return (
+    <div className={classNames("flex flex-col", open && fillWhenAlone ? "flex-1" : "", className)}>
+      <button
+        type="button"
+        onClick={toggle}
+        className={classNames(
+          "flex w-full items-center justify-between gap-3 border bg-[#0A0A0A] px-3 py-2.5 text-left transition hover:bg-[#111]",
+          toneClasses[tone],
+        )}
+        aria-expanded={open}
+      >
+        <div className="flex min-w-0 items-center gap-2">
+          <span className={classNames("text-[8px] font-black uppercase tracking-[0.22em]", chevronColor[tone])}>{label}</span>
+          {!open && <span className="truncate text-[9px] font-bold uppercase tracking-[0.1em] text-[#666]">{summary}</span>}
+        </div>
+        <ChevronDown className={classNames("h-3.5 w-3.5 shrink-0 transition-transform duration-300", chevronColor[tone], open ? "rotate-180" : "rotate-0")} aria-hidden />
+      </button>
+      {open && <div className={classNames("min-w-0", open && fillWhenAlone ? "flex-1" : "")}>{children}</div>}
+    </div>
+  );
+}
 
 function getLifeLossAlertId(payment: any) {
   return payment?.id === undefined || payment?.id === null ? "" : String(payment.id);
@@ -1784,9 +1867,14 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
         )}
       </section>
 
-      <aside className="hidden min-w-0 max-w-full space-y-5 overflow-x-hidden xl:block">
-        <WardenPresence snapshot={snapshot} />
-        <HealthBar lives={participant?.livesRemaining ?? 4} label="Lives remaining" />
+      <aside className="hidden min-w-0 max-w-full flex flex-col gap-1.5 overflow-x-hidden xl:flex">
+        <CollapsibleSection sectionKey="myday-warden" label="The Warden is watching" summary={[...(snapshot?.wardenMessages ?? [])].reverse()[0]?.content?.slice(0, 60) ?? "Watching…"} tone="red">
+          <WardenPresence snapshot={snapshot} />
+        </CollapsibleSection>
+        <CollapsibleSection sectionKey="myday-lives" label="Lives" summary={`${participant?.livesRemaining ?? 4}/4 lives remaining`} tone={((participant?.livesRemaining ?? 4) <= 2) ? "red" : "gold"}>
+          <HealthBar lives={participant?.livesRemaining ?? 4} label="Lives remaining" />
+        </CollapsibleSection>
+        <CollapsibleSection sectionKey="myday-ghost" label="Ghost Life" summary={ghostLifeLocked ? "Used · locked for challenge" : "Available · one rescue"} tone="purple">
         <div className={classNames("motion-card ghost-life-card border p-4 transition", ghostLifeLocked ? "border-[#4A315D] bg-[#120F18] opacity-80" : "border-[#2A2A2A] bg-[#101010]")} data-ghost-life-state={ghostLifeLocked ? "locked" : "available"}>
           <div className="flex items-start justify-between gap-3">
             <MicroLabel tone="purple">Ghost Life</MicroLabel>
@@ -1798,11 +1886,14 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
             {ghostLifeLocked ? "Ghost Life locked" : ghost.isPending ? "Restoring Ghost Life" : "Use Purple Ghost Life"}
           </SharpButton>
         </div>
-        <div className="border border-[#2A2A2A] bg-[#101010] p-4">
-          <MicroLabel tone="red">Latest Warden note</MicroLabel>
-          <p className="mt-3 text-sm font-bold leading-6 text-[#BDBDBD]">{latestWarden?.content ?? "No hiding place. Log the day."}</p>
-        </div>
-        <WardenDailyReds reds={dailyRedsQuery.data?.reds} isLoading={dailyRedsQuery.isLoading} slot={dailyRedsQuery.data?.slot} />
+        </CollapsibleSection>
+        <CollapsibleSection sectionKey="myday-warden-note" label="Latest Warden note" summary={(latestWarden?.content ?? "No hiding place. Log the day.").slice(0, 60)} tone="red" fillWhenAlone>
+          <div className="border border-[#2A2A2A] bg-[#101010] p-4">
+            <MicroLabel tone="red">Latest Warden note</MicroLabel>
+            <p className="mt-3 text-sm font-bold leading-6 text-[#BDBDBD]">{latestWarden?.content ?? "No hiding place. Log the day."}</p>
+          </div>
+          <WardenDailyReds reds={dailyRedsQuery.data?.reds} isLoading={dailyRedsQuery.isLoading} slot={dailyRedsQuery.data?.slot} />
+        </CollapsibleSection>
       </aside>
     </div>
   );
@@ -2107,7 +2198,7 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
         <ChevronDown className={classNames("h-4 w-4 shrink-0 text-[#777] transition-transform duration-300", overviewExpanded ? "rotate-180" : "rotate-0")} aria-hidden="true" />
       </button>
       {/* Collapsible content */}
-      <div className={overviewExpanded ? "" : "hidden"}>
+      <div className={overviewExpanded ? "flex flex-col gap-2" : "hidden"}>
       <div className="insights-marquee overflow-hidden" aria-hidden="true">
         <div className="animate-marquee flex gap-8 whitespace-nowrap py-2 pl-4">
           {[...insightTicker, ...insightTicker].map((item, i) => (
@@ -2118,7 +2209,7 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
         </div>
       </div>
 
-      {/* Sticky stat strip */}
+      {/* Sticky stat strip — always visible */}
       <section className="sticky top-2 z-30 grid grid-cols-4 divide-x divide-[#1A1A1A] border border-[#2A2A2A] bg-[#070707]/95 shadow-[0_18px_50px_rgba(0,0,0,0.55)] backdrop-blur sm:top-3" data-testid="overview-position-strip">
         {[
           { label: "Rank",  value: currentRankLabel, color: "text-white" },
@@ -2134,6 +2225,7 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
       </section>
 
       {/* Next best move */}
+      <CollapsibleSection sectionKey="overview-next-move" label="Next best move" summary={`${nextMove.title} · ${completedRules}/6 done`} tone={nextMove.tone === "red" ? "red" : nextMove.tone === "green" ? "green" : "gold"}>
       <section className={classNames("relative overflow-hidden border p-4 shadow-[0_0_50px_rgba(0,0,0,0.35)]", nextMove.tone === "red" ? "border-[#C0392B]/65 bg-[#190B0A]" : nextMove.tone === "gold" ? "border-[#C8A96E]/65 bg-[#16130B]" : "border-[#2ECC71]/45 bg-[#07150D]")} data-testid="overview-next-best-move">
         <div className="pointer-events-none absolute -right-14 -top-16 h-40 w-40 rounded-full bg-current/10 blur-3xl" />
         <div className="relative">
@@ -2146,8 +2238,10 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
           </div>
         </div>
       </section>
+      </CollapsibleSection>
 
       {/* 2-col: Warden read + Challenge state (merged) */}
+      <CollapsibleSection sectionKey="overview-warden-challenge" label="Warden read · Challenge state" summary={`${todayComplete}/${participantCount} banked · ${riskCount} at risk`} tone="gold">
       <section className="grid gap-3 sm:grid-cols-2" data-testid="overview-boost-warden-grid">
         <WardenMoodCard mood={wardenMoodQuery.data} isLoading={wardenMoodQuery.isLoading} currentDay={currentDay} completedRules={currentParticipant?.completedRulesToday ?? 0} totalRules={6} />
         <article className="relative overflow-hidden border border-[#2A2A2A] bg-[#0F0F0F] p-4" data-testid="overview-red-alert-pace-card">
@@ -2172,8 +2266,10 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
           </div>
         </article>
       </section>
+      </CollapsibleSection>
 
       {/* 2-col: Rival pressure (compact) */}
+      <CollapsibleSection sectionKey="overview-rivals" label="Rival pressure" summary={`Rank ${currentRankLabel} · ${chasing ? `${chasing.displayName} above` : "You lead"} · ${beingChasedBy ? `${beingChasedBy.displayName} below` : "No threat"}`} tone="gold">
       <div data-testid="overview-intelligence-grid">
       <section className="border border-[#2A2A2A] bg-[#101010] p-4" data-testid="personal-rivalry-cards" data-overview-intelligence-grid="true">
         <div className="flex items-center justify-between gap-2">
@@ -2199,9 +2295,10 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
           })}
         </div>
       </section>
-
       </div>
+      </CollapsibleSection>
       {/* Bonuses section — full pool view */}
+      <CollapsibleSection sectionKey="overview-bonuses" label="Bonus pool" summary={`${unclaimedTodayBoosts.length} open today · ${ownBoostWins.length} won`} tone="green">
       <section className="border border-[#2ECC71]/30 bg-[#07150D]" data-testid="overview-active-boosts">
         <button type="button" onClick={() => setBonusAccordionOpen(v => !v)} className="motion-press flex w-full items-center justify-between gap-3 p-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2ECC71]/60">
           <div className="min-w-0">
@@ -2302,6 +2399,8 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
       </section>
 
       {/* Pressure list with show more/less */}
+      </CollapsibleSection>
+      <CollapsibleSection sectionKey="overview-pressure" label="Pressure list" summary={`${compareRows.length} challengers · ${riskCount} at risk`} tone="red" fillWhenAlone>
       <section className="border border-[#2A2A2A] bg-[#101010] p-4" data-testid="overview-compare-list">
         <div className="flex items-end justify-between gap-3">
           <div>
@@ -2344,6 +2443,7 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
         )}
       </section>
       <ParticipantSheet participant={selected} onClose={() => setSelected(null)} />
+      </CollapsibleSection>
       </div>{/* end collapsible */}
     </div>
   );
@@ -2730,7 +2830,7 @@ function Leaderboard({ snapshot }: { snapshot: Snapshot }) {
         <ChevronDown className={classNames("h-4 w-4 shrink-0 text-[#777] transition-transform duration-300", boardExpanded ? "rotate-180" : "rotate-0")} aria-hidden="true" />
       </button>
       {/* Collapsible board content */}
-      <div className={boardExpanded ? "space-y-4" : "hidden"}>
+      <div className={boardExpanded ? "flex flex-col gap-2" : "hidden"}>
       <div className="rounded-[1.4rem] border border-[#2A2A2A] bg-[#0D0D0D] p-4 sm:p-5" data-testid="board-mobile-redesign-shell">
         <div className="flex items-end justify-between gap-4">
           <div>
@@ -2838,6 +2938,7 @@ function Leaderboard({ snapshot }: { snapshot: Snapshot }) {
         </AnimatePresence>
       </section>
 
+      <CollapsibleSection sectionKey="board-podium" label="Podium · Race" summary={`${podium[0]?.displayName ?? "Leader"} leads · ${ranked.length} challengers`} tone="gold">
       <div className="grid grid-cols-3 items-end gap-1.5 sm:gap-3 lg:grid-cols-[0.95fr_1.1fr_0.95fr] lg:items-end" data-testid="top-three-podium" data-mobile-podium-layout="horizontal-stepped" aria-label="Top three arranged as a horizontal mobile podium: second, first, third">
         {podium[0] && <PodiumCard participant={podium[0]} index={0} className="order-2" onSelect={() => { pulse([12, 24, 12]); setSelected(podium[0]); }} />}
         {podium[1] && <PodiumCard participant={podium[1]} index={1} className="order-1 translate-y-3 sm:translate-y-5" onSelect={() => { pulse(14); setSelected(podium[1]); }} />}
@@ -2870,6 +2971,8 @@ function Leaderboard({ snapshot }: { snapshot: Snapshot }) {
         </div>
       )}
 
+      </CollapsibleSection>
+      <CollapsibleSection sectionKey="board-leaderboard" label="Full leaderboard" summary={`${ranked.length} challengers · ${ranked[0]?.displayName ?? ""} leads`} tone="red" fillWhenAlone>
       <div className={classNames("space-y-2", boardMode === "RACE" && "hidden")} data-testid="full-board-compare-list">
         <div className="flex items-end justify-between gap-3 px-1">
           <div>
@@ -2924,18 +3027,20 @@ function Leaderboard({ snapshot }: { snapshot: Snapshot }) {
             </article>
           );
         })}
-      </div>
+      </div>{/* ranked.map articles */}
       <ParticipantSheet participant={selected} onClose={() => setSelected(null)} />
+      </CollapsibleSection>
       </div>{/* end board collapsible */}
-      {/* Warden collective note — anonymous, group-level */}
-      {collectiveInsightQuery.data?.message && (
-        <aside className="border-l-4 border-[#C0392B] bg-[#130F0F] px-4 py-3" data-testid="board-warden-collective-note">
-          <p className="text-[9px] font-black uppercase tracking-[0.22em] text-[#C0392B]">Warden note</p>
-          <p className="mt-2 text-sm font-bold leading-6 text-[#D8D8D8]">{collectiveInsightQuery.data.message}</p>
-        </aside>
-      )}
-      {/* Warden Daily Reds — 3 bullets about today's live group data */}
-      <WardenDailyRedsBoard />
+      {/* Warden notes — collective + daily reds */}
+      <CollapsibleSection sectionKey="board-warden" label="Warden intelligence" summary="Collective note · Daily reds" tone="red" defaultOpen={false}>
+        {collectiveInsightQuery.data?.message && (
+          <aside className="border-l-4 border-[#C0392B] bg-[#130F0F] px-4 py-3" data-testid="board-warden-collective-note">
+            <p className="text-[9px] font-black uppercase tracking-[0.22em] text-[#C0392B]">Warden note</p>
+            <p className="mt-2 text-sm font-bold leading-6 text-[#D8D8D8]">{collectiveInsightQuery.data.message}</p>
+          </aside>
+        )}
+        <WardenDailyRedsBoard />
+      </CollapsibleSection>
     </section>
   );
 }

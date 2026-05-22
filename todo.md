@@ -1375,3 +1375,13 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Upgrade getDailyReds: use full accumulated data — all logs to date, per-participant streaks/lives/points trends, rule consistency over time, projected risk, forward-looking stakes
 - [x] LLM prompt uses past (all historical logs), present (today's data), future (who is at risk of losing a life, who is on a streak worth protecting)
 - [x] All 181 tests pass, TypeScript clean
+
+## v8.12 — Collapsible sections with adaptive layout
+
+- [x] Identify all discrete components in My Day, Overview, Board sections
+- [x] Each component group gets a collapsed header (icon + title + 1-line summary of key data)
+- [x] Collapsed state is compact (40-48px tall) — tap to expand
+- [x] Persist collapse state in localStorage per section per user
+- [x] When only 1-2 components are visible/expanded, layout fills space — no floating islands
+- [x] Adaptive fill: expanded components stretch to use available vertical space gracefully
+- [x] All 181 tests pass, TypeScript clean
