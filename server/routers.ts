@@ -64,7 +64,7 @@ const personalizationInput = z.object({
   biggestObstacle: z.string().trim().min(3).max(2000),
   trainingLevel: z.enum(["starting", "building", "consistent", "advanced"]),
   motivationStyle: z.string().max(80).optional().default("adaptive"),
-  supportNeeded: z.string().trim().min(3).max(2000),
+  supportNeeded: z.string().trim().max(2000).optional().default(""),
 });
 
 const siteLoginInput = z.object({

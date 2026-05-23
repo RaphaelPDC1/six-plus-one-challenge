@@ -192,8 +192,8 @@ export default function Register() {
               <Field label="1. Main goal"><input required value={primaryGoal} onChange={event => setPrimaryGoal(event.target.value)} placeholder="What are you here to change?" className={inputClass} /></Field>
               <Field label="2. Current training level"><select required value={trainingLevel} onChange={event => setTrainingLevel(event.target.value as TrainingLevel)} className={inputClass}>{trainingLevels.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></Field>
               <Field label="3. Biggest obstacle"><textarea required value={biggestObstacle} onChange={event => setBiggestObstacle(event.target.value)} placeholder="What usually knocks you off track?" className={textAreaClass} /></Field>
-              <Field label="4. Support needed"><textarea required value={supportNeeded} onChange={event => setSupportNeeded(event.target.value)} placeholder="What support would help you stay locked in?" className={textAreaClass} /></Field>
-              <Field label="5. Group-chat context"><textarea required value={groupContext} onChange={event => setGroupContext(event.target.value)} placeholder="What should the group know about how you show up, disappear, or need accountability?" className={textAreaClass} /></Field>
+              <Field label="4. Support needed"><textarea value={supportNeeded} onChange={event => setSupportNeeded(event.target.value)} placeholder="What support would help you stay locked in? (optional)" className={textAreaClass} /></Field>
+              <Field label="5. Group-chat context"><textarea value={groupContext} onChange={event => setGroupContext(event.target.value)} placeholder="What should the group know about how you show up, disappear, or need accountability? (optional)" className={textAreaClass} /></Field>
             </div>
 
             <div className="mt-5 grid gap-3 border-t border-[#2A2A2A] pt-4 sm:grid-cols-[1fr_auto] sm:items-center">
