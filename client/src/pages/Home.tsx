@@ -1788,9 +1788,6 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
                 onChange={event => {
                   const val = event.target.value;
                   setForm(current => ({ ...current, readTeachText: val }));
-                  if (val.trim().length > 1 && openRule === "readTeach") {
-                    window.setTimeout(() => setOpenRule("trackedEverything"), 600);
-                  }
                 }}
                 placeholder="Teach one useful thing from today."
               />
