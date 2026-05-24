@@ -1432,3 +1432,12 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Copy audit: no banned words found in any .tsx file — codebase is clean
 - [x] Copy audit: LLM system prompt in messageGenerator.ts already bans praise words at the model level
 - [x] All 181 tests pass, TypeScript clean
+
+
+## v8.17 — Senyo Recovery + Next Steps
+
+- [x] Restore Senyo's life (2→3), streak (0→1), and points (+48) after missed day 18
+- [x] Remove the life-loss popup for Senyo (alert system already tracks dismissals; restored stats prevent new alerts)
+- [ ] Register the 3-day personalised care notes heartbeat (manus-heartbeat create against live URL after deploy)
+- [x] Implement 'Bust personal watch cache on log submit' — invalidate getPersonalWardenWatch after every daily log submission
+- [x] Add participant's name to Today's Log header (show "Senyo's Log" instead of "Today's Log")

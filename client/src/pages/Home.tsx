@@ -1631,6 +1631,7 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
         }, 600);
       }
       void utils.challenge.snapshot.invalidate();
+      void utils.warden.getPersonalWardenWatch.invalidate();
       refetch();
     },
     onError: error => toast.error(error.message ?? "Could not save your log. Please try again."),
@@ -1695,7 +1696,7 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
             </div>
           </div>
           <h1 className="mt-3 text-5xl font-black uppercase leading-[0.86] tracking-[-0.1em] text-white sm:text-6xl md:text-7xl">
-            Today’s<br />
+            {participant?.displayName ?? "Participant"}'s<br />
             <span className="text-[#C8A96E]">Log.</span>
           </h1>
           <div className="mt-3 h-[2px] w-14 bg-[#C8A96E]" />
