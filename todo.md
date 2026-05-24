@@ -1441,3 +1441,4 @@ User priority: the Warden should read the room, find tensions between words and 
 - [ ] Register the 3-day personalised care notes heartbeat (manus-heartbeat create against live URL after deploy)
 - [x] Implement 'Bust personal watch cache on log submit' — invalidate getPersonalWardenWatch after every daily log submission
 - [x] Add participant's name to Today's Log header (show "Senyo's Log" instead of "Today's Log")
+- [x] Delete the life-loss notification message so it won't be posted to the group
