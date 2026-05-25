@@ -1442,3 +1442,5 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Implement 'Bust personal watch cache on log submit' — invalidate getPersonalWardenWatch after every daily log submission
 - [x] Add participant's name to Today's Log header (show "Senyo's Log" instead of "Today's Log")
 - [x] Delete the life-loss notification message so it won't be posted to the group
+- [x] Add Day 17, 18, 19 submissions for Senyo with proof media
+- [x] Create Ghost Life community note popup explaining the feature to all participants
