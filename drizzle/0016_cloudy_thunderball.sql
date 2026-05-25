@@ -1,0 +1,1 @@
+ALTER TABLE `admin_audit_log` MODIFY COLUMN `action` enum('restore_life','deduct_life','mark_payment_received','mark_payment_pending','adjust_points','approve_signup','reject_signup','fulfill_reward','cancel_reward','set_dispute','resolve_dispute','other') NOT NULL;

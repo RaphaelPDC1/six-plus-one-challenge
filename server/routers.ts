@@ -44,6 +44,11 @@ import {
   markUserNotificationsRead,
   logAdminAction,
   getAdminAuditLog,
+  setParticipantDisputeStatus,
+  resolveParticipantDispute,
+  participantContestDispute,
+  participantAcceptDispute,
+  getDisputedParticipants,
 } from "./db";
 import { generateWardenCommentary } from "./warden";
 import { generateDeepThoughtsForSnapshot } from "./deepThought";
@@ -196,6 +201,24 @@ export const appRouter = router({
     submitMyDay: protectedProcedure.input(dayLogInput).mutation(async ({ ctx, input }) => {
       const participant = await getOrCreateParticipant(ctx.user);
       return submitDailyLog(participant.id, input);
+    }),
+
+    contestDispute: protectedProcedure.mutation(async ({ ctx }) => {
+      const participant = await getParticipantByUserId(ctx.user.id);
+      if (!participant) throw new TRPCError({ code: "NOT_FOUND", message: "Participant not found" });
+      if (participant.status !== "dispute") throw new TRPCError({ code: "BAD_REQUEST", message: "Account is not in dispute" });
+      await participantContestDispute(participant.id);
+      await notifyOwner({ title: "Dispute Contested", content: `${participant.displayName} is contesting their dispute.` });
+      return { success: true };
+    }),
+
+    acceptDispute: protectedProcedure.mutation(async ({ ctx }) => {
+      const participant = await getParticipantByUserId(ctx.user.id);
+      if (!participant) throw new TRPCError({ code: "NOT_FOUND", message: "Participant not found" });
+      if (participant.status !== "dispute") throw new TRPCError({ code: "BAD_REQUEST", message: "Account is not in dispute" });
+      await participantAcceptDispute(participant.id);
+      await notifyOwner({ title: "Dispute Accepted", content: `${participant.displayName} has accepted the dispute and withdrawn from the challenge.` });
+      return { success: true };
     }),
 
     uploadProof: protectedProcedure
@@ -561,6 +584,30 @@ export const appRouter = router({
         }
         return { generated: results.filter(r => r.success).length, failed: results.filter(r => !r.success).length, results };
       }),
+
+    setDispute: adminProcedure
+      .input(z.object({
+        participantId: z.number().int(),
+        reason: z.string().trim().min(3).max(500),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await setParticipantDisputeStatus(input.participantId, input.reason, ctx.user.id);
+        return { success: true };
+      }),
+
+    resolveDispute: adminProcedure
+      .input(z.object({
+        participantId: z.number().int(),
+        resolution: z.enum(["reinstate", "withdraw"]),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await resolveParticipantDispute(input.participantId, input.resolution, ctx.user.id);
+        return { success: true };
+      }),
+
+    listDisputes: adminProcedure.query(async () => {
+      return getDisputedParticipants();
+    }),
   }),
 
   whatsapp: router({

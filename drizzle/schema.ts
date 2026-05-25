@@ -62,6 +62,9 @@ export const participants = mysqlTable("participants", {
   daysComplete: int("daysComplete").default(0).notNull(),
   livesRemaining: int("livesRemaining").default(4).notNull(),
   ghostLifeUsed: boolean("ghostLifeUsed").default(false).notNull(),
+  status: mysqlEnum("status", ["active", "dispute", "withdrawn"]).default("active").notNull(),
+  disputeReason: text("disputeReason"),
+  disputeStartedAt: timestamp("disputeStartedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -306,6 +309,8 @@ export const adminAuditLog = mysqlTable("admin_audit_log", {
     "reject_signup",
     "fulfill_reward",
     "cancel_reward",
+    "set_dispute",
+    "resolve_dispute",
     "other",
   ]).notNull(),
   targetParticipantId: int("targetParticipantId"),

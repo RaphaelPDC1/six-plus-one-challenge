@@ -1497,6 +1497,86 @@ function JournalReflectionCard({
   );
 }
 
+// ─── Dispute Banner Component ────────────────────────────────────────────────
+function DisputeBanner({ participant }: { participant: any }) {
+  const utils = trpc.useUtils();
+  const [confirming, setConfirming] = useState<"accept" | "contest" | null>(null);
+  const contestMutation = trpc.challenge.contestDispute.useMutation({
+    onSuccess: () => { utils.challenge.snapshot.invalidate(); setConfirming(null); },
+  });
+  const acceptMutation = trpc.challenge.acceptDispute.useMutation({
+    onSuccess: () => { utils.challenge.snapshot.invalidate(); setConfirming(null); },
+  });
+  const isWithdrawn = participant?.status === "withdrawn";
+  const isContesting = String(participant?.disputeReason ?? "").includes("[CONTESTING]");
+
+  if (isWithdrawn) {
+    return (
+      <div className="mx-4 mt-4 border border-[#555] bg-[#111] p-4" data-testid="dispute-banner-withdrawn">
+        <p className="text-[9px] font-black uppercase tracking-[0.22em] text-[#888]">Account Status</p>
+        <p className="mt-1 text-sm font-black uppercase tracking-[-0.02em] text-[#AAA]">Withdrawn from Challenge</p>
+        <p className="mt-2 text-[11px] leading-5 text-[#666]">Your account has been marked as withdrawn. Contact the organiser if you believe this is an error.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mx-4 mt-4 border border-[#F39C12]/60 bg-[#1A1400] p-4" data-testid="dispute-banner">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[9px] font-black uppercase tracking-[0.22em] text-[#F39C12]">⚠ Account Under Dispute</p>
+          <p className="mt-1 text-sm font-black uppercase tracking-[-0.02em] text-white">Your account is currently in dispute</p>
+          {participant?.disputeReason && (
+            <p className="mt-2 text-[11px] leading-5 text-[#AAA]">
+              Reason: {String(participant.disputeReason).replace("[CONTESTING] ", "")}
+            </p>
+          )}
+          {isContesting && (
+            <p className="mt-2 text-[10px] font-black uppercase tracking-[0.14em] text-[#F39C12]">✓ You are contesting this dispute — awaiting organiser review</p>
+          )}
+        </div>
+      </div>
+      {!isContesting && (
+        <div className="mt-4 space-y-2">
+          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#777]">What would you like to do?</p>
+          {confirming === null && (
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setConfirming("contest")}
+                className="border border-[#F39C12]/60 px-4 py-2 text-[10px] font-black uppercase tracking-[0.14em] text-[#F39C12] hover:bg-[#F39C12]/10 transition-colors"
+              >Contest This</button>
+              <button
+                type="button"
+                onClick={() => setConfirming("accept")}
+                className="border border-[#555] px-4 py-2 text-[10px] font-black uppercase tracking-[0.14em] text-[#888] hover:bg-[#222] transition-colors"
+              >Accept &amp; Leave</button>
+            </div>
+          )}
+          {confirming === "contest" && (
+            <div className="space-y-2">
+              <p className="text-[11px] leading-5 text-[#AAA]">By contesting, you are telling the organiser you disagree with this dispute. They will review and respond.</p>
+              <div className="flex gap-2">
+                <button type="button" disabled={contestMutation.isPending} onClick={() => contestMutation.mutate()} className="border border-[#F39C12] bg-[#F39C12]/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.14em] text-[#F39C12] hover:bg-[#F39C12]/20 transition-colors disabled:opacity-50">{contestMutation.isPending ? "Sending..." : "Yes, Contest This"}</button>
+                <button type="button" onClick={() => setConfirming(null)} className="border border-[#333] px-4 py-2 text-[10px] font-black uppercase tracking-[0.14em] text-[#777] hover:bg-[#222] transition-colors">Cancel</button>
+              </div>
+            </div>
+          )}
+          {confirming === "accept" && (
+            <div className="space-y-2">
+              <p className="text-[11px] leading-5 text-[#AAA]">By accepting, you confirm your withdrawal from the challenge. This cannot be undone.</p>
+              <div className="flex gap-2">
+                <button type="button" disabled={acceptMutation.isPending} onClick={() => acceptMutation.mutate()} className="border border-[#C0392B] bg-[#C0392B]/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.14em] text-[#FFB3A8] hover:bg-[#C0392B]/20 transition-colors disabled:opacity-50">{acceptMutation.isPending ? "Processing..." : "Yes, Accept & Leave"}</button>
+                <button type="button" onClick={() => setConfirming(null)} className="border border-[#333] px-4 py-2 text-[10px] font-black uppercase tracking-[0.14em] text-[#777] hover:bg-[#222] transition-colors">Cancel</button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void }) {
   const utils = trpc.useUtils();
   const [form, setForm] = useState<MyDayForm>(emptyDay);
@@ -1679,6 +1759,11 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
   return (
     <div className="motion-page grid min-w-0 max-w-full gap-0 overflow-x-hidden xl:grid-cols-[minmax(0,1fr)_360px] xl:gap-5">
       <section className="min-w-0 max-w-full overflow-x-hidden">
+
+        {/* ── Dispute Banner — shown when participant is in dispute stage ── */}
+        {(participant?.status === "dispute" || participant?.status === "withdrawn") && (
+          <DisputeBanner participant={participant} />
+        )}
 
         {/* ── Header — flat on dark background, no card border ── */}
         <div className="p-4 pb-5 sm:p-5">
@@ -2931,18 +3016,20 @@ function Leaderboard({ snapshot }: { snapshot: Snapshot }) {
           const pointsGap = index === 0 ? "Leader" : `${Math.max(0, leaderPoints - Number(p.totalPoints ?? 0))} behind`;
           const previousGap = index === 0 ? "No gap" : `${Math.max(0, Number(ranked[index - 1]?.totalPoints ?? 0) - Number(p.totalPoints ?? 0))} to catch`;
           const eliminationRisk = Number(p.riskPoints ?? 0) >= 60 || Number(p.livesRemaining ?? 4) <= 1;
+          const isDisputed = p.status === "dispute" || p.status === "withdrawn";
           const playerBoostWins = allBoostWins.filter((win: any) => String(win.userId) === String(p.id));
           const todayPlayerBoostWins = todayBoostWins.filter((win: any) => String(win.userId) === String(p.id));
           const totalBoostPoints = playerBoostWins.reduce((sum: number, win: any) => sum + Number(win.pointsAwarded ?? 5), 0);
           return (
-            <article key={p.id} className={classNames("motion-row overflow-hidden border bg-[#0D0D0D] transition hover:border-[#C8A96E]", eliminationRisk ? "border-[#C0392B]/75 bg-[#190B0A] shadow-[0_0_26px_rgba(192,57,43,0.12)]" : index === 0 ? "border-[#C8A96E]/70 bg-[#16130B]" : "border-[#2A2A2A]")} data-testid="board-player-row" data-elimination-risk={eliminationRisk ? "true" : "false"}>
+            <article key={p.id} className={classNames("motion-row overflow-hidden border bg-[#0D0D0D] transition hover:border-[#C8A96E]", isDisputed ? "border-[#555]/50 bg-[#111] opacity-50 grayscale" : eliminationRisk ? "border-[#C0392B]/75 bg-[#190B0A] shadow-[0_0_26px_rgba(192,57,43,0.12)]" : index === 0 ? "border-[#C8A96E]/70 bg-[#16130B]" : "border-[#2A2A2A]")} data-testid="board-player-row" data-elimination-risk={eliminationRisk ? "true" : "false"} data-disputed={isDisputed ? "true" : "false"}>
               <button type="button" onClick={() => { pulse(14); setExpandedParticipantId(isExpanded ? null : p.id); }} className="motion-press grid w-full grid-cols-[42px_minmax(0,1fr)] gap-3 p-3 text-left sm:grid-cols-[56px_56px_minmax(0,1fr)_minmax(155px,0.65fr)_auto_32px] sm:items-center sm:p-4" aria-expanded={isExpanded} aria-controls={detailId} aria-label={`Toggle ${p.displayName} Board metrics`}>
                 <span className={classNames("row-span-2 text-2xl font-black sm:row-span-1 sm:text-3xl", eliminationRisk ? "text-[#FFB3A8]" : index === 0 ? "text-[#C8A96E]" : index === 1 ? "text-[#BFC7D5]" : index === 2 ? "text-[#D58A45]" : "text-[#777]")}>#{index + 1}</span>
                 <span className="hidden sm:block"><ProfilePhoto participant={p} className="h-12 w-12" /></span>
                 <span className="min-w-0">
                   <span className="flex min-w-0 flex-wrap items-center gap-2">
                     <span className="block min-w-0 break-words text-lg font-black uppercase tracking-[-0.04em] text-white sm:text-xl">{p.displayName}</span>
-                    {eliminationRisk && <span className="rounded-full border border-[#C0392B] bg-[#C0392B]/15 px-2 py-1 text-[8px] font-black uppercase tracking-[0.13em] text-[#FFB3A8]" data-testid="elimination-risk-badge">⚠ ELIMINATION RISK</span>}
+                    {eliminationRisk && !isDisputed && <span className="rounded-full border border-[#C0392B] bg-[#C0392B]/15 px-2 py-1 text-[8px] font-black uppercase tracking-[0.13em] text-[#FFB3A8]" data-testid="elimination-risk-badge">⚠ ELIMINATION RISK</span>}
+                    {isDisputed && <span className="rounded-full border border-[#888] bg-[#222] px-2 py-1 text-[8px] font-black uppercase tracking-[0.13em] text-[#AAA]" data-testid="dispute-badge">⚠ {p.status === "withdrawn" ? "WITHDRAWN" : "DISPUTE"}</span>}
                     {todayPlayerBoostWins.map((win: any) => <span key={win.id ?? `${win.boostId}-${win.userId}`} className="rounded-full border border-[#C8A96E] bg-[#16130B] px-2 py-1 text-[8px] font-black uppercase tracking-[0.13em] text-[#C8A96E]" data-testid="boost-won-badge">{win.boostIcon} {win.boostName}</span>)}
                   </span>
                   <span className="mt-1 block break-words text-[11px] font-bold uppercase tracking-[0.1em] text-[#C8A96E] sm:text-xs sm:tracking-[0.14em]" data-testid="board-player-status-line">{p.statusLine}</span>
@@ -3827,8 +3914,81 @@ function AdminPanel({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => 
           <div className="space-y-3">{snapshot?.chatHistory.map((m: any) => <div key={m.id} className="border border-[#2A2A2A] bg-[#0D0D0D] p-4"><p className="font-black uppercase text-white">{m.senderName || m.senderId}</p><p className="mt-2 text-sm font-bold text-[#999]">{m.messageText}</p></div>)}</div>
         </div>
       </section>
+      {/* ── Dispute Management ─────────────────────────────────────────────── */}
+      <AdminDisputePanel snapshot={snapshot} refetch={refetch} />
       <AdminAuditLogPanel />
     </div>
+  );
+}
+
+function AdminDisputePanel({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void }) {
+  const [disputeForm, setDisputeForm] = useState({ participantId: "", reason: "" });
+  const raiseDispute = trpc.admin.setDispute.useMutation({
+    onSuccess: () => { haptics.success(); toast("Dispute raised. Participant account greyed."); setDisputeForm({ participantId: "", reason: "" }); refetch(); },
+    onError: (error) => toast(error.message || "Could not raise dispute."),
+  });
+  const resolveDispute = trpc.admin.resolveDispute.useMutation({
+    onSuccess: () => { haptics.success(); toast("Dispute resolved. Account reinstated."); refetch(); },
+    onError: (error) => toast(error.message || "Could not resolve dispute."),
+  });
+  const disputedParticipants = (snapshot?.participants ?? []).filter((p: any) => p.status === "dispute" || p.status === "withdrawn");
+
+  return (
+    <section className="border border-[#F39C12]/40 bg-[#1A1400] p-5 xl:col-span-2" data-testid="admin-dispute-panel">
+      <MicroLabel tone="gold">⚠ Dispute Management</MicroLabel>
+      <h2 className="mt-2 text-3xl font-black uppercase tracking-[-0.06em] text-white">Account disputes.</h2>
+      <p className="mt-3 max-w-2xl text-sm font-bold leading-6 text-[#999]">Flag a participant's account as disputed. Their row will be greyed on the leaderboard and they will see a dispute banner with options to contest or accept.</p>
+
+      {/* Active disputes */}
+      {disputedParticipants.length > 0 && (
+        <div className="mt-5 space-y-3">
+          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#F39C12]">Active disputes ({disputedParticipants.length})</p>
+          {disputedParticipants.map((p: any) => (
+            <div key={p.id} className="border border-[#555] bg-[#111] p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="font-black uppercase text-white">{p.displayName}</p>
+                  <p className="mt-1 text-[10px] font-black uppercase tracking-[0.14em] text-[#888]">{p.status === "withdrawn" ? "Withdrawn" : "In Dispute"}</p>
+                  {p.disputeReason && <p className="mt-2 text-xs font-bold leading-5 text-[#AAA]">{p.disputeReason}</p>}
+                  {p.disputeStartedAt && <p className="mt-1 text-[10px] text-[#666]">{new Date(p.disputeStartedAt).toLocaleString()}</p>}
+                </div>
+                <div className="flex shrink-0 flex-col gap-2">
+                  {p.status !== "withdrawn" && (
+                    <button type="button" disabled={resolveDispute.isPending} onClick={() => resolveDispute.mutate({ participantId: p.id, resolution: "reinstate" })} className="border border-[#2ECC71]/60 px-3 py-1 text-[9px] font-black uppercase tracking-[0.14em] text-[#2ECC71] hover:bg-[#2ECC71]/10 transition-colors disabled:opacity-50">Reinstate</button>
+                  )}
+                  <button type="button" disabled={resolveDispute.isPending} onClick={() => resolveDispute.mutate({ participantId: p.id, resolution: "withdraw" })} className="border border-[#C0392B]/60 px-3 py-1 text-[9px] font-black uppercase tracking-[0.14em] text-[#FFB3A8] hover:bg-[#C0392B]/10 transition-colors disabled:opacity-50">Confirm Withdrawal</button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Raise new dispute */}
+      <div className="mt-5 grid gap-3 md:grid-cols-2">
+        <Field label="Participant">
+          <select value={disputeForm.participantId} onChange={e => setDisputeForm(f => ({ ...f, participantId: e.target.value }))} className="min-h-12 w-full border border-[#2A2A2A] bg-black px-3 py-3 text-sm font-bold text-white outline-none focus:border-[#F39C12]">
+            <option value="">Select participant...</option>
+            {(snapshot?.participants ?? []).filter((p: any) => p.status === "active" || !p.status).map((p: any) => (
+              <option key={p.id} value={p.id}>{p.displayName}</option>
+            ))}
+          </select>
+        </Field>
+        <Field label="Dispute reason">
+          <TextInput value={disputeForm.reason} onChange={e => setDisputeForm(f => ({ ...f, reason: e.target.value }))} placeholder="e.g. Caught eating burger — Clean Eating violation" />
+        </Field>
+      </div>
+      <div className="mt-4">
+        <SharpButton
+          className="min-h-11 px-5 py-3"
+          disabled={raiseDispute.isPending || !disputeForm.participantId || !disputeForm.reason.trim()}
+          onClick={() => raiseDispute.mutate({ participantId: Number(disputeForm.participantId), reason: disputeForm.reason })}
+          style={{ background: "#1A0A00", border: "1px solid #F39C12", color: "#F39C12" }}
+        >
+          {raiseDispute.isPending ? "Raising dispute..." : "⚠ Raise Dispute"}
+        </SharpButton>
+      </div>
+    </section>
   );
 }
 

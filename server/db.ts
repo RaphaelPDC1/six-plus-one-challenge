@@ -1435,3 +1435,92 @@ export async function getAdminAuditLog(limit = 50) {
     .orderBy(desc(adminAuditLog.createdAt))
     .limit(limit);
 }
+
+// ─── Dispute Management ──────────────────────────────────────────────────────
+
+export async function setParticipantDisputeStatus(
+  participantId: number,
+  reason: string,
+  adminUserId: number
+) {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  await db
+    .update(participants)
+    .set({
+      status: "dispute",
+      disputeReason: reason,
+      disputeStartedAt: new Date(),
+    })
+    .where(eq(participants.id, participantId));
+  await logAdminAction({
+    adminUserId,
+    adminName: "Admin",
+    action: "set_dispute",
+    targetParticipantId: participantId,
+    reason: `Dispute raised: ${reason}`,
+  });
+}
+
+export async function resolveParticipantDispute(
+  participantId: number,
+  resolution: "reinstate" | "withdraw",
+  adminUserId: number
+) {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  const newStatus = resolution === "reinstate" ? "active" : "withdrawn";
+  await db
+    .update(participants)
+    .set({
+      status: newStatus,
+      disputeReason: resolution === "reinstate" ? null : undefined,
+      disputeStartedAt: resolution === "reinstate" ? null : undefined,
+    })
+    .where(eq(participants.id, participantId));
+  await logAdminAction({
+    adminUserId,
+    adminName: "Admin",
+    action: "resolve_dispute",
+    targetParticipantId: participantId,
+    reason: `Dispute resolved: ${resolution}`,
+  });
+}
+
+export async function participantContestDispute(participantId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  // Update the dispute reason to note they are contesting
+  const existing = await db
+    .select({ disputeReason: participants.disputeReason })
+    .from(participants)
+    .where(eq(participants.id, participantId))
+    .limit(1);
+  const currentReason = existing[0]?.disputeReason ?? "";
+  const contestNote = currentReason.includes("[CONTESTING]")
+    ? currentReason
+    : `[CONTESTING] ${currentReason}`;
+  await db
+    .update(participants)
+    .set({ disputeReason: contestNote })
+    .where(eq(participants.id, participantId));
+}
+
+export async function participantAcceptDispute(participantId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  await db
+    .update(participants)
+    .set({ status: "withdrawn" })
+    .where(eq(participants.id, participantId));
+}
+
+export async function getDisputedParticipants() {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(participants)
+    .where(eq(participants.status, "dispute"))
+    .orderBy(desc(participants.disputeStartedAt));
+}

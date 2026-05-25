@@ -1444,3 +1444,31 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Delete the life-loss notification message so it won't be posted to the group
 - [x] Add Day 17, 18, 19 submissions for Senyo with proof media
 - [x] Create Ghost Life community note popup explaining the feature to all participants
+
+## v8.18 — Dispute Stage System
+
+- [ ] Add `status` enum (active/dispute/withdrawn), `disputeReason`, `disputeStartedAt` fields to participants table in drizzle/schema.ts
+- [ ] Generate and apply migration SQL for the new dispute fields
+- [ ] Add `setDisputeStatus` admin procedure (set status, reason, timestamp)
+- [ ] Add `resolveDispute` admin procedure (reinstate or remove)
+- [ ] Add `contestDispute` participant procedure (mark as contesting, notify admin)
+- [ ] Add `acceptDispute` participant procedure (mark as withdrawn)
+- [ ] Grey out disputed participant rows on leaderboard (opacity, desaturated, DISPUTE badge)
+- [ ] Grey out disputed participant profile card everywhere
+- [ ] Show dispute banner at top of disputed participant's My Day screen
+- [ ] Show resolution panel with "Accept & Leave" and "Contest This" options for disputed participant
+- [ ] Show "ACCOUNT IN DISPUTE — Submission recorded but frozen pending resolution" on submit
+- [ ] Add admin dashboard section showing all disputed accounts with reason, timestamp, and resolve controls
+- [ ] Flag Wiwi's account as disputed in the database with reason "Caught eating burger — Clean Eating violation"
+- [ ] Write Vitest tests for dispute procedures
+
+## v8.18 — Dispute Stage System
+
+- [x] Add dispute status/reason/timestamp fields to participants table (migration applied)
+- [x] Add setDispute and resolveDispute admin tRPC procedures
+- [x] Add contestDispute and acceptDispute participant tRPC procedures
+- [x] Grey out disputed participant rows on leaderboard (opacity-50 + grayscale) with ⚠ DISPUTE badge
+- [x] Build DisputeBanner component shown on participant's My Day screen with Contest/Accept options
+- [x] Add admin dispute management panel in AdminPanel with raise/resolve controls
+- [x] Flag Wiwi's account as disputed in the database (burger incident)
+- [x] Write dispute.test.ts vitest coverage — all 188 tests passing
