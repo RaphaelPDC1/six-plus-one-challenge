@@ -1744,12 +1744,23 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
     const availableSlots = Math.max(0, 6 - parseProofMedia(form.exerciseProofUrl).length);
     if (availableSlots === 0) { toast.error("You can attach up to 6 proof items per day."); return; }
     files.slice(0, availableSlots).forEach(file => {
-      if (!file.type.match(/^(image\/(png|jpeg|webp)|video\/(mp4|webm|quicktime|x-quicktime|x-msvideo|mov))$/i)) { toast.error("Use PNG, JPG, WEBP, MP4, MOV, or WEBM proof media."); return; }
-      const limit = file.type.startsWith("video/") ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
-      if (file.size > limit) { toast.error(file.type.startsWith("video/") ? "Proof video must be under 50MB." : "Proof image must be under 10MB."); return; }
+      const isImage = /^image\/(png|jpeg|webp)$/i.test(file.type);
+      const isVideo = file.type.startsWith("video/") || /\.(mp4|mov|webm|m4v|avi|3gp)$/i.test(file.name);
+      if (!isImage && !isVideo) { toast.error("Use a photo (PNG, JPG, WEBP) or video (MP4, MOV, WEBM) for proof."); return; }
+      const limit = isVideo ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
+      if (file.size > limit) { toast.error(isVideo ? "Proof video must be under 50MB." : "Proof image must be under 10MB."); return; }
       const reader = new FileReader();
-      const normalizedMimeType = file.type.toLowerCase() === "video/x-quicktime" ? "video/quicktime" : file.type.toLowerCase() === "video/x-msvideo" ? "video/mp4" : file.type.toLowerCase() === "video/mov" ? "video/quicktime" : file.type;
-      const mimeType = normalizedMimeType as "image/png" | "image/jpeg" | "image/webp" | "video/mp4" | "video/webm" | "video/quicktime";
+      // Normalise MIME type — browsers (especially iOS Safari) report non-standard types
+      let mimeType: "image/png" | "image/jpeg" | "image/webp" | "video/mp4" | "video/webm" | "video/quicktime";
+      if (isImage) {
+        mimeType = (file.type === "image/png" ? "image/png" : file.type === "image/webp" ? "image/webp" : "image/jpeg") as typeof mimeType;
+      } else {
+        const lc = file.type.toLowerCase();
+        const name = file.name.toLowerCase();
+        if (lc === "video/webm") mimeType = "video/webm";
+        else if (lc === "video/mp4" || lc === "video/x-msvideo" || /\.mp4$/i.test(name) || /\.m4v$/i.test(name)) mimeType = "video/mp4";
+        else mimeType = "video/quicktime"; // default for .mov, video/quicktime, video/x-quicktime, unknown video
+      }
       reader.onload = () => uploadProof.mutate({ fileName: file.name || "exercise-proof", mimeType, dataUrl: String(reader.result) });
       reader.onerror = () => toast.error("Could not read that proof media.");
       reader.readAsDataURL(file);
