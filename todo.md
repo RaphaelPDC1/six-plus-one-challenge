@@ -1480,3 +1480,21 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Normalize browser MIME types to standard formats (x-quicktime → quicktime, x-msvideo → mp4, mov → quicktime)
 - [x] Update backend regex to accept additional MIME type variations
 - [x] Participants can now upload videos without "The string did not match the expected" error
+
+## v8.20 — Accordion Redesign + Code Cleanup
+
+- [ ] Redesign MY DAY page: group all sections into clean tappable accordions with key info visible in header
+- [ ] Redesign OVERVIEW page: group participant stats/info into accordions with key info in headers
+- [ ] Redesign BOARD page: group leaderboard sections into accordions with consistent open/close state
+- [ ] Establish consistent accordion default state across all 3 pages (most closed, key one open)
+- [ ] Remove dead/unfinished code and unused imports to improve page load time
+- [ ] Remove redundant queries or heavy data fetches that slow initial load
+
+## v8.20 — Accordion Redesign + Layout Cleanup
+
+- [x] MY DAY: Remove standalone Warden block above rules; move Warden/Lives/Ghost Life to collapsible sections below submit button (visible on all screen sizes)
+- [x] MY DAY: All sidebar sections now collapsed by default (Warden, Lives, Ghost Life, Warden Note) — rules stay as the main focus
+- [x] BOARD: Podium · Race now opens by default (was closed) — it's the visual centrepiece
+- [x] BOARD: Full Leaderboard now closed by default (was open, too long on load)
+- [x] OVERVIEW: Pressure List now closed by default (was open, too long on load)
+- [x] CollapsibleSection: Improved visual design — taller header (py-3 px-4), stacked label/summary text, larger chevron (h-4 w-4), active:scale feedback, distinct open/closed bg states

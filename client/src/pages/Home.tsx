@@ -119,16 +119,17 @@ function CollapsibleSection({
         type="button"
         onClick={toggle}
         className={classNames(
-          "flex w-full items-center justify-between gap-3 border bg-[#0A0A0A] px-3 py-2.5 text-left transition hover:bg-[#111]",
+          "flex w-full items-center justify-between gap-3 border px-4 py-3 text-left transition active:scale-[0.99]",
+          open ? "bg-[#0D0D0D] hover:bg-[#111]" : "bg-[#0A0A0A] hover:bg-[#0F0F0F]",
           toneClasses[tone],
         )}
         aria-expanded={open}
       >
-        <div className="flex min-w-0 items-center gap-2">
-          <span className={classNames("text-[8px] font-black uppercase tracking-[0.22em]", chevronColor[tone])}>{label}</span>
-          {!open && <span className="truncate text-[9px] font-bold uppercase tracking-[0.1em] text-[#666]">{summary}</span>}
+        <div className="flex min-w-0 flex-col gap-0.5">
+          <span className={classNames("text-[9px] font-black uppercase tracking-[0.22em]", chevronColor[tone])}>{label}</span>
+          {!open && <span className="truncate text-[10px] font-bold uppercase tracking-[0.08em] text-[#888]">{summary}</span>}
         </div>
-        <ChevronDown className={classNames("h-3.5 w-3.5 shrink-0 transition-transform duration-300", chevronColor[tone], open ? "rotate-180" : "rotate-0")} aria-hidden />
+        <ChevronDown className={classNames("h-4 w-4 shrink-0 transition-transform duration-300", chevronColor[tone], open ? "rotate-180" : "rotate-0")} aria-hidden />
       </button>
       {open && <div className={classNames("min-w-0", open && fillWhenAlone ? "flex-1" : "")}>{children}</div>}
     </div>
@@ -398,8 +399,11 @@ function encodeProofMediaAfterRemoval(value: string, removeIndex: number) {
 function proofMediaSrc(item: ProofMediaItem) {
   const trimmed = item.url.trim();
   if (proofMediaType(item) === "video") {
-    if (trimmed.startsWith("/manus-storage/")) return `/api/storage-image/${encodeURIComponent(trimmed.slice("/manus-storage/".length))}`;
-    if (trimmed.startsWith("/api/storage-image/")) return encodeURI(trimmed);
+    // Videos should be served directly from storage, not through image proxy
+    // The image proxy doesn't handle video MIME types correctly
+    if (trimmed.startsWith("/manus-storage/")) return trimmed;
+    if (trimmed.startsWith("/api/storage-image/")) return trimmed; // Already proxied, return as-is
+    if (/^https?:\/\//i.test(trimmed)) return trimmed; // External URL
     return trimmed;
   }
   return proofImageSrc(trimmed) || trimmed;
@@ -1813,10 +1817,7 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
           </div>
         </div>
 
-                {/* ── Warden — inline on mobile, hidden on desktop (shown in aside) ── */}
-        <div className="mb-1 px-4 xl:hidden">
-          <WardenPresence snapshot={snapshot} />
-        </div>
+        
         {/* ── My Day folder header — tap to collapse/expand rules ── */}
         <button
           type="button"
@@ -1990,14 +1991,15 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
         )}
       </section>
 
-      <aside className="hidden min-w-0 max-w-full flex flex-col gap-1.5 overflow-x-hidden xl:flex">
-        <CollapsibleSection sectionKey="myday-warden" label="The Warden is watching" summary="Personal read · refreshes 4× daily" tone="red" defaultOpen={true}>
+      {/* ── Sidebar sections — shown below rules on mobile, beside rules on desktop ── */}
+      <aside className="min-w-0 max-w-full flex flex-col gap-1.5 overflow-x-hidden xl:flex">
+        <CollapsibleSection sectionKey="myday-warden" label="The Warden is watching" summary="Personal read · refreshes 4× daily" tone="red" defaultOpen={false}>
           <WardenPresence snapshot={snapshot} />
         </CollapsibleSection>
-        <CollapsibleSection sectionKey="myday-lives" label="Lives" summary={`${participant?.livesRemaining ?? 4}/4 lives remaining`} tone={((participant?.livesRemaining ?? 4) <= 2) ? "red" : "gold"} defaultOpen={false}>
+        <CollapsibleSection sectionKey="myday-lives" label={`Lives · ${participant?.livesRemaining ?? 4}/4 remaining`} summary={`${participant?.livesRemaining ?? 4}/4 lives · ${completedRules}/${totalRules} rules done today`} tone={((participant?.livesRemaining ?? 4) <= 2) ? "red" : "gold"} defaultOpen={false}>
           <HealthBar lives={participant?.livesRemaining ?? 4} label="Lives remaining" />
         </CollapsibleSection>
-        <CollapsibleSection sectionKey="myday-ghost" label="Ghost Life" summary={ghostLifeLocked ? "Used · locked for challenge" : "Available · one rescue"} tone="purple" defaultOpen={false}>
+        <CollapsibleSection sectionKey="myday-ghost" label={ghostLifeLocked ? "Ghost Life · Used" : "Ghost Life · Available"} summary={ghostLifeLocked ? "Used · locked for challenge" : "One rescue · tap to activate"} tone="purple" defaultOpen={false}>
         <div className={classNames("motion-card ghost-life-card border p-4 transition", ghostLifeLocked ? "border-[#4A315D] bg-[#120F18] opacity-80" : "border-[#2A2A2A] bg-[#101010]")} data-ghost-life-state={ghostLifeLocked ? "locked" : "available"}>
           <div className="flex items-start justify-between gap-3">
             <MicroLabel tone="purple">Ghost Life</MicroLabel>
@@ -2529,7 +2531,7 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
       </CollapsibleSection>
 
       {/* Pressure list with show more/less */}
-      <CollapsibleSection sectionKey="overview-pressure" label="Pressure list" summary={`${compareRows.length} challengers · ${riskCount} at risk`} tone="red" fillWhenAlone defaultOpen={true}>
+      <CollapsibleSection sectionKey="overview-pressure" label="Pressure list" summary={`${compareRows.length} challengers · ${riskCount} at risk`} tone="red" fillWhenAlone defaultOpen={false}>
       <section className="border border-[#2A2A2A] bg-[#101010] p-4" data-testid="overview-compare-list">
         <div className="flex items-end justify-between gap-3">
           <div>
@@ -2979,7 +2981,7 @@ function Leaderboard({ snapshot }: { snapshot: Snapshot }) {
 
       {/* Boost Key Slots removed — see Overview → Boosts section */}
 
-      <CollapsibleSection sectionKey="board-podium" label="Podium · Race" summary={`${podium[0]?.displayName ?? "Leader"} leads · ${ranked.length} challengers`} tone="gold" defaultOpen={false}>
+      <CollapsibleSection sectionKey="board-podium" label="Podium · Race" summary={`${podium[0]?.displayName ?? "Leader"} leads · ${ranked.length} challengers`} tone="gold" defaultOpen={true}>
       <div className="grid grid-cols-3 items-end gap-1.5 sm:gap-3 lg:grid-cols-[0.95fr_1.1fr_0.95fr] lg:items-end" data-testid="top-three-podium" data-mobile-podium-layout="horizontal-stepped" aria-label="Top three arranged as a horizontal mobile podium: second, first, third">
         {podium[0] && <PodiumCard participant={podium[0]} index={0} className="order-2" onSelect={() => { pulse([12, 24, 12]); setSelected(podium[0]); }} />}
         {podium[1] && <PodiumCard participant={podium[1]} index={1} className="order-1 translate-y-3 sm:translate-y-5" onSelect={() => { pulse(14); setSelected(podium[1]); }} />}
@@ -3013,7 +3015,7 @@ function Leaderboard({ snapshot }: { snapshot: Snapshot }) {
       )}
 
       </CollapsibleSection>
-      <CollapsibleSection sectionKey="board-leaderboard" label="Full leaderboard" summary={`${ranked.length} challengers · ${ranked[0]?.displayName ?? ""} leads`} tone="red" fillWhenAlone defaultOpen={true}>
+      <CollapsibleSection sectionKey="board-leaderboard" label="Full leaderboard" summary={`${ranked.length} challengers · ${ranked[0]?.displayName ?? ""} leads`} tone="red" fillWhenAlone defaultOpen={false}>
       <div className={classNames("space-y-2", boardMode === "RACE" && "hidden")} data-testid="full-board-compare-list">
         <div className="flex items-end justify-between gap-3 px-1">
           <div>
