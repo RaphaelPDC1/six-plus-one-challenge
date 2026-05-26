@@ -226,7 +226,7 @@ export const appRouter = router({
         fileName: z.string().trim().min(1).max(180),
         mimeType: z.enum(["image/png", "image/jpeg", "image/webp", "video/mp4", "video/webm", "video/quicktime"]),
         // base64 overhead is ~4/3 of raw bytes; 50MB video → ~67M chars, 10MB image → ~14M chars
-        dataUrl: z.string().max(70_000_000).regex(/^data:(image\/(png|jpeg|webp)|video\/(mp4|webm|quicktime));base64,[A-Za-z0-9+/=]+$/, "Proof media must be a PNG, JPG, WEBP, MP4, MOV, or WEBM data URL."),
+        dataUrl: z.string().max(70_000_000).regex(/^data:(image\/(png|jpeg|webp)|video\/(mp4|webm|quicktime|x-quicktime|x-msvideo));base64,[A-Za-z0-9+/=]+$/i, "Proof media must be a PNG, JPG, WEBP, MP4, MOV, or WEBM data URL."),
       }))
       .mutation(async ({ ctx, input }) => {
         const participant = await getOrCreateParticipant(ctx.user);

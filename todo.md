@@ -1473,3 +1473,10 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Add admin dispute management panel in AdminPanel with raise/resolve controls
 - [x] Flag Wiwi's account as disputed in the database (burger incident)
 - [x] Write dispute.test.ts vitest coverage — all 188 tests passing
+
+## v8.19 — Video Upload MIME Type Fix
+
+- [x] Fix frontend MIME type validation to accept video/x-quicktime, video/x-msvideo, video/mov variants
+- [x] Normalize browser MIME types to standard formats (x-quicktime → quicktime, x-msvideo → mp4, mov → quicktime)
+- [x] Update backend regex to accept additional MIME type variations
+- [x] Participants can now upload videos without "The string did not match the expected" error
