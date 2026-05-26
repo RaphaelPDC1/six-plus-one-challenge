@@ -1438,11 +1438,12 @@ User priority: the Warden should read the room, find tensions between words and 
 
 - [x] Restore Senyo's life (2→3), streak (0→1), and points (+48) after missed day 18
 - [x] Remove the life-loss popup for Senyo (alert system already tracks dismissals; restored stats prevent new alerts)
+- [x] Waive stale payment event (ID 660001) for Day 20 so alert no longer appears
 - [ ] Register the 3-day personalised care notes heartbeat (manus-heartbeat create against live URL after deploy)
 - [x] Implement 'Bust personal watch cache on log submit' — invalidate getPersonalWardenWatch after every daily log submission
 - [x] Add participant's name to Today's Log header (show "Senyo's Log" instead of "Today's Log")
 - [x] Delete the life-loss notification message so it won't be posted to the group
-- [x] Add Day 17, 18, 19 submissions for Senyo with proof media
+- [x] Add Day 17, 18, 19, 20 submissions for Senyo with proof media
 - [x] Create Ghost Life community note popup explaining the feature to all participants
 
 ## v8.18 — Dispute Stage System
