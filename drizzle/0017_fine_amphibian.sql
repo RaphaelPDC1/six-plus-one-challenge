@@ -1,0 +1,1 @@
+ALTER TABLE `payment_events` ADD `notificationSuppressed` boolean DEFAULT false NOT NULL;

@@ -122,6 +122,7 @@ export const paymentEvents = mysqlTable("payment_events", {
   status: mysqlEnum("status", ["pending", "received", "waived"]).default("pending").notNull(),
   confirmedByUserId: int("confirmedByUserId"),
   confirmedAt: timestamp("confirmedAt"),
+  notificationSuppressed: boolean("notificationSuppressed").default(false).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, table => ({
   // Prevent duplicate life-loss penalties for the same daily log

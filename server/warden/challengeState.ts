@@ -186,10 +186,11 @@ const JOIN_OR_ONBOARDING_REASON_PATTERN = /\b(join|joined|joining|new player|onb
 const LIFE_LOSS_REASON_PATTERN = /\b(life|lost|loss|missed|deadline|rule|penalty|forfeit|failed|failure)\b/i;
 
 export function isWardenLifeLossPaymentEvent(
-  payment: Pick<typeof paymentEvents.$inferSelect, "participantId" | "dailyLogId" | "amountPence" | "reason" | "status">,
+  payment: Pick<typeof paymentEvents.$inferSelect, "participantId" | "dailyLogId" | "amountPence" | "reason" | "status" | "notificationSuppressed">,
   allParticipants: Array<Pick<typeof participants.$inferSelect, "id">>
 ): boolean {
   if (!payment || payment.status === "waived" || payment.amountPence !== 2500) return false;
+  if (payment.notificationSuppressed) return false; // Skip suppressed notifications
   if (!allParticipants.some((participant) => participant.id === payment.participantId)) return false;
   const reason = payment.reason ?? "";
   if (JOIN_OR_ONBOARDING_REASON_PATTERN.test(reason)) return false;

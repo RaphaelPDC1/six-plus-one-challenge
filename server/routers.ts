@@ -460,6 +460,15 @@ export const appRouter = router({
       return { success: true } as const;
     }),
 
+    suppressPaymentNotification: adminProcedure.input(z.object({ paymentId: z.number().int() })).mutation(async ({ ctx, input }) => {
+      const { db } = await import("./db");
+      const { paymentEvents } = await import("../drizzle/schema");
+      const { eq } = await import("drizzle-orm");
+      await db.update(paymentEvents).set({ notificationSuppressed: true }).where(eq(paymentEvents.id, input.paymentId));
+      await logAdminAction({ adminUserId: ctx.user.id, adminName: ctx.user.name ?? "Admin", action: "suppress_payment_notification", newValue: `paymentId:${input.paymentId}` });
+      return { success: true } as const;
+    }),
+
     auditLog: adminProcedure.query(async () => {
       return getAdminAuditLog(100);
     }),

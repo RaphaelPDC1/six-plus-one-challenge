@@ -1498,3 +1498,10 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] BOARD: Full Leaderboard now closed by default (was open, too long on load)
 - [x] OVERVIEW: Pressure List now closed by default (was open, too long on load)
 - [x] CollapsibleSection: Improved visual design — taller header (py-3 px-4), stacked label/summary text, larger chevron (h-4 w-4), active:scale feedback, distinct open/closed bg states
+
+## v8.21 — Suppress Life-Loss WhatsApp Notifications
+
+- [x] Add `notificationSuppressed` column to payment_events table (default false)
+- [x] Update `isWardenLifeLossPaymentEvent` to exclude suppressed notifications from Warden context
+- [x] Add `admin.suppressPaymentNotification` tRPC mutation to suppress specific payment event notifications
+- [x] All 188 tests pass with suppression logic
