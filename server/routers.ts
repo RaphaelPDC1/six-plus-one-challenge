@@ -461,11 +461,13 @@ export const appRouter = router({
     }),
 
     suppressPaymentNotification: adminProcedure.input(z.object({ paymentId: z.number().int() })).mutation(async ({ ctx, input }) => {
-      const { db } = await import("./db");
+      const { getDb } = await import("./db");
       const { paymentEvents } = await import("../drizzle/schema");
       const { eq } = await import("drizzle-orm");
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "Database connection failed" });
       await db.update(paymentEvents).set({ notificationSuppressed: true }).where(eq(paymentEvents.id, input.paymentId));
-      await logAdminAction({ adminUserId: ctx.user.id, adminName: ctx.user.name ?? "Admin", action: "suppress_payment_notification", newValue: `paymentId:${input.paymentId}` });
+      await logAdminAction({ adminUserId: ctx.user.id, adminName: ctx.user.name ?? "Admin", action: "mark_payment_pending", newValue: `paymentId:${input.paymentId}:suppressed` });
       return { success: true } as const;
     }),
 
