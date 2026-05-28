@@ -143,6 +143,7 @@ function getLifeLossAlertId(payment: any) {
 export function isLifeLossPaymentEvent(payment: any, participants: any[] = []) {
   const id = getLifeLossAlertId(payment);
   if (!id) return false;
+  if (payment?.notificationSuppressed === true) return false;
   const amountPence = Number(payment?.amountPence ?? 0);
   if (!Number.isFinite(amountPence) || amountPence < 2500) return false;
   if (!["pending", "received"].includes(String(payment?.status ?? "pending"))) return false;
