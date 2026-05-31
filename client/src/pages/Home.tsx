@@ -955,7 +955,7 @@ function LifeLossAlert({ snapshot }: { snapshot: Snapshot | undefined }) {
             <ProfilePhoto participant={participant ?? { displayName: "Participant", avatarInitials: "?" }} className="h-14 w-14 rounded-full" />
             <div className="min-w-0">
               <h2 className="break-words text-3xl font-black uppercase leading-none tracking-[-0.08em] text-white">{participant?.displayName ?? "Participant"} lost a life.</h2>
-              <p className="mt-2 text-xs font-black uppercase leading-5 tracking-[0.14em] text-[#FFB3A8]">Now on {livesAfter}/4 lives · £{(Number(visibleEvent.amountPence ?? 2500) / 100).toFixed(0)} pending</p>
+              <p className="mt-2 text-xs font-black uppercase leading-5 tracking-[0.14em] text-[#FFB3A8]">{livesAfter === 0 ? "OUT OF THE CHALLENGE" : `Now on ${livesAfter}/4 lives`} · £{(Number(visibleEvent.amountPence ?? 2500) / 100).toFixed(0)} pending</p>
             </div>
           </div>
           <p className="relative mt-4 text-sm font-bold leading-6 text-[#D8D8D8]">{visibleEvent.reason ?? "A challenge rule was missed before the deadline."}</p>
