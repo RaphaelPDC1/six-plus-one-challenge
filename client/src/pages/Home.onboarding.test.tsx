@@ -722,7 +722,7 @@ describe("Home onboarding shell", () => {
     expect(homeSource).toContain('data-testid=\"stepped-podium-card\"');
     expect(homeSource).toContain('data-testid=\"full-board-compare-list\"');
     expect(homeSource).toContain('data-testid=\"elimination-risk-badge\"');
-    expect(homeSource).toContain("⚠ ELIMINATION RISK");
+    expect(homeSource).toContain("⚠ AT RISK");
     expect(homeSource).toContain("inline-flex max-w-full min-w-0 items-center gap-1 overflow-hidden");
     expect(homeSource).toContain("<span className=\"min-w-0 truncate tabular-nums\">{value}</span>");
     expect(homeSource).toContain("block max-w-full break-words text-2xl font-black leading-none text-[#C8A96E]");

@@ -2226,7 +2226,8 @@ function Overview({ snapshot }: { snapshot: Snapshot }) {
   const totalLivesLost = insights.reduce((sum: number, p: any) => sum + p.livesLost, 0);
   const pendingPayments = payments.filter((p: any) => p.status === "pending").length;
   const pendingRewards = redemptions.filter((r: any) => r.status === "pending").length;
-  const riskCount = insights.filter((p: any) => Number(p.riskPoints ?? 0) >= 42 || Number(p.livesRemaining ?? 4) <= 2).length;
+  const riskCount = insights.filter((p: any) => Number(p.livesRemaining ?? 4) > 0 && (Number(p.riskPoints ?? 0) >= 42 || Number(p.livesRemaining ?? 4) <= 2)).length;
+  const eliminatedCount = insights.filter((p: any) => Number(p.livesRemaining ?? 4) === 0).length;
   const riskLeader = [...insights].sort((a: any, b: any) => b.riskPoints - a.riskPoints || a.livesRemaining - b.livesRemaining)[0];
   const daysInsight = getDaysRemainingInsight(currentDay, participantCount, todayComplete, onPaceCount);
   const liveAppPoints = insights.reduce((sum: number, participant: any) => {
@@ -3030,7 +3031,8 @@ function Leaderboard({ snapshot }: { snapshot: Snapshot }) {
           const detailId = `board-player-${p.id}-metrics`;
           const pointsGap = index === 0 ? "Leader" : `${Math.max(0, leaderPoints - Number(p.totalPoints ?? 0))} behind`;
           const previousGap = index === 0 ? "No gap" : `${Math.max(0, Number(ranked[index - 1]?.totalPoints ?? 0) - Number(p.totalPoints ?? 0))} to catch`;
-          const eliminationRisk = Number(p.riskPoints ?? 0) >= 60 || Number(p.livesRemaining ?? 4) <= 1;
+          const isEliminated = Number(p.livesRemaining ?? 4) === 0;
+          const eliminationRisk = !isEliminated && (Number(p.riskPoints ?? 0) >= 60 || Number(p.livesRemaining ?? 4) <= 1);
           const isDisputed = p.status === "dispute" || p.status === "withdrawn";
           const playerBoostWins = allBoostWins.filter((win: any) => String(win.userId) === String(p.id));
           const todayPlayerBoostWins = todayBoostWins.filter((win: any) => String(win.userId) === String(p.id));
@@ -3043,7 +3045,8 @@ function Leaderboard({ snapshot }: { snapshot: Snapshot }) {
                 <span className="min-w-0">
                   <span className="flex min-w-0 flex-wrap items-center gap-2">
                     <span className="block min-w-0 break-words text-lg font-black uppercase tracking-[-0.04em] text-white sm:text-xl">{p.displayName}</span>
-                    {eliminationRisk && !isDisputed && <span className="rounded-full border border-[#C0392B] bg-[#C0392B]/15 px-2 py-1 text-[8px] font-black uppercase tracking-[0.13em] text-[#FFB3A8]" data-testid="elimination-risk-badge">⚠ ELIMINATION RISK</span>}
+                    {isEliminated && !isDisputed && <span className="rounded-full border border-[#C0392B] bg-[#C0392B]/15 px-2 py-1 text-[8px] font-black uppercase tracking-[0.13em] text-[#FFB3A8]" data-testid="elimination-risk-badge">⚠ OUT</span>}
+                    {eliminationRisk && !isDisputed && !isEliminated && <span className="rounded-full border border-[#C0392B] bg-[#C0392B]/15 px-2 py-1 text-[8px] font-black uppercase tracking-[0.13em] text-[#FFB3A8]" data-testid="elimination-risk-badge">⚠ AT RISK</span>}
                     {isDisputed && <span className="rounded-full border border-[#888] bg-[#222] px-2 py-1 text-[8px] font-black uppercase tracking-[0.13em] text-[#AAA]" data-testid="dispute-badge">⚠ {p.status === "withdrawn" ? "WITHDRAWN" : "DISPUTE"}</span>}
                     {todayPlayerBoostWins.map((win: any) => <span key={win.id ?? `${win.boostId}-${win.userId}`} className="rounded-full border border-[#C8A96E] bg-[#16130B] px-2 py-1 text-[8px] font-black uppercase tracking-[0.13em] text-[#C8A96E]" data-testid="boost-won-badge">{win.boostIcon} {win.boostName}</span>)}
                   </span>
