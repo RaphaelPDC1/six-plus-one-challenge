@@ -1505,3 +1505,12 @@ User priority: the Warden should read the room, find tensions between words and 
 - [x] Update `isWardenLifeLossPaymentEvent` to exclude suppressed notifications from Warden context
 - [x] Add `admin.suppressPaymentNotification` tRPC mutation to suppress specific payment event notifications
 - [x] All 188 tests pass with suppression logic
+
+
+## v8.24 — One-Time Save Bug Fix
+
+- [x] Fix: Submit button now visible even when day is already complete (was hidden, preventing resaves)
+- [x] Button text changes to "Update Day" when day is locked (vs "Lock In Day" for new submissions)
+- [x] Help text clarifies: "Day is locked. You can still edit and update."
+- [x] Participants can now save multiple times per day before deadline
+- [x] All 188 tests pass

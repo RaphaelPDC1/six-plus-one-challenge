@@ -1962,34 +1962,35 @@ function MyDay({ snapshot, refetch }: { snapshot: Snapshot; refetch: () => void 
         )}
 
         {/* When the day is already locked in, show a static locked state — never float over rule cards */}
-        {todayAlreadyComplete ? (
-          <div className="mt-4 border border-[#2ECC71]/40 bg-[#0A1A0A] p-4" data-testid="day-locked-banner">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-[9px] font-black uppercase tracking-[0.2em] text-[#2ECC71]/70">Day {snapshot?.challenge.currentDay ?? "—"} · Locked in</p>
-                <p className="mt-1 text-base font-black uppercase leading-none tracking-[-0.03em] text-white">+{liveTaskPoints.visibleTotal} pts banked</p>
+        <div className={classNames("submit-dock motion-submit-dock relative mx-4 mt-4", submit.isPending && "submit-dock-pending", allAddressed && !submit.isPending && "submit-dock-ready")} data-save-progress-scale={saveProgressScale} data-save-progress-docked="true" data-mobile-save-progress-mini-to-section="true" data-mobile-save-progress-above-nav="true">
+          {todayAlreadyComplete && (
+            <div className="mb-3 border border-[#2ECC71]/40 bg-[#0A1A0A] p-4" data-testid="day-locked-banner">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-[9px] font-black uppercase tracking-[0.2em] text-[#2ECC71]/70">Day {snapshot?.challenge.currentDay ?? "—"} · Locked in</p>
+                  <p className="mt-1 text-base font-black uppercase leading-none tracking-[-0.03em] text-white">+{liveTaskPoints.visibleTotal} pts banked</p>
+                </div>
+                <div className="grid h-8 w-8 shrink-0 place-items-center border border-[#2ECC71]/60 bg-[#2ECC71]/10">
+                  <Check className="h-4 w-4 text-[#2ECC71]" />
+                </div>
               </div>
-              <div className="grid h-8 w-8 shrink-0 place-items-center border border-[#2ECC71]/60 bg-[#2ECC71]/10">
-                <Check className="h-4 w-4 text-[#2ECC71]" />
-              </div>
+              {lastMissed.length > 0 && <div className="mt-3 border-l-4 border-[#C0392B] bg-[#180F0F] p-4 text-sm font-bold text-[#F0B7AE]">Rollover miss: {lastMissed.join(", ")}. Penalty recorded.</div>}
             </div>
-            {lastMissed.length > 0 && <div className="mt-3 border-l-4 border-[#C0392B] bg-[#180F0F] p-4 text-sm font-bold text-[#F0B7AE]">Rollover miss: {lastMissed.join(", ")}. Penalty recorded.</div>}
-          </div>
-        ) : (
-          <div className={classNames("submit-dock motion-submit-dock relative mx-4 mt-4", submit.isPending && "submit-dock-pending", allAddressed && !submit.isPending && "submit-dock-ready")} data-save-progress-scale={saveProgressScale} data-save-progress-docked="true" data-mobile-save-progress-mini-to-section="true" data-mobile-save-progress-above-nav="true">
-            <SharpButton className={classNames("w-full py-5 text-sm", submit.isPending && "submit-button-pending")} disabled={submit.isPending} onClick={() => submit.mutate({ ...form, reflectionShared: false, dayNumber: snapshot?.challenge.currentDay ?? 1 })}>
-              {submit.isPending
-                ? (allAddressed ? "Locking in the day…" : "Saving progress…")
+          )}
+          <SharpButton className={classNames("w-full py-5 text-sm", submit.isPending && "submit-button-pending")} disabled={submit.isPending} onClick={() => submit.mutate({ ...form, reflectionShared: false, dayNumber: snapshot?.challenge.currentDay ?? 1 })}>
+            {submit.isPending
+              ? (allAddressed ? "Locking in the day…" : "Saving progress…")
+              : todayAlreadyComplete
+                ? `Update Day ${snapshot?.challenge.currentDay ?? 1} · +${liveTaskPoints.visibleTotal} pts`
                 : allAddressed
                   ? `Lock In Day ${snapshot?.challenge.currentDay ?? 1} · +${liveTaskPoints.visibleTotal} pts`
                   : `Save Progress · ${completedRules}/${totalRules} done`}
-            </SharpButton>
-            {!allAddressed && <p className="mt-2 text-center text-[10px] font-black uppercase tracking-[0.16em] text-[#C8A96E]/80">Save keeps your work. Lock In submits the day before midnight.</p>}
-            {saveNotice && <div role="status" className={classNames("pointer-events-none absolute -top-3 right-3 rounded-full border bg-black/90 px-2 py-1 text-[9px] font-black uppercase leading-none tracking-[0.16em] shadow-[0_0_18px_rgba(0,0,0,0.45)]", saveNotice.complete ? "border-[#2ECC71]/70 text-[#2ECC71]" : "border-[#C8A96E]/70 text-[#C8A96E]")}>{saveNotice.title}</div>}
-            {draftRestored && <div role="status" className="pointer-events-none absolute -top-3 left-3 rounded-full border border-[#C8A96E]/70 bg-black/90 px-2 py-1 text-[9px] font-black uppercase leading-none tracking-[0.16em] text-[#C8A96E] shadow-[0_0_18px_rgba(0,0,0,0.45)]">Draft recovered</div>}
-            {lastMissed.length > 0 && <div className="mt-3 border-l-4 border-[#C0392B] bg-[#180F0F] p-4 text-sm font-bold text-[#F0B7AE]">Rollover miss: {lastMissed.join(", ")}. Penalty recorded.</div>}
-          </div>
-        )}
+          </SharpButton>
+          {!allAddressed && !todayAlreadyComplete && <p className="mt-2 text-center text-[10px] font-black uppercase tracking-[0.16em] text-[#C8A96E]/80">Save keeps your work. Lock In submits the day before midnight.</p>}
+          {todayAlreadyComplete && <p className="mt-2 text-center text-[10px] font-black uppercase tracking-[0.16em] text-[#2ECC71]/80">Day is locked. You can still edit and update.</p>}
+          {saveNotice && <div role="status" className={classNames("pointer-events-none absolute -top-3 right-3 rounded-full border bg-black/90 px-2 py-1 text-[9px] font-black uppercase leading-none tracking-[0.16em] shadow-[0_0_18px_rgba(0,0,0,0.45)]", saveNotice.complete ? "border-[#2ECC71]/70 text-[#2ECC71]" : "border-[#C8A96E]/70 text-[#C8A96E]")}>{saveNotice.title}</div>}
+          {draftRestored && <div role="status" className="pointer-events-none absolute -top-3 left-3 rounded-full border border-[#C8A96E]/70 bg-black/90 px-2 py-1 text-[9px] font-black uppercase leading-none tracking-[0.16em] text-[#C8A96E] shadow-[0_0_18px_rgba(0,0,0,0.45)]">Draft recovered</div>}
+        </div>
       </section>
 
       {/* ── Sidebar sections — shown below rules on mobile, beside rules on desktop ── */}
