@@ -4477,7 +4477,7 @@ export default function Home() {
 
       {notificationsOpen && <PwaNotificationPanel open={notificationsOpen} onClose={() => setNotificationsOpen(false)} />}
       <PullToRefreshIndicator distance={pullDistance} refreshing={pullRefreshing} />
-      <LifeLossAlert snapshot={snapshot} />
+      {/* LifeLossAlert removed - served its purpose */}
       <CommunityCareReleaseNotePopup note={releaseNoteQuery.data} isPending={acknowledgeReleaseNote.isPending} onAcknowledge={releaseNoteId => acknowledgeReleaseNote.mutate({ releaseNoteId })} />
       <MobileBottomNav mobileTabs={mobileTabs} activeTab={activeTab} activeMobileIndex={activeMobileIndex} onSelect={changeActiveTab} />
     </main>
